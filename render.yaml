@@ -1,0 +1,48 @@
+services:
+  - type: web
+    name: venezuela-investment-journal
+    runtime: docker
+    dockerfilePath: ./Dockerfile
+    plan: starter
+    envVars:
+      - key: DATABASE_URL
+        fromDatabase:
+          name: vij-db
+          property: connectionString
+      - key: OPENAI_API_KEY
+        sync: false
+      - key: NEWSLETTER_PROVIDER
+        value: console
+      - key: NEWSLETTER_API_KEY
+        sync: false
+      - key: LOG_LEVEL
+        value: INFO
+    healthCheckPath: /health
+
+  - type: cron
+    name: vij-daily-pipeline
+    runtime: docker
+    dockerfilePath: ./Dockerfile
+    schedule: "0 10 * * *"
+    plan: starter
+    buildCommand: ""
+    startCommand: "python run_daily.py"
+    envVars:
+      - key: DATABASE_URL
+        fromDatabase:
+          name: vij-db
+          property: connectionString
+      - key: OPENAI_API_KEY
+        sync: false
+      - key: NEWSLETTER_PROVIDER
+        value: console
+      - key: NEWSLETTER_API_KEY
+        sync: false
+      - key: LOG_LEVEL
+        value: INFO
+
+databases:
+  - name: vij-db
+    plan: starter
+    databaseName: vij
+    postgresMajorVersion: "16"

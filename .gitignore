@@ -1,0 +1,15 @@
+.venv/
+venv/
+__pycache__/
+*.py[cod]
+.pytest_cache/
+.mypy_cache/
+.env
+*.db
+storage/
+output/
+*.log
+.DS_Store
+.idea/
+.vscode/
+playwright/.auth/

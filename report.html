@@ -1,0 +1,1358 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Venezuelan Business Network</title>
+  
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Libre+Baskerville:ital,wght@0,400;0,700;1,400&family=Open+Sans:ital,wght@0,300..800;1,300..800&display=swap" rel="stylesheet">
+  
+  <style>
+    :root {
+      --sr-blue: #002b5e;
+      --sr-blue-light: #1a4170;
+      --sr-blue-dark: #001f44;
+      --sr-red: #cc0000;
+      --sr-gray-bg: #f8f9fa;
+      --sr-gray-light: #e9ecef;
+      --sr-gray-text: #6c757d;
+      --sr-dark-text: #212529;
+      --white: #ffffff;
+      --status-red: #cc0000;
+      --status-red-bg: #ffe6e6;
+      --status-green: #0b8043;
+      --status-green-bg: #e6f4ea;
+      --status-yellow: #f5b041;
+      --status-yellow-bg: #fef5e6;
+      --font-serif: 'Libre Baskerville', 'Times New Roman', Times, serif;
+      --font-sans: 'Open Sans', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif;
+    }
+
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+    html { scroll-behavior: smooth; }
+
+    body {
+      font-family: var(--font-sans);
+      background-color: var(--white);
+      color: var(--sr-dark-text);
+      line-height: 1.6;
+      font-size: 16px;
+      -webkit-font-smoothing: antialiased;
+    }
+
+    /* ── TOP NAV ── */
+    .top-nav {
+      background-color: var(--sr-blue);
+      color: var(--white);
+      padding: 12px 0;
+      font-family: var(--font-sans);
+    }
+    .top-nav-container {
+      max-width: 1140px;
+      margin: 0 auto;
+      padding: 0 20px;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+    }
+    .nav-brand {
+      font-family: var(--font-serif);
+      font-size: 1.25rem;
+      font-weight: 700;
+      letter-spacing: 0.5px;
+      display: flex;
+      align-items: center;
+      gap: 12px;
+    }
+    .nav-brand svg.brand-logo {
+      width: 28px;
+      height: 28px;
+      flex-shrink: 0;
+    }
+    .nav-links {
+      display: flex;
+      gap: 24px;
+      font-size: 0.85rem;
+      font-weight: 600;
+      text-transform: uppercase;
+      letter-spacing: 1px;
+    }
+    .nav-links a { color: var(--white); text-decoration: none; transition: opacity 0.2s; }
+    .nav-links a:hover { opacity: 0.8; }
+    .nav-login { background: var(--sr-red); padding: 6px 16px; border-radius: 3px; }
+
+    /* ── MACRO TICKER BAR ── */
+    .ticker-bar {
+      background: var(--sr-blue-dark);
+      color: var(--white);
+      overflow: hidden;
+      border-bottom: 1px solid rgba(255,255,255,0.1);
+    }
+    .ticker-inner {
+      max-width: 1140px;
+      margin: 0 auto;
+      padding: 0 20px;
+      display: flex;
+      align-items: center;
+      height: 40px;
+      gap: 0;
+      overflow-x: auto;
+      scrollbar-width: none;
+    }
+    .ticker-inner::-webkit-scrollbar { display: none; }
+    .ticker-item {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      padding: 0 20px;
+      white-space: nowrap;
+      font-size: 0.78rem;
+      font-weight: 600;
+      border-right: 1px solid rgba(255,255,255,0.15);
+      flex-shrink: 0;
+    }
+    .ticker-item:last-child { border-right: none; }
+    .ticker-label { opacity: 0.6; text-transform: uppercase; letter-spacing: 0.5px; font-size: 0.65rem; }
+    .ticker-value { font-family: 'Courier New', monospace; font-size: 0.85rem; }
+    .ticker-change { font-size: 0.7rem; padding: 1px 6px; border-radius: 3px; }
+    .ticker-up { color: #4ade80; }
+    .ticker-down { color: #f87171; }
+    .ticker-change-up { background: rgba(74,222,128,0.15); color: #4ade80; }
+    .ticker-change-down { background: rgba(248,113,113,0.15); color: #f87171; }
+    .ticker-neutral { opacity: 0.8; }
+    .ticker-source {
+      font-size: 0.6rem;
+      opacity: 0.4;
+      margin-left: 4px;
+      font-style: italic;
+    }
+
+    /* ── HERO ── */
+    .hero {
+      background-color: var(--sr-gray-bg);
+      padding: 40px 20px 30px;
+      text-align: center;
+      border-bottom: 1px solid var(--sr-gray-light);
+    }
+    .hero h1 {
+      font-family: var(--font-serif);
+      font-size: 2.8rem;
+      font-weight: 700;
+      color: var(--sr-blue);
+      max-width: 800px;
+      margin: 0 auto 20px;
+      line-height: 1.25;
+    }
+    .hero .subtitle {
+      font-family: var(--font-sans);
+      font-size: 1.15rem;
+      color: var(--sr-gray-text);
+      max-width: 680px;
+      margin: 0 auto;
+      line-height: 1.6;
+    }
+
+    /* ── INVESTMENT CLIMATE SCORE ── */
+    .climate-panel {
+      max-width: 1140px;
+      margin: 0 auto;
+      padding: 0 20px;
+    }
+    .climate-box {
+      background: var(--white);
+      border: 1px solid var(--sr-gray-light);
+      border-top: 4px solid var(--sr-blue);
+      margin-top: 24px;
+      padding: 28px 36px;
+      box-shadow: 0 4px 15px rgba(0,0,0,0.03);
+    }
+    .climate-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: baseline;
+      margin-bottom: 20px;
+    }
+    .climate-header h3 {
+      font-family: var(--font-serif);
+      font-size: 1.2rem;
+      color: var(--sr-blue);
+    }
+    .climate-header .climate-period {
+      font-size: 0.75rem;
+      color: var(--sr-gray-text);
+      font-weight: 600;
+    }
+    .climate-bars {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 18px 40px;
+    }
+    .bar-item {
+      position: relative;
+    }
+    .bar-top {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: 6px;
+    }
+    .bar-label {
+      font-size: 0.82rem;
+      font-weight: 600;
+      color: var(--sr-dark-text);
+    }
+    .bar-right {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+    .bar-score {
+      font-size: 0.82rem;
+      font-weight: 700;
+      color: var(--sr-dark-text);
+      font-family: 'Courier New', monospace;
+    }
+    .bar-trend {
+      display: inline-flex;
+      align-items: center;
+      gap: 3px;
+      font-size: 0.68rem;
+      font-weight: 700;
+      padding: 1px 7px;
+      border-radius: 3px;
+    }
+    .trend-up { background: var(--status-green-bg); color: var(--status-green); }
+    .trend-down { background: var(--status-red-bg); color: var(--status-red); }
+    .trend-flat { background: var(--sr-gray-light); color: var(--sr-gray-text); }
+    .bar-why {
+      font-size: 0.7rem;
+      color: var(--sr-gray-text);
+      margin-top: 4px;
+      line-height: 1.4;
+      font-style: italic;
+    }
+    .bar-track {
+      height: 8px;
+      background: var(--sr-gray-light);
+      border-radius: 4px;
+      overflow: hidden;
+    }
+    .bar-fill {
+      height: 100%;
+      border-radius: 4px;
+      width: 0;
+      transition: width 1.2s ease;
+    }
+    .bar-red { background: var(--status-red); }
+    .bar-yellow { background: var(--status-yellow); }
+    .bar-green { background: var(--status-green); }
+    .bar-blue { background: var(--sr-blue); }
+    .climate-footer {
+      font-size: 0.7rem;
+      color: var(--sr-gray-text);
+      border-top: 1px solid var(--sr-gray-light);
+      padding-top: 12px;
+      margin-top: 20px;
+      line-height: 1.5;
+    }
+    .climate-footer a { color: var(--sr-blue); text-decoration: none; }
+    .climate-footer a:hover { text-decoration: underline; }
+
+    /* ── TWO-COLUMN ROW (News + Calendar) ── */
+    .two-col-row {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 16px;
+      margin-top: 16px;
+    }
+
+    /* ── FORWARD CALENDAR ── */
+    .calendar-box {
+      background: var(--white);
+      border: 1px solid var(--sr-gray-light);
+      padding: 24px 36px;
+      box-shadow: 0 4px 15px rgba(0,0,0,0.03);
+    }
+    .calendar-box h3 {
+      font-family: var(--font-serif);
+      font-size: 1.2rem;
+      color: var(--sr-blue);
+      margin-bottom: 16px;
+      display: flex;
+      align-items: center;
+      gap: 10px;
+    }
+    .calendar-box h3::before {
+      content: '\1F4C5';
+      font-size: 1.1rem;
+    }
+    .cal-timeline {
+      position: relative;
+      padding-left: 20px;
+    }
+    .cal-timeline::before {
+      content: '';
+      position: absolute;
+      left: 6px;
+      top: 0;
+      bottom: 0;
+      width: 2px;
+      background: var(--sr-gray-light);
+    }
+    .cal-event {
+      position: relative;
+      padding: 10px 0 10px 24px;
+      font-size: 0.88rem;
+      line-height: 1.5;
+    }
+    .cal-event::before {
+      content: '';
+      position: absolute;
+      left: -1px;
+      top: 16px;
+      width: 10px;
+      height: 10px;
+      border-radius: 50%;
+      border: 2px solid var(--sr-blue);
+      background: var(--white);
+    }
+    .cal-event.cal-urgent::before {
+      border-color: var(--sr-red);
+      background: var(--status-red-bg);
+      animation: dotPulse 1.5s infinite;
+    }
+    .cal-event.cal-positive::before {
+      border-color: var(--status-green);
+      background: var(--status-green-bg);
+    }
+    .cal-date {
+      font-weight: 700;
+      color: var(--sr-blue);
+      font-size: 0.78rem;
+      text-transform: uppercase;
+      letter-spacing: 0.5px;
+    }
+    .cal-event.cal-urgent .cal-date { color: var(--sr-red); }
+    .cal-desc { color: var(--sr-dark-text); }
+    .cal-note {
+      color: var(--sr-gray-text);
+      font-size: 0.78rem;
+      font-style: italic;
+    }
+
+    /* ── PANEL BOX (shared style for news, developments) ── */
+    .panel-box {
+      background: var(--white);
+      border: 1px solid var(--sr-gray-light);
+      margin-top: 16px;
+      padding: 24px 36px;
+      box-shadow: 0 4px 15px rgba(0,0,0,0.03);
+    }
+    .two-col-row .panel-box,
+    .two-col-row .calendar-box { margin-top: 0; }
+    .panel-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: 16px;
+    }
+    .panel-header h3 {
+      font-family: var(--font-serif);
+      font-size: 1.2rem;
+      color: var(--sr-blue);
+    }
+
+    /* News timeline (This Week's News) */
+    .news-timeline {
+      position: relative;
+      padding-left: 20px;
+    }
+    .news-timeline::before {
+      content: '';
+      position: absolute;
+      left: 6px;
+      top: 0;
+      bottom: 0;
+      width: 2px;
+      background: var(--sr-gray-light);
+    }
+    .news-item {
+      position: relative;
+      padding: 10px 0 10px 24px;
+      font-size: 0.88rem;
+      line-height: 1.5;
+    }
+    .news-item::before {
+      content: '';
+      position: absolute;
+      left: -1px;
+      top: 16px;
+      width: 10px;
+      height: 10px;
+      border-radius: 50%;
+      border: 2px solid var(--sr-blue);
+      background: var(--white);
+    }
+    .news-item.news-positive::before {
+      border-color: var(--status-green);
+      background: var(--status-green-bg);
+    }
+    .news-item.news-negative::before {
+      border-color: var(--status-red);
+      background: var(--status-red-bg);
+      animation: dotPulse 1.5s infinite;
+    }
+    .news-item.news-mixed::before {
+      border-color: var(--status-yellow);
+      background: var(--status-yellow-bg);
+    }
+    .news-headline { color: var(--sr-dark-text); }
+    .news-headline strong { color: var(--sr-dark-text); }
+    .news-note {
+      color: var(--sr-gray-text);
+      font-size: 0.78rem;
+      font-style: italic;
+    }
+    .news-link {
+      display: block;
+      text-decoration: none;
+      color: inherit;
+      padding: 4px 8px;
+      margin: -4px -8px;
+      border-radius: 4px;
+      transition: background 0.15s ease;
+    }
+    .news-link:hover { background: var(--sr-gray-bg); }
+    .news-note { color: var(--sr-blue); }
+    .news-link:hover .news-note { text-decoration: underline; }
+
+    /* Highlight flash when scrolling to an entry */
+    .entry.highlight {
+      animation: highlightFlash 1.5s ease;
+    }
+    @keyframes highlightFlash {
+      0% { background: #fffde7; }
+      100% { background: var(--white); }
+    }
+    .entry { scroll-margin-top: 24px; }
+
+    /* Sector filter dropdown */
+    .sector-select {
+      font-family: var(--font-sans);
+      font-size: 0.82rem;
+      font-weight: 600;
+      color: var(--sr-blue);
+      padding: 6px 32px 6px 12px;
+      border: 1px solid var(--sr-gray-light);
+      border-radius: 3px;
+      background: var(--sr-gray-bg);
+      cursor: pointer;
+      appearance: none;
+      -webkit-appearance: none;
+      background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='12' viewBox='0 0 12 12'%3E%3Cpath fill='%23002b5e' d='M2 4l4 4 4-4'/%3E%3C/svg%3E");
+      background-repeat: no-repeat;
+      background-position: right 10px center;
+    }
+    .sector-select:focus { outline: 2px solid var(--sr-blue); outline-offset: 1px; }
+
+    /* ── ENTRY CARDS ── */
+    .entries-container { margin-top: 16px; }
+    .entry {
+      background: var(--white);
+      border-bottom: 1px solid var(--sr-gray-light);
+      padding: 0;
+      transition: background 0.2s ease;
+    }
+    .entry:last-child { border-bottom: none; }
+    .entry:hover { background: #fcfcfd; }
+    .entry.hidden { display: none; }
+    .all-only.hidden { display: none; }
+
+    .entry-header {
+      padding: 20px 0 12px;
+    }
+    .pill-row {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      margin-bottom: 16px;
+      flex-wrap: wrap;
+    }
+    .category-label {
+      font-family: var(--font-sans);
+      font-size: 0.75rem;
+      font-weight: 700;
+      text-transform: uppercase;
+      letter-spacing: 1px;
+      color: var(--sr-blue);
+    }
+    .badge-new {
+      font-size: 0.6rem;
+      font-weight: 800;
+      text-transform: uppercase;
+      letter-spacing: 1px;
+      padding: 2px 8px;
+      border-radius: 3px;
+      background: var(--sr-red);
+      color: var(--white);
+      animation: pulseNew 2s ease-in-out infinite;
+    }
+    @keyframes pulseNew { 0%, 100% { opacity: 1; } 50% { opacity: 0.7; } }
+
+    .status-pill {
+      font-size: 0.7rem;
+      font-weight: 700;
+      text-transform: uppercase;
+      padding: 4px 10px;
+      border-radius: 20px;
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+    }
+    .status-passed { background: var(--status-green-bg); color: var(--status-green); }
+    .status-progress { background: var(--status-yellow-bg); color: #d97706; }
+    .status-announced { background: #e0f2fe; color: #2563eb; }
+    .status-promulgation { background: #ffedd5; color: #ea580c; }
+    .status-dot { width: 6px; height: 6px; border-radius: 50%; }
+    .status-passed .status-dot { background: var(--status-green); }
+    .status-progress .status-dot { background: #d97706; animation: dotPulse 1.5s infinite; }
+    .status-promulgation .status-dot { background: #ea580c; animation: dotPulse 1.5s infinite; }
+    .status-announced .status-dot { background: #2563eb; }
+    @keyframes dotPulse { 0%, 100% { opacity: 1; } 50% { opacity: 0.3; } }
+
+    .entry-header h3 {
+      font-family: var(--font-serif);
+      font-size: 1.2rem;
+      color: var(--sr-dark-text);
+      line-height: 1.3;
+      margin-bottom: 8px;
+    }
+    .entry-meta {
+      font-size: 0.85rem;
+      color: var(--sr-gray-text);
+      display: flex;
+      align-items: center;
+      gap: 16px;
+      flex-wrap: wrap;
+    }
+    .entry-meta a { color: var(--sr-blue); text-decoration: none; font-weight: 600; }
+    .entry-meta a:hover { text-decoration: underline; }
+    .source-trust {
+      font-size: 0.7rem;
+      padding: 2px 8px;
+      border-radius: 3px;
+      font-weight: 600;
+    }
+    .trust-official { background: #e0f2fe; color: #1d4ed8; }
+    .trust-state { background: #fef3c7; color: #92400e; }
+
+    .entry-body { padding: 0 0 20px; }
+
+    .takeaway {
+      font-size: 1.05rem;
+      line-height: 1.7;
+      color: var(--sr-dark-text);
+      margin-bottom: 20px;
+    }
+    .takeaway-header {
+      font-family: var(--font-sans);
+      font-size: 0.85rem;
+      font-weight: 700;
+      color: var(--sr-red);
+      text-transform: uppercase;
+      letter-spacing: 1px;
+      margin-bottom: 8px;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+    }
+    .takeaway strong { color: var(--sr-blue); font-weight: 700; }
+    .sentiment-badge {
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      padding: 4px 12px;
+      border-radius: 4px;
+      font-size: 0.75rem;
+      font-weight: 700;
+      text-transform: uppercase;
+    }
+    .sentiment-positive { background: var(--status-green-bg); color: var(--status-green); }
+    .sentiment-negative { background: var(--status-red-bg); color: var(--status-red); }
+    .sentiment-mixed { background: var(--status-yellow-bg); color: #d97706; }
+
+    .detail-toggle {
+      background: none;
+      border: none;
+      color: var(--sr-blue);
+      font-family: var(--font-sans);
+      font-size: 0.9rem;
+      font-weight: 600;
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      gap: 6px;
+    }
+    .detail-toggle:hover { text-decoration: underline; }
+    .detail-content {
+      display: none;
+      margin-top: 20px;
+      padding: 24px;
+      background: var(--sr-gray-bg);
+      border-left: 3px solid var(--sr-gray-light);
+      font-family: var(--font-sans);
+      font-size: 0.9rem;
+      color: var(--sr-gray-text);
+      line-height: 1.8;
+      white-space: pre-wrap;
+    }
+    .detail-content.open { display: block; animation: fadeIn 0.4s ease; }
+    @keyframes fadeIn { from { opacity: 0; } to { opacity: 1; } }
+
+    /* ── EMAIL SIGNUP ── */
+    .signup-band {
+      background: var(--sr-blue);
+      padding: 48px 20px;
+      text-align: center;
+    }
+    .signup-inner {
+      max-width: 600px;
+      margin: 0 auto;
+    }
+    .signup-inner h3 {
+      font-family: var(--font-serif);
+      color: var(--white);
+      font-size: 1.6rem;
+      margin-bottom: 8px;
+    }
+    .signup-inner p {
+      color: rgba(255,255,255,0.7);
+      font-size: 0.95rem;
+      margin-bottom: 20px;
+    }
+    .signup-form {
+      display: flex;
+      gap: 0;
+      max-width: 480px;
+      margin: 0 auto;
+    }
+    .signup-form input {
+      flex: 1;
+      padding: 14px 18px;
+      border: none;
+      border-radius: 3px 0 0 3px;
+      font-size: 0.95rem;
+      font-family: var(--font-sans);
+      outline: none;
+    }
+    .signup-form button {
+      padding: 14px 28px;
+      background: var(--sr-red);
+      color: var(--white);
+      border: none;
+      border-radius: 0 3px 3px 0;
+      font-family: var(--font-sans);
+      font-weight: 700;
+      font-size: 0.85rem;
+      text-transform: uppercase;
+      letter-spacing: 1px;
+      cursor: pointer;
+      transition: background 0.2s;
+    }
+    .signup-form button:hover { background: #a30000; }
+    .signup-note {
+      color: rgba(255,255,255,0.4);
+      font-size: 0.72rem;
+      margin-top: 12px;
+    }
+
+    /* ── FOOTER ── */
+    .footer {
+      background-color: var(--sr-blue-dark);
+      color: var(--white);
+      padding: 40px 20px;
+      text-align: center;
+      font-family: var(--font-sans);
+      font-size: 0.85rem;
+      line-height: 1.8;
+    }
+    .footer p { opacity: 0.8; max-width: 800px; margin: 0 auto; }
+
+    @media (max-width: 768px) {
+      .hero h1 { font-size: 2.2rem; }
+      .panel-box { padding: 20px; }
+      .nav-links { display: none; }
+      .climate-bars { grid-template-columns: 1fr; }
+      .two-col-row { grid-template-columns: 1fr; }
+      .calendar-box { padding: 20px; }
+      .signup-form { flex-direction: column; }
+      .signup-form input { border-radius: 3px; }
+      .signup-form button { border-radius: 3px; }
+    }
+  </style>
+</head>
+<body>
+
+<!-- TOP NAV -->
+<div class="top-nav">
+  <div class="top-nav-container">
+    <div class="nav-brand">
+      <svg class="brand-logo" viewBox="0 0 32 32" fill="none" xmlns="http://www.w3.org/2000/svg">
+        <defs>
+          <clipPath id="shield"><rect x="1" y="1" width="30" height="30" rx="5"/></clipPath>
+        </defs>
+        <rect x="1" y="1" width="30" height="10" fill="#FFCC00" clip-path="url(#shield)"/>
+        <rect x="1" y="11" width="30" height="10" fill="#003893"/>
+        <rect x="1" y="21" width="30" height="10" fill="#CF142B" clip-path="url(#shield)"/>
+        <circle cx="16" cy="16" r="1.2" fill="white"/>
+        <circle cx="11.5" cy="14" r="1.2" fill="white"/>
+        <circle cx="20.5" cy="14" r="1.2" fill="white"/>
+        <circle cx="9" cy="17" r="1.2" fill="white"/>
+        <circle cx="23" cy="17" r="1.2" fill="white"/>
+        <polyline points="7,24 13,18 17,20 25,11" stroke="white" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" opacity="0.9"/>
+        <polygon points="25,8 26.2,11 25,10.2 23.8,11" fill="white" opacity="0.9"/>
+        <rect x="1" y="1" width="30" height="30" rx="5" stroke="rgba(255,255,255,0.6)" stroke-width="1.5" fill="none"/>
+      </svg>
+      Venezuelan Business Network
+    </div>
+    <div class="nav-links">
+      <a href="#">Our Products</a>
+      <a href="#">Our Editors</a>
+      <a href="#">Media</a>
+      <a href="#" class="nav-login">Subscribe Free</a>
+    </div>
+  </div>
+</div>
+
+<!-- MACRO TICKER BAR -->
+<div class="ticker-bar">
+  <div class="ticker-inner">
+    <div class="ticker-item">
+      <span class="ticker-label">BCV Official</span>
+      <span class="ticker-value">7.07</span>
+      <span class="ticker-neutral">Bs.D/$</span>
+      <span class="ticker-change ticker-change-up">&minus;0.3%</span>
+      <span class="ticker-source">BCV (live)</span>
+    </div>
+    <div class="ticker-item">
+      <span class="ticker-label">Travel Advisory</span>
+      <span class="ticker-value" style="color: #4ade80;">Level 3</span>
+      <span class="ticker-change ticker-change-up">&#9660; from 4</span>
+      <span class="ticker-source">State Dept</span>
+    </div>
+    <div class="ticker-item">
+      <span class="ticker-label">Brent Crude</span>
+      <span class="ticker-value">$65.48</span>
+      <span class="ticker-change ticker-change-down">&minus;4.1%</span>
+      <span class="ticker-source">MarketWatch</span>
+    </div>
+    <div class="ticker-item">
+      <span class="ticker-label">Sanctions</span>
+      <span class="ticker-value" style="color: #4ade80;">Easing</span>
+      <span class="ticker-change ticker-change-up">Bank GLs</span>
+      <span class="ticker-source">OFAC</span>
+    </div>
+    <div class="ticker-item">
+      <span class="ticker-label">Inflation Q1</span>
+      <span class="ticker-value">71.8%</span>
+      <span class="ticker-down">&#9660;</span>
+      <span class="ticker-source">BCV Official</span>
+    </div>
+    <div class="ticker-item">
+      <span class="ticker-label">Country Risk</span>
+      <span class="ticker-value" style="color: #f87171;">E</span>
+      <span class="ticker-neutral">(Extreme)</span>
+      <span class="ticker-source">Coface</span>
+    </div>
+    <div class="ticker-item">
+      <span class="ticker-label">FDI Stock</span>
+      <span class="ticker-value">$30.5B</span>
+      <span class="ticker-source">UNCTAD '24</span>
+    </div>
+    <div class="ticker-item">
+      <span class="ticker-label">Oil Prod.</span>
+      <span class="ticker-value">1.095M</span>
+      <span class="ticker-neutral">bpd</span>
+      <span class="ticker-up">&#9650;</span>
+      <span class="ticker-source">PDVSA</span>
+    </div>
+  </div>
+</div>
+
+<!-- HERO -->
+<div class="hero">
+  <h1>Venezuelan Intelligence for International Investors</h1>
+  <div class="subtitle">The definitive guide to navigating Venezuela's political and economic transition. Focusing on business opportunities in Real Estate, Mining, and more.</div>
+</div>
+
+<!-- INVESTMENT CLIMATE + CALENDAR -->
+<div class="climate-panel">
+  <div class="climate-box" id="climateBox">
+    <div class="climate-header">
+      <h3>Investment Climate Tracker</h3>
+      <span class="climate-period">Q2 2026 vs. Q1 2026</span>
+    </div>
+    <div class="climate-bars">
+
+      <div class="bar-item">
+        <div class="bar-top">
+          <span class="bar-label">Sanctions Trajectory</span>
+          <div class="bar-right">
+            <span class="bar-score">7/10</span>
+            <span class="bar-trend trend-up">&#9650; +3</span>
+          </div>
+        </div>
+        <div class="bar-track"><div class="bar-fill bar-green" data-width="70"></div></div>
+        <div class="bar-why">OFAC eased bank sanctions Apr 15; expanded GLs 49 &amp; 50A in Feb; GL 5T issued Mar 2. Travel advisory downgraded to Level 3.</div>
+      </div>
+
+      <div class="bar-item">
+        <div class="bar-top">
+          <span class="bar-label">Diplomatic Progress</span>
+          <div class="bar-right">
+            <span class="bar-score">6/10</span>
+            <span class="bar-trend trend-up">&#9650; +3</span>
+          </div>
+        </div>
+        <div class="bar-track"><div class="bar-fill bar-green" data-width="60"></div></div>
+        <div class="bar-why">Charg&eacute; d'affaires appointed to Washington; first formal diplomatic channel since 2019</div>
+      </div>
+
+      <div class="bar-item">
+        <div class="bar-top">
+          <span class="bar-label">Legal Framework</span>
+          <div class="bar-right">
+            <span class="bar-score">4/10</span>
+            <span class="bar-trend trend-up">&#9650; +1</span>
+          </div>
+        </div>
+        <div class="bar-track"><div class="bar-fill bar-yellow" data-width="40"></div></div>
+        <div class="bar-why">Hydrocarbons Law reform signed, codifying empresa mixta model. Mining law tightens state control.</div>
+      </div>
+
+      <div class="bar-item">
+        <div class="bar-top">
+          <span class="bar-label">Political Stability</span>
+          <div class="bar-right">
+            <span class="bar-score">3/10</span>
+            <span class="bar-trend trend-up">&#9650; +1</span>
+          </div>
+        </div>
+        <div class="bar-track"><div class="bar-fill bar-red" data-width="30"></div></div>
+        <div class="bar-why">Amnesty Law benefited 8,000+; signals normalization. But no elections scheduled yet.</div>
+      </div>
+
+      <div class="bar-item">
+        <div class="bar-top">
+          <span class="bar-label">Property Rights</span>
+          <div class="bar-right">
+            <span class="bar-score">3/10</span>
+            <span class="bar-trend trend-flat">&mdash; 0</span>
+          </div>
+        </div>
+        <div class="bar-track"><div class="bar-fill bar-red" data-width="30"></div></div>
+        <div class="bar-why">Mining law reasserts absolute state ownership. No new protections for real estate or commercial assets.</div>
+      </div>
+
+      <div class="bar-item">
+        <div class="bar-top">
+          <span class="bar-label">Macro Stability</span>
+          <div class="bar-right">
+            <span class="bar-score">2/10</span>
+            <span class="bar-trend trend-down">&#9660; &minus;1</span>
+          </div>
+        </div>
+        <div class="bar-track"><div class="bar-fill bar-red" data-width="20"></div></div>
+        <div class="bar-why">Inflation accelerating: 649% annualized (Mar). Parallel premium widened to 31.7%. Coface E rating.</div>
+      </div>
+
+    </div>
+    <div class="climate-footer">
+      <strong>Methodology:</strong> Sub-scores derived from BCV exchange/inflation data (live scrape), Coface E rating, OFAC GL activity via Federal Register API,
+      US State Dept travel advisory level (live scrape, now Level 3), GDELT global news sentiment, OFAC SDN list monitoring,
+      UNCTAD FDI stock ($30.5B), Amnesty Law implementation data, and legislative pipeline analysis. QoQ comparison based on Q4 2025 baseline.
+      Sources: <a href="https://www.bcv.org.ve" target="_blank">BCV</a> &bull;
+      <a href="https://www.federalregister.gov/agencies/foreign-assets-control-office" target="_blank">Federal Register</a> &bull;
+      <a href="https://ofac.treasury.gov/sanctions-programs-and-country-information/venezuela-related-sanctions" target="_blank">OFAC</a> &bull;
+      <a href="https://travel.state.gov/content/travel/en/traveladvisories/traveladvisories/venezuela-travel-advisory.html" target="_blank">State Dept</a> &bull;
+      <a href="https://www.gdeltproject.org" target="_blank">GDELT</a> &bull;
+      <a href="https://tradingeconomics.com/venezuela/inflation-cpi" target="_blank">Trading Economics</a> &bull;
+      <a href="https://unctad.org/topic/investment/world-investment-report" target="_blank">UNCTAD</a>
+    </div>
+  </div>
+
+  <!-- NEWS + CALENDAR SIDE BY SIDE -->
+  <div class="two-col-row">
+    <!-- THIS WEEK'S NEWS (left) -->
+    <div class="panel-box">
+      <div class="panel-header">
+        <h3>This Week's News</h3>
+      </div>
+      <div class="news-timeline">
+        <div class="news-item news-positive">
+          <a href="#dev-bank-sanctions" class="news-link">
+            <div class="news-headline"><strong>BREAKING: US eases sanctions on Venezuelan banks</strong> &mdash; OFAC issues new general licenses for banking sector.</div>
+            <div class="news-note">Read our analysis &rarr;</div>
+          </a>
+        </div>
+        <div class="news-item news-positive">
+          <a href="#dev-travel-advisory" class="news-link">
+            <div class="news-headline"><strong>Travel advisory downgraded to Level 3</strong> &mdash; State Dept downgrades from "Do Not Travel" to "Reconsider Travel."</div>
+            <div class="news-note">Read our analysis &rarr;</div>
+          </a>
+        </div>
+        <div class="news-item news-positive">
+          <a href="#dev-ofac-notice" class="news-link">
+            <div class="news-headline"><strong>OFAC sanctions actions published</strong> &mdash; Federal Register notice Apr 7 modifies Venezuela designations.</div>
+            <div class="news-note">Read our analysis &rarr;</div>
+          </a>
+        </div>
+        <div class="news-item news-positive">
+          <a href="#dev-sanctions" class="news-link">
+            <div class="news-headline"><strong>Sanctions pilgrimage announced</strong> &mdash; National mobilization Apr 19 &ndash; May 1.</div>
+            <div class="news-note">Read our analysis &rarr;</div>
+          </a>
+        </div>
+        <div class="news-item news-mixed">
+          <a href="#dev-mining" class="news-link">
+            <div class="news-headline"><strong>Mining law declared constitutional</strong> &mdash; State reasserts mineral ownership. Awaiting promulgation.</div>
+            <div class="news-note">Read our analysis &rarr;</div>
+          </a>
+        </div>
+        <div class="news-item news-negative">
+          <a href="#dev-socioeconomic" class="news-link">
+            <div class="news-headline"><strong>Price controls law advancing</strong> &mdash; Citizen oversight committees for "fair pricing."</div>
+            <div class="news-note">Read our analysis &rarr;</div>
+          </a>
+        </div>
+      </div>
+    </div>
+
+    <!-- FORWARD CALENDAR (right) -->
+    <div class="calendar-box">
+      <h3>Investor Forward Calendar</h3>
+      <div class="cal-timeline">
+        <div class="cal-event cal-positive">
+          <div class="cal-date">Apr 15 &mdash; Today</div>
+          <div class="cal-desc"><strong>Bank Sanctions Eased</strong> &mdash; GLs issued</div>
+          <div class="cal-note">OFAC banking GLs. <a href="https://www.upi.com/Top_News/US/2026/04/15/us-eases-sanctions-venezuelan-banks/4341744710443/" target="_blank" style="color:var(--sr-blue)">UPI &rarr;</a></div>
+        </div>
+        <div class="cal-event cal-urgent">
+          <div class="cal-date">Apr 15 &mdash; Imminent</div>
+          <div class="cal-desc"><strong>Socioeconomic Law &mdash; 2nd Discussion</strong></div>
+          <div class="cal-note">Price controls &amp; citizen oversight. <a href="https://www.asambleanacional.gob.ve/noticias/ley-de-proteccion-de-derechos-socioeconomicos-sera-sometida-a-segunda-discusion-en-los-proximos-dias" target="_blank" style="color:var(--sr-blue)">Source &rarr;</a></div>
+        </div>
+        <div class="cal-event cal-urgent">
+          <div class="cal-date">Apr 19 &ndash; May 1</div>
+          <div class="cal-desc"><strong>Gran Peregrinaci&oacute;n Nacional</strong></div>
+          <div class="cal-note">Anti-sanctions mobilization. Watch for OFAC responses.</div>
+        </div>
+        <div class="cal-event">
+          <div class="cal-date">Apr &ndash; May (TBD)</div>
+          <div class="cal-desc"><strong>Mining Law &mdash; Promulgation</strong></div>
+          <div class="cal-note">Awaiting presidential signature.</div>
+        </div>
+        <div class="cal-event">
+          <div class="cal-date">2026 Agenda</div>
+          <div class="cal-desc"><strong>Tax Harmonization Law</strong></div>
+          <div class="cal-note">Fiscal terms for energy JVs &amp; real estate. No date set.</div>
+        </div>
+        <div class="cal-event cal-positive">
+          <div class="cal-date">Ongoing</div>
+          <div class="cal-desc"><strong>OFAC GLs 46A&ndash;50A</strong> &mdash; Active</div>
+          <div class="cal-note">Oil &amp; gas authorizations. Revocable. <a href="https://ofac.treasury.gov/sanctions-programs-and-country-information/venezuela-related-sanctions" target="_blank" style="color:var(--sr-blue)">OFAC &rarr;</a></div>
+        </div>
+        <div class="cal-event">
+          <div class="cal-date">2026 Target</div>
+          <div class="cal-desc"><strong>34 laws planned</strong></div>
+          <div class="cal-note">Full legislative agenda. <a href="https://www.ciudadvalencia.com.ve/sancionar-34-leyes-2026/" target="_blank" style="color:var(--sr-blue)">Source &rarr;</a></div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- LATEST DEVELOPMENTS -->
+  <div class="panel-box" style="margin-bottom: 8px;">
+    <div class="panel-header">
+      <h3>Latest Developments</h3>
+      <select class="sector-select" id="sectorFilter">
+        <option value="all">All Sectors</option>
+        <option value="realestate">Real Estate</option>
+        <option value="security">Safety &amp; Security</option>
+        <option value="economic">Economic Policy</option>
+        <option value="fiscal">Tax &amp; Fiscal</option>
+        <option value="sanctions">Sanctions</option>
+        <option value="diplomatic">US Relations</option>
+        <option value="governance">Governance</option>
+        <option value="legal">Legal &amp; Rights</option>
+        <option value="mining">Mining</option>
+        <option value="energy">Energy &amp; Oil</option>
+        <option value="banking">Banking &amp; Finance</option>
+      </select>
+    </div>
+    <div class="entries-container">
+
+  <!-- US Eases Bank Sanctions — Apr 15 -->
+  <div class="entry" id="dev-bank-sanctions" data-sectors="sanctions banking">
+    <div class="entry-header">
+      <div class="pill-row">
+        <span class="category-label">Sanctions</span>
+        <span class="badge-new">New</span>
+        <span class="status-pill status-passed"><span class="status-dot"></span> In Effect</span>
+      </div>
+      <h3>US Eases Sanctions on Venezuelan Banks</h3>
+      <div class="entry-meta">
+        <span>April 15, 2026</span>
+        <span>|</span>
+        <a href="https://www.upi.com/Top_News/US/2026/04/15/us-eases-sanctions-venezuelan-banks/4341744710443/" target="_blank">UPI &rarr;</a>
+        <span class="source-trust trust-official">Via GDELT &mdash; UPI Wire</span>
+      </div>
+    </div>
+    <div class="entry-body">
+      <div class="takeaway-header">
+        <span>Investment Impact</span>
+        <span class="sentiment-badge sentiment-positive">&#9650; Favorable</span>
+      </div>
+      <div class="takeaway">
+        <strong>Breaking development detected by our international news monitors.</strong> The US has eased sanctions on Venezuelan banking institutions, issuing new general licenses that expand permissible financial transactions. This is the most significant operational change for foreign investors since the GL expansion in February 2026. Banking access is the critical enabler for commercial operations — without it, even OFAC-licensed activities face severe friction in payment flows, correspondent banking, and capital repatriation. This directly benefits real estate transactions, energy JVs, and any commercial entity seeking to establish Venezuelan operations.
+      </div>
+    </div>
+  </div>
+
+  <!-- Travel Advisory Downgrade — Apr 15 -->
+  <div class="entry" id="dev-travel-advisory" data-sectors="security diplomatic">
+    <div class="entry-header">
+      <div class="pill-row">
+        <span class="category-label">Safety &amp; Security</span>
+        <span class="badge-new">New</span>
+        <span class="status-pill status-passed"><span class="status-dot"></span> Level Change</span>
+      </div>
+      <h3>US Travel Advisory Downgraded to Level 3: "Reconsider Travel"</h3>
+      <div class="entry-meta">
+        <span>April 15, 2026</span>
+        <span>|</span>
+        <a href="https://travel.state.gov/content/travel/en/traveladvisories/traveladvisories/venezuela-travel-advisory.html" target="_blank">State Dept &rarr;</a>
+        <span class="source-trust trust-official">Official &mdash; US State Department</span>
+      </div>
+    </div>
+    <div class="entry-body">
+      <div class="takeaway-header">
+        <span>Investment Impact</span>
+        <span class="sentiment-badge sentiment-positive">&#9650; Favorable</span>
+      </div>
+      <div class="takeaway">
+        <strong>The US State Department has downgraded Venezuela's travel advisory from Level 4 ("Do Not Travel") to Level 3 ("Reconsider Travel").</strong> This is a material improvement verified by our automated State Department monitor. Level 4 was a hard barrier for many institutional investors whose compliance policies prohibit travel to Level 4 countries. At Level 3, due diligence trips, site visits, and in-person negotiations become permissible under most corporate travel policies. Insurance providers also use travel advisory levels to determine coverage eligibility. This change lowers the practical cost of doing business in Venezuela.
+      </div>
+    </div>
+  </div>
+
+  <!-- OFAC Federal Register Notice — Apr 7 -->
+  <div class="entry" id="dev-ofac-notice" data-sectors="sanctions">
+    <div class="entry-header">
+      <div class="pill-row">
+        <span class="category-label">Sanctions</span>
+        <span class="badge-new">New</span>
+        <span class="status-pill status-announced"><span class="status-dot"></span> Published</span>
+      </div>
+      <h3>OFAC Sanctions Actions &mdash; Federal Register Notice</h3>
+      <div class="entry-meta">
+        <span>April 7, 2026</span>
+        <span>|</span>
+        <a href="https://www.federalregister.gov/documents/2026/04/07/2026-06723/notice-of-ofac-sanctions-actions" target="_blank">Federal Register &rarr;</a>
+        <span class="source-trust trust-official">Official &mdash; Federal Register</span>
+      </div>
+    </div>
+    <div class="entry-body">
+      <div class="takeaway-header">
+        <span>Investment Impact</span>
+        <span class="sentiment-badge sentiment-positive">&#9650; Favorable</span>
+      </div>
+      <div class="takeaway">
+        OFAC published a formal notice of sanctions actions in the Federal Register, the legally binding publication of record for all US regulatory changes. This notice documents modifications to Venezuela-related designations, including potential SDN list changes and general license updates. <strong>Federal Register publications are the authoritative source — they supersede press releases and confirm the legal effective date of any sanctions change.</strong> Investors and compliance teams should review the full document for specific entity changes that may affect existing or planned Venezuelan operations.
+      </div>
+    </div>
+  </div>
+
+  <!-- Sanctions Mobilization — Apr 14 -->
+  <div class="entry" id="dev-sanctions" data-sectors="sanctions diplomatic">
+    <div class="entry-header">
+      <div class="pill-row">
+        <span class="category-label">Sanctions</span>
+        <span class="badge-new">New</span>
+        <span class="status-pill status-announced"><span class="status-dot"></span> Announced &mdash; Apr 19 to May 1</span>
+      </div>
+      <h3>National Mobilization to Demand Full Sanctions Removal</h3>
+      <div class="entry-meta">
+        <span>April 14, 2026</span>
+        <span>|</span>
+        <a href="https://www.asambleanacional.gob.ve/noticias/diputado-jorge-rodriguez-nos-sumamos-a-peregrinacion-nacional-por-el-levantamiento-de-las-sanciones" target="_blank">Asamblea Nacional &rarr;</a>
+        <span class="source-trust trust-state">State Media</span>
+      </div>
+    </div>
+    <div class="entry-body">
+      <div class="takeaway-header">
+        <span>Investment Impact</span>
+        <span class="sentiment-badge sentiment-positive">&#9650; Favorable</span>
+      </div>
+      <div class="takeaway">
+        AN President Jorge Rodr&iacute;guez confirmed the legislature will join a "Gran Peregrinaci&oacute;n Nacional" running April 19 to May 1. The mobilization demands <strong>total lifting of economic sanctions</strong>. For investors, this is a leading indicator: the government is consolidating domestic political support for sanctions relief as a prerequisite for economic reforms. Watch for corresponding OFAC license announcements or State Department statements during this window.
+      </div>
+      <button class="detail-toggle" onclick="toggleDetail(this)"><span>&#9662;</span> Read Original Source Extract</button>
+      <div class="detail-content">En el marco de la conmemoraci&oacute;n del D&iacute;a de la Dignidad Nacional, el presidente de la Asamblea Nacional (AN), diputado Jorge Rodr&iacute;guez (PSUV/Nacional), anunci&oacute; que se sumar&aacute; a la "Gran Peregrinaci&oacute;n Nacional por la Paz y el Fin del Bloqueo", para exigir el cese de las sanciones contra el pa&iacute;s.
+
+Confirm&oacute; que se sumar&aacute; a la movilizaci&oacute;n convocada por la presidenta encargada de la Rep&uacute;blica, Delcy Rodr&iacute;guez G&oacute;mez, cuyo objetivo central es elevar una voz unificada ante la comunidad internacional para demandar el levantamiento total de las sanciones econ&oacute;micas impuestas contra Venezuela.
+
+La "Gran Peregrinaci&oacute;n Nacional por la Paz y el Fin del Bloqueo" se llevar&aacute; a cabo del 19 de abril al 1&deg; de mayo, y recorrer&aacute; todo el territorio venezolano para exigir el levantamiento de las sanciones econ&oacute;micas y promover la unidad nacional.</div>
+    </div>
+  </div>
+
+  <!-- Mining Law — Apr 14 -->
+  <div class="entry" id="dev-mining" data-sectors="mining">
+    <div class="entry-header">
+      <div class="pill-row">
+        <span class="category-label">Mining</span>
+        <span class="badge-new">New</span>
+        <span class="status-pill status-promulgation"><span class="status-dot"></span> Awaiting Promulgation</span>
+      </div>
+      <h3>Ley Org&aacute;nica de Minas Declared Constitutional by TSJ</h3>
+      <div class="entry-meta">
+        <span>April 14, 2026</span>
+        <span>|</span>
+        <a href="https://www.asambleanacional.gob.ve/noticias/tsj-declara-constitucionalidad-del-caracter-organico-de-la-ley-de-minas" target="_blank">Asamblea Nacional &rarr;</a>
+        <span class="source-trust trust-official">Official &mdash; TSJ Ruling</span>
+      </div>
+    </div>
+    <div class="entry-body">
+      <div class="takeaway-header">
+        <span>Investment Impact</span>
+        <span class="sentiment-badge sentiment-mixed">&#9672; Mixed</span>
+      </div>
+      <div class="takeaway">
+        The TSJ's constitutional approval clears the last hurdle before presidential promulgation. <strong>Article 3 reasserts that the Venezuelan state maintains "absolute ownership" of all mineral deposits and explicitly prohibits any transfer of mining rights to private entities.</strong> However, the law simultaneously aims to "provide legal certainty" for sector participants and creates a mandatory Social Fund from mining revenues. This is a reorganization of the Arco Minero framework &mdash; not a closure to foreign participation, but a tightening of state control.
+      </div>
+      <button class="detail-toggle" onclick="toggleDetail(this)"><span>&#9662;</span> Read Original Source Extract</button>
+      <div class="detail-content">El Tribunal Supremo de Justicia (TSJ) declar&oacute; la constitucionalidad del car&aacute;cter org&aacute;nico de la Ley Org&aacute;nica de Minas, sancionada por el Poder Legislativo el pasado jueves.
+
+La decisi&oacute;n fue informada, el lunes, por la Sala Constitucional de la m&aacute;xima corte del pa&iacute;s, cuando se determin&oacute; que la ley se ajusta a lo que establece el art&iacute;culo 203 de la Constituci&oacute;n de la Rep&uacute;blica Bolivariana de Venezuela (CRBV).
+
+Es de recordar que el principal objetivo de la Ley Org&aacute;nica de Minas, seg&uacute;n su art&iacute;culo 1, es reorganizar la explotaci&oacute;n de minerales estrat&eacute;gicos en el pa&iacute;s, estableciendo reglas claras que brinden seguridad jur&iacute;dica a los actores del sector.
+
+&mdash;
+
+"Ley de Minas convertir&aacute; riqueza mineral en motor de desarrollo econ&oacute;mico" (also April 14): El diputado Carlos Gamarra (PSUV/Yaracuy) detall&oacute; que la normativa ratifica la soberan&iacute;a nacional al establecer, en su art&iacute;culo 3, que el Estado venezolano mantiene la propiedad absoluta de los yacimientos. La ley proh&iacute;be cualquier transferencia de las minas a sectores privados y protege los recursos estrat&eacute;gicos del pa&iacute;s.</div>
+    </div>
+  </div>
+
+  <!-- Socioeconomic Protection Law — Apr 14 -->
+  <div class="entry" id="dev-socioeconomic" data-sectors="economic fiscal">
+    <div class="entry-header">
+      <div class="pill-row">
+        <span class="category-label">Economic Policy</span>
+        <span class="badge-new">New</span>
+        <span class="status-pill status-progress"><span class="status-dot"></span> In Progress &mdash; 2nd Discussion</span>
+      </div>
+      <h3>Ley de Protecci&oacute;n de Derechos Socioecon&oacute;micos Advancing</h3>
+      <div class="entry-meta">
+        <span>April 14, 2026</span>
+        <span>|</span>
+        <a href="https://www.asambleanacional.gob.ve/noticias/ley-de-proteccion-de-derechos-socioeconomicos-sera-sometida-a-segunda-discusion-en-los-proximos-dias" target="_blank">Asamblea Nacional &rarr;</a>
+        <span class="source-trust trust-state">State Media</span>
+      </div>
+    </div>
+    <div class="entry-body">
+      <div class="takeaway-header">
+        <span>Investment Impact</span>
+        <span class="sentiment-badge sentiment-negative">&#9660; Unfavorable</span>
+      </div>
+      <div class="takeaway">
+        This law creates a framework for state-enforced "fair prices" and introduces <strong>citizen oversight committees (comit&eacute;s de usuarios)</strong> empowered to monitor and flag "speculative" pricing. For consumer-facing businesses &mdash; retail, food, pharma, and FMCG &mdash; this represents a significant regulatory layer. International retailers and distributors should model margin impact scenarios now. The law is framed alongside a forthcoming Tax Harmonization Law.
+      </div>
+      <button class="detail-toggle" onclick="toggleDetail(this)"><span>&#9662;</span> Read Original Source Extract</button>
+      <div class="detail-content">El presidente de la Subcomisi&oacute;n de Finanzas, diputado Fernando Bastidas (PSUV/Falc&oacute;n), inform&oacute; que el Proyecto de Ley de Protecci&oacute;n de los Derechos Socioecon&oacute;micos ser&aacute; sometido a segunda discusi&oacute;n en los pr&oacute;ximos d&iacute;as.
+
+Enfatiz&oacute; que este instrumento legal tiene como objetivo fundamental establecer mecanismos de protecci&oacute;n contra el abuso de condiciones especulativas que sectores inescrupulosos pretenden imponer en el mercado nacional.
+
+Precios justos: El asamble&iacute;sta indic&oacute; que el proyecto es una respuesta estructural para garantizar que los bienes y servicios lleguen al pueblo a precios justos. Destac&oacute; la inclusi&oacute;n de los comit&eacute;s de usuarios como pieza clave.
+
+Transformaci&oacute;n socioecon&oacute;mica: Bastidas destac&oacute; la necesidad de una transformaci&oacute;n tributaria mediante la Ley de Armonizaci&oacute;n Tributaria. Acuerdos como el suscrito con Chevron son fundamentales para impulsar la producci&oacute;n energ&eacute;tica bajo esquemas de cooperaci&oacute;n internacional.</div>
+    </div>
+  </div>
+
+  <!-- Amnesty Law — Apr 11 -->
+  <div class="entry" id="dev-amnesty" data-sectors="legal governance">
+    <div class="entry-header">
+      <div class="pill-row">
+        <span class="category-label">Legal &amp; Rights</span>
+        <span class="status-pill status-passed"><span class="status-dot"></span> Passed &mdash; In Effect</span>
+      </div>
+      <h3>Amnesty Law Records Over 8,000 Beneficiaries</h3>
+      <div class="entry-meta">
+        <span>April 11, 2026</span>
+        <span>|</span>
+        <a href="https://www.asambleanacional.gob.ve/noticias/ley-de-amnistia-ha-beneficiado-a-mas-de-ocho-mil-personas-en-menos-de-dos-meses" target="_blank">Asamblea Nacional &rarr;</a>
+        <span class="source-trust trust-state">State Media</span>
+      </div>
+    </div>
+    <div class="entry-body">
+      <div class="takeaway-header">
+        <span>Investment Impact</span>
+        <span class="sentiment-badge sentiment-positive">&#9650; Favorable</span>
+      </div>
+      <div class="takeaway">
+        The Amnesty Law has benefited over 8,000 individuals in under two months. While not directly commercial, this is a leading indicator of political normalization. International investors and multilateral institutions use amnesty programs as benchmarks for governance improvement when assessing country risk.
+      </div>
+    </div>
+  </div>
+
+  <!-- US Relations — Mar 27 -->
+  <div class="entry" id="dev-diplomat" data-sectors="diplomatic sanctions">
+    <div class="entry-header">
+      <div class="pill-row">
+        <span class="category-label">US Relations</span>
+        <span class="status-pill status-announced"><span class="status-dot"></span> Appointment</span>
+      </div>
+      <h3>Venezuela Appoints Charg&eacute; d'Affaires to Washington</h3>
+      <div class="entry-meta">
+        <span>March 27, 2026</span>
+        <span>|</span>
+        <a href="https://www.asambleanacional.gob.ve/noticias/diputada-ilenia-medina-relacion-diplomatica-con-eeuu-es-conveniente-para-difundir-verdad-sobre-venezuela" target="_blank">Asamblea Nacional &rarr;</a>
+        <span class="source-trust trust-state">State Media</span>
+      </div>
+    </div>
+    <div class="entry-body">
+      <div class="takeaway-header">
+        <span>Investment Impact</span>
+        <span class="sentiment-badge sentiment-positive">&#9650; Favorable</span>
+      </div>
+      <div class="takeaway">
+        F&eacute;lix Plasencia (former Foreign Minister) has been designated as Venezuela's charg&eacute; d'affaires in Washington. The National Assembly explicitly framed this as <strong>"bilateral negotiation that could enable the lifting of sanctions"</strong> and cooperation in energy. This is the most concrete diplomatic signal yet that Venezuela is pursuing a transactional relationship with Washington: sanctions relief for energy cooperation. The existence of a formal diplomatic channel significantly reduces the political risk for OFAC license applications.
+      </div>
+      <button class="detail-toggle" onclick="toggleDetail(this)"><span>&#9662;</span> Read Original Source Extract</button>
+      <div class="detail-content">La segunda vicepresidenta de la Comisi&oacute;n Permanente de Pol&iacute;tica Exterior, Soberan&iacute;a e Integraci&oacute;n, diputada Ilenia Medina (PPT/Nacional), se&ntilde;al&oacute; que la relaci&oacute;n diplom&aacute;tica con los Estados Unidos es muy conveniente para difundir la verdad sobre Venezuela.
+
+La parlamentaria explic&oacute; que la designaci&oacute;n de F&eacute;lix Plasencia como encargado de negocios de Venezuela ante los EEUU es una oportunidad para crear un plan de difusi&oacute;n de los objetivos que persigue Venezuela.
+
+En materia comercial y financiera, la diputada considera que esta negociaci&oacute;n bilateral con EEUU podr&iacute;a permitir el levantamiento de las sanciones contra Venezuela, un paso importante para mejorar las relaciones de cooperaci&oacute;n en &aacute;reas claves como energ&iacute;a y econom&iacute;a.</div>
+    </div>
+  </div>
+
+  <!-- Energy & Hydrocarbons — Jan 29 -->
+  <div class="entry" id="dev-hydrocarbons" data-sectors="energy fiscal">
+    <div class="entry-header">
+      <div class="pill-row">
+        <span class="category-label">Energy &amp; Oil</span>
+        <span class="status-pill status-passed"><span class="status-dot"></span> Passed &mdash; In Effect</span>
+      </div>
+      <h3>Ley Org&aacute;nica de Hidrocarburos Reform Signed into Law</h3>
+      <div class="entry-meta">
+        <span>Signed Jan 29, 2026</span>
+        <span>|</span>
+        <a href="https://www.asambleanacional.gob.ve/noticias/diputado-nicolas-maduro-guerra-el-dialogo-y-el-respeto-a-las-leyes-son-el-camino-al-desarrollo" target="_blank">Asamblea Nacional &rarr;</a>
+        <span class="source-trust trust-state">State Media</span>
+      </div>
+    </div>
+    <div class="entry-body">
+      <div class="takeaway-header">
+        <span>Investment Impact</span>
+        <span class="sentiment-badge sentiment-positive">&#9650; Favorable</span>
+      </div>
+      <div class="takeaway">
+        The reform of the Hydrocarbons Law (originally enacted ~2001) is now signed. It codifies the empresa mixta (mixed-enterprise) model operating since 2022, under which March 2026 production reached 1.095 million bpd. <strong>This is the legal architecture that underpins Chevron's current operations and any future OFAC-licensed participation by US or international oil companies.</strong> The reform adapts the framework to "the current reality, marked by blockades and sanctions." Read alongside the forthcoming Tax Harmonization Law, which may alter fiscal terms for energy JVs.
+      </div>
+    </div>
+  </div>
+
+    </div>
+  </div>
+</div>
+
+<!-- EMAIL SIGNUP -->
+<div class="signup-band">
+  <div class="signup-inner">
+    <h3>Get the Daily Brief</h3>
+    <p>Legislative changes, sanctions updates, and macro data &mdash; delivered to your inbox every morning before markets open.</p>
+    <form class="signup-form" onsubmit="handleSignup(event)">
+      <input type="email" placeholder="Enter your email address" required>
+      <button type="submit">Subscribe</button>
+    </form>
+    <div class="signup-note">Free. Unsubscribe anytime. No spam &mdash; only signal.</div>
+  </div>
+</div>
+
+<!-- FOOTER -->
+<div class="footer">
+  <p>&copy; 2026 Venezuelan Business Network. All rights reserved.</p>
+  <p style="margin-top: 10px; font-size: 0.75rem;">This publication is for informational purposes only and does not constitute investment advice. Data sourced from BCV (live scrape), OFAC Federal Register API, OFAC SDN List, GDELT global news monitor, US State Department travel advisories, Coface, Trading Economics, UNCTAD, and PDVSA. Always consult qualified legal and financial advisors before making investment decisions in sanctioned jurisdictions.</p>
+</div>
+
+<script>
+function toggleDetail(btn) {
+  const content = btn.nextElementSibling;
+  content.classList.toggle('open');
+  const span = btn.querySelector('span');
+  if (content.classList.contains('open')) {
+    span.innerHTML = '&#9652;';
+    btn.innerHTML = btn.innerHTML.replace('Read Original', 'Hide Original');
+  } else {
+    span.innerHTML = '&#9662;';
+    btn.innerHTML = btn.innerHTML.replace('Hide Original', 'Read Original');
+  }
+}
+
+document.querySelectorAll('.news-link').forEach(link => {
+  link.addEventListener('click', function(e) {
+    e.preventDefault();
+    const targetId = this.getAttribute('href').slice(1);
+    const target = document.getElementById(targetId);
+    if (!target) return;
+    const dropdown = document.getElementById('sectorFilter');
+    if (dropdown.value !== 'all') {
+      dropdown.value = 'all';
+      dropdown.dispatchEvent(new Event('change'));
+    }
+    target.scrollIntoView({ behavior: 'smooth', block: 'center' });
+    target.classList.remove('highlight');
+    void target.offsetWidth;
+    target.classList.add('highlight');
+  });
+});
+
+document.getElementById('sectorFilter').addEventListener('change', function() {
+  const filter = this.value;
+  const isAll = filter === 'all';
+  document.querySelectorAll('.entry').forEach(entry => {
+    if (isAll) {
+      entry.classList.remove('hidden');
+    } else {
+      const sectors = entry.dataset.sectors || '';
+      entry.classList.toggle('hidden', !sectors.includes(filter));
+    }
+  });
+});
+
+function handleSignup(e) {
+  e.preventDefault();
+  const input = e.target.querySelector('input');
+  const email = input.value;
+  e.target.innerHTML = '<div style="color: white; font-size: 1.1rem; padding: 14px 0;">\u2713 You\'re in. Watch your inbox.</div>';
+}
+
+const climateObserver = new IntersectionObserver((entries) => {
+  entries.forEach(entry => {
+    if (entry.isIntersecting) {
+      document.querySelectorAll('.bar-fill').forEach(bar => {
+        bar.style.width = bar.dataset.width + '%';
+      });
+      climateObserver.unobserve(entry.target);
+    }
+  });
+}, { threshold: 0.3 });
+
+const climateBox = document.getElementById('climateBox');
+if (climateBox) climateObserver.observe(climateBox);
+</script>
+
+</body>
+</html>
