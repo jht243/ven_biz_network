@@ -11,6 +11,8 @@ services:
           property: connectionString
       - key: OPENAI_API_KEY
         sync: false
+      - key: BUTTONDOWN_API_KEY
+        sync: false
       - key: NEWSLETTER_PROVIDER
         value: console
       - key: NEWSLETTER_API_KEY

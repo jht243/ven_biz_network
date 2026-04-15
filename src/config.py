@@ -39,6 +39,9 @@ class Settings(BaseSettings):
     newsletter_api_key: str = ""
     subscriber_list_path: str = "subscribers.json"
 
+    # Buttondown (subscriber signup)
+    buttondown_api_key: str = ""
+
     # Server
     server_port: int = 8080
 

@@ -721,7 +721,7 @@
       <a href="#">Our Products</a>
       <a href="#">Our Editors</a>
       <a href="#">Media</a>
-      <a href="#" class="nav-login">Subscribe Free</a>
+      <a href="#signup" class="nav-login">Subscribe Free</a>
     </div>
   </div>
 </div>
@@ -1269,7 +1269,7 @@ En materia comercial y financiera, la diputada considera que esta negociaci&oacu
 </div>
 
 <!-- EMAIL SIGNUP -->
-<div class="signup-band">
+<div class="signup-band" id="signup">
   <div class="signup-inner">
     <h3>Get the Daily Brief</h3>
     <p>Legislative changes, sanctions updates, and macro data &mdash; delivered to your inbox every morning before markets open.</p>
@@ -1334,9 +1334,35 @@ document.getElementById('sectorFilter').addEventListener('change', function() {
 
 function handleSignup(e) {
   e.preventDefault();
-  const input = e.target.querySelector('input');
-  const email = input.value;
-  e.target.innerHTML = '<div style="color: white; font-size: 1.1rem; padding: 14px 0;">\u2713 You\'re in. Watch your inbox.</div>';
+  const form = e.target;
+  const input = form.querySelector('input');
+  const btn = form.querySelector('button');
+  const email = input.value.trim();
+  if (!email) return;
+
+  btn.disabled = true;
+  btn.textContent = 'Subscribing...';
+
+  fetch('/api/subscribe', {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ email: email })
+  })
+  .then(r => r.json())
+  .then(data => {
+    if (data.ok) {
+      form.innerHTML = '<div style="color: white; font-size: 1.1rem; padding: 14px 0;">\u2713 You\'re in. Watch your inbox.</div>';
+    } else {
+      btn.disabled = false;
+      btn.textContent = 'Subscribe';
+      alert(data.error || 'Something went wrong. Please try again.');
+    }
+  })
+  .catch(() => {
+    btn.disabled = false;
+    btn.textContent = 'Subscribe';
+    alert('Network error. Please try again.');
+  });
 }
 
 const climateObserver = new IntersectionObserver((entries) => {
