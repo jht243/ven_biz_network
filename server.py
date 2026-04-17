@@ -7,12 +7,14 @@ Serves the generated report.html on Render (or locally).
 from __future__ import annotations
 
 import logging
+import time
 from pathlib import Path
 
 import httpx
-from flask import Flask, send_from_directory, abort, request, jsonify
+from flask import Flask, send_from_directory, abort, request, jsonify, Response
 
 from src.config import settings
+from src.storage_remote import fetch_report_html, supabase_storage_enabled
 
 app = Flask(__name__)
 logger = logging.getLogger(__name__)
@@ -21,13 +23,37 @@ OUTPUT_DIR = settings.output_dir
 
 BUTTONDOWN_API_URL = "https://api.buttondown.com/v1/subscribers"
 
+# Tiny in-memory cache so we don't hit Supabase Storage on every page view.
+_REPORT_CACHE: dict = {"html": None, "fetched_at": 0.0}
+_REPORT_CACHE_TTL_SECONDS = 60
+
+
+def _get_report_html() -> str | None:
+    """Return rendered report HTML from Supabase Storage (cached) or local disk."""
+    if supabase_storage_enabled():
+        now = time.time()
+        if _REPORT_CACHE["html"] and now - _REPORT_CACHE["fetched_at"] < _REPORT_CACHE_TTL_SECONDS:
+            return _REPORT_CACHE["html"]
+        html = fetch_report_html()
+        if html:
+            _REPORT_CACHE["html"] = html
+            _REPORT_CACHE["fetched_at"] = now
+            return html
+        if _REPORT_CACHE["html"]:
+            return _REPORT_CACHE["html"]
+
+    report = OUTPUT_DIR / "report.html"
+    if report.exists():
+        return report.read_text(encoding="utf-8")
+    return None
+
 
 @app.route("/")
 def index():
-    report = OUTPUT_DIR / "report.html"
-    if not report.exists():
+    html = _get_report_html()
+    if not html:
         abort(503, description="Report not yet generated. Run the daily pipeline first.")
-    return send_from_directory(str(OUTPUT_DIR), "report.html")
+    return Response(html, mimetype="text/html")
 
 
 @app.route("/api/subscribe", methods=["POST"])
@@ -100,7 +126,12 @@ def subscribe():
 @app.route("/health")
 def health():
     report = OUTPUT_DIR / "report.html"
-    return {"status": "ok", "report_exists": report.exists()}, 200
+    return {
+        "status": "ok",
+        "report_exists_local": report.exists(),
+        "supabase_storage_enabled": supabase_storage_enabled(),
+        "report_cached": _REPORT_CACHE["html"] is not None,
+    }, 200
 
 
 if __name__ == "__main__":

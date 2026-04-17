@@ -118,6 +118,14 @@ def generate_report(output_path: Path | None = None) -> Path:
         output_path.parent.mkdir(parents=True, exist_ok=True)
         output_path.write_text(html, encoding="utf-8")
         logger.info("Report generated: %s (%d entries)", output_path, len(entries))
+
+        try:
+            from src.storage_remote import upload_report_html, supabase_storage_enabled
+            if supabase_storage_enabled():
+                upload_report_html(html)
+        except Exception as e:
+            logger.error("Failed to upload report to Supabase Storage: %s", e)
+
         return output_path
 
     finally:

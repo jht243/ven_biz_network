@@ -42,6 +42,11 @@ class Settings(BaseSettings):
     # Buttondown (subscriber signup)
     buttondown_api_key: str = ""
 
+    # Supabase Storage (used to share report.html between cron + web on Render)
+    supabase_url: str = ""
+    supabase_service_key: str = ""
+    supabase_report_bucket: str = "reports"
+
     # Server
     server_port: int = 8080
 
