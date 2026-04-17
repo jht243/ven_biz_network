@@ -35,6 +35,15 @@ class Settings(BaseSettings):
     # by default. Override via REPORT_LOOKBACK_DAYS in env if you want a
     # shorter rolling window.
     report_lookback_days: int = 120
+    # Hard cap on LLM calls per pipeline run. Default 200 calls/run
+    # ≈ ~$1.20 at current gpt-4o pricing (~$0.006/call). With the cron
+    # firing twice a day that's ~$2.40/day worst case, well inside a
+    # $5/day budget. Override via LLM_CALL_BUDGET_PER_RUN env var.
+    llm_call_budget_per_run: int = 200
+    # Approximate gpt-4o pricing for the cost-estimate log line. Update
+    # if you switch models or pricing changes. Values are USD per 1M tokens.
+    llm_input_price_per_mtok: float = 2.50
+    llm_output_price_per_mtok: float = 10.00
 
     # Newsletter
     newsletter_provider: str = "console"

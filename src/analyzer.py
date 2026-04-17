@@ -27,8 +27,28 @@ from src.models import (
 
 logger = logging.getLogger(__name__)
 
-LLM_CALL_BUDGET_PER_RUN = 80
+LLM_CALL_BUDGET_PER_RUN = settings.llm_call_budget_per_run
 GDELT_TONE_THRESHOLD = 3.0
+
+
+# Module-level usage accumulator so callers (run_analysis, backfill
+# scripts) can read token totals after a batch and log estimated cost.
+# Reset with reset_usage().
+_LLM_USAGE = {"calls": 0, "input_tokens": 0, "output_tokens": 0}
+
+
+def reset_usage() -> None:
+    _LLM_USAGE.update({"calls": 0, "input_tokens": 0, "output_tokens": 0})
+
+
+def get_usage() -> dict:
+    """Current accumulated LLM usage with estimated USD cost."""
+    in_cost = _LLM_USAGE["input_tokens"] / 1_000_000 * settings.llm_input_price_per_mtok
+    out_cost = _LLM_USAGE["output_tokens"] / 1_000_000 * settings.llm_output_price_per_mtok
+    return {
+        **_LLM_USAGE,
+        "estimated_cost_usd": round(in_cost + out_cost, 4),
+    }
 RELEVANCE_KEYWORDS = (
     # English
     "sanction", "sanctions", "ofac", "treasury", "executive order",
@@ -134,6 +154,7 @@ def run_analysis() -> dict:
     client = OpenAI(api_key=settings.openai_api_key)
     db = SessionLocal()
 
+    reset_usage()
     summary = {"analyzed": 0, "skipped": 0, "errors": 0}
 
     try:
@@ -288,7 +309,19 @@ def run_analysis() -> dict:
     finally:
         db.close()
 
-    logger.info("Analysis complete: %s", summary)
+    usage = get_usage()
+    summary["llm_usage"] = usage
+    logger.info(
+        "Analysis complete: analyzed=%d skipped=%d errors=%d | "
+        "LLM calls=%d input_tok=%d output_tok=%d est_cost=$%.4f",
+        summary["analyzed"],
+        summary["skipped"],
+        summary["errors"],
+        usage["calls"],
+        usage["input_tokens"],
+        usage["output_tokens"],
+        usage["estimated_cost_usd"],
+    )
     return summary
 
 
@@ -456,6 +489,12 @@ def _analyze_article(
         max_tokens=600,
         response_format={"type": "json_object"},
     )
+
+    usage = getattr(response, "usage", None)
+    if usage is not None:
+        _LLM_USAGE["calls"] += 1
+        _LLM_USAGE["input_tokens"] += getattr(usage, "prompt_tokens", 0) or 0
+        _LLM_USAGE["output_tokens"] += getattr(usage, "completion_tokens", 0) or 0
 
     raw = response.choices[0].message.content
     return json.loads(raw)
