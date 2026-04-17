@@ -75,7 +75,7 @@ For each article, produce a JSON object with these fields:
   "status_label": "<short label for the status pill, e.g. 'Passed — In Effect', 'In Progress — 2nd Discussion'>",
   "category_label": "<display label, e.g. 'Sanctions', 'Energy & Oil', 'US Relations'>",
   "headline_short": "<concise headline, max 80 chars>",
-  "takeaway": "<2-4 sentence investor impact analysis. Be specific about what this means for foreign capital. Bold the single most important sentence using <strong> tags.>",
+  "takeaway": "<2-4 sentence investor impact analysis. Be specific about what this means for foreign capital. Wrap the single most important sentence in literal HTML <strong>...</strong> tags. Do NOT use markdown asterisks (**bold**), do NOT use any other HTML tags.>",
   "is_breaking": <true if this is a major development that materially changes the investment landscape>,
   "source_trust": "<one of: official, tier1, state, tier2>",
   "calendar_event": <null OR an object with these fields:

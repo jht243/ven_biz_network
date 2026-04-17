@@ -11,6 +11,7 @@ from datetime import date, timedelta, datetime
 from pathlib import Path
 
 from jinja2 import Environment, FileSystemLoader
+from markupsafe import Markup, escape as html_escape
 
 from src.config import settings
 from src.models import (
@@ -23,6 +24,34 @@ from src.models import (
 )
 
 logger = logging.getLogger(__name__)
+
+
+# Matches **bold** but not stray single asterisks. Non-greedy, no
+# crossing newlines.
+_MD_BOLD_RE = re.compile(r"\*\*(.+?)\*\*", re.S)
+
+
+def _render_takeaway(raw: str) -> Markup:
+    """
+    Convert the LLM-produced takeaway into safe HTML.
+
+    The prompt asks the model to wrap the most important sentence in
+    <strong> tags, but the model often reverts to markdown-style
+    **bold**. Both are normalized to <strong>...</strong> here so the
+    Jinja template can render them as actual bold text.
+
+    Everything else is HTML-escaped, so this is safe even if the model
+    returns unexpected characters.
+    """
+    if not raw:
+        return Markup("")
+    escaped = str(html_escape(raw))
+    escaped = escaped.replace("&lt;strong&gt;", "<strong>").replace(
+        "&lt;/strong&gt;", "</strong>"
+    )
+    escaped = _MD_BOLD_RE.sub(r"<strong>\1</strong>", escaped)
+    return Markup(escaped)
+
 
 SECTOR_OPTIONS = [
     {"value": "realestate", "label": "Real Estate"},
@@ -155,7 +184,8 @@ def _build_entries(ext_articles, assembly_news) -> list[dict]:
         status_label = analysis.get("status_label", status.replace("_", " ").title())
         category_label = analysis.get("category_label", "General")
         headline = analysis.get("headline_short", item.headline[:80])
-        takeaway = analysis.get("takeaway", "")
+        takeaway_raw = analysis.get("takeaway", "")
+        takeaway = _render_takeaway(takeaway_raw)
         is_breaking = analysis.get("is_breaking", False)
         source_trust = analysis.get("source_trust", "tier2")
 
@@ -203,6 +233,7 @@ def _build_entries(ext_articles, assembly_news) -> list[dict]:
             "status_label": status_label,
             "category_label": category_label,
             "takeaway": takeaway,
+            "takeaway_plain": takeaway_raw.replace("**", "").replace("<strong>", "").replace("</strong>", ""),
             "is_new": is_new,
             "is_breaking": is_breaking,
             "trust_class": trust_css,
@@ -438,8 +469,8 @@ def _build_news_sidebar(entries: list[dict]) -> list[dict]:
     top = sorted(entries, key=lambda e: (e.get("is_breaking", False), e["relevance"]), reverse=True)
     sidebar = []
     for e in top[:8]:
-        summary_short = e["takeaway"][:120].rsplit(" ", 1)[0] + "..." if len(e["takeaway"]) > 120 else e["takeaway"]
-        summary_short = re.sub(r"<[^>]+>", "", summary_short)
+        plain = e.get("takeaway_plain") or re.sub(r"<[^>]+>", "", str(e["takeaway"]))
+        summary_short = plain[:120].rsplit(" ", 1)[0] + "..." if len(plain) > 120 else plain
         sidebar.append({
             "id": e["id"],
             "headline_short": e["headline_short"],
