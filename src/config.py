@@ -3,7 +3,7 @@ from pydantic_settings import BaseSettings
 
 
 class Settings(BaseSettings):
-    model_config = {"env_file": ".env", "env_file_encoding": "utf-8"}
+    model_config = {"env_file": ".env", "env_file_encoding": "utf-8", "extra": "ignore"}
 
     database_url: str = "sqlite:///./venezuela_journal.db"
     storage_dir: Path = Path("./storage")
@@ -31,7 +31,10 @@ class Settings(BaseSettings):
     openai_api_key: str = ""
     openai_model: str = "gpt-4o"
     analysis_min_relevance: int = 5
-    report_lookback_days: int = 7
+    # Wide enough to cover a full year of backfilled official-source content
+    # by default. Override via REPORT_LOOKBACK_DAYS in env if you want a
+    # shorter rolling window.
+    report_lookback_days: int = 120
 
     # Newsletter
     newsletter_provider: str = "console"

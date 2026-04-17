@@ -27,15 +27,36 @@ from src.models import (
 
 logger = logging.getLogger(__name__)
 
-LLM_CALL_BUDGET_PER_RUN = 30
+LLM_CALL_BUDGET_PER_RUN = 80
 GDELT_TONE_THRESHOLD = 3.0
 RELEVANCE_KEYWORDS = (
+    # English
     "sanction", "sanctions", "ofac", "treasury", "executive order",
     "license", "oil", "pdvsa", "chevron", "mining", "real estate",
     "property", "expropriat", "nationaliz", "bcv", "bond", "debt",
     "amnesty", "election", "maduro", "guaido", "machado",
     "investor", "investment", "fdi", "imf", "world bank",
     "bilateral", "ambassador", "diplomatic", "consulate",
+    # Spanish (for Asamblea Nacional). Be SELECTIVE — generic terms like
+    # "ley" or "diputado" match nearly every headline and defeat the
+    # purpose of pre-filtering.
+    "sanci\u00f3n", "sanciones", "levantamiento de las sanciones",
+    "ley org\u00e1nica", "ley de minas", "ley tributaria", "ley fiscal",
+    "ley de hidrocarburos", "ley de inversi\u00f3n", "ley de inversiones",
+    "ley antibloqueo", "ley socioecon\u00f3mica", "decreto",
+    "petr\u00f3leo", "miner\u00eda", "minas", "miner", "hidrocarburos",
+    "inmueble", "inmuebles", "bienes ra\u00edces",
+    "expropiaci\u00f3n", "nacionalizaci\u00f3n", "privatizaci\u00f3n",
+    "concesi\u00f3n", "concesion",
+    "amnist\u00eda", "amnistia", "elecciones", "electoral",
+    "inversi\u00f3n extranjera", "inversi\u00f3n", "inversionista", "inversores",
+    "tributario", "impuesto", "presupuesto", "deuda externa",
+    "comercio exterior", "exportaci\u00f3n", "importaci\u00f3n",
+    "energ\u00eda", "energia", "el\u00e9ctric",
+    "tasa de cambio", "divisa", "bolivar",
+    "embajad", "diplom\u00e1tic", "uni\u00f3n europea",
+    "estados unidos", "ee.uu",
+    "estado de emergencia",
 )
 
 SYSTEM_PROMPT = """You are a senior investment analyst specializing in Venezuela.
@@ -125,10 +146,20 @@ def run_analysis() -> dict:
         )
 
         rule_based, llm_candidates = _partition_articles(ext_articles)
+
+        # Same partition logic for Asamblea Nacional rows. Most assembly
+        # headlines are routine internal procedure ("se juramenta", "se
+        # instala comisión", etc.) and do not need an LLM — only the
+        # investor-relevant ones (laws, sanctions, fiscal/oil/mining) do.
+        an_rule_based, an_llm_candidates = _partition_assembly(assembly_news)
+
         logger.info(
-            "Partitioned: %d rule-based (no LLM), %d LLM candidates (cap=%d)",
+            "Partitioned: %d external rule-based, %d external LLM cand. | "
+            "%d assembly rule-based, %d assembly LLM cand. | budget=%d",
             len(rule_based),
             len(llm_candidates),
+            len(an_rule_based),
+            len(an_llm_candidates),
             LLM_CALL_BUDGET_PER_RUN,
         )
 
@@ -140,13 +171,28 @@ def run_analysis() -> dict:
             except Exception as e:
                 logger.error("Rule-based analysis failed for article %d: %s", article.id, e)
                 summary["errors"] += 1
+        for news in an_rule_based:
+            try:
+                news.analysis_json = _rule_based_analysis_assembly(news)
+                news.status = GazetteStatus.ANALYZED
+                summary["analyzed"] += 1
+            except Exception as e:
+                logger.error("Rule-based analysis failed for news %d: %s", news.id, e)
+                summary["errors"] += 1
         db.commit()
-        logger.info("Rule-based pass: %d entries marked analyzed (no LLM cost)", len(rule_based))
+        logger.info(
+            "Rule-based pass: %d entries marked analyzed (no LLM cost)",
+            len(rule_based) + len(an_rule_based),
+        )
 
+        # Single shared LLM budget across external articles + assembly news.
+        # External candidates are typically more authoritative (Federal Register,
+        # Travel Advisory) so we drain the budget for them first.
         llm_budget = LLM_CALL_BUDGET_PER_RUN
+
         for article in llm_candidates:
             if llm_budget <= 0:
-                logger.info("LLM budget exhausted; remaining %d articles skipped", len(llm_candidates) - summary["analyzed"])
+                logger.info("LLM budget exhausted before external done; skipping rest")
                 summary["skipped"] += 1
                 continue
             try:
@@ -165,9 +211,7 @@ def run_analysis() -> dict:
                 summary["analyzed"] += 1
                 llm_budget -= 1
                 logger.info(
-                    "LLM analyzed [%d/%d, budget %d left]: %s (score=%s)",
-                    summary["analyzed"],
-                    len(llm_candidates),
+                    "LLM analyzed external [budget %d left]: %s (score=%s)",
                     llm_budget,
                     article.headline[:60],
                     analysis.get("relevance_score", "?"),
@@ -179,7 +223,21 @@ def run_analysis() -> dict:
 
             time.sleep(0.5)
 
-        for news in assembly_news:
+        for news in an_llm_candidates:
+            if llm_budget <= 0:
+                logger.info(
+                    "LLM budget exhausted; %d assembly candidates fall back to rule-based",
+                    len(an_llm_candidates) - (LLM_CALL_BUDGET_PER_RUN - llm_budget - len(llm_candidates)),
+                )
+                # Fall back so the row still gets marked ANALYZED (just with
+                # a low score) — leaves it queryable but out of the report.
+                try:
+                    news.analysis_json = _rule_based_analysis_assembly(news)
+                    news.status = GazetteStatus.ANALYZED
+                    summary["skipped"] += 1
+                except Exception:
+                    summary["errors"] += 1
+                continue
             try:
                 analysis = _analyze_article(
                     client,
@@ -194,8 +252,10 @@ def run_analysis() -> dict:
                 news.status = GazetteStatus.ANALYZED
                 db.commit()
                 summary["analyzed"] += 1
+                llm_budget -= 1
                 logger.info(
-                    "Analyzed assembly news: %s (score=%s)",
+                    "LLM analyzed assembly [budget %d left]: %s (score=%s)",
+                    llm_budget,
                     news.headline[:60],
                     analysis.get("relevance_score", "?"),
                 )
@@ -205,6 +265,7 @@ def run_analysis() -> dict:
                 db.rollback()
 
             time.sleep(0.5)
+        db.commit()
 
     finally:
         db.close()
@@ -250,6 +311,43 @@ def _passes_prefilter(article) -> bool:
             return False
 
     return True
+
+
+def _partition_assembly(news_items: list) -> tuple[list, list]:
+    """Same idea as _partition_articles but for AssemblyNewsEntry rows."""
+    rule_based = []
+    llm_candidates = []
+    for n in news_items:
+        text = f"{n.headline or ''} {n.body_text or ''}".lower()
+        # Drop obvious empty-page placeholders.
+        if "no se encontraron resultados" in (n.headline or "").lower():
+            rule_based.append(n)
+            continue
+        if not any(kw in text for kw in RELEVANCE_KEYWORDS):
+            rule_based.append(n)
+            continue
+        llm_candidates.append(n)
+
+    # Newest-first: a recent law debate matters more than something from January.
+    llm_candidates.sort(key=lambda n: n.published_date or date.min, reverse=True)
+    return rule_based, llm_candidates
+
+
+def _rule_based_analysis_assembly(news) -> dict:
+    """Templated low-relevance analysis for an Asamblea Nacional row."""
+    return {
+        "relevance_score": 2,
+        "sectors": ["governance"],
+        "sentiment": "mixed",
+        "status": "monitoring",
+        "status_label": "Monitoring",
+        "category_label": "Asamblea Nacional",
+        "headline_short": (news.headline or "")[:80],
+        "takeaway": "Routine assembly proceeding — flagged below relevance threshold by pre-screen.",
+        "is_breaking": False,
+        "source_trust": "state",
+        "_rule_based": True,
+    }
 
 
 def _llm_priority(article) -> tuple:
