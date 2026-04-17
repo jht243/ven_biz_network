@@ -95,6 +95,21 @@ BUTTONDOWN_API_URL = "https://api.buttondown.com/v1/subscribers"
 _REPORT_CACHE: dict = {"html": None, "fetched_at": 0.0}
 _REPORT_CACHE_TTL_SECONDS = 60
 
+# Small in-memory cache for top-nav pages that are expensive to re-render on
+# every click (DB reads + template render). This keeps header navigation
+# feeling instant while still refreshing frequently.
+_NAV_CACHE_PATHS = frozenset({
+    "/briefing",
+    "/invest-in-venezuela",
+    "/sanctions-tracker",
+    "/tools",
+    "/explainers",
+    "/calendar",
+    "/sources",
+})
+_NAV_PAGE_CACHE: dict[str, dict] = {}
+_NAV_PAGE_CACHE_TTL_SECONDS = 90
+
 
 def _get_report_html() -> str | None:
     """Return rendered report HTML from Supabase Storage (cached) or local disk."""
@@ -114,6 +129,62 @@ def _get_report_html() -> str | None:
     if report.exists():
         return report.read_text(encoding="utf-8")
     return None
+
+
+def _normalize_cache_path(path: str) -> str:
+    """Normalize `/foo/` and `/foo` to the same cache key."""
+    if not path:
+        return "/"
+    normalized = path.rstrip("/")
+    return normalized or "/"
+
+
+@app.before_request
+def _serve_nav_page_cache():
+    """Return cached HTML for top-nav pages when still fresh."""
+    if request.method != "GET":
+        return None
+    if request.query_string:
+        return None
+    path = _normalize_cache_path(request.path or "/")
+    if path not in _NAV_CACHE_PATHS:
+        return None
+    cached = _NAV_PAGE_CACHE.get(path)
+    if not cached:
+        return None
+    if time.time() - cached.get("cached_at", 0.0) > _NAV_PAGE_CACHE_TTL_SECONDS:
+        return None
+    response = Response(cached["body"], mimetype=cached.get("mimetype", "text/html"))
+    response.headers["X-Page-Cache"] = "HIT"
+    return response
+
+
+@app.after_request
+def _store_nav_page_cache(response: Response) -> Response:
+    """Cache successful HTML responses for top-nav pages."""
+    try:
+        if request.method != "GET":
+            return response
+        if request.query_string:
+            return response
+        if response.status_code != 200:
+            return response
+        if response.mimetype != "text/html":
+            return response
+
+        path = _normalize_cache_path(request.path or "/")
+        if path not in _NAV_CACHE_PATHS:
+            return response
+
+        _NAV_PAGE_CACHE[path] = {
+            "body": response.get_data(),
+            "mimetype": response.mimetype,
+            "cached_at": time.time(),
+        }
+        response.headers["X-Page-Cache"] = "MISS"
+    except Exception as exc:
+        logger.warning("nav page cache skipped due to error: %s", exc)
+    return response
 
 
 @app.route("/")
