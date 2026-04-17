@@ -29,7 +29,7 @@ services:
   - type: cron
     name: vij-daily-pipeline
     runtime: python
-    schedule: "0 10 * * *"
+    schedule: "0 10,17 * * *"
     plan: starter
     buildCommand: "pip install -r requirements.txt"
     startCommand: "python run_daily.py"
