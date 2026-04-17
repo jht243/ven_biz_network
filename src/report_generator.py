@@ -94,7 +94,7 @@ def generate_report(output_path: Path | None = None) -> Path:
         entries = _build_entries(ext_articles, assembly_news)
         ticker_items = _build_ticker(db)
         news_items = _build_news_sidebar(entries)
-        calendar_events = _build_calendar()
+        calendar_events = _build_calendar(ext_articles, assembly_news)
         climate = _build_climate()
 
         template_dir = Path(__file__).parent.parent / "templates"
@@ -303,6 +303,14 @@ def _entry_text(entry: dict) -> str:
 
 DEDUP_WINDOW_DAYS = 7
 JACCARD_THRESHOLD = 0.35
+# Even when two entries share a topic tag and fall inside the dedup
+# window, they must also have at least this much *content* overlap to
+# be merged. This protects against the "two genuinely different mining
+# laws were passed in the same week" case — both would tag as
+# mining_law, but their headlines/bodies would have low word overlap
+# (e.g. "Mining Royalty Reform" vs "Organic Mining Law Promulgation"),
+# so they stay as separate entries.
+TOPIC_MERGE_MIN_JACCARD = 0.25
 
 
 def _deduplicate_entries(entries: list[dict]) -> list[dict]:
@@ -336,19 +344,38 @@ def _deduplicate_entries(entries: list[dict]) -> list[dict]:
 
     for tag, group in by_tag.items():
         # Sort newest first, then iterate building "clusters" of entries
-        # within DEDUP_WINDOW_DAYS of each other.
+        # that satisfy BOTH:
+        #   - within DEDUP_WINDOW_DAYS of an existing cluster member
+        #   - shared significant-word Jaccard >= TOPIC_MERGE_MIN_JACCARD
+        #     with an existing cluster member (this is the safety net
+        #     that keeps two genuinely-different same-topic events apart)
         group.sort(key=lambda e: e["published_date"], reverse=True)
+        sigs = {id(e): _topic_signature(_entry_text(e)) for e in group}
         clusters: list[list[dict]] = []
         for e in group:
             placed = False
+            sig = sigs[id(e)]
             for cluster in clusters:
-                if any(
+                date_ok = any(
                     abs((e["published_date"] - x["published_date"]).days) <= DEDUP_WINDOW_DAYS
                     for x in cluster
-                ):
-                    cluster.append(e)
-                    placed = True
-                    break
+                )
+                if not date_ok:
+                    continue
+                content_ok = False
+                for x in cluster:
+                    x_sig = sigs[id(x)]
+                    union = sig | x_sig
+                    if not union:
+                        continue
+                    if len(sig & x_sig) / len(union) >= TOPIC_MERGE_MIN_JACCARD:
+                        content_ok = True
+                        break
+                if not content_ok:
+                    continue
+                cluster.append(e)
+                placed = True
+                break
             if not placed:
                 clusters.append([e])
 
@@ -360,14 +387,19 @@ def _deduplicate_entries(entries: list[dict]) -> list[dict]:
             keeper = cluster[0]
             survivors.append(keeper)
             if len(cluster) > 1:
+                dropped_titles = ", ".join(
+                    f"'{e['headline_short'][:40]}'" for e in cluster[1:]
+                )
                 logger.info(
-                    "Dedup [%s window=%dd]: kept '%s' (rel=%s, %s); dropped %d related",
+                    "Dedup [%s win=%dd, jacc>=%.2f]: kept '%s' (rel=%s, %s); dropped %d: %s",
                     tag,
                     DEDUP_WINDOW_DAYS,
+                    TOPIC_MERGE_MIN_JACCARD,
                     keeper["headline_short"][:60],
                     keeper["relevance"],
                     keeper["published_date"],
                     len(cluster) - 1,
+                    dropped_titles,
                 )
 
     # --- Pass 2: Jaccard for everything that survived (no tag match) ---
@@ -479,82 +511,138 @@ def _build_ticker(db) -> list[dict]:
     return items
 
 
-def _build_calendar() -> list[dict]:
-    """Forward-looking investor calendar.
+# Sort order for calendar urgency tiers — lowest int = shown first.
+_URGENCY_ORDER = {
+    "today": 0,
+    "imminent": 1,
+    "dated": 2,
+    "pending": 3,
+    "ongoing": 4,
+    "longterm": 5,
+}
 
-    These are curated, editorially-selected events. They are intentionally
-    static (not auto-generated) because the calendar is a *forecast* of
-    what investors should watch, not a recap of what was scraped. Edit
-    this list when major upcoming events change.
+# Small set of *standing* calendar items — long-horizon programs whose
+# presence in the calendar is a function of "investors should always be
+# aware of these", not of any one news article. Daily news scraping
+# wouldn't naturally surface "OFAC GLs 46A-50A are still active" because
+# their continued existence isn't news. These get appended after the
+# dynamically-extracted items, only if they aren't already covered by
+# something dynamic with a similar title.
+_STANDING_CALENDAR_ITEMS: list[dict] = [
+    {
+        "date_label": "Ongoing",
+        "title": "OFAC GLs 46A–50A",
+        "subtitle": "Active",
+        "note": "Oil & gas authorizations. Revocable.",
+        "link": "https://ofac.treasury.gov/sanctions-programs-and-country-information/venezuela-related-sanctions",
+        "link_label": "OFAC",
+        "css_class": "cal-positive",
+        "urgency": "ongoing",
+    },
+    {
+        "date_label": "2026 Target",
+        "title": "34 laws planned",
+        "subtitle": None,
+        "note": "Full legislative agenda for 2026.",
+        "link": "https://www.ciudadvalencia.com.ve/sancionar-34-leyes-2026/",
+        "link_label": "Source",
+        "css_class": "",
+        "urgency": "longterm",
+    },
+]
 
-    Order: most time-sensitive first (today/imminent), then dated future
-    events, then ongoing/standing items, then long-horizon agenda.
+
+def _build_calendar(ext_articles, assembly_news) -> list[dict]:
+    """Forward-looking investor calendar built from recent analyzed news.
+
+    The LLM analyzer extracts a `calendar_event` object on entries that
+    describe a specific time-bounded event (a scheduled discussion,
+    march, license expiration, pending promulgation, etc). This pulls
+    those out, dedupes by title, sorts by urgency, and appends a small
+    set of standing items (active OFAC GLs, the 2026 legislative
+    target) that wouldn't naturally surface in daily news.
     """
-    return [
-        {
-            "date_label": "Apr 15 — Today",
-            "title": "Bank Sanctions Eased",
-            "subtitle": "GLs issued",
-            "note": "OFAC banking GLs.",
-            "link": "https://www.upi.com/Top_News/US/2026/04/15/us-eases-sanctions-venezuelan-banks/4341744710443/",
-            "link_label": "UPI",
-            "css_class": "cal-positive",
-        },
-        {
-            "date_label": "Apr 15 — Imminent",
-            "title": "Socioeconomic Law — 2nd Discussion",
-            "subtitle": None,
-            "note": "Price controls & citizen oversight.",
-            "link": "https://www.asambleanacional.gob.ve/noticias/ley-de-proteccion-de-derechos-socioeconomicos-sera-sometida-a-segunda-discusion-en-los-proximos-dias",
-            "link_label": "Source",
-            "css_class": "cal-urgent",
-        },
-        {
-            "date_label": "Apr 19 – May 1",
-            "title": "Gran Peregrinación Nacional",
-            "subtitle": None,
-            "note": "Anti-sanctions mobilization. Watch for OFAC responses.",
-            "link": None,
-            "link_label": None,
-            "css_class": "cal-urgent",
-        },
-        {
-            "date_label": "Apr – May (TBD)",
-            "title": "Mining Law — Promulgation",
-            "subtitle": None,
-            "note": "Awaiting presidential signature.",
-            "link": None,
-            "link_label": None,
-            "css_class": "",
-        },
-        {
-            "date_label": "2026 Agenda",
-            "title": "Tax Harmonization Law",
-            "subtitle": None,
-            "note": "Fiscal terms for energy JVs & real estate. No date set.",
-            "link": None,
-            "link_label": None,
-            "css_class": "",
-        },
-        {
-            "date_label": "Ongoing",
-            "title": "OFAC GLs 46A–50A",
-            "subtitle": "Active",
-            "note": "Oil & gas authorizations. Revocable.",
-            "link": "https://ofac.treasury.gov/sanctions-programs-and-country-information/venezuela-related-sanctions",
-            "link_label": "OFAC",
-            "css_class": "cal-positive",
-        },
-        {
-            "date_label": "2026 Target",
-            "title": "34 laws planned",
-            "subtitle": None,
-            "note": "Full legislative agenda.",
-            "link": "https://www.ciudadvalencia.com.ve/sancionar-34-leyes-2026/",
-            "link_label": "Source",
-            "css_class": "",
-        },
-    ]
+    candidates: list[dict] = []
+    seen_titles: set[str] = set()
+
+    # Newest entries first so when the same event is mentioned twice
+    # we keep the freshest framing.
+    for item in sorted(
+        list(ext_articles) + list(assembly_news),
+        key=lambda x: x.published_date,
+        reverse=True,
+    ):
+        analysis = item.analysis_json or {}
+        ev = analysis.get("calendar_event")
+        if not ev or not isinstance(ev, dict):
+            continue
+        title = (ev.get("title") or "").strip()
+        if not title:
+            continue
+        # Dedupe by normalized title across entries.
+        key = _normalize(title)
+        if key in seen_titles:
+            continue
+        seen_titles.add(key)
+
+        urgency = (ev.get("urgency") or "dated").lower()
+        candidates.append({
+            "date_label": ev.get("date_label") or item.published_date.strftime("%b %d, %Y"),
+            "title": title,
+            "subtitle": ev.get("subtitle"),
+            "note": ev.get("note") or "",
+            "link": item.source_url,
+            "link_label": _calendar_link_label(item),
+            "css_class": ev.get("css_class") or "",
+            "urgency": urgency,
+            "_relevance": analysis.get("relevance_score", 0),
+            "_published": item.published_date,
+        })
+
+    # Append standing items only if they don't duplicate a dynamic one.
+    for fixture in _STANDING_CALENDAR_ITEMS:
+        if _normalize(fixture["title"]) in seen_titles:
+            continue
+        candidates.append({
+            **fixture,
+            "_relevance": 0,
+            "_published": date.min,
+        })
+
+    # Sort: urgency tier first, then relevance score (high first),
+    # then newest published date.
+    candidates.sort(
+        key=lambda c: (
+            _URGENCY_ORDER.get(c["urgency"], 99),
+            -c.get("_relevance", 0),
+            -((c["_published"] - date.min).days if c["_published"] else 0),
+        )
+    )
+
+    cleaned = []
+    for c in candidates[:8]:
+        cleaned.append({k: v for k, v in c.items() if not k.startswith("_")})
+
+    if len(cleaned) <= 2:
+        # Almost-empty calendar: fall back to standing items only so the
+        # box doesn't render as a barren single line.
+        cleaned = list(_STANDING_CALENDAR_ITEMS)
+
+    return cleaned
+
+
+def _calendar_link_label(item) -> str:
+    """Short pill-friendly label for the calendar event source link."""
+    if hasattr(item, "source"):
+        if item.source == SourceType.FEDERAL_REGISTER:
+            return "Federal Register"
+        if item.source == SourceType.TRAVEL_ADVISORY:
+            return "State Dept"
+        if item.source == SourceType.OFAC_SDN:
+            return "OFAC"
+    if hasattr(item, "source_url") and "asambleanacional" in (item.source_url or ""):
+        return "AN"
+    return "Source"
 
 
 def _build_climate() -> dict:

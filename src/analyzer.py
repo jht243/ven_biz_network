@@ -77,7 +77,21 @@ For each article, produce a JSON object with these fields:
   "headline_short": "<concise headline, max 80 chars>",
   "takeaway": "<2-4 sentence investor impact analysis. Be specific about what this means for foreign capital. Bold the single most important sentence using <strong> tags.>",
   "is_breaking": <true if this is a major development that materially changes the investment landscape>,
-  "source_trust": "<one of: official, tier1, state, tier2>"
+  "source_trust": "<one of: official, tier1, state, tier2>",
+  "calendar_event": <null OR an object with these fields:
+    {
+      "date_label": "<short date label, e.g. 'Apr 15 — Today', 'Apr 19 – May 1', 'Apr – May (TBD)', 'Q3 2026', 'Ongoing'>",
+      "title": "<short event name, e.g. 'Mining Law — Promulgation', 'Bank Sanctions Eased'>",
+      "subtitle": "<optional one-line modifier, or null>",
+      "note": "<one short sentence (<= 90 chars) explaining why an investor should care>",
+      "urgency": "<one of: today, imminent, dated, pending, ongoing, longterm — for sort order>",
+      "css_class": "<one of: cal-positive, cal-urgent, '' — for color>"
+    }
+   ONLY populate this if the article describes a SPECIFIC time-bounded
+   event (a scheduled discussion, a march/event, a license expiration,
+   a law about to be promulgated). Return null for routine commentary,
+   recaps of past events, or things that have no investor-relevant
+   date attached.>
 }
 
 Guidelines:
@@ -90,6 +104,10 @@ Guidelines:
 - If the article is noise (social media recap, sports, weather), score it 1.
 - For OFAC/sanctions changes, always score 7+.
 - For travel advisory level changes, always score 8+.
+- For calendar_event: use 'today' if dated today, 'imminent' if within 7 days,
+  'dated' if has explicit future dates, 'pending' if awaiting promulgation/
+  signature/approval, 'ongoing' for active standing programs, 'longterm' for
+  2026/agenda items.
 
 Return ONLY the JSON object, no markdown fences or explanation."""
 
