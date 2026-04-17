@@ -1513,9 +1513,48 @@ def briefing_feed():
         abort(500)
 
 
+# Per-slug in-memory cache for individual briefing analysis pages.
+# Each post does 1-2 DB queries + a full template render (~700ms TTFB),
+# but the content is essentially static once published — so cache the
+# rendered HTML for 10 minutes per slug. Cap the cache at 200 entries
+# so a crawler hitting every old briefing can't blow out memory.
+_BRIEFING_POST_CACHE: dict[str, dict] = {}
+_BRIEFING_POST_CACHE_TTL_SECONDS = 600
+_BRIEFING_POST_CACHE_MAX_ENTRIES = 200
+
+
+def _briefing_cache_get(slug: str) -> bytes | None:
+    cached = _BRIEFING_POST_CACHE.get(slug)
+    if not cached:
+        return None
+    if time.time() - cached.get("cached_at", 0.0) > _BRIEFING_POST_CACHE_TTL_SECONDS:
+        return None
+    return cached.get("body")
+
+
+def _briefing_cache_put(slug: str, body: bytes) -> None:
+    if len(_BRIEFING_POST_CACHE) >= _BRIEFING_POST_CACHE_MAX_ENTRIES:
+        # Evict the oldest 25% of entries by cached_at timestamp.
+        ordered = sorted(
+            _BRIEFING_POST_CACHE.items(),
+            key=lambda kv: kv[1].get("cached_at", 0.0),
+        )
+        for evict_slug, _ in ordered[: _BRIEFING_POST_CACHE_MAX_ENTRIES // 4]:
+            _BRIEFING_POST_CACHE.pop(evict_slug, None)
+    _BRIEFING_POST_CACHE[slug] = {"body": body, "cached_at": time.time()}
+
+
 @app.route("/briefing/<slug>")
 def briefing_post(slug: str):
     """Render a single blog post by slug."""
+    # Serve from the per-slug cache first — these pages are essentially
+    # static once published and the DB roundtrip + render dominates TTFB.
+    cached_body = _briefing_cache_get(slug)
+    if cached_body is not None:
+        resp = Response(cached_body, mimetype="text/html")
+        resp.headers["X-Page-Cache"] = "HIT"
+        return resp
+
     try:
         from src.models import BlogPost, SessionLocal, init_db
         from src.page_renderer import render_blog_post
@@ -1545,7 +1584,11 @@ def briefing_post(slug: str):
                 related.extend(fill)
 
             html = render_blog_post(post, related=related)
-            return Response(html, mimetype="text/html")
+            body = html.encode("utf-8") if isinstance(html, str) else html
+            _briefing_cache_put(slug, body)
+            resp = Response(body, mimetype="text/html")
+            resp.headers["X-Page-Cache"] = "MISS"
+            return resp
         finally:
             db.close()
     except HTTPException:

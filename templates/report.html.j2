@@ -188,8 +188,19 @@
     .sentiment-positive { background: var(--status-green-bg); color: var(--status-green); }
     .sentiment-negative { background: var(--status-red-bg); color: var(--status-red); }
     .sentiment-mixed { background: var(--status-yellow-bg); color: #d97706; }
-    .detail-toggle { background: none; border: none; color: var(--sr-blue); font-family: var(--font-sans); font-size: 0.9rem; font-weight: 600; cursor: pointer; display: flex; align-items: center; gap: 6px; }
-    .detail-toggle:hover { text-decoration: underline; }
+    /* Match the original-headline subtitle style — small, grey, italic.
+       This is a tertiary "show me the raw source" affordance, so it
+       should feel like meta-text, not a primary call-to-action. */
+    .detail-toggle { background: none; border: none; padding: 0; color: var(--sr-gray-text); font-family: var(--font-serif); font-size: 0.78rem; font-style: italic; font-weight: 400; cursor: pointer; display: inline-flex; align-items: center; gap: 6px; line-height: 1.35; }
+    .detail-toggle:hover { color: var(--sr-blue); text-decoration: underline; }
+    .detail-toggle span { font-style: normal; }
+    /* Click feedback for "Read full analysis" — instant visual response so
+       the reader knows the click registered before the next page paints. */
+    .full-analysis-link a { transition: color 0.15s ease, opacity 0.15s ease; }
+    .full-analysis-link a:hover { text-decoration: underline; }
+    .full-analysis-link a:active,
+    .full-analysis-link a.is-loading { color: var(--sr-blue-dark) !important; opacity: 0.65; }
+    .full-analysis-link a.is-loading::after { content: " · loading…"; font-style: italic; font-weight: 400; opacity: 0.85; }
     .detail-content { display: none; margin-top: 20px; padding: 24px; background: var(--sr-gray-bg); border-left: 3px solid var(--sr-gray-light); font-family: var(--font-sans); font-size: 0.9rem; color: var(--sr-gray-text); line-height: 1.8; white-space: pre-wrap; }
     .detail-content.open { display: block; animation: fadeIn 0.4s ease; }
     @keyframes fadeIn { from { opacity: 0; } to { opacity: 1; } }
@@ -432,6 +443,15 @@
 </div>
 
 <script>
+// Give "Read full analysis" links instant visual feedback when clicked
+// so the reader sees something happen even while the next page loads.
+// We don't preventDefault — navigation still proceeds normally.
+document.querySelectorAll('.full-analysis-link a').forEach(function(a) {
+  a.addEventListener('click', function() {
+    a.classList.add('is-loading');
+  });
+});
+
 function toggleDetail(btn) {
   const content = btn.nextElementSibling;
   content.classList.toggle('open');
