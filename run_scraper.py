@@ -1,6 +1,6 @@
 #!/usr/bin/env python3
 """
-CLI entry point for the Venezuelan Business Network scraper.
+CLI entry point for the Caracas Research scraper.
 
 Usage:
     # Scrape today's gazette and assembly news
@@ -51,10 +51,10 @@ def setup_logging(level: str):
 @click.option("--log-level", default="INFO", type=click.Choice(
               ["DEBUG", "INFO", "WARNING", "ERROR"], case_sensitive=False))
 def main(target_date, date_from, date_to, log_level):
-    """Venezuelan Business Network — Daily Scraper"""
+    """Caracas Research — Daily Scraper"""
     setup_logging(log_level)
 
-    console.print("\n[bold blue]Venezuelan Business Network[/bold blue] — Scraper\n")
+    console.print("\n[bold blue]Caracas Research[/bold blue] — Scraper\n")
 
     init_db()
     console.print("[green]Database initialized.[/green]\n")

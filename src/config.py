@@ -77,8 +77,8 @@ class Settings(BaseSettings):
     # share URLs. Override via SITE_URL env var when a custom domain
     # is added (Tier 4).
     site_url: str = "https://caracasresearch.com"
-    site_name: str = "Venezuelan Business Network"
-    site_owner_org: str = "Venezuelan Business Network"
+    site_name: str = "Caracas Research"
+    site_owner_org: str = "Caracas Research"
     site_locale: str = "en_US"
 
     # Long-form blog post generator. Each post is roughly 700-900 words and

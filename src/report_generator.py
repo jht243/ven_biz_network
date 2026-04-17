@@ -602,14 +602,12 @@ def _build_ticker(db) -> list[dict]:
         items.extend([
             {"label": "Brent Crude", "value": "$65.48", "unit": None, "change": "−4.1%", "change_dir": "down", "value_color": None, "source": "MarketWatch"},
             {"label": "Inflation Q1", "value": "71.8%", "unit": None, "change": None, "change_dir": "down", "value_color": None, "source": "BCV Official"},
-            {"label": "Country Risk", "value": "E", "unit": "(Extreme)", "change": None, "change_dir": "down", "value_color": "#f87171", "source": "Coface"},
             {"label": "Oil Prod.", "value": "1.095M", "unit": "bpd", "change": None, "change_dir": "up", "value_color": None, "source": "PDVSA"},
         ])
     else:
         items.extend([
             {"label": "Brent Crude", "value": "$65.48", "unit": None, "change": "−4.1%", "change_dir": "down", "value_color": None, "source": "MarketWatch"},
             {"label": "Inflation Q1", "value": "71.8%", "unit": None, "change": None, "change_dir": "down", "value_color": None, "source": "BCV Official"},
-            {"label": "Country Risk", "value": "E", "unit": "(Extreme)", "change": None, "change_dir": "down", "value_color": "#f87171", "source": "Coface"},
             {"label": "FDI Stock", "value": "$30.5B", "unit": None, "change": None, "change_dir": "up", "value_color": None, "source": "UNCTAD '24"},
             {"label": "Oil Prod.", "value": "1.095M", "unit": "bpd", "change": None, "change_dir": "up", "value_color": None, "source": "PDVSA"},
         ])

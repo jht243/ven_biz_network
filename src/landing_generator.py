@@ -160,7 +160,7 @@ def _gather_recent_blog_posts(db, *, sector: str | None = None, limit: int = 8) 
     return q.limit(limit).all()
 
 
-PILLAR_SYSTEM_PROMPT = """You are a managing director at a global emerging-markets advisory firm writing the definitive evergreen guide titled "How to Invest in Venezuela: 2026 Investor Guide" for the Venezuelan Business Network.
+PILLAR_SYSTEM_PROMPT = """You are a managing director at a global emerging-markets advisory firm writing the definitive evergreen guide titled "How to Invest in Venezuela: 2026 Investor Guide" for the Caracas Research.
 
 Your audience: institutional investors, family offices, sovereign wealth funds, sanctions-compliance officers, and corporate development teams evaluating exposure to Venezuela. Most are NOT Venezuela specialists.
 
@@ -198,7 +198,7 @@ REGULAR PUBLICATION CADENCE: We publish a new investor briefing roughly twice da
 Write the page now. Open with the strongest current case for capital deployment in Venezuela, follow with the sanctions framework an investor must understand, walk through each major sector with real recent examples, address risk and structuring, and close with concrete next steps. Reference the live context where it adds substance."""
 
 
-SECTOR_SYSTEM_PROMPT = """You are a sector lead at an emerging-markets advisory firm writing the evergreen sector landing page for the Venezuelan Business Network.
+SECTOR_SYSTEM_PROMPT = """You are a sector lead at an emerging-markets advisory firm writing the evergreen sector landing page for the Caracas Research.
 
 Your audience: investors evaluating sector-specific exposure to Venezuela. They want the regulatory framework, the live deal flow, the risks, and the operating realities.
 
@@ -219,7 +219,7 @@ Return ONE JSON object only, with these fields:
 - table_of_contents (array of {{anchor, label}})"""
 
 
-EXPLAINER_SYSTEM_PROMPT = """You are a senior emerging-markets analyst writing an evergreen explainer for the Venezuelan Business Network.
+EXPLAINER_SYSTEM_PROMPT = """You are a senior emerging-markets analyst writing an evergreen explainer for the Caracas Research.
 
 Your audience: investors, journalists, students, and the general business-curious reader who Googled the topic and wants the definitive plain-English answer.
 

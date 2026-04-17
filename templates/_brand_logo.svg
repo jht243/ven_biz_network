@@ -1,0 +1,19 @@
+<svg class="brand-logo" viewBox="0 0 32 32" fill="none" xmlns="http://www.w3.org/2000/svg" aria-label="Caracas Research" role="img">
+  <defs>
+    <clipPath id="cr-badge"><rect x="1" y="1" width="30" height="30" rx="6"/></clipPath>
+  </defs>
+  <!-- Venezuelan flag tricolor backdrop (yellow / blue / red) -->
+  <rect x="1" y="1" width="30" height="10" fill="#FFCC00" clip-path="url(#cr-badge)"/>
+  <rect x="1" y="11" width="30" height="10" fill="#003893" clip-path="url(#cr-badge)"/>
+  <rect x="1" y="21" width="30" height="10" fill="#CF142B" clip-path="url(#cr-badge)"/>
+  <!-- Avila mountain silhouette over Caracas (the city's defining ridge) -->
+  <path d="M1 22 L5 17 L8 19 L12 14 L16 18 L20 13 L24 17 L28 15 L31 18 L31 22 Z" fill="#001a4d" clip-path="url(#cr-badge)"/>
+  <!-- 5 white stars in arc, evoking the Venezuelan flag -->
+  <circle cx="9" cy="6" r="0.95" fill="white"/>
+  <circle cx="13" cy="5" r="0.95" fill="white"/>
+  <circle cx="17" cy="5" r="0.95" fill="white"/>
+  <circle cx="21" cy="5" r="0.95" fill="white"/>
+  <circle cx="25" cy="6" r="0.95" fill="white"/>
+  <!-- Soft white border for contrast on dark nav backgrounds -->
+  <rect x="1" y="1" width="30" height="30" rx="6" stroke="rgba(255,255,255,0.7)" stroke-width="1.5" fill="none"/>
+</svg>

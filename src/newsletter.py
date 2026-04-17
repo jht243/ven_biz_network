@@ -49,7 +49,7 @@ class SendGridProvider(EmailProvider):
     def send(self, to: str, subject: str, html_body: str) -> bool:
         payload = {
             "personalizations": [{"to": [{"email": to}]}],
-            "from": {"email": self.from_email, "name": "Venezuelan Business Network"},
+            "from": {"email": self.from_email, "name": "Caracas Research"},
             "subject": subject,
             "content": [{"type": "text/html", "value": html_body}],
         }
@@ -107,7 +107,7 @@ def send_newsletter(report_html: str, dry_run: bool = False) -> dict:
         return {"sent": 0, "failed": 0, "provider": provider_name}
 
     from datetime import date
-    subject = f"Venezuelan Business Network — {date.today().strftime('%B %d, %Y')}"
+    subject = f"Caracas Research — {date.today().strftime('%B %d, %Y')}"
 
     if dry_run:
         logger.info("DRY RUN: would send to %d subscribers via %s", len(subscribers), provider_name)

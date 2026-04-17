@@ -5,10 +5,10 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
 
   {% set _seo = seo|default({}) %}
-  <title>{{ _seo.title|default('Venezuelan Business Network — Daily Investment & Sanctions Briefing') }}</title>
+  <title>{{ _seo.title|default('Caracas Research — Daily Investment & Sanctions Briefing') }}</title>
   <meta name="description" content="{{ _seo.description|default('Daily Venezuelan investment & sanctions briefing for global investors.') }}">
   <meta name="keywords" content="{{ _seo.keywords|default('invest in Venezuela, OFAC Venezuela sanctions, invest in Caracas, Venezuelan investment opportunities') }}">
-  <meta name="author" content="{{ _seo.site_name|default('Venezuelan Business Network') }}">
+  <meta name="author" content="{{ _seo.site_name|default('Caracas Research') }}">
   <meta name="robots" content="index, follow, max-image-preview:large, max-snippet:-1">
   <meta name="news_keywords" content="{{ _seo.keywords|default('Venezuela investment, OFAC sanctions, Caracas') }}">
   <link rel="canonical" href="{{ _seo.canonical|default('https://caracasresearch.com/') }}">
@@ -16,20 +16,20 @@
   <link rel="alternate" hreflang="x-default" href="{{ _seo.canonical|default('https://caracasresearch.com/') }}">
 
   <meta property="og:type" content="{{ _seo.og_type|default('website') }}">
-  <meta property="og:site_name" content="{{ _seo.site_name|default('Venezuelan Business Network') }}">
+  <meta property="og:site_name" content="{{ _seo.site_name|default('Caracas Research') }}">
   <meta property="og:locale" content="{{ _seo.locale|default('en_US') }}">
   <meta property="og:url" content="{{ _seo.canonical|default('https://caracasresearch.com/') }}">
-  <meta property="og:title" content="{{ _seo.title|default('Venezuelan Business Network') }}">
+  <meta property="og:title" content="{{ _seo.title|default('Caracas Research') }}">
   <meta property="og:description" content="{{ _seo.description|default('Daily Venezuelan investment briefing.') }}">
   <meta property="og:image" content="{{ _seo.og_image|default('https://caracasresearch.com/static/og-image.png') }}">
   <meta property="og:image:width" content="{{ _seo.og_image_width|default(1200) }}">
   <meta property="og:image:height" content="{{ _seo.og_image_height|default(630) }}">
-  <meta property="og:image:alt" content="Venezuelan Business Network — daily sanctions and investment briefing">
+  <meta property="og:image:alt" content="Caracas Research — daily sanctions and investment briefing">
   {% if _seo.published_iso %}<meta property="article:published_time" content="{{ _seo.published_iso }}">{% endif %}
   {% if _seo.modified_iso %}<meta property="article:modified_time" content="{{ _seo.modified_iso }}">{% endif %}
 
   <meta name="twitter:card" content="{{ _seo.twitter_card|default('summary_large_image') }}">
-  <meta name="twitter:title" content="{{ _seo.title|default('Venezuelan Business Network') }}">
+  <meta name="twitter:title" content="{{ _seo.title|default('Caracas Research') }}">
   <meta name="twitter:description" content="{{ _seo.description|default('Daily Venezuelan investment briefing.') }}">
   <meta name="twitter:image" content="{{ _seo.og_image|default('https://caracasresearch.com/static/og-image.png') }}">
 
@@ -62,12 +62,12 @@
     body { font-family: var(--font-sans); background-color: var(--white); color: var(--sr-dark-text); line-height: 1.6; font-size: 16px; -webkit-font-smoothing: antialiased; }
     .top-nav { background-color: var(--sr-blue); color: var(--white); padding: 12px 0; font-family: var(--font-sans); }
     .top-nav-container { max-width: 1140px; margin: 0 auto; padding: 0 20px; display: flex; justify-content: space-between; align-items: center; }
-    .nav-brand { font-family: var(--font-serif); font-size: 1.25rem; font-weight: 700; letter-spacing: 0.5px; display: flex; align-items: center; gap: 12px; }
-    .nav-brand svg.brand-logo { width: 28px; height: 28px; flex-shrink: 0; }
-    .nav-links { display: flex; gap: 24px; font-size: 0.85rem; font-weight: 600; text-transform: uppercase; letter-spacing: 1px; }
-    .nav-links a { color: var(--white); text-decoration: none; transition: opacity 0.2s; }
+    .nav-brand { font-family: var(--font-serif); font-size: 1.25rem; font-weight: 700; letter-spacing: 0.5px; display: flex; align-items: center; gap: 12px; line-height: 1; }
+    .nav-brand svg.brand-logo { width: 30px; height: 30px; flex-shrink: 0; display: block; }
+    .nav-links { display: flex; align-items: center; gap: 24px; font-size: 0.85rem; font-weight: 600; text-transform: uppercase; letter-spacing: 1px; line-height: 1; }
+    .nav-links a { color: var(--white); text-decoration: none; transition: opacity 0.2s; display: inline-flex; align-items: center; }
     .nav-links a:hover { opacity: 0.8; }
-    .nav-login { background: var(--sr-red); padding: 6px 16px; border-radius: 3px; }
+    .nav-login { background: var(--sr-red); padding: 8px 16px; border-radius: 3px; line-height: 1; }
     .ticker-bar { background: var(--sr-blue-dark); color: var(--white); overflow: hidden; border-bottom: 1px solid rgba(255,255,255,0.1); }
     .ticker-inner { max-width: 1140px; margin: 0 auto; padding: 0 20px; display: flex; align-items: center; height: 40px; gap: 0; overflow-x: auto; scrollbar-width: none; }
     .ticker-inner::-webkit-scrollbar { display: none; }
@@ -225,25 +225,10 @@
 
 <div class="top-nav">
   <div class="top-nav-container">
-    <div class="nav-brand">
-      <svg class="brand-logo" viewBox="0 0 32 32" fill="none" xmlns="http://www.w3.org/2000/svg">
-        <defs>
-          <clipPath id="shield"><rect x="1" y="1" width="30" height="30" rx="5"/></clipPath>
-        </defs>
-        <rect x="1" y="1" width="30" height="10" fill="#FFCC00" clip-path="url(#shield)"/>
-        <rect x="1" y="11" width="30" height="10" fill="#003893"/>
-        <rect x="1" y="21" width="30" height="10" fill="#CF142B" clip-path="url(#shield)"/>
-        <circle cx="16" cy="16" r="1.2" fill="white"/>
-        <circle cx="11.5" cy="14" r="1.2" fill="white"/>
-        <circle cx="20.5" cy="14" r="1.2" fill="white"/>
-        <circle cx="9" cy="17" r="1.2" fill="white"/>
-        <circle cx="23" cy="17" r="1.2" fill="white"/>
-        <polyline points="7,24 13,18 17,20 25,11" stroke="white" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" opacity="0.9"/>
-        <polygon points="25,8 26.2,11 25,10.2 23.8,11" fill="white" opacity="0.9"/>
-        <rect x="1" y="1" width="30" height="30" rx="5" stroke="rgba(255,255,255,0.6)" stroke-width="1.5" fill="none"/>
-      </svg>
-      Venezuelan Business Network
-    </div>
+    <a href="/" class="nav-brand" style="color: inherit; text-decoration: none;">
+      {% include "_brand_logo.svg" %}
+      Caracas Research
+    </a>
     <div class="nav-links">
       <a href="/briefing">Analysis</a>
       <a href="/invest-in-venezuela">Invest</a>
@@ -395,7 +380,7 @@
 <div style="background: var(--white); border-top: 1px solid var(--sr-gray-light); padding: 48px 20px;">
   <div style="max-width: 1140px; margin: 0 auto;">
     <div style="font-family: var(--font-serif); font-size: 1.5rem; color: var(--sr-blue-dark); margin-bottom: 6px;">
-      More from Venezuelan Business Network
+      More from Caracas Research
     </div>
     <div style="font-size: 0.85rem; color: var(--sr-gray-text); text-transform: uppercase; letter-spacing: 1px; margin-bottom: 24px;">
       Evergreen guides, free tools, and full archives
@@ -442,7 +427,7 @@
 </div>
 
 <div class="footer">
-  <p>&copy; {{ current_year }} Venezuelan Business Network. All rights reserved.</p>
+  <p>&copy; {{ current_year }} Caracas Research. All rights reserved.</p>
   <p style="margin-top: 10px; font-size: 0.75rem;">This publication is for informational purposes only and does not constitute investment advice. Data sourced from BCV (live scrape), OFAC Federal Register API, OFAC SDN List, GDELT global news monitor, US State Department travel advisories, Coface, Trading Economics, UNCTAD, and PDVSA. Always consult qualified legal and financial advisors before making investment decisions in sanctioned jurisdictions.</p>
 </div>
 

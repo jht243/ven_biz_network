@@ -1,5 +1,5 @@
 """
-Flask web server for Venezuelan Business Network.
+Flask web server for Caracas Research.
 
 Serves the generated report.html on Render (or locally).
 """
@@ -962,9 +962,9 @@ def sources_page():
             base = _base_url()
             canonical = f"{base}/sources"
             seo = {
-                "title": "Sources & Methodology — Venezuelan Business Network",
+                "title": "Sources & Methodology — Caracas Research",
                 "description": (
-                    "How Venezuelan Business Network produces its investor briefings: "
+                    "How Caracas Research produces its investor briefings: "
                     "primary Venezuelan and US government sources we monitor, refresh "
                     "cadence, LLM filtering pipeline, and editorial standards."
                 ),
