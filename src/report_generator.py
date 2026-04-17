@@ -304,6 +304,21 @@ _TOPIC_TAGS: list[tuple[str, tuple[str, ...]]] = [
     ("ofac_sanctions_relief", ("levantamiento de las sanciones", "sanctions easing", "ease sanctions", "ease the sanctions", "lift sanctions", "us eases sanctions")),
     ("ofac_designations", ("notice of ofac sanctions actions", "ofac sdn list update", "ofac sanctions actions")),
     ("travel_advisory", ("travel advisory", "do not travel advisory", "reconsider travel", "advisory level")),
+    # Recurring public-mobilization campaigns (one campaign, many headlines).
+    # Used primarily by the calendar dedup so we don't list the same anti-
+    # sanctions march under two different LLM-generated titles.
+    ("anti_sanctions_protest", (
+        "march against sanctions",
+        "marcha contra las sanciones",
+        "national mobilization against sanctions",
+        "nationwide march against sanctions",
+        "movilizacion contra las sanciones",
+        "movilizacion nacional antiimperialista",
+        "marcha por la paz y contra las sanciones",
+        "movilizacion antiimperialista",
+        "anti-sanctions march",
+        "anti-sanctions mobilization",
+    )),
     # Diplomatic ties (specific bilaterals)
     ("eu_dialogue", ("grupo de amistad venezuela-ue", "venezuela-eu friendship group", "european parliament delegation")),
     ("us_relations_specific", ("us senate resolution", "us state department releases", "us-venezuela bilateral")),
@@ -386,7 +401,14 @@ _EXCLUSIVE_TOPIC_TAGS = frozenset({
     "admin_celeridad_law",
     "constitutional_court_minas",
     "travel_advisory",
+    "anti_sanctions_protest",
 })
+
+# Calendar-specific dedup threshold. Lower than the news Jaccard floor
+# because the calendar surface is small (≤8 items) and tolerates more
+# aggressive merging — a duplicate slot is much more visible there
+# than buried in a 27-item news feed.
+CALENDAR_JACCARD_THRESHOLD = 0.30
 
 
 def _deduplicate_entries(entries: list[dict]) -> list[dict]:
@@ -636,18 +658,117 @@ _STANDING_CALENDAR_ITEMS: list[dict] = [
 ]
 
 
+def _calendar_dedup_score(ev: dict) -> tuple:
+    """Higher tuple wins when collapsing duplicate calendar events.
+
+    Priority order: most-urgent tier first (lowest urgency_order int),
+    then highest source-article relevance, then most recent article.
+    """
+    return (
+        -_URGENCY_ORDER.get(ev.get("urgency", "dated"), 99),
+        ev.get("_relevance", 0),
+        (ev.get("_published") - date.min).days if ev.get("_published") else 0,
+    )
+
+
+def _deduplicate_calendar_events(events: list[dict]) -> list[dict]:
+    """Two-pass dedup of calendar candidates.
+
+    Pass 1: Exclusive topic tags. The LLM frequently rephrases the same
+    underlying event ("Amnesty Law Review Extension" vs "Amnesty Law
+    Commission Extension", "Nationwide March Against Sanctions" vs
+    "National Mobilization Against Sanctions"), but the topic tag system
+    pins both to the same canonical event (`amnesty_law`,
+    `anti_sanctions_protest`). At most one event per exclusive tag
+    survives, with the highest-priority one kept.
+
+    Pass 2: Jaccard fallback on title tokens for any pair the topic
+    system didn't catch (threshold = CALENDAR_JACCARD_THRESHOLD).
+
+    Standing fixtures are passed through this same pipeline so they
+    also dedupe against dynamic items if they overlap.
+    """
+    if not events:
+        return events
+
+    kept: list[dict] = []
+    sigs: list[set[str]] = []
+    by_topic: dict[str, int] = {}
+
+    for ev in events:
+        topic = ev.get("_topic")
+        sig = _topic_signature(ev.get("title", "") + " " + (ev.get("subtitle") or ""))
+
+        if topic and topic in _EXCLUSIVE_TOPIC_TAGS:
+            if topic in by_topic:
+                idx = by_topic[topic]
+                if _calendar_dedup_score(ev) > _calendar_dedup_score(kept[idx]):
+                    logger.info(
+                        "Calendar dedup [%s exclusive]: replacing '%s' with '%s'",
+                        topic,
+                        kept[idx].get("title", "")[:50],
+                        ev.get("title", "")[:50],
+                    )
+                    kept[idx] = ev
+                    sigs[idx] = sig
+                else:
+                    logger.info(
+                        "Calendar dedup [%s exclusive]: dropping '%s' (kept '%s')",
+                        topic,
+                        ev.get("title", "")[:50],
+                        kept[idx].get("title", "")[:50],
+                    )
+                continue
+            by_topic[topic] = len(kept)
+            kept.append(ev)
+            sigs.append(sig)
+            continue
+
+        # Jaccard fallback for events outside the exclusive-tag system.
+        merged_idx: int | None = None
+        for i, ksig in enumerate(sigs):
+            if not sig or not ksig:
+                continue
+            jacc = len(sig & ksig) / len(sig | ksig)
+            if jacc >= CALENDAR_JACCARD_THRESHOLD:
+                merged_idx = i
+                break
+        if merged_idx is not None:
+            if _calendar_dedup_score(ev) > _calendar_dedup_score(kept[merged_idx]):
+                logger.info(
+                    "Calendar dedup [jacc>=%.2f]: replacing '%s' with '%s'",
+                    CALENDAR_JACCARD_THRESHOLD,
+                    kept[merged_idx].get("title", "")[:50],
+                    ev.get("title", "")[:50],
+                )
+                kept[merged_idx] = ev
+                sigs[merged_idx] = sig
+            else:
+                logger.info(
+                    "Calendar dedup [jacc>=%.2f]: dropping '%s' (kept '%s')",
+                    CALENDAR_JACCARD_THRESHOLD,
+                    ev.get("title", "")[:50],
+                    kept[merged_idx].get("title", "")[:50],
+                )
+        else:
+            kept.append(ev)
+            sigs.append(sig)
+
+    return kept
+
+
 def _build_calendar(ext_articles, assembly_news) -> list[dict]:
     """Forward-looking investor calendar built from recent analyzed news.
 
     The LLM analyzer extracts a `calendar_event` object on entries that
     describe a specific time-bounded event (a scheduled discussion,
     march, license expiration, pending promulgation, etc). This pulls
-    those out, dedupes by title, sorts by urgency, and appends a small
-    set of standing items (active OFAC GLs, the 2026 legislative
-    target) that wouldn't naturally surface in daily news.
+    those out, runs them through topic-tag + Jaccard dedup, sorts by
+    urgency, and appends a small set of standing items (active OFAC
+    GLs, the 2026 legislative target) that wouldn't naturally surface
+    in daily news. Standing items go through the same dedup pass.
     """
     candidates: list[dict] = []
-    seen_titles: set[str] = set()
 
     # Newest entries first so when the same event is mentioned twice
     # we keep the freshest framing.
@@ -663,11 +784,16 @@ def _build_calendar(ext_articles, assembly_news) -> list[dict]:
         title = (ev.get("title") or "").strip()
         if not title:
             continue
-        # Dedupe by normalized title across entries.
-        key = _normalize(title)
-        if key in seen_titles:
-            continue
-        seen_titles.add(key)
+
+        # Compute the topic from the calendar event's own fields. We
+        # intentionally do NOT mix in the source article body here —
+        # the topic should describe the *event*, not the article that
+        # mentioned it, otherwise broad articles incidentally referencing
+        # an exclusive-tag keyword would steamroll legitimately distinct
+        # calendar items.
+        topic = _topic_tag(
+            " ".join(filter(None, [title, ev.get("subtitle"), ev.get("note")]))
+        )
 
         urgency = (ev.get("urgency") or "dated").lower()
         candidates.append({
@@ -679,19 +805,31 @@ def _build_calendar(ext_articles, assembly_news) -> list[dict]:
             "link_label": _calendar_link_label(item),
             "css_class": ev.get("css_class") or "",
             "urgency": urgency,
+            "_topic": topic,
             "_relevance": analysis.get("relevance_score", 0),
             "_published": item.published_date,
         })
 
-    # Append standing items only if they don't duplicate a dynamic one.
+    # Append standing items into the same pool so they dedupe against
+    # any dynamic event that's already covering the same ground.
     for fixture in _STANDING_CALENDAR_ITEMS:
-        if _normalize(fixture["title"]) in seen_titles:
-            continue
         candidates.append({
             **fixture,
+            "_topic": _topic_tag(
+                " ".join(filter(None, [fixture.get("title"), fixture.get("subtitle"), fixture.get("note")]))
+            ),
             "_relevance": 0,
             "_published": date.min,
         })
+
+    pre = len(candidates)
+    candidates = _deduplicate_calendar_events(candidates)
+    if len(candidates) < pre:
+        logger.info(
+            "Calendar dedup total: %d -> %d events",
+            pre,
+            len(candidates),
+        )
 
     # Sort: urgency tier first, then relevance score (high first),
     # then newest published date.
