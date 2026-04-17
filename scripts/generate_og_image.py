@@ -85,7 +85,7 @@ def main() -> None:
     draw.line([(80, HEIGHT - 90), (WIDTH - 80, HEIGHT - 90)], fill=ACCENT, width=2)
     draw.text(
         (80, HEIGHT - 70),
-        "venezuela-investment-journal.onrender.com",
+        "caracasresearch.com",
         font=footer,
         fill=MUTED,
     )

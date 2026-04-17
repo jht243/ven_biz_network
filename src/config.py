@@ -76,7 +76,7 @@ class Settings(BaseSettings):
     # canonical <link>, sitemap entries, JSON-LD identifiers, and OG
     # share URLs. Override via SITE_URL env var when a custom domain
     # is added (Tier 4).
-    site_url: str = "https://venezuela-investment-journal.onrender.com"
+    site_url: str = "https://caracasresearch.com"
     site_name: str = "Venezuelan Business Network"
     site_owner_org: str = "Venezuelan Business Network"
     site_locale: str = "en_US"
