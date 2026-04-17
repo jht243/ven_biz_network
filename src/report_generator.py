@@ -358,7 +358,35 @@ JACCARD_THRESHOLD = 0.35
 # mining_law, but their headlines/bodies would have low word overlap
 # (e.g. "Mining Royalty Reform" vs "Organic Mining Law Promulgation"),
 # so they stay as separate entries.
+#
+# This Jaccard floor is *only* applied to non-exclusive topic tags
+# (see _EXCLUSIVE_TOPIC_TAGS below). For named single-instrument
+# tags like mining_law (= Ley Orgánica de Minas), sharing the tag +
+# date window is sufficient to merge — those tags inherently refer
+# to one specific legal instrument, so 5 articles tagged mining_law
+# in the same week are all about the same law.
 TOPIC_MERGE_MIN_JACCARD = 0.25
+
+# Topic tags that refer to a single, uniquely-named instrument or
+# event. Articles sharing one of these tags within DEDUP_WINDOW_DAYS
+# always describe the same underlying story (e.g. "Ley Orgánica de
+# Minas" only exists once; the Amnesty Law of 2025 only exists once;
+# a single travel-advisory revision only exists once), so we collapse
+# them without requiring extra word-overlap evidence.
+#
+# Add a tag here only when you're confident the tag's keyword set
+# uniquely identifies one instrument. Broad tags like
+# "foreign_investment_general" must NOT be exclusive — those legitimately
+# cover multiple distinct deals.
+_EXCLUSIVE_TOPIC_TAGS = frozenset({
+    "mining_law",
+    "amnesty_law",
+    "hydrocarbons_law",
+    "socioeconomic_law",
+    "admin_celeridad_law",
+    "constitutional_court_minas",
+    "travel_advisory",
+})
 
 
 def _deduplicate_entries(entries: list[dict]) -> list[dict]:
@@ -392,11 +420,14 @@ def _deduplicate_entries(entries: list[dict]) -> list[dict]:
 
     for tag, group in by_tag.items():
         # Sort newest first, then iterate building "clusters" of entries
-        # that satisfy BOTH:
+        # that satisfy:
         #   - within DEDUP_WINDOW_DAYS of an existing cluster member
-        #   - shared significant-word Jaccard >= TOPIC_MERGE_MIN_JACCARD
-        #     with an existing cluster member (this is the safety net
-        #     that keeps two genuinely-different same-topic events apart)
+        #   - AND (only for non-exclusive tags) shared significant-word
+        #     Jaccard >= TOPIC_MERGE_MIN_JACCARD with an existing
+        #     cluster member.
+        # Exclusive tags refer to a single named instrument, so the
+        # date-window check alone is enough — see _EXCLUSIVE_TOPIC_TAGS.
+        is_exclusive = tag in _EXCLUSIVE_TOPIC_TAGS
         group.sort(key=lambda e: e["published_date"], reverse=True)
         sigs = {id(e): _topic_signature(_entry_text(e)) for e in group}
         clusters: list[list[dict]] = []
@@ -410,6 +441,10 @@ def _deduplicate_entries(entries: list[dict]) -> list[dict]:
                 )
                 if not date_ok:
                     continue
+                if is_exclusive:
+                    cluster.append(e)
+                    placed = True
+                    break
                 content_ok = False
                 for x in cluster:
                     x_sig = sigs[id(x)]
@@ -438,11 +473,12 @@ def _deduplicate_entries(entries: list[dict]) -> list[dict]:
                 dropped_titles = ", ".join(
                     f"'{e['headline_short'][:40]}'" for e in cluster[1:]
                 )
+                rule = "exclusive" if is_exclusive else f"jacc>={TOPIC_MERGE_MIN_JACCARD:.2f}"
                 logger.info(
-                    "Dedup [%s win=%dd, jacc>=%.2f]: kept '%s' (rel=%s, %s); dropped %d: %s",
+                    "Dedup [%s win=%dd, %s]: kept '%s' (rel=%s, %s); dropped %d: %s",
                     tag,
                     DEDUP_WINDOW_DAYS,
-                    TOPIC_MERGE_MIN_JACCARD,
+                    rule,
                     keeper["headline_short"][:60],
                     keeper["relevance"],
                     keeper["published_date"],
