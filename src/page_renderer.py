@@ -47,7 +47,7 @@ def render_blog_post(post, *, related: list | None = None) -> str:
     """Render a single BlogPost row to HTML with full BlogPosting JSON-LD."""
     base = _base_url()
     canonical = f"{base}/briefing/{post.slug}"
-    og_image = f"{base}/static/og-image.png"
+    og_image = f"{base}/static/og-image.png?v=2"
 
     keywords = post.keywords_json or []
     if isinstance(keywords, str):
@@ -138,7 +138,7 @@ def render_blog_index(posts: Iterable) -> str:
         "site_name": settings.site_name,
         "site_url": base,
         "locale": settings.site_locale,
-        "og_image": f"{base}/static/og-image.png",
+        "og_image": f"{base}/static/og-image.png?v=2",
         "og_type": "website",
         "published_iso": _iso(datetime.utcnow()),
         "modified_iso": _iso(datetime.utcnow()),
@@ -184,7 +184,7 @@ def render_landing_page(page, *, recent_briefings: list | None = None) -> str:
     """Render a LandingPage row (pillar / sector / explainer) to HTML."""
     base = _base_url()
     canonical = f"{base}{page.canonical_path}"
-    og_image = f"{base}/static/og-image.png"
+    og_image = f"{base}/static/og-image.png?v=2"
 
     keywords = page.keywords_json or []
     if isinstance(keywords, str):

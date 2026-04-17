@@ -67,13 +67,17 @@
     body { font-family: var(--font-sans); background: var(--white); color: var(--sr-dark-text); line-height: 1.65; font-size: 17px; -webkit-font-smoothing: antialiased; }
     a { color: var(--sr-blue); text-decoration: underline; text-decoration-color: var(--sr-gray-light); text-underline-offset: 3px; }
     a:hover { color: var(--sr-red); text-decoration-color: var(--sr-red); }
-    .top-nav { background: var(--sr-blue); color: var(--white); padding: 12px 0; font-family: var(--font-sans); }
-    .top-nav-inner { max-width: 1100px; margin: 0 auto; padding: 0 24px; display: flex; align-items: center; justify-content: space-between; flex-wrap: wrap; gap: 12px; }
-    .nav-brand { font-family: var(--font-serif); font-weight: 700; font-size: 18px; letter-spacing: 0.3px; color: var(--white); text-decoration: none; display: inline-flex; align-items: center; gap: 10px; line-height: 1; }
-    .nav-brand svg.brand-logo { width: 28px; height: 28px; flex-shrink: 0; display: block; }
-    .nav-links { display: flex; align-items: center; gap: 18px; flex-wrap: wrap; line-height: 1; }
-    .nav-links a { color: rgba(255,255,255,0.85); text-decoration: none; font-size: 14px; font-weight: 500; display: inline-flex; align-items: center; }
-    .nav-links a:hover { color: var(--white); }
+    /* Top-nav styling — kept identical to templates/report.html.j2 so the
+       header looks the same on every page (homepage, tools, briefings…). */
+    .top-nav { background-color: var(--sr-blue); color: var(--white); padding: 12px 0; font-family: var(--font-sans); }
+    .top-nav-inner { max-width: 1140px; margin: 0 auto; padding: 0 20px; display: flex; justify-content: space-between; align-items: center; }
+    .nav-brand { font-family: var(--font-serif); font-size: 1.25rem; font-weight: 700; letter-spacing: 0.5px; color: var(--white); text-decoration: none; display: flex; align-items: center; gap: 12px; line-height: 1; }
+    .nav-brand svg.brand-logo { width: 30px; height: 30px; flex-shrink: 0; display: block; }
+    .nav-links { display: flex; align-items: center; gap: 24px; font-size: 0.85rem; font-weight: 600; text-transform: uppercase; letter-spacing: 1px; line-height: 1; }
+    .nav-links a { color: var(--white); text-decoration: none; transition: opacity 0.2s; display: inline-flex; align-items: center; }
+    .nav-links a:hover { opacity: 0.8; }
+    .nav-login { background: var(--sr-red); padding: 8px 16px; border-radius: 3px; line-height: 1; }
+    @media (max-width: 768px) { .nav-links { display: none; } }
 
     .container { max-width: 760px; margin: 0 auto; padding: 0 24px; }
     .container-wide { max-width: 1100px; margin: 0 auto; padding: 0 24px; }
@@ -134,14 +138,13 @@
   <div class="top-nav-inner">
     <a class="nav-brand" href="/">{% include "_brand_logo.svg" %}Caracas Research</a>
     <div class="nav-links">
-      <a href="/">Daily Briefing</a>
       <a href="/briefing">Analysis</a>
       <a href="/invest-in-venezuela">Invest</a>
       <a href="/sanctions-tracker">Sanctions</a>
       <a href="/tools">Tools</a>
       <a href="/explainers">Explainers</a>
       <a href="/calendar">Calendar</a>
-      <a href="/sources">Sources</a>
+      <a href="/#signup" class="nav-login">Subscribe Free</a>
     </div>
   </div>
 </nav>
@@ -156,7 +159,6 @@
 
 <footer class="site-footer">
   &copy; {{ current_year|default(2026) }} Caracas Research ·
-  <a href="/sources">Sources</a> ·
   <a href="/sitemap.xml">Sitemap</a>
 </footer>
 </body>

@@ -21,7 +21,7 @@
   <meta property="og:url" content="{{ _seo.canonical|default('https://caracasresearch.com/') }}">
   <meta property="og:title" content="{{ _seo.title|default('Caracas Research') }}">
   <meta property="og:description" content="{{ _seo.description|default('Daily Venezuelan investment briefing.') }}">
-  <meta property="og:image" content="{{ _seo.og_image|default('https://caracasresearch.com/static/og-image.png') }}">
+  <meta property="og:image" content="{{ _seo.og_image|default('https://caracasresearch.com/static/og-image.png?v=2') }}">
   <meta property="og:image:width" content="{{ _seo.og_image_width|default(1200) }}">
   <meta property="og:image:height" content="{{ _seo.og_image_height|default(630) }}">
   <meta property="og:image:alt" content="Caracas Research — daily sanctions and investment briefing">
@@ -31,7 +31,7 @@
   <meta name="twitter:card" content="{{ _seo.twitter_card|default('summary_large_image') }}">
   <meta name="twitter:title" content="{{ _seo.title|default('Caracas Research') }}">
   <meta name="twitter:description" content="{{ _seo.description|default('Daily Venezuelan investment briefing.') }}">
-  <meta name="twitter:image" content="{{ _seo.og_image|default('https://caracasresearch.com/static/og-image.png') }}">
+  <meta name="twitter:image" content="{{ _seo.og_image|default('https://caracasresearch.com/static/og-image.png?v=2') }}">
 
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
@@ -201,6 +201,15 @@
     .full-analysis-link a:active,
     .full-analysis-link a.is-loading { color: var(--sr-blue-dark) !important; opacity: 0.65; }
     .full-analysis-link a.is-loading::after { content: " · loading…"; font-style: italic; font-weight: 400; opacity: 0.85; }
+    /* Share button — quiet by default, lights up on hover/copy. */
+    .share-btn { background: transparent; border: 1px solid var(--sr-gray-light); border-radius: 999px; padding: 4px 12px; font-family: var(--font-sans); font-size: 12px; font-weight: 600; color: var(--sr-gray-text); cursor: pointer; display: inline-flex; align-items: center; gap: 6px; line-height: 1; transition: color 0.15s ease, border-color 0.15s ease, background 0.15s ease; }
+    .share-btn:hover { color: var(--sr-blue); border-color: var(--sr-blue); }
+    .share-btn:active { transform: scale(0.97); }
+    .share-btn.copied { color: #166534; border-color: #166534; background: #f0fdf4; }
+    .share-btn svg { display: block; }
+    /* Floating "Link copied" toast — appears bottom-center for ~1.6s. */
+    .share-toast { position: fixed; bottom: 32px; left: 50%; transform: translateX(-50%) translateY(20px); background: var(--sr-blue-dark); color: var(--white); padding: 10px 20px; border-radius: 999px; font-family: var(--font-sans); font-size: 13px; font-weight: 600; letter-spacing: 0.3px; box-shadow: 0 8px 24px rgba(0,0,0,0.18); opacity: 0; pointer-events: none; transition: opacity 0.2s ease, transform 0.2s ease; z-index: 9999; }
+    .share-toast.is-visible { opacity: 1; transform: translateX(-50%) translateY(0); }
     .detail-content { display: none; margin-top: 20px; padding: 24px; background: var(--sr-gray-bg); border-left: 3px solid var(--sr-gray-light); font-family: var(--font-sans); font-size: 0.9rem; color: var(--sr-gray-text); line-height: 1.8; white-space: pre-wrap; }
     .detail-content.open { display: block; animation: fadeIn 0.4s ease; }
     @keyframes fadeIn { from { opacity: 0; } to { opacity: 1; } }
@@ -372,13 +381,28 @@
             </span>
           </div>
           <div class="takeaway">{{ entry.takeaway }}</div>
-          {% if entry.blog_slug %}
-          <div class="full-analysis-link" style="margin-top:10px; font-size:13px;">
-            <a href="/briefing/{{ entry.blog_slug }}" style="color:#cc0000; font-weight:600; text-decoration:none;">Read full analysis &rarr;</a>
+          <div class="entry-actions" style="margin-top:10px; display:flex; align-items:center; gap:14px; flex-wrap:wrap;">
+            {% if entry.blog_slug %}
+            <div class="full-analysis-link" style="font-size:13px;">
+              <a href="/briefing/{{ entry.blog_slug }}" style="color:#cc0000; font-weight:600; text-decoration:none;">Read full analysis &rarr;</a>
+            </div>
+            {% endif %}
+            {# Share button: copies the full-analysis link on desktop, opens
+               the native share sheet on mobile. Falls back to the home-page
+               anchor if there's no blog post yet. #}
+            <button type="button" class="share-btn"
+                    data-share-url="{% if entry.blog_slug %}https://caracasresearch.com/briefing/{{ entry.blog_slug }}{% else %}https://caracasresearch.com/#dev-{{ entry.id }}{% endif %}"
+                    data-share-title="{{ (entry.headline_short or entry.headline) | e }}"
+                    aria-label="Share this development">
+              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+                <circle cx="18" cy="5" r="3"/><circle cx="6" cy="12" r="3"/><circle cx="18" cy="19" r="3"/>
+                <line x1="8.59" y1="13.51" x2="15.42" y2="17.49"/><line x1="15.41" y1="6.51" x2="8.59" y2="10.49"/>
+              </svg>
+              <span class="share-btn-label">Share</span>
+            </button>
           </div>
-          {% endif %}
           {% if entry.body_text %}
-          <button class="detail-toggle" onclick="toggleDetail(this)"><span>&#9662;</span> Read Original Source Extract</button>
+          <button class="detail-toggle" onclick="toggleDetail(this)" style="margin-top:8px;"><span>&#9662;</span> Read Original Source Extract</button>
           <div class="detail-content">{{ entry.body_text }}</div>
           {% endif %}
         </div>
@@ -451,6 +475,78 @@ document.querySelectorAll('.full-analysis-link a').forEach(function(a) {
     a.classList.add('is-loading');
   });
 });
+
+// Share buttons on each "Latest Developments" entry. On mobile (or any
+// browser exposing navigator.share) we open the native share sheet; on
+// desktop we copy to the clipboard and show a toast.
+(function initShareButtons() {
+  var toastEl = null;
+  function showToast(msg) {
+    if (!toastEl) {
+      toastEl = document.createElement('div');
+      toastEl.className = 'share-toast';
+      document.body.appendChild(toastEl);
+    }
+    toastEl.textContent = msg;
+    requestAnimationFrame(function() { toastEl.classList.add('is-visible'); });
+    clearTimeout(toastEl._hideTimer);
+    toastEl._hideTimer = setTimeout(function() {
+      toastEl.classList.remove('is-visible');
+    }, 1600);
+  }
+  function flashCopied(btn) {
+    var label = btn.querySelector('.share-btn-label');
+    var prev = label ? label.textContent : null;
+    btn.classList.add('copied');
+    if (label) label.textContent = 'Copied';
+    setTimeout(function() {
+      btn.classList.remove('copied');
+      if (label && prev !== null) label.textContent = prev;
+    }, 1600);
+  }
+  function copyToClipboard(text) {
+    if (navigator.clipboard && navigator.clipboard.writeText) {
+      return navigator.clipboard.writeText(text);
+    }
+    return new Promise(function(resolve, reject) {
+      try {
+        var ta = document.createElement('textarea');
+        ta.value = text;
+        ta.style.position = 'fixed';
+        ta.style.opacity = '0';
+        document.body.appendChild(ta);
+        ta.select();
+        document.execCommand('copy');
+        document.body.removeChild(ta);
+        resolve();
+      } catch (err) { reject(err); }
+    });
+  }
+  document.querySelectorAll('.share-btn').forEach(function(btn) {
+    btn.addEventListener('click', function() {
+      var url = btn.getAttribute('data-share-url');
+      var title = btn.getAttribute('data-share-title') || 'Caracas Research';
+      if (!url) return;
+      // Prefer the native share sheet on mobile / supported browsers.
+      if (navigator.share) {
+        navigator.share({ title: title, url: url }).catch(function() {
+          // User cancelled or share failed — silently fall back to copy.
+          copyToClipboard(url).then(function() {
+            flashCopied(btn);
+            showToast('Link copied');
+          }).catch(function() {});
+        });
+        return;
+      }
+      copyToClipboard(url).then(function() {
+        flashCopied(btn);
+        showToast('Link copied');
+      }).catch(function() {
+        showToast('Could not copy link');
+      });
+    });
+  });
+})();
 
 function toggleDetail(btn) {
   const content = btn.nextElementSibling;

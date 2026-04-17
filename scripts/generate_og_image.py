@@ -70,10 +70,10 @@ def main() -> None:
     subtitle = _font(36)
     footer = _font(26)
 
-    draw.text((80, 100), "VENEZUELAN BUSINESS NETWORK", font=eyebrow, fill=ACCENT)
+    draw.text((80, 100), "CARACAS RESEARCH", font=eyebrow, fill=ACCENT)
 
-    draw.text((80, 170), "Invest in Venezuela", font=title, fill=WHITE)
-    draw.text((80, 270), "Daily sanctions & investment briefing", font=title, fill=WHITE)
+    draw.text((80, 170), "Venezuelan Research", font=title, fill=WHITE)
+    draw.text((80, 270), "for International Investors", font=title, fill=WHITE)
 
     draw.text(
         (80, 410),
