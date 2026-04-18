@@ -77,7 +77,21 @@
     .nav-links a { color: var(--white); text-decoration: none; transition: opacity 0.2s; display: inline-flex; align-items: center; }
     .nav-links a:hover { opacity: 0.8; }
     .nav-login { background: var(--sr-red); padding: 8px 16px; border-radius: 3px; line-height: 1; }
-    @media (max-width: 768px) { .nav-links { display: none; } }
+    /* Hamburger button — hidden on desktop, shown on <=768px to expose nav-links. */
+    .nav-toggle { display: none; background: transparent; border: 0; padding: 8px; margin: -8px -4px -8px 0; cursor: pointer; -webkit-tap-highlight-color: transparent; }
+    .nav-toggle-bar { display: block; width: 24px; height: 2px; background: var(--white); border-radius: 2px; margin: 5px 0; transition: transform 0.2s ease, opacity 0.15s ease; }
+    .nav-toggle[aria-expanded="true"] .nav-toggle-bar:nth-child(1) { transform: translateY(7px) rotate(45deg); }
+    .nav-toggle[aria-expanded="true"] .nav-toggle-bar:nth-child(2) { opacity: 0; }
+    .nav-toggle[aria-expanded="true"] .nav-toggle-bar:nth-child(3) { transform: translateY(-7px) rotate(-45deg); }
+    @media (max-width: 768px) {
+      .top-nav-inner { flex-wrap: wrap; }
+      .nav-toggle { display: block; }
+      .nav-links { display: none; flex-direction: column; align-items: stretch; width: 100%; gap: 0; margin-top: 12px; padding-top: 6px; border-top: 1px solid rgba(255,255,255,0.18); font-size: 0.95rem; }
+      .nav-links a { padding: 14px 4px; border-bottom: 1px solid rgba(255,255,255,0.08); }
+      .nav-links a:last-child { border-bottom: 0; }
+      .nav-login { display: inline-block; align-self: flex-start; margin-top: 10px; padding: 10px 18px; }
+      .top-nav.is-open .nav-links { display: flex; }
+    }
 
     .container { max-width: 760px; margin: 0 auto; padding: 0 24px; }
     .container-wide { max-width: 1100px; margin: 0 auto; padding: 0 24px; }
@@ -154,7 +168,12 @@
 <nav class="top-nav">
   <div class="top-nav-inner">
     <a class="nav-brand" href="/">{% include "_brand_logo.svg" %}Caracas Research</a>
-    <div class="nav-links">
+    <button type="button" class="nav-toggle" aria-label="Open menu" aria-expanded="false" aria-controls="primary-nav">
+      <span class="nav-toggle-bar"></span>
+      <span class="nav-toggle-bar"></span>
+      <span class="nav-toggle-bar"></span>
+    </button>
+    <div class="nav-links" id="primary-nav">
       <a href="/briefing">Analysis</a>
       <a href="/invest-in-venezuela">Invest</a>
       <a href="/sanctions-tracker">Sanctions</a>
@@ -196,6 +215,28 @@
 </footer>
 
 <script>
+// Mobile nav toggle. The hamburger button is the only way to reach the
+// nav links on screens <=768px, so this script is required, not nice-to-have.
+(function initNavToggle() {
+  var btn = document.querySelector('.top-nav .nav-toggle');
+  var nav = document.querySelector('.top-nav');
+  if (!btn || !nav) return;
+  function setOpen(open) {
+    nav.classList.toggle('is-open', open);
+    btn.setAttribute('aria-expanded', open ? 'true' : 'false');
+    btn.setAttribute('aria-label', open ? 'Close menu' : 'Open menu');
+  }
+  btn.addEventListener('click', function() {
+    setOpen(!nav.classList.contains('is-open'));
+  });
+  nav.querySelectorAll('.nav-links a').forEach(function(a) {
+    a.addEventListener('click', function() { setOpen(false); });
+  });
+  document.addEventListener('keydown', function(e) {
+    if (e.key === 'Escape') setOpen(false);
+  });
+})();
+
 // Auto-inject a Share button into every breadcrumbs row. This means tools,
 // calendar, sanctions tracker, blog index, etc. all get a consistent share
 // affordance without per-template edits. Pages can still place additional
