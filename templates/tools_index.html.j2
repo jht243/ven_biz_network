@@ -25,6 +25,7 @@
   <div class="index-grid">
     {% for t in tools %}
     <article class="index-card">
+      <a class="card-link" href="{{ t.url }}" aria-label="{{ t.name }}"></a>
       <a class="title-link" href="{{ t.url }}">{{ t.name }}</a>
       <div class="meta">{{ t.category }}</div>
       <p class="summary">{{ t.summary }}</p>

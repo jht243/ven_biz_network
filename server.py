@@ -826,7 +826,7 @@ def tools_index():
                 "url": "/tools/caracas-safety-by-neighborhood",
                 "name": "Caracas Safety Score by Neighborhood",
                 "category": "Travel",
-                "summary": "Curated 1–5 safety rating for every major Caracas neighborhood (Las Mercedes, Altamira, Petare, Catia, and more), with business-use guidance and specific risks to avoid.",
+                "summary": "Interactive map of Caracas with a curated 1–5 safety rating for every major neighborhood (Las Mercedes, Altamira, Petare, Catia, and more), plus toggleable overlays for embassies, hospitals, police, and the international airport — with business-use guidance and specific risks to avoid.",
             },
             {
                 "url": "/tools/venezuela-visa-requirements",
