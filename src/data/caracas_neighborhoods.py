@@ -43,9 +43,9 @@ CARACAS_NEIGHBORHOODS: list[dict] = [
         "summary": "Long-standing diplomatic and residential district with a relatively visible private-security presence. Plaza Altamira has been a focal point of historical political demonstrations.",
         "business_use": "Common location for law firms, advisory shops, and family-office representatives. Well served by quality residential rentals.",
         "what_to_avoid": "Stay alert during politically charged periods; demonstrations have flared at Plaza Altamira.",
-        # Anchor: Plaza Francia / Plaza Altamira, north of Av. Francisco de Miranda.
-        "lat": 10.4998,
-        "lng": -66.8530,
+        # Anchor: Plaza Francia / Plaza Altamira (the obelisk), per Wikipedia.
+        "lat": 10.4964,
+        "lng": -66.8490,
     },
     {
         "name": "Chacao",
@@ -68,9 +68,9 @@ CARACAS_NEIGHBORHOODS: list[dict] = [
         "summary": "Upscale residential area with a notable concentration of business-class hotels. Good walkability for the area in daylight hours.",
         "business_use": "Hotels here host most foreign-investor delegations. Good choice for short-stay accommodation.",
         "what_to_avoid": "Use only authorised transport between hotel and meetings.",
-        # Anchor: Plaza La Castellana.
-        "lat": 10.5023,
-        "lng": -66.8497,
+        # Anchor: Av. Principal de La Castellana (north-west of Plaza Altamira).
+        "lat": 10.5043,
+        "lng": -66.8562,
     },
     {
         "name": "El Hatillo",

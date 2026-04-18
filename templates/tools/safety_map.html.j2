@@ -38,6 +38,45 @@
   .leaflet-popup-content .pop-pill.s5 { background: #1e8449; }
   .leaflet-popup-content .pop-jump { display: inline-block; margin-top: 8px; font-size: 12px; color: var(--sr-blue-dark); font-weight: 600; }
   .nbh-card.is-target { box-shadow: 0 0 0 2px var(--sr-blue-dark); transition: box-shadow 0.2s ease; }
+
+  /* Landmark (POI) markers — universal symbols, square with white icon */
+  .poi-marker {
+    width: 22px; height: 22px; border-radius: 4px;
+    display: flex; align-items: center; justify-content: center;
+    border: 1.5px solid #fff; box-shadow: 0 1px 3px rgba(0,0,0,0.4);
+    color: #fff;
+  }
+  .poi-marker svg { width: 14px; height: 14px; display: block; fill: currentColor; }
+  .poi-marker.poi-hospital { background: #c0392b; }
+  .poi-marker.poi-embassy  { background: #34495e; }
+  .poi-marker.poi-police   { background: #1f3a68; }
+  .poi-marker.poi-airport  { background: #4a4a4a; }
+
+  .leaflet-popup-content .poi-kicker {
+    display: inline-block; padding: 2px 8px; border-radius: 10px;
+    font-size: 10px; font-weight: 700; color: #fff;
+    text-transform: uppercase; letter-spacing: 0.7px;
+    margin-bottom: 6px;
+  }
+  .leaflet-popup-content .poi-kicker.poi-hospital { background: #c0392b; }
+  .leaflet-popup-content .poi-kicker.poi-embassy  { background: #34495e; }
+  .leaflet-popup-content .poi-kicker.poi-police   { background: #1f3a68; }
+  .leaflet-popup-content .poi-kicker.poi-airport  { background: #4a4a4a; }
+  .leaflet-popup-content .poi-area { font-size: 11px; color: var(--sr-gray-text); text-transform: uppercase; letter-spacing: 0.6px; margin-bottom: 4px; }
+
+  /* Layer-control styling — match the rest of the page */
+  .leaflet-control-layers {
+    font-family: var(--font-sans, 'Open Sans', sans-serif);
+    font-size: 12px;
+    border-radius: 3px !important;
+    box-shadow: 0 1px 4px rgba(0,0,0,0.15) !important;
+  }
+  .leaflet-control-layers-expanded { padding: 8px 12px !important; }
+  .leaflet-control-layers label { display: flex; align-items: center; gap: 6px; margin: 4px 0; }
+
+  .poi-legend { display: flex; gap: 14px; flex-wrap: wrap; margin: 0 0 12px; font-size: 12px; color: var(--sr-gray-text); align-items: center; }
+  .poi-legend-item { display: flex; align-items: center; gap: 6px; }
+
   .filter { display:flex; gap:8px; margin: 12px 0 20px; }
   .filter input, .filter select { padding: 10px 14px; border: 1px solid var(--sr-gray-light); border-radius:3px; font-size: 14px; }
   .filter input { flex:1; }
@@ -98,10 +137,18 @@
     <div class="legend-item"><span class="dot s1"></span> 1 — Do not enter</div>
   </div>
 
-  <div id="safety-map" role="img" aria-label="Map of Caracas with neighborhoods colored by safety score"></div>
+  <div id="safety-map" role="img" aria-label="Map of Caracas with neighborhoods colored by safety score, plus hospitals, embassies, police, and the international airport"></div>
+  <div class="poi-legend">
+    <span class="poi-legend-item"><span class="poi-marker poi-hospital" aria-hidden="true"><svg viewBox="0 0 24 24"><path d="M11 3h2v8h8v2h-8v8h-2v-8H3v-2h8z"/></svg></span> Hospital</span>
+    <span class="poi-legend-item"><span class="poi-marker poi-embassy" aria-hidden="true"><svg viewBox="0 0 24 24"><path d="M5 21V4h2v1h11l-2 4 2 4H7v8z"/></svg></span> Embassy</span>
+    <span class="poi-legend-item"><span class="poi-marker poi-police" aria-hidden="true"><svg viewBox="0 0 24 24"><path d="M12 2 4 5v6c0 5 3.4 9.4 8 11 4.6-1.6 8-6 8-11V5z"/></svg></span> Police</span>
+    <span class="poi-legend-item"><span class="poi-marker poi-airport" aria-hidden="true"><svg viewBox="0 0 24 24"><path d="M21 16v-2l-8-5V3.5a1.5 1.5 0 0 0-3 0V9l-8 5v2l8-2.5V19l-2 1.5V22l3.5-1 3.5 1v-1.5L13 19v-5.5z"/></svg></span> Airport</span>
+    <span style="margin-left:auto;">Use the <strong>layer control</strong> on the map to toggle categories.</span>
+  </div>
   <p class="map-note">
-    Marker positions are approximate, illustrative anchors for each named area
-    — not precise neighborhood boundaries. Click a marker for details.
+    Marker positions are approximate, illustrative anchors — not precise
+    boundaries. Click any marker for details. The Caracas embassies and
+    hospitals shown here are a curated subset, not a complete directory.
   </p>
 
   <div class="filter">
@@ -146,6 +193,7 @@
   </p>
 
   <script id="nbh-data" type="application/json">{{ neighborhoods | tojson }}</script>
+  <script id="poi-data" type="application/json">{{ landmarks | default([]) | tojson }}</script>
   <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"
           integrity="sha256-20nQCchB9co0qIjJZRGuk2/Z9VM+kNiyxNV1lvTlZBo="
           crossorigin=""></script>
@@ -158,6 +206,23 @@
       var data = [];
       try { data = JSON.parse(document.getElementById('nbh-data').textContent || '[]'); }
       catch (e) { data = []; }
+
+      var pois = [];
+      try { pois = JSON.parse(document.getElementById('poi-data').textContent || '[]'); }
+      catch (e) { pois = []; }
+
+      var POI_ICONS = {
+        hospital: '<svg viewBox="0 0 24 24"><path d="M11 3h2v8h8v2h-8v8h-2v-8H3v-2h8z"/></svg>',
+        embassy:  '<svg viewBox="0 0 24 24"><path d="M5 21V4h2v1h11l-2 4 2 4H7v8z"/></svg>',
+        police:   '<svg viewBox="0 0 24 24"><path d="M12 2 4 5v6c0 5 3.4 9.4 8 11 4.6-1.6 8-6 8-11V5z"/></svg>',
+        airport:  '<svg viewBox="0 0 24 24"><path d="M21 16v-2l-8-5V3.5a1.5 1.5 0 0 0-3 0V9l-8 5v2l8-2.5V19l-2 1.5V22l3.5-1 3.5 1v-1.5L13 19v-5.5z"/></svg>'
+      };
+      var POI_LABELS = {
+        hospital: 'Hospitals',
+        embassy:  'Embassies',
+        police:   'Police',
+        airport:  'Airport'
+      };
 
       var map = null;
       var markers = [];
@@ -188,6 +253,8 @@
           attribution: '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors'
         }).addTo(map);
 
+        var nbhLayer = L.layerGroup().addTo(map);
+        nbhLayerRef = nbhLayer;
         var bounds = [];
         data.forEach(function(n, idx) {
           if (typeof n.lat !== 'number' || typeof n.lng !== 'number') return;
@@ -200,11 +267,54 @@
           });
           var m = L.marker([n.lat, n.lng], { icon: icon, title: n.name + ' — ' + n.safety_score + '/5' });
           m.bindPopup(popupHtml(n, idx));
-          m.addTo(map);
+          m.addTo(nbhLayer);
           markers.push({ marker: m, score: n.safety_score, text: (n.name + ' ' + n.municipality + ' ' + n.category).toLowerCase(), idx: idx });
           bounds.push([n.lat, n.lng]);
         });
         if (bounds.length) map.fitBounds(bounds, { padding: [30, 30] });
+
+        // ---- Landmark / POI overlay layers ----
+        var poiLayers = {};
+        pois.forEach(function(p) {
+          if (typeof p.lat !== 'number' || typeof p.lng !== 'number') return;
+          var cat = p.category || 'other';
+          if (!POI_ICONS[cat]) return;
+          if (!poiLayers[cat]) poiLayers[cat] = L.layerGroup();
+          var icon = L.divIcon({
+            className: '',
+            html: '<div class="poi-marker poi-' + cat + '" title="' + escapeHtml(p.name) + '">' + POI_ICONS[cat] + '</div>',
+            iconSize: [22, 22],
+            iconAnchor: [11, 11],
+            popupAnchor: [0, -11]
+          });
+          var pm = L.marker([p.lat, p.lng], { icon: icon, title: p.name });
+          pm.bindPopup(
+            '<div class="poi-kicker poi-' + cat + '">' + escapeHtml(POI_LABELS[cat] || cat) + '</div>' +
+            '<h4>' + escapeHtml(p.name) + '</h4>' +
+            (p.area ? '<div class="poi-area">' + escapeHtml(p.area) + '</div>' : '') +
+            (p.note ? '<p style="margin:6px 0 0;">' + escapeHtml(p.note) + '</p>' : '')
+          );
+          pm.addTo(poiLayers[cat]);
+        });
+
+        // Defaults: neighborhoods, hospitals, embassies, and airport on;
+        // police off (rarely useful to a planning visitor).
+        var DEFAULT_ON = { hospital: true, embassy: true, airport: true, police: false };
+        var overlays = {};
+        // Neighborhoods go first so they sit at the top of the toggle list.
+        overlays['Neighborhoods'] = nbhLayer;
+
+        ['hospital', 'embassy', 'police', 'airport'].forEach(function(cat) {
+          if (!poiLayers[cat]) return;
+          var label = POI_LABELS[cat] +
+            ' <span style="display:inline-block;width:10px;height:10px;border-radius:2px;vertical-align:middle;margin-left:2px;background:' +
+            ({ hospital: '#c0392b', embassy: '#34495e', police: '#1f3a68', airport: '#4a4a4a' }[cat]) + ';"></span>';
+          overlays[label] = poiLayers[cat];
+          if (DEFAULT_ON[cat]) poiLayers[cat].addTo(map);
+        });
+        if (Object.keys(overlays).length) {
+          L.control.layers(null, overlays, { collapsed: false, position: 'topright' }).addTo(map);
+        }
 
         map.on('popupopen', function(e) {
           var el = e.popup.getElement();
@@ -223,6 +333,7 @@
         });
       }
 
+      var nbhLayerRef = null;
       function apply() {
         var qv = (q.value || '').toLowerCase().trim();
         var minScore = parseInt(min.value || '0', 10);
@@ -231,14 +342,14 @@
           var matchS = parseInt(c.dataset.score, 10) >= minScore;
           c.style.display = (matchQ && matchS) ? '' : 'none';
         });
-        if (!map) return;
+        if (!nbhLayerRef) return;
         markers.forEach(function(item) {
           var matchQ = !qv || item.text.indexOf(qv) !== -1;
           var matchS = item.score >= minScore;
           if (matchQ && matchS) {
-            if (!map.hasLayer(item.marker)) item.marker.addTo(map);
+            if (!nbhLayerRef.hasLayer(item.marker)) nbhLayerRef.addLayer(item.marker);
           } else {
-            if (map.hasLayer(item.marker)) map.removeLayer(item.marker);
+            if (nbhLayerRef.hasLayer(item.marker)) nbhLayerRef.removeLayer(item.marker);
           }
         });
       }

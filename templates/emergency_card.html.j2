@@ -14,13 +14,22 @@
 
   <style>
     /* =========================================================================
-       Caracas Emergency Card — print-first, two-page, A4/Letter.
-       Front (page 1):  Spanish-first "show this to a stranger" sheet.
-       Back  (page 2):  English "for me, when I'm rattled" reference.
+       Caracas Emergency Card — single A4 page, bilingual, print-first.
+       Spanish-first content for hand-to-stranger usage; English second
+       for the traveller. Designed to fold into a passport.
 
-       On screen we draw a grey background and a white "page" with a dotted
-       cut-line so the user can preview exactly how it will print. On paper
-       the page barrier disappears and only the content prints.
+       On screen:
+         - Grey "desk" background.
+         - Toolbar that explains editability and lets the user pick which
+           embassy to feature on the printed sheet.
+         - Editable fields visibly highlighted (yellow + dotted underline).
+         - A "Before you land" prep checklist above the card — *screen only*,
+           never printed.
+         - Dashed page barrier on the white sheet so the user can preview
+           the printable boundary.
+       On paper:
+         - Toolbar, prep checklist, dashed barriers, yellow editable hints
+           all suppressed; only the card itself prints.
        ========================================================================= */
 
     :root {
@@ -32,7 +41,8 @@
       --red-dark: #8b0000;
       --navy: #001f44;
       --bg-shade: #f4f4f0;
-      --bg-shade-strong: #e8e6dd;
+      --edit-bg: #fff7c2;
+      --edit-line: #b8a200;
       --serif: 'Libre Baskerville', 'Times New Roman', Times, serif;
       --sans: 'Open Sans', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif;
     }
@@ -47,51 +57,150 @@
       padding: 24px 0 60px;
     }
 
-    /* On-screen "page" preview ---------------------------------------------- */
+    /* ---- ON-SCREEN TOOLBAR (loud, instructional) ------------------------- */
     .screen-toolbar {
       max-width: 210mm;
-      margin: 0 auto 20px;
-      padding: 14px 18px;
+      margin: 0 auto 16px;
       background: #fff;
       border: 1px solid #c0c0bc;
+      border-top: 5px solid var(--navy);
       border-radius: 4px;
-      font-size: 13px;
-      color: var(--ink-soft);
-      display: flex;
-      justify-content: space-between;
-      align-items: center;
-      gap: 16px;
-      flex-wrap: wrap;
+      overflow: hidden;
+      font-size: 14px;
+      color: var(--ink);
     }
-    .screen-toolbar strong { color: var(--ink); font-size: 14px; }
-    .screen-toolbar .actions { display: flex; gap: 10px; }
-    .screen-toolbar button {
+    .toolbar-head {
+      padding: 14px 18px 12px;
+      border-bottom: 1px solid #e5e5df;
+      background: #fffbe6;
+    }
+    .toolbar-head h1 {
+      font-family: var(--serif);
+      font-size: 18px;
+      font-weight: 700;
+      color: var(--navy);
+      margin-bottom: 4px;
+    }
+    .toolbar-head p { font-size: 13.5px; color: var(--ink-soft); line-height: 1.5; }
+    .toolbar-head p strong {
+      color: var(--ink);
+      background: var(--edit-bg);
+      padding: 1px 6px;
+      border-radius: 2px;
+      border-bottom: 1.5px dotted var(--edit-line);
+    }
+    .toolbar-body {
+      padding: 14px 18px;
+      display: grid;
+      grid-template-columns: 1fr auto;
+      gap: 16px;
+      align-items: end;
+    }
+    @media (max-width: 720px) { .toolbar-body { grid-template-columns: 1fr; } }
+    .toolbar-body label {
+      display: block;
+      font-size: 11px;
+      font-weight: 800;
+      letter-spacing: 1px;
+      text-transform: uppercase;
+      color: var(--navy);
+      margin-bottom: 6px;
+    }
+    .toolbar-body select {
+      width: 100%;
+      max-width: 420px;
+      font-family: var(--sans);
+      font-size: 14px;
+      font-weight: 600;
+      padding: 9px 12px;
+      border: 1.5px solid var(--navy);
+      border-radius: 3px;
+      background: #fff;
+      color: var(--ink);
+      cursor: pointer;
+    }
+    .toolbar-actions { display: flex; gap: 10px; }
+    .toolbar-actions button {
       font-family: var(--sans);
       font-size: 13px;
       font-weight: 700;
-      padding: 8px 16px;
+      padding: 9px 18px;
       border-radius: 3px;
-      border: 1px solid var(--navy);
+      border: 1.5px solid var(--navy);
       background: var(--navy);
       color: #fff;
       cursor: pointer;
+      white-space: nowrap;
     }
-    .screen-toolbar button.secondary { background: #fff; color: var(--navy); }
+    .toolbar-actions button.secondary { background: #fff; color: var(--navy); }
+    .toolbar-actions button:hover { opacity: 0.92; }
 
+    /* ---- "Before you land" — own printable page (throwaway) ------------- */
+    .prep {
+      max-width: 210mm;
+      min-height: 297mm;
+      margin: 0 auto 24px;
+      background: #fff;
+      border: 1px solid #c0c0bc;
+      border-radius: 4px;
+      padding: 18mm 18mm 20mm;
+      box-shadow: 0 4px 24px rgba(0, 0, 0, 0.18);
+      position: relative;
+    }
+    .prep::before {
+      content: "";
+      position: absolute;
+      inset: 0;
+      border: 1px dashed #b0b0aa;
+      pointer-events: none;
+      border-radius: 4px;
+    }
+    .prep h2 {
+      font-family: var(--serif);
+      font-size: 17px;
+      color: var(--navy);
+      margin-bottom: 4px;
+    }
+    .prep .lead {
+      font-size: 13.5px;
+      color: var(--ink-soft);
+      margin-bottom: 14px;
+      line-height: 1.5;
+    }
+    .prep ul {
+      list-style: none;
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 8px 22px;
+    }
+    @media (max-width: 720px) { .prep ul { grid-template-columns: 1fr; } }
+    .prep li {
+      display: grid;
+      grid-template-columns: 18px 1fr;
+      gap: 8px;
+      font-size: 13px;
+      line-height: 1.45;
+      padding: 4px 0;
+    }
+    .prep li .box {
+      width: 14px; height: 14px; margin-top: 3px;
+      border: 1.5px solid var(--navy);
+      border-radius: 2px;
+    }
+    .prep li strong { color: var(--ink); }
+    .prep li em { font-style: normal; color: var(--ink-soft); }
+
+    /* ---- THE PAGE itself (single A4) ------------------------------------- */
     .page {
       width: 210mm;
       min-height: 297mm;
-      margin: 0 auto 24px;
-      padding: 12mm 12mm 14mm;
+      margin: 0 auto;
+      padding: 10mm 10mm 12mm;
       background: #fff;
       box-shadow: 0 4px 24px rgba(0, 0, 0, 0.18);
       position: relative;
-      overflow: hidden;
     }
-    .page + .page { margin-top: 32px; }
     .page::before {
-      /* "page barrier" — visible only on screen so the user can see the
-         physical sheet boundary before printing */
       content: "";
       position: absolute;
       inset: 0;
@@ -112,93 +221,139 @@
       border-radius: 999px;
     }
 
-    /* Page header ----------------------------------------------------------- */
+    /* ---- Editable field treatment (screen only) -------------------------- */
+    [contenteditable="true"] {
+      background: var(--edit-bg);
+      border-bottom: 1.5px dotted var(--edit-line);
+      padding: 0 3px;
+      cursor: text;
+      min-height: 1.1em;
+      display: inline-block;
+      min-width: 8mm;
+    }
+    [contenteditable="true"]:focus { outline: 2px solid var(--navy); outline-offset: 1px; background: #fff5b3; }
+    [contenteditable="true"]:empty::before {
+      content: attr(data-placeholder);
+      color: #8a7900;
+      font-style: italic;
+      font-weight: 400;
+    }
+
+    /* ---- Header banner --------------------------------------------------- */
     .sheet-header {
-      border: 3px solid var(--red);
-      padding: 8px 12px;
+      border: 2.5px solid var(--red);
+      padding: 6px 10px;
       display: flex;
       justify-content: space-between;
       align-items: center;
       gap: 14px;
-      margin-bottom: 8mm;
+      margin-bottom: 4mm;
     }
     .sheet-header .es {
       font-family: var(--serif);
-      font-size: 22pt;
+      font-size: 17pt;
       font-weight: 700;
       color: var(--red);
       line-height: 1.05;
     }
     .sheet-header .en {
       font-family: var(--sans);
-      font-size: 11pt;
+      font-size: 9pt;
       font-weight: 700;
       color: var(--ink);
       text-transform: uppercase;
-      letter-spacing: 0.6px;
+      letter-spacing: 0.5px;
       text-align: right;
-      line-height: 1.2;
+      line-height: 1.25;
     }
-    .sheet-header .en small { display: block; font-weight: 400; font-size: 9pt; color: var(--ink-soft); margin-top: 2px; text-transform: none; letter-spacing: 0; }
+    .sheet-header .en small { display: block; font-weight: 400; font-size: 8pt; color: var(--ink-soft); margin-top: 2px; text-transform: none; letter-spacing: 0; }
 
-    /* Big call-to-action banner under header */
-    .helpme {
-      background: var(--red);
-      color: #fff;
-      padding: 6px 12px;
-      margin-bottom: 6mm;
-      display: flex;
-      justify-content: space-between;
-      align-items: baseline;
-      gap: 12px;
-    }
-    .helpme .es { font-family: var(--serif); font-size: 14pt; font-weight: 700; }
-    .helpme .en { font-size: 9.5pt; font-weight: 600; opacity: 0.95; }
-
-    /* Section blocks -------------------------------------------------------- */
-    .block { margin-bottom: 5mm; }
+    /* ---- Section block titles ------------------------------------------- */
+    .block { margin-bottom: 3.5mm; }
     .block-title {
       font-family: var(--sans);
-      font-size: 9pt;
+      font-size: 8.5pt;
       text-transform: uppercase;
-      letter-spacing: 1.4px;
+      letter-spacing: 1.3px;
       font-weight: 800;
       color: #fff;
       background: var(--navy);
-      padding: 3px 10px;
-      margin-bottom: 6px;
+      padding: 2px 8px;
+      margin-bottom: 4px;
     }
     .block-title .en {
       font-weight: 500;
-      letter-spacing: 0.6px;
+      letter-spacing: 0.5px;
       text-transform: none;
       opacity: 0.85;
-      font-size: 8.5pt;
-      margin-left: 8px;
+      font-size: 7.5pt;
+      margin-left: 6px;
     }
 
-    /* Show-this-to-driver address cards (front page) */
-    .addr-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 4mm; }
-    .addr-grid.cols-1 { grid-template-columns: 1fr; }
+    /* ---- "My details" fillable block ------------------------------------- */
+    .me-box {
+      border: 1.5px dashed var(--ink);
+      padding: 5px 8px;
+      background: var(--bg-shade);
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 0 16px;
+    }
+    .me-box .row {
+      display: flex;
+      gap: 8px;
+      align-items: baseline;
+      padding: 2.5px 0;
+    }
+    .me-box .row + .row,
+    .me-box .row { border-bottom: 1px dotted #aaa; }
+    .me-box .row:last-child,
+    .me-box .row:nth-last-child(2):nth-child(odd) { border-bottom: 0; }
+    .me-box label {
+      font-size: 7.5pt;
+      font-weight: 800;
+      color: var(--navy);
+      text-transform: uppercase;
+      letter-spacing: 0.6px;
+      flex-shrink: 0;
+      min-width: 24mm;
+      line-height: 1.2;
+    }
+    .me-box label .en { display: block; font-weight: 500; color: var(--ink-soft); text-transform: none; letter-spacing: 0; font-size: 7pt; }
+    .me-box .val { flex: 1; min-height: 12px; font-size: 9.5pt; font-weight: 700; line-height: 1.2; }
+
+    /* ---- Big call-this-number panel (911 + embassy) ---------------------- */
+    .call-row { display: grid; grid-template-columns: 1fr 1fr; gap: 3mm; }
+    .call {
+      border: 2px solid var(--red);
+      padding: 5px 8px;
+      text-align: center;
+    }
+    .call .label-es { font-family: var(--serif); font-size: 10pt; font-weight: 700; color: var(--red); }
+    .call .label-en { font-size: 7.5pt; color: var(--ink-soft); margin-bottom: 2px; }
+    .call .num { font-family: var(--sans); font-size: 20pt; font-weight: 800; color: var(--ink); letter-spacing: 0.5px; line-height: 1.05; }
+    .call .sub { font-size: 8pt; color: var(--ink-soft); margin-top: 1px; }
+
+    /* ---- Address cards (hospital + selected embassy) --------------------- */
     .addr {
       border: 1.2px solid var(--ink);
-      padding: 6px 10px 8px;
-      page-break-inside: avoid;
+      padding: 5px 9px;
     }
     .addr .flag {
       display: inline-block;
-      font-size: 9pt;
+      font-size: 8pt;
       font-weight: 800;
-      letter-spacing: 0.5px;
+      letter-spacing: 0.4px;
       color: #fff;
       background: var(--navy);
-      padding: 1px 6px;
-      margin-right: 6px;
+      padding: 1px 5px;
+      margin-right: 5px;
       vertical-align: middle;
     }
+    .addr.hospital .flag { background: var(--red-dark); }
     .addr h3 {
       font-family: var(--serif);
-      font-size: 11pt;
+      font-size: 10pt;
       font-weight: 700;
       color: var(--ink);
       display: inline;
@@ -206,467 +361,306 @@
       line-height: 1.2;
     }
     .addr .address {
-      font-size: 10pt;
+      font-size: 9pt;
       font-weight: 600;
       color: var(--ink);
-      margin-top: 4px;
+      margin-top: 3px;
       line-height: 1.3;
     }
     .addr .phone {
-      font-size: 10.5pt;
+      font-size: 9.5pt;
       font-weight: 700;
       color: var(--red);
-      margin-top: 4px;
-      letter-spacing: 0.3px;
-    }
-    .addr .note {
-      font-size: 8.5pt;
-      color: var(--ink-soft);
-      margin-top: 4px;
-      font-style: italic;
-      line-height: 1.3;
+      margin-top: 2px;
     }
 
-    /* Fillable lines */
-    .fill {
-      display: inline-block;
-      border-bottom: 1.5px solid var(--ink);
-      min-width: 60mm;
-      height: 14px;
-      vertical-align: bottom;
-    }
-    .fill.short { min-width: 28mm; }
-    .fill.long { min-width: 100mm; }
-    [contenteditable="true"]:focus { outline: 2px solid var(--navy); outline-offset: 2px; background: #f6faff; }
+    .addr-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 3mm; }
 
-    /* "My info" boxes */
-    .me-box {
-      border: 1.5px dashed var(--ink);
-      padding: 8px 10px;
-      background: var(--bg-shade);
-      page-break-inside: avoid;
-    }
-    .me-box .row { display: flex; gap: 12px; align-items: baseline; padding: 4px 0; }
-    .me-box .row + .row { border-top: 1px dotted #aaa; }
-    .me-box label {
-      font-size: 8.5pt;
-      font-weight: 800;
-      color: var(--navy);
-      text-transform: uppercase;
-      letter-spacing: 0.7px;
-      flex-shrink: 0;
-      min-width: 40mm;
-    }
-    .me-box label .en { display: block; font-weight: 500; color: var(--ink-soft); text-transform: none; letter-spacing: 0; font-size: 7.5pt; }
-    .me-box .val { flex: 1; min-height: 16px; font-size: 10.5pt; font-weight: 700; }
-
-    /* Phone-call panel */
-    .call-panel { display: grid; grid-template-columns: 1fr 1fr; gap: 4mm; margin-bottom: 5mm; }
-    .call {
-      border: 2px solid var(--red);
-      padding: 6px 10px;
-      text-align: center;
-      page-break-inside: avoid;
-    }
-    .call .label-es { font-family: var(--serif); font-size: 11pt; font-weight: 700; color: var(--red); }
-    .call .label-en { font-size: 8pt; color: var(--ink-soft); margin-bottom: 3px; }
-    .call .num { font-family: var(--sans); font-size: 22pt; font-weight: 800; color: var(--ink); letter-spacing: 1px; line-height: 1.05; }
-    .call .sub { font-size: 8.5pt; color: var(--ink-soft); margin-top: 2px; }
-
-    /* Two-column body wrapper */
-    .two-col { display: grid; grid-template-columns: 1fr 1fr; gap: 5mm; }
-
-    /* Generic data table */
-    table.list { width: 100%; border-collapse: collapse; font-size: 9pt; }
-    table.list th, table.list td { text-align: left; padding: 3px 6px; border-bottom: 1px solid #ddd; vertical-align: top; }
-    table.list th { background: var(--bg-shade); font-size: 8pt; text-transform: uppercase; letter-spacing: 0.6px; color: var(--ink-soft); }
-    table.list td.num { font-weight: 700; color: var(--red); white-space: nowrap; font-size: 9.5pt; }
-
-    /* Decision tree */
-    .tree { display: grid; grid-template-columns: 1fr 1fr; gap: 3mm; }
-    .tree .scenario {
-      border: 1px solid var(--ink);
-      padding: 5px 8px;
-      page-break-inside: avoid;
-    }
-    .tree .scenario h4 {
-      font-family: var(--serif);
-      font-size: 10pt;
-      font-weight: 700;
-      color: var(--red);
-      margin-bottom: 3px;
-    }
-    .tree .scenario ol { margin-left: 14px; font-size: 8.5pt; line-height: 1.4; }
-    .tree .scenario ol li { margin-bottom: 2px; }
-
-    /* Safe-corridor neighbourhood lists */
-    .corridor { display: grid; grid-template-columns: 1fr 1fr; gap: 4mm; font-size: 9pt; }
-    .corridor .col { padding: 6px 10px; }
-    .corridor .col.safe { border: 1.5px solid #1f6f3f; background: #ecf6ef; }
-    .corridor .col.avoid { border: 1.5px solid var(--red); background: #fbecea; }
-    .corridor h4 {
-      font-size: 9pt;
-      text-transform: uppercase;
-      letter-spacing: 0.8px;
-      font-weight: 800;
-      margin-bottom: 4px;
-    }
-    .corridor .col.safe h4 { color: #1f6f3f; }
-    .corridor .col.avoid h4 { color: var(--red-dark); }
-    .corridor ul { margin-left: 14px; }
-    .corridor li { margin: 1px 0; line-height: 1.3; }
-
-    /* Six rules grid */
-    .rules { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 3mm; }
-    .rule {
+    /* ---- Quick-action box ------------------------------------------------ */
+    .quick {
       border-left: 3px solid var(--red);
-      padding: 3px 8px;
       background: var(--bg-shade);
+      padding: 5px 9px;
       font-size: 8.5pt;
-      line-height: 1.3;
-      page-break-inside: avoid;
+      line-height: 1.4;
+      margin-bottom: 3mm;
     }
-    .rule strong { display: block; font-size: 9pt; color: var(--red-dark); margin-bottom: 2px; }
+    .quick strong { color: var(--red-dark); }
 
-    /* Spanish phrases box */
-    .phrases { columns: 2; column-gap: 6mm; font-size: 9pt; }
-    .phrases .ph { break-inside: avoid; padding: 3px 0; border-bottom: 1px dotted #ccc; }
-    .phrases .ph .es { font-family: var(--serif); font-weight: 700; color: var(--ink); display: block; }
-    .phrases .ph .en { font-size: 8pt; color: var(--ink-soft); display: block; }
+    /* ---- Spanish phrases (compact, 3-col) -------------------------------- */
+    .phrases { columns: 3; column-gap: 5mm; font-size: 8pt; }
+    .phrases .ph { break-inside: avoid; padding: 2px 0; border-bottom: 1px dotted #ccc; }
+    .phrases .ph .es { font-family: var(--serif); font-weight: 700; color: var(--ink); display: block; line-height: 1.2; }
+    .phrases .ph .en { font-size: 7pt; color: var(--ink-soft); display: block; line-height: 1.2; }
 
-    /* Footer */
-    .sheet-footer {
-      margin-top: 4mm;
-      padding-top: 4px;
-      border-top: 1px solid var(--ink);
+    /* ---- Six rules (3-col compact) --------------------------------------- */
+    .rules { display: grid; grid-template-columns: repeat(3, 1fr); gap: 2mm 3mm; }
+    .rule {
+      border-left: 2.5px solid var(--red);
+      padding: 2px 7px;
+      background: var(--bg-shade);
       font-size: 7.5pt;
+      line-height: 1.3;
+    }
+    .rule strong { display: block; font-size: 8pt; color: var(--red-dark); margin-bottom: 1px; }
+
+    /* ---- Footer ---------------------------------------------------------- */
+    .sheet-footer {
+      margin-top: 3mm;
+      padding-top: 3px;
+      border-top: 1px solid var(--ink);
+      font-size: 7pt;
       color: var(--ink-soft);
       display: flex;
       justify-content: space-between;
       gap: 16px;
     }
 
+    /* ---- Embassy filtering: show only the selected one ------------------- */
+    [data-embassy-card] { display: none; }
+    [data-embassy-card].is-selected { display: block; }
+
     /* ------------------ PRINT RULES --------------------------------------- */
     @page {
       size: A4;
-      margin: 10mm 10mm 12mm;
+      margin: 8mm 8mm 10mm;
     }
     @media print {
       html, body { background: #fff; }
       body { padding: 0; }
       .screen-toolbar, .page-marker { display: none !important; }
+
+      /* The pre-departure checklist becomes its own throwaway sheet,
+         printed BEFORE the keepsake emergency card. */
+      .prep {
+        max-width: none;
+        width: auto;
+        margin: 0;
+        padding: 0;
+        background: #fff;
+        border: 0;
+        border-radius: 0;
+        page-break-before: always;
+      }
+      .prep::before { display: none; }
+      .prep h2 { font-family: var(--serif); font-size: 18pt; color: var(--ink); margin-bottom: 4px; }
+      .prep .lead { font-size: 10pt; color: var(--ink-soft); margin-bottom: 10mm; }
+      .prep ul { gap: 4mm 8mm; }
+      .prep li { font-size: 10.5pt; line-height: 1.5; padding: 3px 0; }
+      .prep li .box { width: 16px; height: 16px; border-width: 1.5px; }
+      .prep::after {
+        content: "Throwaway page — keep only the card from the previous sheet.";
+        display: block;
+        margin-top: 10mm;
+        padding-top: 4mm;
+        border-top: 1px solid #999;
+        font-size: 8pt;
+        font-style: italic;
+        color: var(--ink-soft);
+        text-align: center;
+      }
+
       .page {
         width: auto;
         min-height: auto;
         margin: 0;
         padding: 0;
         box-shadow: none;
-        page-break-after: always;
       }
-      .page:last-of-type { page-break-after: auto; }
       .page::before { display: none; }
-      [contenteditable="true"] { outline: none !important; background: transparent !important; }
+      [contenteditable="true"] {
+        background: transparent !important;
+        border-bottom: none !important;
+        padding: 0 !important;
+      }
+      [contenteditable="true"]:empty::before { content: ""; }
       a { color: inherit; text-decoration: none; }
     }
 
     @media (max-width: 860px) {
       .page { width: 100%; padding: 16px; box-shadow: none; }
-      .addr-grid, .call-panel, .two-col, .tree, .corridor, .rules { grid-template-columns: 1fr; }
-      .phrases { columns: 1; }
+      .me-box, .call-row, .addr-grid { grid-template-columns: 1fr; }
+      .phrases { columns: 2; }
+      .rules { grid-template-columns: 1fr; }
     }
   </style>
 </head>
 <body>
 
+  {# ====================================================================
+     SCREEN-ONLY TOOLBAR — clearly explains editability + embassy picker.
+     ==================================================================== #}
   <div class="screen-toolbar">
-    <div>
-      <strong>Caracas Emergency Card — print preview</strong><br>
-      Two A4 pages, double-sided. Edit any underlined field directly in the page, then print.
+    <div class="toolbar-head">
+      <h1>Caracas Emergency Card — personalize, then print one page</h1>
+      <p>
+        Pick your embassy, click any <strong>highlighted field</strong> to type into it, then print.
+      </p>
     </div>
-    <div class="actions">
-      <button type="button" class="secondary" onclick="resetFields()">Clear my info</button>
-      <button type="button" onclick="window.print()">Print this card</button>
+    <div class="toolbar-body">
+      <div>
+        <label for="embassy-picker">Which embassy should appear on the card?</label>
+        <select id="embassy-picker">
+          {% for e in embassies_top %}
+          <option value="{{ e.short }}"{% if loop.first %} selected{% endif %}>
+            {{ e.country_en }} — {{ e.address_short }}
+          </option>
+          {% endfor %}
+        </select>
+      </div>
+      <div class="toolbar-actions">
+        <button type="button" class="secondary" onclick="resetFields()">Clear my info</button>
+        <button type="button" onclick="window.print()">Print this card</button>
+      </div>
     </div>
   </div>
 
   {# =====================================================================
-     PAGE 1 — FRONT — Spanish-first "show this to a stranger / driver"
+     THE PRINTABLE PAGE — single A4 sheet (the keepsake card).
      ===================================================================== #}
-  <article class="page" data-page="front">
-    <span class="page-marker">Page 1 / Front · Show this to anyone</span>
-
+  <article class="page">
     <header class="sheet-header">
       <div class="es">EMERGENCIA<br>POR FAVOR AYÚDEME</div>
       <div class="en">
         EMERGENCY · PLEASE HELP ME
-        <small>I am a foreign visitor. Please call one of the numbers below or take me to one of these addresses.</small>
+        <small>Foreign visitor — please call a number below or take me to one of these addresses.</small>
       </div>
     </header>
 
-    <div class="helpme">
-      <div class="es">Soy un(a) visitante extranjero(a). No hablo español bien.</div>
-      <div class="en">If I am unconscious or in trouble, please help.</div>
-    </div>
-
     {# ---- WHO I AM (fillable) ---- #}
     <section class="block">
-      <div class="block-title">Mis datos <span class="en">My details</span></div>
+      <div class="block-title">Mis datos <span class="en">My details — type to fill</span></div>
       <div class="me-box">
-        <div class="row"><label>Nombre <span class="en">Name</span></label><div class="val" contenteditable="true" data-field="name"></div></div>
-        <div class="row"><label>Pasaporte # <span class="en">Passport #</span></label><div class="val" contenteditable="true" data-field="passport"></div></div>
-        <div class="row"><label>Nacionalidad <span class="en">Nationality</span></label><div class="val" contenteditable="true" data-field="nationality"></div></div>
-        <div class="row"><label>Tipo de sangre <span class="en">Blood type</span></label><div class="val" contenteditable="true" data-field="blood"></div></div>
-        <div class="row"><label>Alergias / medicinas <span class="en">Allergies / meds</span></label><div class="val" contenteditable="true" data-field="medical"></div></div>
-        <div class="row"><label>Mi hotel <span class="en">My hotel</span></label><div class="val" contenteditable="true" data-field="hotel"></div></div>
-        <div class="row"><label>Tel. del hotel <span class="en">Hotel phone</span></label><div class="val" contenteditable="true" data-field="hotel_phone"></div></div>
+        <div class="row"><label>Nombre <span class="en">Name</span></label><div class="val" contenteditable="true" data-field="name" data-placeholder="Jane Doe"></div></div>
+        <div class="row"><label>Pasaporte <span class="en">Passport #</span></label><div class="val" contenteditable="true" data-field="passport" data-placeholder="123456789"></div></div>
+        <div class="row"><label>Nacionalidad <span class="en">Nationality</span></label><div class="val" contenteditable="true" data-field="nationality" data-placeholder="USA"></div></div>
+        <div class="row"><label>Sangre <span class="en">Blood type</span></label><div class="val" contenteditable="true" data-field="blood" data-placeholder="O+"></div></div>
+        <div class="row"><label>Alergias / med. <span class="en">Allergies / meds</span></label><div class="val" contenteditable="true" data-field="medical" data-placeholder="Penicillin · diabetic"></div></div>
+        <div class="row"><label>Mi hotel <span class="en">My hotel</span></label><div class="val" contenteditable="true" data-field="hotel" data-placeholder="JW Marriott, El Rosal"></div></div>
+        <div class="row"><label>Tel. hotel <span class="en">Hotel phone</span></label><div class="val" contenteditable="true" data-field="hotel_phone" data-placeholder="+58 212 957-2222"></div></div>
+        <div class="row"><label>Contacto <span class="en">Home contact + WhatsApp</span></label><div class="val" contenteditable="true" data-field="home_contact" data-placeholder="John Doe · +1 415 555-0100"></div></div>
       </div>
     </section>
 
     {# ---- BIG NUMBERS A STRANGER CAN DIAL ---- #}
     <section class="block">
-      <div class="block-title">Llame a este número <span class="en">Please call this number</span></div>
-      <div class="call-panel">
+      <div class="call-row">
         <div class="call">
           <div class="label-es">Emergencias locales</div>
           <div class="label-en">Local emergency services</div>
           <div class="num">911</div>
-          <div class="sub">Policía / Ambulancia / Bomberos</div>
+          <div class="sub">Policía · Ambulancia · Bomberos</div>
         </div>
         <div class="call">
           <div class="label-es">Mi embajada (24 h)</div>
           <div class="label-en">My embassy after-hours line</div>
-          <div class="num" contenteditable="true" data-field="my_embassy_phone">+1 202 501-4444</div>
-          <div class="sub" contenteditable="true" data-field="my_embassy_label">US — circle the embassy on the back</div>
+          <div class="num" id="call-embassy-num">+1 202 501-4444</div>
+          <div class="sub" id="call-embassy-sub">Estados Unidos</div>
         </div>
       </div>
     </section>
 
-    {# ---- ADDRESSES TO SHOW THE DRIVER ---- #}
+    {# ---- HOSPITAL + SELECTED EMBASSY ADDRESSES (Spanish, for taxi) ---- #}
     <section class="block">
-      <div class="block-title">Lléveme a una de estas direcciones <span class="en">Please take me to one of these addresses</span></div>
-
-      <div class="addr-grid cols-1" style="margin-bottom: 4mm;">
-        <div class="addr" style="border-color: var(--red); border-width: 2px;">
-          <span class="flag" style="background: var(--red);">HOSPITAL</span>
-          <h3>Si estoy herido(a) — lléveme al hospital privado más cercano</h3>
-          <div class="note">If I am injured, take me to the nearest private hospital below. Avoid public hospitals.</div>
-        </div>
-      </div>
-
+      <div class="block-title">Lléveme aquí <span class="en">Take me to one of these addresses</span></div>
       <div class="addr-grid">
-        {% for m in medical[:4] %}
-        <div class="addr">
-          <span class="flag" style="background: var(--red-dark);">HOSP</span>
+        {% for m in medical[:2] %}
+        <div class="addr hospital">
+          <span class="flag">HOSP</span>
           <h3>{{ m.name }}</h3>
-          <div class="address">{{ m.neighborhood }} · Caracas</div>
+          <div class="address">{{ m.neighborhood }}, Caracas</div>
           {% if m.phone %}<div class="phone">{{ m.phone }}</div>{% endif %}
-          <div class="note">{{ m.notes }}</div>
         </div>
         {% endfor %}
       </div>
-    </section>
-
-    {# ---- EMBASSIES — Spanish addresses for taxi drivers ---- #}
-    <section class="block">
-      <div class="block-title">Embajadas en Caracas <span class="en">Embassies — circle yours, then show this to the driver</span></div>
-      <div class="addr-grid">
+      <div style="margin-top: 3mm;">
         {% for e in embassies_top %}
-        <div class="addr">
+        <div class="addr" data-embassy-card data-embassy-key="{{ e.short }}">
           <span class="flag">{{ e.short }}</span>
           <h3>Embajada de {{ e.country_es }}</h3>
           <div class="address">{{ e.address }}</div>
-          {% if e.phone %}<div class="phone">{{ e.phone }}</div>{% endif %}
-          {% if e.after_hours and e.after_hours != e.phone %}<div class="note">24h: {{ e.after_hours }}</div>{% endif %}
+          {% if e.phone %}<div class="phone">{{ e.phone }}{% if e.after_hours and e.after_hours != e.phone %} · 24h: {{ e.after_hours }}{% endif %}</div>{% endif %}
         </div>
         {% endfor %}
       </div>
     </section>
 
-    <footer class="sheet-footer">
-      <span>Caracas Emergency Card · Front · Updated {{ updated_label }}</span>
-      <span>caracasresearch.com/travel/emergency-card</span>
-    </footer>
-  </article>
-
-  {# =====================================================================
-     PAGE 2 — BACK — English "for me, when I'm rattled"
-     ===================================================================== #}
-  <article class="page" data-page="back">
-    <span class="page-marker">Page 2 / Back · For me to reference</span>
-
-    <header class="sheet-header">
-      <div class="es" style="color: var(--navy);">PARA MÍ MISMO(A)</div>
-      <div class="en" style="color: var(--navy);">
-        FOR ME · WHAT TO DO IN AN INCIDENT
-        <small>Calm. Read top to bottom. Call the right number first.</small>
-      </div>
-    </header>
-
-    {# ---- DECISION TREE ---- #}
+    {# ---- WHAT TO DO (3 short scenarios) ---- #}
     <section class="block">
-      <div class="block-title">Do this first <span class="en">Decision tree by scenario</span></div>
-      <div class="tree">
-        <div class="scenario">
-          <h4>1. Crime / robbery / kidnap attempt</h4>
-          <ol>
-            <li>Comply with the attacker. Hand over the decoy wallet.</li>
-            <li>Once safe, call your embassy 24 h line (front of card).</li>
-            <li>Then call your security firm: <strong>Crisis24 +1 877 484-1610</strong> or <strong>ISOS +1 215 942-8478</strong>.</li>
-            <li>File a police report only after embassy guidance.</li>
-          </ol>
-        </div>
-        <div class="scenario">
-          <h4>2. Medical emergency</h4>
-          <ol>
-            <li>Call ISOS or your insurer first — they coordinate the hospital and direct billing.</li>
-            <li>Go to a <strong>private</strong> hospital (front of card). Avoid public hospitals.</li>
-            <li>Show the medical strip on the front (blood type, meds, allergies).</li>
-          </ol>
-        </div>
-        <div class="scenario">
-          <h4>3. Detained at a checkpoint (GNB / PNB)</h4>
-          <ol>
-            <li>Be polite. Do not photograph or argue.</li>
-            <li>Present passport + visa. Do not sign anything.</li>
-            <li>Insist on embassy notification. Memorise the unit name and badge numbers.</li>
-            <li>Call your embassy as soon as released.</li>
-          </ol>
-        </div>
-        <div class="scenario">
-          <h4>4. Lost / stolen passport</h4>
-          <ol>
-            <li>Use the photocopy in your other shoe / hotel safe.</li>
-            <li>Walk in to your embassy during business hours.</li>
-            <li>File a denuncia at CICPC <em>only</em> if your embassy asks for one.</li>
-            <li>Cancel cards via the numbers written below.</li>
-          </ol>
-        </div>
+      <div class="quick">
+        <strong>Crime / robbery:</strong> comply, hand over decoy wallet, then call your embassy and Crisis24 +1 877 484-1610. &nbsp;
+        <strong>Medical:</strong> call International SOS +1 215 942-8478, then go to a private hospital above. &nbsp;
+        <strong>Detained at GNB checkpoint:</strong> polite, no photos, present passport, do not sign anything, insist on embassy notification.
       </div>
     </section>
 
-    <div class="two-col">
-      {# ---- EMERGENCY NUMBERS ---- #}
-      <section class="block">
-        <div class="block-title">Phone numbers</div>
-        <table class="list">
-          <tbody>
-            {% for e in emergency %}
-            <tr>
-              <td>{{ e.label }}</td>
-              <td class="num">{{ e.number }}</td>
-            </tr>
-            {% endfor %}
-          </tbody>
-        </table>
-      </section>
-
-      {# ---- MY CONTACTS ---- #}
-      <section class="block">
-        <div class="block-title">My in-country contacts</div>
-        <div class="me-box">
-          <div class="row"><label>Driver / fixer</label><div class="val" contenteditable="true" data-field="driver"></div></div>
-          <div class="row"><label>Driver plate</label><div class="val" contenteditable="true" data-field="driver_plate"></div></div>
-          <div class="row"><label>Insurer 24/7</label><div class="val" contenteditable="true" data-field="insurer"></div></div>
-          <div class="row"><label>Policy #</label><div class="val" contenteditable="true" data-field="policy"></div></div>
-          <div class="row"><label>Home contact</label><div class="val" contenteditable="true" data-field="home_contact"></div></div>
-          <div class="row"><label>Home WhatsApp</label><div class="val" contenteditable="true" data-field="home_whatsapp"></div></div>
-          <div class="row"><label>Bank cancel #</label><div class="val" contenteditable="true" data-field="bank"></div></div>
-          <div class="row"><label>Flight out</label><div class="val" contenteditable="true" data-field="flight"></div></div>
-        </div>
-      </section>
-    </div>
-
-    {# ---- SAFE / AVOID CORRIDOR ---- #}
+    {# ---- SIX RULES + ESSENTIAL PHRASES, side by side ---- #}
     <section class="block">
-      <div class="block-title">Safe corridor — stay east-central, daylight</div>
-      <div class="corridor">
-        <div class="col safe">
-          <h4>Stay inside</h4>
-          <ul>
-            <li>Las Mercedes</li>
-            <li>La Castellana</li>
-            <li>Altamira</li>
-            <li>El Rosal · Chacao</li>
-            <li>Los Palos Grandes</li>
-            <li>Campo Alegre · Country Club</li>
-            <li>Valle Arriba (residential)</li>
-          </ul>
-        </div>
-        <div class="col avoid">
-          <h4>Do not enter</h4>
-          <ul>
-            <li>Petare</li>
-            <li>Catia</li>
-            <li>23 de Enero</li>
-            <li>El Valle</li>
-            <li>Antímano</li>
-            <li>Any cerro / barrio (informal hillside)</li>
-            <li>Maiquetía / Catia La Mar after dark</li>
-          </ul>
-        </div>
-      </div>
-    </section>
-
-    {# ---- SIX NON-NEGOTIABLE RULES ---- #}
-    <section class="block">
-      <div class="block-title">Six non-negotiable rules</div>
+      <div class="block-title">Six rules <span class="en">non-negotiable</span></div>
       <div class="rules">
-        <div class="rule"><strong>Never a street taxi</strong>Pre-arrange every car. Express kidnap starts with unlicensed taxis.</div>
-        <div class="rule"><strong>Move 07:00–18:00</strong>Schedule all hotel ↔ meeting ↔ airport moves in daylight.</div>
-        <div class="rule"><strong>Low profile</strong>No watch, no jewellery, no DSLR, no phone in hand. Branded laptop bags off.</div>
-        <div class="rule"><strong>Decoy wallet</strong>$20–40 + an expired card to hand over. Real funds in money belt.</div>
-        <div class="rule"><strong>Comply at GNB</strong>Polite. Passport + visa. Do not photograph. Do not negotiate.</div>
-        <div class="rule"><strong>Two-deep comms</strong>Itinerary + check-ins to a contact at home twice daily.</div>
+        <div class="rule"><strong>Never a street taxi</strong>Pre-arrange every car.</div>
+        <div class="rule"><strong>Move 07:00–18:00</strong>All transfers in daylight.</div>
+        <div class="rule"><strong>Low profile</strong>No watch, no jewellery, no DSLR, no phone in hand.</div>
+        <div class="rule"><strong>Decoy wallet</strong>$20–40 to hand over.</div>
+        <div class="rule"><strong>Comply at GNB</strong>No photos, no negotiation.</div>
+        <div class="rule"><strong>Two-deep comms</strong>Itinerary &amp; check-ins to home twice daily.</div>
       </div>
     </section>
 
-    {# ---- MONEY ---- #}
     <section class="block">
-      <div class="block-title">Money cheat-sheet</div>
-      <table class="list">
-        <tbody>
-          <tr><td><strong>Cash</strong></td><td>USD only · post-2009 series · undamaged · small bills ($1, $5, $10, $20). Bring $200–500/wk.</td></tr>
-          <tr><td><strong>Cards</strong></td><td>Visa more reliable than Mastercard / Amex. Many merchants prefer Zelle.</td></tr>
-          <tr><td><strong>Zelle</strong></td><td>Set up a US Zelle account before flying — informal default cashless rail.</td></tr>
-          <tr><td><strong>ATMs</strong></td><td>Last resort. Tiny daily Bs. limits, frequent cash-out conditions.</td></tr>
-          <tr><td><strong>Rate</strong></td><td>Two rates: BCV official + parallel (typically 25–35% higher). Confirm before negotiating.</td></tr>
-        </tbody>
-      </table>
-    </section>
-
-    {# ---- SPANISH PHRASES ---- #}
-    <section class="block">
-      <div class="block-title">Essential Spanish phrases</div>
+      <div class="block-title">Frases esenciales <span class="en">Essential Spanish phrases</span></div>
       <div class="phrases">
         <div class="ph"><span class="es">Necesito ayuda.</span><span class="en">I need help.</span></div>
         <div class="ph"><span class="es">Llame a la policía.</span><span class="en">Call the police.</span></div>
         <div class="ph"><span class="es">Llame a una ambulancia.</span><span class="en">Call an ambulance.</span></div>
         <div class="ph"><span class="es">Lléveme al hospital privado.</span><span class="en">Take me to the private hospital.</span></div>
-        <div class="ph"><span class="es">Lléveme a la embajada de [país].</span><span class="en">Take me to the [country] embassy.</span></div>
+        <div class="ph"><span class="es">Lléveme a mi embajada.</span><span class="en">Take me to my embassy.</span></div>
         <div class="ph"><span class="es">No hablo español.</span><span class="en">I don't speak Spanish.</span></div>
         <div class="ph"><span class="es">Necesito un médico.</span><span class="en">I need a doctor.</span></div>
-        <div class="ph"><span class="es">Me robaron / Me asaltaron.</span><span class="en">I was robbed / mugged.</span></div>
+        <div class="ph"><span class="es">Me robaron.</span><span class="en">I was robbed.</span></div>
         <div class="ph"><span class="es">Perdí mi pasaporte.</span><span class="en">I lost my passport.</span></div>
-        <div class="ph"><span class="es">Soy diabético(a).</span><span class="en">I am diabetic.</span></div>
-        <div class="ph"><span class="es">Soy alérgico(a) a…</span><span class="en">I am allergic to…</span></div>
-        <div class="ph"><span class="es">Llame a este número, por favor.</span><span class="en">Call this number, please.</span></div>
-        <div class="ph"><span class="es">¿Cuánto cuesta? — En dólares.</span><span class="en">How much? — In dollars.</span></div>
+        <div class="ph"><span class="es">Llame a este número.</span><span class="en">Call this number.</span></div>
+        <div class="ph"><span class="es">¿Cuánto cuesta? En dólares.</span><span class="en">How much? In dollars.</span></div>
         <div class="ph"><span class="es">Pare aquí, por favor.</span><span class="en">Stop here, please.</span></div>
-        <div class="ph"><span class="es">No tengo más dinero.</span><span class="en">I have no more money.</span></div>
-        <div class="ph"><span class="es">Mi familia está en [país].</span><span class="en">My family is in [country].</span></div>
       </div>
     </section>
 
     <footer class="sheet-footer">
-      <span>Caracas Emergency Card · Back · Updated {{ updated_label }} · Print double-sided, fold into passport.</span>
-      <span>Caracas Research</span>
+      <span>Caracas Emergency Card · Updated {{ updated_label }} · Fold into passport.</span>
+      <span>caracasresearch.com/travel/emergency-card</span>
     </footer>
   </article>
 
+  {# =====================================================================
+     PREP CHECKLIST — prints as its own throwaway page AFTER the card.
+     ===================================================================== #}
+  <div class="prep">
+    <h2>Before you land — do these once, then throw this page away</h2>
+    <p class="lead">
+      The emergency card on the previous sheet only works if you've done the
+      offline prep it depends on. Tick these off in the days before your
+      flight, then bin this page — keep only the card.
+    </p>
+    <ul>
+      <li><span class="box"></span><div><strong>Photocopy passport &amp; visa</strong> — carry one paper copy on you, leave one in the hotel safe, leave a third with a contact at home.</div></li>
+      <li><span class="box"></span><div><strong>Hide emergency cash ($100–200)</strong> — inside a shoe insole, hidden bag pocket, or money belt. Small undamaged USD bills, post-2009 series.</div></li>
+      <li><span class="box"></span><div><strong>Decoy wallet</strong> — $20–40 plus an expired card to hand over in a robbery.</div></li>
+      <li><span class="box"></span><div><strong>Register with your embassy</strong> — US: STEP. UK: GOV.UK alerts. Canada: ROCA. Germany: Elefand. France: Ariane. Free, 5 minutes.</div></li>
+      <li><span class="box"></span><div><strong>Confirm insurance covers Venezuela</strong> — in writing: medical evacuation, kidnap &amp; ransom, civil-unrest cancellation.</div></li>
+      <li><span class="box"></span><div><strong>Pre-arrange airport transfer</strong> — book a marked vehicle through the hotel before you board. Never plan to find a taxi at SVMI.</div></li>
+      <li><span class="box"></span><div><strong>Activate eSIM + install VPN</strong> — Airalo / Holafly Venezuela eSIM; ExpressVPN / Mullvad / Proton signed-in before takeoff.</div></li>
+      <li><span class="box"></span><div><strong>Set up Zelle, bring USD cash</strong> — $200–500/wk in $1, $5, $10, $20. Undamaged, post-2009.</div></li>
+      <li><span class="box"></span><div><strong>Download offline maps</strong> — Caracas in Google Maps, plus Maps.me / Organic Maps as a backup.</div></li>
+      <li><span class="box"></span><div><strong>Two-deep comms</strong> — share itinerary + daily check-in plan with someone at home.</div></li>
+      <li><span class="box"></span><div><strong>Fill out the card</strong> — name, passport, blood type, allergies, hotel and home contact in the previous sheet. It auto-saves.</div></li>
+      <li><span class="box"></span><div><strong>Pick your embassy + print</strong> — choose your embassy in the toolbar above and print both sheets.</div></li>
+    </ul>
+  </div>
+
 <script>
-// Persist editable fields to localStorage so the user can re-print without re-typing.
+// --------- Editable-field persistence (localStorage) ---------
 (function() {
-  const KEY = 'caracas-emergency-card.v1';
+  const KEY = 'caracas-emergency-card.v2';
   const fields = document.querySelectorAll('[contenteditable="true"][data-field]');
   let saved = {};
   try { saved = JSON.parse(localStorage.getItem(KEY) || '{}'); } catch (e) { saved = {}; }
@@ -680,14 +674,46 @@
   });
   window.resetFields = function() {
     if (!confirm('Clear all your saved info on this card?')) return;
-    fields.forEach(function(el) {
-      const name = el.getAttribute('data-field');
-      // Preserve the default placeholder for the embassy phone/label, blank everything else.
-      if (name === 'my_embassy_phone' || name === 'my_embassy_label') return;
-      el.textContent = '';
-    });
+    fields.forEach(function(el) { el.textContent = ''; });
     try { localStorage.removeItem(KEY); } catch (e) {}
   };
+})();
+
+// --------- Embassy picker: show only the selected embassy ---------
+(function() {
+  const KEY = 'caracas-emergency-card.embassy';
+  const picker = document.getElementById('embassy-picker');
+  const cards = document.querySelectorAll('[data-embassy-card]');
+  const callNum = document.getElementById('call-embassy-num');
+  const callSub = document.getElementById('call-embassy-sub');
+  if (!picker) return;
+
+  // Load saved choice if present.
+  try {
+    const saved = localStorage.getItem(KEY);
+    if (saved) {
+      for (const opt of picker.options) {
+        if (opt.value === saved) { picker.value = saved; break; }
+      }
+    }
+  } catch (e) {}
+
+  function applySelection() {
+    const key = picker.value;
+    cards.forEach(function(c) {
+      c.classList.toggle('is-selected', c.getAttribute('data-embassy-key') === key);
+    });
+    const selectedCard = document.querySelector('[data-embassy-key="' + key + '"]');
+    if (selectedCard && callNum && callSub) {
+      const phone = selectedCard.querySelector('.phone');
+      const heading = selectedCard.querySelector('h3');
+      if (phone) callNum.textContent = (phone.textContent || '').split('·')[0].trim();
+      if (heading) callSub.textContent = (heading.textContent || '').replace('Embajada de', '').trim();
+    }
+    try { localStorage.setItem(KEY, key); } catch (e) {}
+  }
+  picker.addEventListener('change', applySelection);
+  applySelection();
 })();
 </script>
 </body>
