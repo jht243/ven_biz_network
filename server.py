@@ -799,6 +799,12 @@ def tools_index():
 
         tools = [
             {
+                "url": "/travel/emergency-card",
+                "name": "Caracas Emergency Card — Printable Pocket Sheet",
+                "category": "Travel",
+                "summary": "Print a single A4 sheet for your passport: bilingual hospital and embassy addresses a taxi driver can read, big phone numbers a stranger can dial, your blood type and home contact, and a throwaway pre-departure checklist. Pick your embassy and the card auto-personalizes.",
+            },
+            {
                 "url": "/tools/ofac-venezuela-sanctions-checker",
                 "name": "OFAC Venezuela Sanctions Exposure Checker",
                 "category": "Compliance",
