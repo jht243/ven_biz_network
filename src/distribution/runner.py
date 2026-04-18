@@ -18,7 +18,7 @@ from datetime import datetime, timedelta
 from typing import Iterable
 
 from src.config import settings
-from src.distribution import google_indexing
+from src.distribution import google_indexing, indexnow
 from src.models import BlogPost, DistributionLog, SessionLocal, init_db
 
 
@@ -26,6 +26,7 @@ logger = logging.getLogger(__name__)
 
 
 CHANNEL_GOOGLE_INDEXING = "google_indexing"
+CHANNEL_INDEXNOW = "indexnow"
 
 # Don't re-ping the same URL on the same channel within this window.
 # Google's docs say frequent re-notifications for unchanged URLs are
@@ -175,9 +176,84 @@ def run_google_indexing() -> dict:
         db.close()
 
 
+def run_indexnow() -> dict:
+    """Submit recent BlogPost URLs + the standard daily-changing static
+    pages to IndexNow in a single batched POST. IndexNow forwards to all
+    participating engines (Bing, Yandex, Seznam, Naver, Mojeek, ...).
+
+    No credentials required — the protocol authenticates by domain
+    ownership via /{key}.txt, which Flask serves automatically.
+    """
+    init_db()
+    db = SessionLocal()
+    try:
+        already_submitted = _recent_pinged_urls(db, CHANNEL_INDEXNOW, _REPING_COOLDOWN)
+
+        # Same lookback window as Google Indexing so the two channels
+        # operate on a coherent slice of new content.
+        cutoff = datetime.utcnow() - timedelta(days=settings.google_indexing_lookback_days)
+        new_posts = (
+            db.query(BlogPost)
+            .filter(BlogPost.created_at >= cutoff)
+            .order_by(BlogPost.created_at.desc())
+            .limit(500)  # IndexNow accepts up to 10k per call; 500 is plenty.
+            .all()
+        )
+
+        candidates: list[tuple[str, str, int | None]] = []
+        for post in new_posts:
+            url = _blog_url(post)
+            if url in already_submitted:
+                continue
+            candidates.append((url, "blog_post", post.id))
+
+        for path in _STATIC_URLS_TO_PING_DAILY:
+            url = _site_base() + path
+            if url in already_submitted:
+                continue
+            candidates.append((url, "static", None))
+
+        if not candidates:
+            return {"status": "ok", "submitted": 0, "reason": "nothing new"}
+
+        # IndexNow takes the entire batch in one POST, so we record one
+        # DistributionLog row per URL after a single network call.
+        urls_only = [c[0] for c in candidates]
+        result = indexnow.submit_urls(urls_only)
+
+        for url, entity_type, entity_id in candidates:
+            _record(
+                db,
+                channel=CHANNEL_INDEXNOW,
+                url=url,
+                success=result.success,
+                response_code=result.status_code,
+                response_snippet=result.response_snippet,
+                entity_type=entity_type,
+                entity_id=entity_id,
+            )
+
+        db.commit()
+        return {
+            "status": "ok" if result.success else "error",
+            "submitted": result.submitted,
+            "response_code": result.status_code,
+        }
+    except Exception as exc:
+        logger.exception("indexnow runner failed: %s", exc)
+        try:
+            db.rollback()
+        except Exception:
+            pass
+        return {"status": "error", "error": str(exc)}
+    finally:
+        db.close()
+
+
 def run_all() -> dict:
     """Run every enabled distribution channel. Returns per-channel summary."""
     return {
         CHANNEL_GOOGLE_INDEXING: run_google_indexing(),
+        CHANNEL_INDEXNOW: run_indexnow(),
         # Future: bluesky, mastodon, telegram, linkedin, threads, medium
     }

@@ -1670,10 +1670,17 @@ def travel_emergency_card():
             country_es, short = country_es_map.get(
                 e["country"], (e["country"], e["country"][:2].upper())
             )
+            # Short address label for the dropdown — first comma-separated
+            # chunk of the address is usually the building / street, which
+            # is enough for a user to recognise their embassy quickly.
+            address = e.get("address", "")
+            address_short = address.split(",")[0].strip() if address else ""
             embassies_top.append({
+                "country_en": e["country"],
                 "country_es": country_es,
                 "short": short,
-                "address": e.get("address", ""),
+                "address": address,
+                "address_short": address_short,
                 "phone": e.get("phone", ""),
                 "after_hours": e.get("after_hours", ""),
             })
@@ -2070,6 +2077,23 @@ def sitemap_xml():
         parts.append("</url>")
     parts.append("</urlset>")
     return Response("".join(parts), mimetype="application/xml")
+
+
+@app.route("/<key>.txt")
+def indexnow_key_file(key: str):
+    """
+    Serve the IndexNow ownership-proof key file at the domain root.
+    The IndexNow protocol requires that GET https://example.com/<KEY>.txt
+    return the literal key as plain text — that's how Bing / Yandex /
+    Seznam / etc. verify we own the host before accepting our pushed URLs.
+
+    We only serve our one known key; any other /<thing>.txt 404s.
+    """
+    from src.distribution.indexnow import INDEXNOW_KEY
+
+    if key == INDEXNOW_KEY:
+        return Response(INDEXNOW_KEY, mimetype="text/plain")
+    abort(404)
 
 
 @app.route("/news-sitemap.xml")
