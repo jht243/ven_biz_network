@@ -135,7 +135,7 @@ def _styles():
         "bullet": ParagraphStyle(
             "bullet", parent=base["Normal"],
             fontName="Helvetica", fontSize=9, leading=12,
-            textColor=BRAND_INK, leftIndent=10, bulletIndent=0, spaceAfter=2,
+            textColor=BRAND_INK, leftIndent=0, bulletIndent=0, spaceAfter=4,
         ),
         "kpi_label": ParagraphStyle(
             "kpi_label", parent=base["Normal"],
