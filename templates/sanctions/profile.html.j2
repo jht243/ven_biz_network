@@ -11,6 +11,7 @@
   they need to recognise the page as authoritative.
 #}
 {% extends "_base.html.j2" %}
+{% from "_cluster_nav.html.j2" import cluster_nav %}
 
 {% block content %}
 <div class="container">
@@ -157,6 +158,21 @@
       </ul>
     </div>
 
+    {# Sector backlink — bridges the sanctions cluster to the investment
+       cluster when the program code maps cleanly to a sector page.
+       e.g. an EO 13850 designation (gold sector) gets a link into
+       /sectors/mining; readers researching a sanctioned individual can
+       jump to the sector context with one click, and Google sees the
+       descriptive cross-cluster anchor. #}
+    {% if sector_link %}
+    <div class="source-citation" style="background:#eef2f7;border-left-color:#002b5e;">
+      <strong>{{ profile.display_name }}</strong> was designated under {{ profile.program }},
+      a Venezuela-sector program. For sector-level context — regulatory framework,
+      OFAC pathways, and current deal flow — see
+      <a href="{{ sector_link.path }}"><strong>{{ sector_link.anchor }}</strong></a>.
+    </div>
+    {% endif %}
+
     <div class="related">
       <h3>Other {{ profile.bucket }} on the Venezuela SDN list</h3>
       <ul>
@@ -169,5 +185,7 @@
       </p>
     </div>
   </article>
+
+  {{ cluster_nav(cluster_ctx) }}
 </div>
 {% endblock %}

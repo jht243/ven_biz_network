@@ -13,6 +13,7 @@
   fall into the same A-Z layout.
 #}
 {% extends "_base.html.j2" %}
+{% from "_cluster_nav.html.j2" import cluster_nav %}
 
 {% block content %}
 <div class="container-wide">
@@ -79,5 +80,7 @@
       </p>
     </div>
   </article>
+
+  {{ cluster_nav(cluster_ctx) }}
 </div>
 {% endblock %}

@@ -1,0 +1,166 @@
+{#
+  Cluster navigation block — the visible-to-readers, crawlable-by-Googlebot
+  manifestation of our topic-cluster topology.
+
+  Every cluster page (pillar, profile, tool, explainer, sector) renders
+  this block near the bottom so a visitor — and a crawler — can see the
+  full topical hub from any single page in the cluster.
+
+  Why this layout rather than a pure radial "back to pillar" link:
+    • Modern SEO ("topical authority", post-Helpful-Content / SGE) rewards
+      mesh-style internal linking — every cluster member links to the
+      pillar AND to every other cluster member. This block emits both:
+      pillar at top, sister-pages below.
+    • Anchor text is sourced from src/seo/cluster_topology.py so it stays
+      consistent across every page that links to a given URL. That's how
+      Google figures out "this URL is the canonical answer to this
+      question" — by seeing the same descriptive anchor used everywhere
+      it's linked.
+    • One reusable component keeps the implementation cost of adding a
+      new page near zero: register the new page in cluster_topology.py,
+      and every existing cluster member auto-discovers it as a sibling.
+
+  Inputs (passed via Jinja `cluster_ctx` dict on every render):
+      cluster_ctx.cluster   = Cluster instance (or None to skip render)
+      cluster_ctx.pillar    = ClusterLink to the pillar (or None if this IS the pillar)
+      cluster_ctx.others    = list[ClusterLink] of sister cluster members
+      cluster_ctx.is_pillar = bool — True when current page IS the pillar
+                              (changes the heading from "Continue exploring"
+                              to "What's in this hub")
+#}
+{% macro cluster_nav(cluster_ctx) -%}
+{% if cluster_ctx and cluster_ctx.cluster %}
+<aside class="topic-cluster-nav" aria-label="Topic cluster navigation">
+  <div class="topic-cluster-header">
+    <div class="topic-cluster-eyebrow">Topic cluster</div>
+    <h2 class="topic-cluster-title">
+      {% if cluster_ctx.is_pillar %}What's in this hub: {{ cluster_ctx.cluster.name }}
+      {% else %}Continue exploring: {{ cluster_ctx.cluster.name }}{% endif %}
+    </h2>
+    {% if cluster_ctx.cluster.summary %}
+    <p class="topic-cluster-summary">{{ cluster_ctx.cluster.summary }}</p>
+    {% endif %}
+  </div>
+
+  {% if cluster_ctx.pillar %}
+  <a class="topic-cluster-pillar" href="{{ cluster_ctx.pillar.path }}">
+    <div class="topic-cluster-pillar-eyebrow">Hub page</div>
+    <div class="topic-cluster-pillar-anchor">{{ cluster_ctx.pillar.anchor }}</div>
+    {% if cluster_ctx.pillar.description %}
+    <div class="topic-cluster-pillar-desc">{{ cluster_ctx.pillar.description }}</div>
+    {% endif %}
+  </a>
+  {% endif %}
+
+  {% if cluster_ctx.others %}
+  <ul class="topic-cluster-list">
+    {% for link in cluster_ctx.others %}
+    <li>
+      <a href="{{ link.path }}">{{ link.anchor }}</a>
+      {% if link.description %}<small>{{ link.description }}</small>{% endif %}
+    </li>
+    {% endfor %}
+  </ul>
+  {% endif %}
+</aside>
+{% endif %}
+{%- endmacro %}
+
+{#
+  Inline CSS — kept inside the macro file so any template that imports
+  the macro automatically inherits the styles via {% include %} of the
+  CSS partial below. Templates extending _base.html.j2 already include
+  this in {% block head_extra %}.
+#}
+{% macro cluster_nav_css() -%}
+<style>
+  .topic-cluster-nav {
+    margin: 48px 0 16px;
+    padding: 24px 22px;
+    background: #f8f9fa;
+    border-left: 4px solid #002b5e;
+    border-radius: 4px;
+  }
+  .topic-cluster-eyebrow {
+    font-family: 'Open Sans', sans-serif;
+    font-size: 11px;
+    text-transform: uppercase;
+    letter-spacing: 1.5px;
+    color: #6c757d;
+    font-weight: 700;
+    margin-bottom: 6px;
+  }
+  .topic-cluster-title {
+    font-family: 'Libre Baskerville', serif;
+    font-size: 20px;
+    color: #001f44;
+    margin: 0 0 8px;
+    line-height: 1.3;
+  }
+  .topic-cluster-summary {
+    font-size: 14px;
+    color: #495057;
+    margin: 0 0 18px;
+    line-height: 1.55;
+  }
+  .topic-cluster-pillar {
+    display: block;
+    background: #ffffff;
+    border: 1px solid #e9ecef;
+    border-left: 3px solid #cc0000;
+    padding: 14px 18px;
+    margin-bottom: 16px;
+    text-decoration: none;
+    color: inherit;
+    border-radius: 3px;
+    transition: border-color 0.15s, transform 0.15s;
+  }
+  .topic-cluster-pillar:hover {
+    border-color: #002b5e;
+    transform: translateY(-1px);
+  }
+  .topic-cluster-pillar-eyebrow {
+    font-size: 10px;
+    text-transform: uppercase;
+    letter-spacing: 1.4px;
+    color: #cc0000;
+    font-weight: 700;
+    margin-bottom: 4px;
+  }
+  .topic-cluster-pillar-anchor {
+    font-family: 'Libre Baskerville', serif;
+    font-weight: 700;
+    color: #001f44;
+    font-size: 16px;
+    line-height: 1.4;
+  }
+  .topic-cluster-pillar-desc {
+    font-size: 13px;
+    color: #495057;
+    margin-top: 4px;
+  }
+  .topic-cluster-list {
+    list-style: none;
+    margin: 0;
+    padding: 0;
+  }
+  .topic-cluster-list li {
+    border-bottom: 1px dotted #e9ecef;
+    padding: 10px 0;
+  }
+  .topic-cluster-list li:last-child { border-bottom: 0; }
+  .topic-cluster-list li a {
+    font-weight: 600;
+    color: #002b5e;
+    text-decoration: none;
+    line-height: 1.4;
+  }
+  .topic-cluster-list li a:hover { color: #cc0000; }
+  .topic-cluster-list li small {
+    display: block;
+    font-size: 12.5px;
+    color: #6c757d;
+    margin-top: 2px;
+  }
+</style>
+{%- endmacro %}

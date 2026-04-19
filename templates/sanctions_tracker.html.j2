@@ -127,6 +127,9 @@
     and the <a href="/tools/ofac-venezuela-general-licenses">general license lookup</a>.
   </p>
 
+  {% from "_cluster_nav.html.j2" import cluster_nav %}
+  {{ cluster_nav(cluster_ctx) }}
+
   <script>
     (function() {
       var table = document.getElementById('sdn-table');

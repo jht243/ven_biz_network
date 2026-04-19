@@ -719,6 +719,9 @@ def tool_ofac_sanctions_checker():
             ],
         )
 
+        from src.seo.cluster_topology import build_cluster_ctx
+        cluster_ctx = build_cluster_ctx("/tools/ofac-venezuela-sanctions-checker")
+
         template = _env.get_template("tools/ofac_sanctions_checker.html.j2")
         html = template.render(
             query=query,
@@ -726,6 +729,7 @@ def tool_ofac_sanctions_checker():
             total_sdn=total_sdn,
             seo=seo,
             jsonld=jsonld,
+            cluster_ctx=cluster_ctx,
             current_year=_date.today().year,
         )
         return Response(html, mimetype="text/html")
@@ -773,11 +777,15 @@ def tool_ofac_general_licenses():
             ],
         )
 
+        from src.seo.cluster_topology import build_cluster_ctx
+        cluster_ctx = build_cluster_ctx("/tools/ofac-venezuela-general-licenses")
+
         template = _env.get_template("tools/ofac_general_licenses.html.j2")
         html = template.render(
             licenses=licenses,
             seo=seo,
             jsonld=jsonld,
+            cluster_ctx=cluster_ctx,
             current_year=_date.today().year,
         )
         return Response(html, mimetype="text/html")
@@ -1290,12 +1298,16 @@ def sanctions_tracker():
                 ],
             }, ensure_ascii=False)
 
+            from src.seo.cluster_topology import build_cluster_ctx
+            cluster_ctx = build_cluster_ctx("/sanctions-tracker")
+
             template = _env.get_template("sanctions_tracker.html.j2")
             html = template.render(
                 sdn_entries=sdn_entries,
                 stats=stats,
                 seo=seo,
                 jsonld=jsonld,
+                cluster_ctx=cluster_ctx,
                 current_year=_date.today().year,
                 last_refreshed_local=last_refreshed_local,
                 last_refreshed_relative=last_refreshed_relative,
@@ -1411,6 +1423,9 @@ def sanctions_index_page(bucket: str):
             ],
         }, ensure_ascii=False)
 
+        from src.seo.cluster_topology import build_cluster_ctx
+        cluster_ctx = build_cluster_ctx(f"/sanctions/{bucket}")
+
         template = _env.get_template("sanctions/index.html.j2")
         html = template.render(
             bucket=bucket,
@@ -1420,6 +1435,7 @@ def sanctions_index_page(bucket: str):
             stats=s,
             seo=seo,
             jsonld=jsonld,
+            cluster_ctx=cluster_ctx,
             current_year=_date.today().year,
         )
         return Response(html, mimetype="text/html")
@@ -1598,6 +1614,10 @@ def sanctions_profile_page(bucket: str, slug: str):
             "@graph": [breadcrumb, entity_node],
         }, ensure_ascii=False)
 
+        from src.seo.cluster_topology import build_cluster_ctx, sector_for_program
+        cluster_ctx = build_cluster_ctx(profile.url_path)
+        sector_link = sector_for_program(profile.program)
+
         template = _env.get_template("sanctions/profile.html.j2")
         html = template.render(
             profile=profile,
@@ -1606,6 +1626,8 @@ def sanctions_profile_page(bucket: str, slug: str):
             related_news=related_news,
             siblings=siblings,
             stats=s,
+            sector_link=sector_link,
+            cluster_ctx=cluster_ctx,
             seo=seo,
             jsonld=jsonld,
             current_year=_date.today().year,

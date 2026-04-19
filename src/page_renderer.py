@@ -195,6 +195,41 @@ def render_blog_index(posts: Iterable) -> str:
     )
 
 
+def _sdn_actors_for_sector(sector_slug: str, *, limit: int = 10) -> list:
+    """Best-effort list of OFAC SDN profiles relevant to a sector page.
+
+    We use the program-to-sector mapping from cluster_topology to flip
+    the relationship: for any sector that is the canonical sector for
+    one or more OFAC programs, return the SDN profiles designated under
+    those programs (capped at `limit`, prioritising individuals).
+
+    Returns an empty list for sectors with no program mapping (e.g.
+    /sectors/agriculture isn't bound to a Venezuela-program EO), in
+    which case the template skips the section. This means we only
+    surface the cross-cluster section when it carries real signal.
+    """
+    from src.data.sdn_profiles import list_all_profiles
+    from src.seo.cluster_topology import program_to_sector_links
+
+    target_path = f"/sectors/{sector_slug}"
+    relevant_programs = {
+        prog for prog, link in program_to_sector_links().items()
+        if link.path == target_path
+    }
+    if not relevant_programs:
+        return []
+
+    # Sort by bucket priority (individuals first — they're the searchable
+    # name queries from GSC), then alphabetically.
+    bucket_order = {"individuals": 0, "entities": 1, "vessels": 2, "aircraft": 3}
+    candidates = [
+        p for p in list_all_profiles()
+        if (p.program or "").upper() in relevant_programs
+    ]
+    candidates.sort(key=lambda p: (bucket_order.get(p.bucket, 9), p.raw_name.upper()))
+    return candidates[:limit]
+
+
 def render_landing_page(page, *, recent_briefings: list | None = None) -> str:
     """Render a LandingPage row (pillar / sector / explainer) to HTML."""
     base = _base_url()
@@ -274,10 +309,25 @@ def render_landing_page(page, *, recent_briefings: list | None = None) -> str:
         ensure_ascii=False,
     )
 
+    from src.seo.cluster_topology import build_cluster_ctx
+    cluster_ctx = build_cluster_ctx(page.canonical_path)
+
+    # For sector landing pages, surface a "Sanctioned actors in this
+    # sector" section pulling profiles from the new SDN cluster. This
+    # is the cross-cluster bridge from /sectors/<slug> back into the
+    # sanctions cluster — the second half of the reciprocal link the
+    # SDN profile pages already make to /sectors/<slug>.
+    sector_sdn_actors: list = []
+    if page.page_type == "sector":
+        sector_slug = page.canonical_path.rsplit("/", 1)[-1]
+        sector_sdn_actors = _sdn_actors_for_sector(sector_slug)
+
     template = _env.get_template("landing.html.j2")
     return template.render(
         page=page,
         recent_briefings=recent_briefings or [],
+        sector_sdn_actors=sector_sdn_actors,
+        cluster_ctx=cluster_ctx,
         seo=seo,
         jsonld=jsonld,
         current_year=date.today().year,
