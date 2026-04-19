@@ -1206,8 +1206,16 @@ def _build_jsonld(entries: list[dict], seo: dict, generated_at: datetime) -> str
 def _build_seo(entries: list[dict], generated_at: datetime) -> dict:
     """
     Build the SEO context (meta tags, Open Graph, Twitter, canonical) for
-    the home report page. The page is news-driven, so the title and
-    description rotate with whatever's freshest.
+    the home report page.
+
+    The <title> is intentionally pinned to a stable brand + value-prop
+    pattern — only the trailing "Updated <date>" segment moves. A title
+    that fully rotates day-to-day fragments Google's authority signal
+    for the homepage URL; pinning the first half consolidates ranking
+    weight on a single canonical phrase.
+
+    The meta description still rotates with the freshest takeaway,
+    since description churn is fine and helps SERP CTR.
     """
     base = settings.site_url.rstrip("/")
 
@@ -1219,17 +1227,10 @@ def _build_seo(entries: list[dict], generated_at: datetime) -> dict:
         s for s, _ in sorted(sector_counter.items(), key=lambda kv: kv[1], reverse=True)
     ][:3]
 
-    if top_sectors:
-        sector_phrase = ", ".join(top_sectors)
-        title = (
-            f"Invest in Venezuela: {sector_phrase} & sanctions briefing "
-            f"— {generated_at.strftime('%b %d, %Y')}"
-        )
-    else:
-        title = (
-            "Invest in Venezuela: Daily sanctions, regulatory & investment briefing "
-            f"— {generated_at.strftime('%b %d, %Y')}"
-        )
+    title = (
+        "Caracas Research — Venezuela Investment Intelligence "
+        f"| Updated {generated_at.strftime('%b %d, %Y')}"
+    )
 
     if entries:
         first = entries[0]

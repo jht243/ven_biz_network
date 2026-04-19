@@ -1,0 +1,173 @@
+{#
+  /tools/public-company-venezuela-exposure-check
+
+  Interactive lookup. The user types a company name (or ticker), we
+  resolve it against the S&P 500 list, build the exposure report
+  in-process, and either (a) preview the answer with a deep-link to
+  the canonical /companies/<slug>/venezuela-exposure page, or (b) tell
+  them we don't have that ticker indexed and offer the OFAC SDN
+  checker as a generic fallback.
+#}
+{% extends "_base.html.j2" %}
+{% from "_cluster_nav.html.j2" import cluster_nav %}
+
+{% block head_extra %}
+<style>
+  .tool-form { display: flex; gap: 8px; margin: 20px 0; }
+  .tool-form input { flex: 1; padding: 14px 18px; border: 2px solid var(--sr-blue); border-radius: 3px; font-size: 16px; }
+  .tool-form button { background: var(--sr-blue); color: var(--white); border: none; padding: 14px 24px; font-size: 15px; font-weight: 600; cursor: pointer; border-radius: 3px; }
+  .tool-form button:hover { background: var(--sr-blue-dark); }
+  .examples { font-size: 13px; color: var(--sr-gray-text); margin-top: 6px; }
+  .examples a { margin-right: 12px; }
+
+  .answer-card { padding: 22px 24px; border-radius: 6px; margin: 24px 0; }
+  .answer-card h2 { font-family: var(--font-serif); font-size: 22px; margin-bottom: 6px; }
+  .answer-card .pill { display: inline-block; font-size: 11px; font-weight: 700; text-transform: uppercase; letter-spacing: 1.4px; padding: 4px 10px; border-radius: 999px; margin-bottom: 8px; }
+  .answer-card.direct { background: #fdecea; border-left: 4px solid var(--sr-red); }
+  .answer-card.direct .pill { background: var(--sr-red); color: var(--white); }
+  .answer-card.indirect { background: #fff3e0; border-left: 4px solid #f5b041; }
+  .answer-card.indirect .pill { background: #f5b041; color: var(--white); }
+  .answer-card.historical { background: #eef2f7; border-left: 4px solid var(--sr-blue); }
+  .answer-card.historical .pill { background: var(--sr-blue); color: var(--white); }
+  .answer-card.none { background: #e8f5e9; border-left: 4px solid #2e7d32; }
+  .answer-card.none .pill { background: #2e7d32; color: var(--white); }
+  .answer-card.unknown { background: #f8f9fa; border-left: 4px solid var(--sr-gray-text); }
+  .answer-card.unknown .pill { background: var(--sr-gray-text); color: var(--white); }
+
+  .answer-card .cta { display: inline-block; margin-top: 12px; background: var(--sr-blue); color: var(--white); padding: 10px 18px; border-radius: 3px; text-decoration: none; font-weight: 600; font-size: 14px; }
+  .answer-card .cta:hover { background: var(--sr-blue-dark); }
+
+  .signal-mini { background: var(--white); border: 1px solid var(--sr-gray-light); padding: 10px 14px; border-radius: 3px; margin-bottom: 8px; font-size: 13px; }
+  .signal-mini.sdn { border-left: 4px solid var(--sr-red); }
+  .signal-mini.edgar { border-left: 4px solid var(--sr-blue); }
+
+  .not-found { background: #fff3e0; border-left: 4px solid #f5b041; color: #7c4a03; padding: 16px 20px; border-radius: 3px; margin: 20px 0; }
+  .disclaimer { background: #fff3e0; border-left: 4px solid #f5b041; padding: 14px 18px; font-size: 13px; color: #7c4a03; margin: 24px 0; border-radius: 3px; }
+
+  .quick-list { columns: 2; column-gap: 16px; padding: 0; list-style: none; margin: 12px 0 24px; font-size: 14px; }
+  @media (max-width: 600px) { .quick-list { columns: 1; } }
+  .quick-list li { padding: 4px 0; break-inside: avoid; }
+</style>
+{% endblock %}
+
+{% block content %}
+<section class="container">
+
+  <nav class="breadcrumbs" aria-label="Breadcrumb">
+    <a href="/">Home</a><span>/</span>
+    <a href="/tools">Tools</a><span>/</span>
+    <span>Public Company Venezuela Exposure Check</span>
+  </nav>
+
+  <header style="margin: 16px 0 20px;">
+    <div style="font-size:12px; text-transform:uppercase; letter-spacing:1.4px; color:#cc0000; font-weight:700;">
+      Free compliance tool · Backed by OFAC + SEC EDGAR + the Caracas Research corpus
+    </div>
+    <h1 style="font-family:var(--font-serif); font-size:32px; color:var(--sr-blue-dark); margin:8px 0 10px;">
+      Public Company Venezuela Exposure Check
+    </h1>
+    <p style="font-family:var(--font-serif); font-style:italic; color:var(--sr-gray-text); font-size:17px;">
+      Type any S&amp;P 500 company name or ticker. We check the OFAC
+      Venezuela SDN list, the company's recent SEC filings, and our
+      Federal Register / news corpus, and return a single actionable
+      answer with citation links.
+    </p>
+  </header>
+
+  <form class="tool-form" method="get" action="/tools/public-company-venezuela-exposure-check">
+    <input type="text" name="q" value="{{ query or '' }}" placeholder="e.g. Chevron, Apple, JPM, BLK" autofocus required>
+    <button type="submit">Check exposure</button>
+  </form>
+
+  <div class="examples">
+    Try:
+    <a href="?q=chevron">Chevron</a>
+    <a href="?q=halliburton">Halliburton</a>
+    <a href="?q=goldman">Goldman Sachs</a>
+    <a href="?q=AAPL">Apple</a>
+    <a href="?q=simon property">Simon Property</a>
+    <a href="?q=franklin resources">Franklin Resources</a>
+  </div>
+
+  {% if query %}
+    {% if report %}
+      <article class="answer-card {{ report.classification }}">
+        <span class="pill">{{ {
+            'direct': 'Direct exposure',
+            'indirect': 'Indirect exposure',
+            'historical': 'Historical exposure',
+            'none': 'No current exposure',
+            'unknown': 'No exposure on record',
+          }.get(report.classification, report.classification) }}</span>
+        <h2>{{ report.headline }}</h2>
+        <p>{{ report.summary }}</p>
+
+        {% if report.sdn_matches %}
+        <div style="margin-top:14px;">
+          <strong style="font-size:13px; text-transform:uppercase; letter-spacing:0.6px; color:var(--sr-gray-text);">OFAC SDN matches ({{ report.sdn_matches|length }})</strong>
+          {% for m in report.sdn_matches[:3] %}
+          <div class="signal-mini sdn"><a href="{{ m.profile_url }}"><strong>{{ m.name }}</strong></a> — {{ m.bucket }}, {{ m.program }} ({{ m.score }}%)</div>
+          {% endfor %}
+        </div>
+        {% endif %}
+
+        {% if report.edgar_mentions %}
+        <div style="margin-top:14px;">
+          <strong style="font-size:13px; text-transform:uppercase; letter-spacing:0.6px; color:var(--sr-gray-text);">Recent SEC filings ({{ report.edgar_mentions|length }})</strong>
+          {% for f in report.edgar_mentions[:3] %}
+          <div class="signal-mini edgar">
+            {% if f.url %}<a href="{{ f.url }}" rel="nofollow"><strong>{{ f.form }} · {{ f.filed }}</strong></a>{% else %}<strong>{{ f.form }} · {{ f.filed }}</strong>{% endif %}
+            {% if f.snippet %} — {{ f.snippet|safe }}{% endif %}
+          </div>
+          {% endfor %}
+        </div>
+        {% endif %}
+
+        <a class="cta" href="/companies/{{ report.company.slug }}/venezuela-exposure">
+          See the full {{ report.company.short_name }} Venezuela exposure profile →
+        </a>
+      </article>
+    {% else %}
+      <div class="not-found">
+        <strong>{{ query }}</strong> isn't on our S&amp;P 500 register
+        (we publish one page per S&amp;P 500 ticker — about 500 names).
+        Try the broader
+        <a href="/tools/ofac-venezuela-sanctions-checker?q={{ query|urlencode }}">OFAC sanctions checker</a>
+        for a name-only screen, or check the
+        <a href="https://efts.sec.gov/LATEST/search-index?q=%22{{ query|urlencode }}%22+Venezuela" rel="nofollow">SEC EDGAR full-text search</a>.
+      </div>
+    {% endif %}
+  {% endif %}
+
+  {% if popular %}
+  <h2 style="font-family:var(--font-serif); font-size:22px; color:var(--sr-blue-dark); margin:32px 0 8px;">
+    Most-checked S&amp;P 500 Venezuela exposure pages
+  </h2>
+  <ul class="quick-list">
+    {% for p in popular %}
+    <li>
+      <a href="{{ p.url_path }}">{{ p.short_name }}</a>
+      <small style="color:var(--sr-gray-text);">({{ p.ticker }}) — {{ p.label }}</small>
+    </li>
+    {% endfor %}
+  </ul>
+  {% endif %}
+
+  <div class="disclaimer">
+    <strong>Important:</strong> This tool combines fuzzy SDN matching, SEC
+    EDGAR full-text search, and our internal news corpus. It does NOT
+    perform full ownership-chain analysis (the OFAC 50% Rule), check
+    non-SDN sectoral lists, or substitute for a vetted commercial
+    sanctions-screening provider. For high-stakes counterparties,
+    retain qualified sanctions counsel.
+  </div>
+
+  <p style="font-size:12px; color:var(--sr-gray-text); margin-bottom:32px;">
+    See related: <a href="/companies">browse the full S&amp;P 500 Venezuela exposure register</a> ·
+    <a href="/tools/ofac-venezuela-sanctions-checker">name-only OFAC screening</a> ·
+    <a href="/tools/ofac-venezuela-general-licenses">general license lookup</a>.
+  </p>
+
+  {{ cluster_nav(cluster_ctx) }}
+</section>
+{% endblock %}

@@ -1,0 +1,297 @@
+{#
+  Per-S&P-500 company "Venezuela exposure" landing page.
+
+  URL: /companies/<slug>/venezuela-exposure
+
+  The TITLE and H1 carry "{Company} Venezuela exposure" verbatim so the
+  matching SERP snippet is the user's exact query. Even when the answer
+  is "no exposure", the page exists, ranks, and answers the question
+  authoritatively — which is what a compliance analyst is looking for.
+
+  Sections (always present in this order so the SERP "skip-to-section"
+  links stay stable across pages):
+    1. Headline classification banner.
+    2. Key facts (analyst-style summary).
+    3. OFAC SDN matches (when any).
+    4. SEC EDGAR filings (when any).
+    5. Internal news / Federal Register mentions.
+    6. Methodology + last-updated stamp.
+    7. Sibling companies (sector cohort) for crawl-depth.
+#}
+{% extends "_base.html.j2" %}
+{% from "_cluster_nav.html.j2" import cluster_nav %}
+
+{% block head_extra %}
+<style>
+  .exposure-banner { padding: 22px 24px; border-radius: 6px; margin: 16px 0 28px; }
+  .exposure-banner h2 { font-family: var(--font-serif); font-size: 22px; margin-bottom: 6px; }
+  .exposure-banner p { font-size: 15px; }
+  .exposure-banner .pill { display: inline-block; font-size: 11px; font-weight: 700; text-transform: uppercase; letter-spacing: 1.4px; padding: 4px 10px; border-radius: 999px; margin-bottom: 8px; }
+  .exposure-banner.direct { background: #fdecea; border-left: 4px solid var(--sr-red); color: #6c1411; }
+  .exposure-banner.direct .pill { background: var(--sr-red); color: var(--white); }
+  .exposure-banner.indirect { background: #fff3e0; border-left: 4px solid #f5b041; color: #7c4a03; }
+  .exposure-banner.indirect .pill { background: #f5b041; color: var(--white); }
+  .exposure-banner.historical { background: #eef2f7; border-left: 4px solid var(--sr-blue); color: #1a2c4d; }
+  .exposure-banner.historical .pill { background: var(--sr-blue); color: var(--white); }
+  .exposure-banner.none { background: #e8f5e9; border-left: 4px solid #2e7d32; color: #1b4d1f; }
+  .exposure-banner.none .pill { background: #2e7d32; color: var(--white); }
+  .exposure-banner.unknown { background: #f8f9fa; border-left: 4px solid var(--sr-gray-text); color: var(--sr-dark-text); }
+  .exposure-banner.unknown .pill { background: var(--sr-gray-text); color: var(--white); }
+
+  .signal-card { border: 1px solid var(--sr-gray-light); border-radius: 4px; padding: 14px 18px; margin-bottom: 10px; background: var(--white); }
+  .signal-card .name { font-family: var(--font-serif); font-weight: 700; color: var(--sr-blue-dark); font-size: 16px; }
+  .signal-card .meta { font-size: 12px; color: var(--sr-gray-text); margin-top: 4px; text-transform: uppercase; letter-spacing: 0.6px; }
+  .signal-card .snippet { font-size: 14px; margin-top: 8px; color: var(--sr-dark-text); }
+  .signal-card .matched { font-size: 12px; color: var(--sr-gray-text); margin-top: 6px; font-style: italic; }
+  .signal-card.sdn { border-left: 4px solid var(--sr-red); background: #fff8f7; }
+  .signal-card.edgar { border-left: 4px solid var(--sr-blue); }
+  .signal-card.corpus { border-left: 4px solid #f5b041; }
+
+  .empty-block { background: var(--sr-gray-bg); border: 1px dashed var(--sr-gray-light); padding: 14px 18px; border-radius: 4px; color: var(--sr-gray-text); font-size: 14px; }
+
+  .meta-strip { display: grid; grid-template-columns: repeat(auto-fit, minmax(140px, 1fr)); gap: 12px; margin: 18px 0 26px; padding: 14px 16px; background: var(--sr-gray-bg); border-radius: 4px; font-size: 13px; }
+  .meta-strip dt { font-size: 11px; color: var(--sr-gray-text); text-transform: uppercase; letter-spacing: 0.8px; margin-bottom: 2px; }
+  .meta-strip dd { font-weight: 600; color: var(--sr-blue-dark); font-family: var(--font-serif); font-size: 15px; }
+
+  .related-cohort { display: grid; grid-template-columns: repeat(auto-fit, minmax(220px, 1fr)); gap: 10px; margin-top: 12px; }
+  .related-cohort a { display: block; padding: 10px 12px; border: 1px solid var(--sr-gray-light); border-radius: 3px; text-decoration: none; color: var(--sr-blue-dark); font-weight: 600; font-size: 14px; }
+  .related-cohort a:hover { border-color: var(--sr-blue); color: var(--sr-red); }
+  .related-cohort a small { display: block; font-weight: 400; color: var(--sr-gray-text); font-size: 12px; margin-top: 2px; }
+
+  .methodology { font-size: 13px; color: var(--sr-gray-text); margin-top: 26px; padding: 14px 18px; background: var(--sr-gray-bg); border-radius: 4px; }
+</style>
+{% endblock %}
+
+{% block content %}
+<section class="container">
+
+  <nav class="breadcrumbs" aria-label="Breadcrumb">
+    <a href="/">Home</a>
+    <span>›</span>
+    <a href="/companies">S&amp;P 500 Venezuela Exposure</a>
+    <span>›</span>
+    <strong>{{ report.company.short_name }}</strong>
+  </nav>
+
+  <article>
+    <header style="margin: 8px 0 12px;">
+      <div style="font-size:12px; text-transform:uppercase; letter-spacing:1.4px; color:#cc0000; font-weight:700;">
+        Venezuela exposure profile · {{ report.company.ticker }} ·
+        {{ report.company.sector }}
+      </div>
+      <h1 style="font-family:var(--font-serif); font-size:36px; color:var(--sr-blue-dark); margin:8px 0 10px; line-height:1.2;">
+        {{ report.company.short_name }} ({{ report.company.ticker }}):
+        Venezuela Exposure Check
+      </h1>
+      <p class="subtitle" style="font-family:var(--font-serif); font-style:italic; color:var(--sr-gray-text); font-size:18px;">
+        Independent audit of {{ report.company.name }}'s exposure to Venezuela —
+        OFAC SDN matches, SEC filings, and Caracas Research news corpus.
+      </p>
+    </header>
+
+    <div class="exposure-banner {{ report.classification }}">
+      <span class="pill">{{ {
+          'direct': 'Direct exposure',
+          'indirect': 'Indirect exposure',
+          'historical': 'Historical exposure',
+          'none': 'No current exposure',
+          'unknown': 'No exposure on record',
+        }.get(report.classification, report.classification) }}</span>
+      <h2>{{ report.headline }}</h2>
+      <p>{{ report.summary }}</p>
+    </div>
+
+    <dl class="meta-strip">
+      <div>
+        <dt>Ticker</dt>
+        <dd>{{ report.company.ticker }}</dd>
+      </div>
+      <div>
+        <dt>S&amp;P 500 sector</dt>
+        <dd>{{ report.company.sector }}</dd>
+      </div>
+      <div>
+        <dt>Headquarters</dt>
+        <dd>{{ report.company.headquarters or '—' }}</dd>
+      </div>
+      <div>
+        <dt>OFAC matches</dt>
+        <dd>{{ report.sdn_matches|length }}</dd>
+      </div>
+      <div>
+        <dt>EDGAR filings</dt>
+        <dd>{{ report.edgar_mentions|length }}</dd>
+      </div>
+      <div>
+        <dt>Last refreshed</dt>
+        <dd>{{ report.generated_at[:10] }}</dd>
+      </div>
+    </dl>
+
+    <div class="body">
+
+      {# ── SDN matches ─────────────────────────────────────────── #}
+      <h2 id="ofac-matches">OFAC Venezuela SDN matches</h2>
+      {% if report.sdn_matches %}
+        <p>
+          The Caracas Research engine matched
+          {{ report.sdn_matches|length }}
+          {{ 'entry' if report.sdn_matches|length == 1 else 'entries' }}
+          on the US Treasury OFAC Venezuela-program SDN list to
+          {{ report.company.short_name }} or one of its operating
+          subsidiaries. Click through to each profile to verify the
+          match before relying on it for a compliance decision.
+        </p>
+        {% for m in report.sdn_matches %}
+        <div class="signal-card sdn">
+          <div class="name">
+            <a href="{{ m.profile_url }}">{{ m.name }}</a>
+          </div>
+          <div class="meta">{{ m.bucket }} · {{ m.program }} · {{ m.score }}% confidence</div>
+          <div class="matched">Matched on the term: <em>{{ m.matched_term }}</em></div>
+        </div>
+        {% endfor %}
+      {% else %}
+        <div class="empty-block">
+          No entry on the OFAC Venezuela SDN list contains
+          <strong>{{ report.company.short_name }}</strong>
+          {% if report.curated and report.curated.subsidiaries %}
+          or any of its operating subsidiaries
+          ({{ report.curated.subsidiaries|join(', ') }})
+          {% endif %}
+          as of the most recent OFAC scrape. Always re-verify with
+          <a href="https://sanctions-search.ofac.treasury.gov/" rel="nofollow">OFAC Sanctions Search</a>
+          before transacting.
+        </div>
+      {% endif %}
+
+      {# ── EDGAR mentions ─────────────────────────────────────── #}
+      <h2 id="sec-filings">SEC filings disclosing Venezuela items</h2>
+      {% if report.edgar_mentions %}
+        <p>
+          {{ report.company.short_name }} has filed
+          {{ report.edgar_mentions|length }} recent SEC document{{ 's' if report.edgar_mentions|length != 1 else '' }}
+          containing references to Venezuela, PdVSA, CITGO or related
+          terms. These are the company's own disclosures.
+        </p>
+        {% for f in report.edgar_mentions %}
+        <div class="signal-card edgar">
+          <div class="name">
+            {% if f.url %}<a href="{{ f.url }}" rel="nofollow">{{ f.form }} · {{ f.filed }}</a>{% else %}{{ f.form }} · {{ f.filed }}{% endif %}
+          </div>
+          <div class="meta">SEC EDGAR · accession {{ f.accession_no }}</div>
+          {% if f.snippet %}<div class="snippet">… {{ f.snippet|safe }} …</div>{% endif %}
+        </div>
+        {% endfor %}
+      {% elif report.edgar_attempted %}
+        <div class="empty-block">
+          We searched {{ report.company.short_name }}'s SEC filings (10-K,
+          10-Q, 8-K, 20-F, 6-K) for the past two years and found no
+          mention of Venezuela, PdVSA, CITGO, or Caracas. This is
+          consistent with no material disclosed exposure. The full SEC
+          full-text search is here:
+          <a href="https://efts.sec.gov/LATEST/search-index?q=%22Venezuela%22&ciks={{ report.company.cik or '' }}" rel="nofollow">
+            EDGAR full-text search for {{ report.company.short_name }}
+          </a>.
+        </div>
+      {% else %}
+        <div class="empty-block">
+          SEC filings have not been indexed for {{ report.company.short_name }} yet.
+          See the live full-text search:
+          <a href="https://efts.sec.gov/LATEST/search-index?q=%22Venezuela%22&ciks={{ report.company.cik or '' }}" rel="nofollow">
+            EDGAR full-text search
+          </a>.
+        </div>
+      {% endif %}
+
+      {# ── Internal corpus ────────────────────────────────────── #}
+      <h2 id="news-corpus">Federal Register &amp; news corpus mentions</h2>
+      {% if report.corpus_mentions %}
+        <p>
+          Caracas Research indexes US Federal Register notices, the
+          Asamblea Nacional record, and the analyzed news corpus we
+          republish daily. The following entries name
+          {{ report.company.short_name }} alongside Venezuelan context:
+        </p>
+        {% for n in report.corpus_mentions %}
+        <div class="signal-card corpus">
+          <div class="name">
+            {% if n.url %}<a href="{{ n.url }}" rel="nofollow">{{ n.headline }}</a>{% else %}{{ n.headline }}{% endif %}
+          </div>
+          <div class="meta">{{ n.source }}{% if n.date %} · {{ n.date }}{% endif %}</div>
+          {% if n.snippet %}<div class="snippet">{{ n.snippet }}</div>{% endif %}
+        </div>
+        {% endfor %}
+      {% else %}
+        <div class="empty-block">
+          No Federal Register notice or analyzed news article in our
+          corpus references {{ report.company.short_name }} in a
+          Venezuela context. Search the live
+          <a href="/sanctions-tracker">sanctions tracker</a>
+          or the
+          <a href="/briefing">daily briefing index</a>
+          for ad-hoc context.
+        </div>
+      {% endif %}
+
+      {# ── Curated note ──────────────────────────────────────── #}
+      {% if report.curated %}
+      <h2 id="analyst-note">Caracas Research analyst note</h2>
+      <p>{{ report.curated.summary }}</p>
+      {% if report.curated.subsidiaries %}
+      <p><strong>Known Venezuela-related operating entities or counterparties:</strong>
+        {{ report.curated.subsidiaries|join(', ') }}.</p>
+      {% endif %}
+      {% if report.curated.ofac_licenses %}
+      <p><strong>Relevant OFAC general licenses:</strong>
+        {{ report.curated.ofac_licenses|join(', ') }} —
+        <a href="/tools/ofac-venezuela-general-licenses">browse the full GL directory</a>.</p>
+      {% endif %}
+      {% endif %}
+
+      {# ── Methodology ───────────────────────────────────────── #}
+      <div class="methodology">
+        <strong>Methodology.</strong>
+        This page combines four signals: (1) a hand-curated map of S&amp;P 500
+        Venezuela exposure maintained by Caracas Research analysts;
+        (2) fuzzy substring matching against every Venezuela-program OFAC SDN
+        designation (refreshed twice daily); (3) the SEC EDGAR full-text search
+        across the company's 10-K, 10-Q, 8-K, 20-F, and 6-K filings for the
+        past 24 months; (4) a scan of our own analyzed-news corpus and US
+        Federal Register notices. Last refreshed
+        {{ report.generated_at[:10] }}. This is not legal or compliance advice;
+        always verify with primary sources and qualified sanctions counsel
+        before transacting.
+      </div>
+
+      <h2>Useful tools</h2>
+      <ul>
+        <li><a href="/tools/public-company-venezuela-exposure-check">Look up another public company's Venezuela exposure</a></li>
+        <li><a href="/tools/ofac-venezuela-sanctions-checker">OFAC Venezuela sanctions checker</a> — fuzzy SDN search by name or ID</li>
+        <li><a href="/tools/ofac-venezuela-general-licenses">OFAC Venezuela general licenses lookup</a></li>
+        <li><a href="/sanctions-tracker">Browse all active OFAC Venezuela SDN designations</a></li>
+        <li><a href="/explainers/what-are-ofac-sanctions-on-venezuela">Plain-English explainer: OFAC Venezuela sanctions</a></li>
+      </ul>
+    </div>
+
+    {% if siblings %}
+    <div class="related">
+      <h3>Other {{ report.company.sector }} S&amp;P 500 companies in this register</h3>
+      <div class="related-cohort">
+        {% for s in siblings %}
+        <a href="{{ s.url_path }}">
+          {{ s.short_name }}
+          <small>{{ s.ticker }}{% if s.curated_level %} · {{ s.curated_level }} exposure{% elif s.sdn_match_count %} · {{ s.sdn_match_count }} SDN match{{ 'es' if s.sdn_match_count != 1 else '' }}{% else %} · no exposure on record{% endif %}</small>
+        </a>
+        {% endfor %}
+      </div>
+      <p style="margin-top:14px;font-size:14px;">
+        <a href="/companies"><strong>Browse the full S&amp;P 500 Venezuela exposure register →</strong></a>
+      </p>
+    </div>
+    {% endif %}
+  </article>
+
+  {{ cluster_nav(cluster_ctx) }}
+</section>
+{% endblock %}

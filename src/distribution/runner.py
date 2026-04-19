@@ -56,6 +56,8 @@ _STATIC_URLS_TO_PING_DAILY = (
     "/sanctions/entities",
     "/sanctions/vessels",
     "/sanctions/aircraft",
+    "/companies",
+    "/tools/public-company-venezuela-exposure-check",
 )
 
 
@@ -240,6 +242,22 @@ def run_indexnow() -> dict:
                 candidates.append((url, "sdn_profile", p.db_id))
         except Exception as exc:
             logger.warning("indexnow: could not enumerate SDN profiles: %s", exc)
+
+        # Per-S&P-500 Venezuela-exposure pages. The 23-hour cooldown via
+        # `already_submitted` means each URL pings exactly once per day
+        # cycle; on the very first run after this lands, we'll submit
+        # all ~500 URLs in a single batch (well under IndexNow's 10k
+        # cap) and then quiet down to "only new constituents" steady
+        # state.
+        try:
+            from src.data.company_exposure import companies_for_sitemap
+            for entry in companies_for_sitemap():
+                url = _site_base() + entry["url_path"]
+                if url in already_submitted:
+                    continue
+                candidates.append((url, "company_profile", None))
+        except Exception as exc:
+            logger.warning("indexnow: could not enumerate company profiles: %s", exc)
 
         if not candidates:
             return {"status": "ok", "submitted": 0, "reason": "nothing new"}

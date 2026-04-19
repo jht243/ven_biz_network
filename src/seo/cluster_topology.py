@@ -57,6 +57,8 @@ _ANCHOR: dict[str, str] = {
     "/sanctions/aircraft": "All sanctioned aircraft under Venezuela-related programs",
     "/tools/ofac-venezuela-sanctions-checker": "OFAC Venezuela sanctions checker (search any name)",
     "/tools/ofac-venezuela-general-licenses": "OFAC General Licenses for Venezuela (full list)",
+    "/tools/public-company-venezuela-exposure-check": "Public company Venezuela exposure check (S&P 500)",
+    "/companies": "S&P 500 Venezuela exposure register (every ticker, A-Z)",
     "/explainers/what-are-ofac-sanctions-on-venezuela": "What are OFAC sanctions on Venezuela? (plain-English guide)",
 
     "/invest-in-venezuela": "How to invest in Venezuela (2026 sanctions-safe guide)",
@@ -149,6 +151,8 @@ CLUSTERS: dict[str, Cluster] = {
             _ck("/sanctions/aircraft",    "Every blocked aircraft — model, MSN, tail number, registered owner."),
             _ck("/tools/ofac-venezuela-sanctions-checker", "Paste any name to instantly check it against the live SDN list."),
             _ck("/tools/ofac-venezuela-general-licenses",  "All active OFAC GLs that authorize otherwise-prohibited transactions."),
+            _ck("/tools/public-company-venezuela-exposure-check", "Type any S&P 500 name or ticker to surface OFAC + EDGAR + news exposure."),
+            _ck("/companies", "A-Z directory of every S&P 500 company with a Venezuela-exposure profile."),
             _ck("/explainers/what-are-ofac-sanctions-on-venezuela", "Plain-English overview of how Venezuela-related OFAC sanctions work."),
         ),
     ),
@@ -225,6 +229,8 @@ _PATH_TO_CLUSTER: tuple[tuple[str, str], ...] = (
     ("/sanctions/",            "sanctions"),
     ("/tools/ofac-venezuela-sanctions-checker", "sanctions"),
     ("/tools/ofac-venezuela-general-licenses",  "sanctions"),
+    ("/tools/public-company-venezuela-exposure-check", "sanctions"),
+    ("/companies",             "sanctions"),
     ("/explainers/what-are-ofac-sanctions-on-venezuela", "sanctions"),
 
     ("/invest-in-venezuela",   "investment"),

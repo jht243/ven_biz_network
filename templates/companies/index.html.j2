@@ -1,0 +1,147 @@
+{#
+  /companies — A-Z directory of every S&P 500 ticker we publish a
+  Venezuela-exposure profile for.
+
+  This page exists primarily for crawl-depth: every per-ticker profile
+  page has one inbound link from this directory and one outbound link
+  to its sector cohort. Together those guarantee Googlebot reaches the
+  whole 500-page corpus without us having to ping IndexNow per page.
+#}
+{% extends "_base.html.j2" %}
+{% from "_cluster_nav.html.j2" import cluster_nav %}
+
+{% block head_extra %}
+<style>
+  .companies-summary { display: grid; grid-template-columns: repeat(auto-fit, minmax(140px, 1fr)); gap: 12px; margin: 18px 0 26px; }
+  .companies-summary .stat { background: var(--sr-gray-bg); padding: 14px 16px; border-radius: 4px; text-align: center; }
+  .companies-summary .stat .num { font-family: var(--font-serif); font-size: 28px; font-weight: 700; color: var(--sr-blue-dark); display: block; }
+  .companies-summary .stat .label { font-size: 12px; text-transform: uppercase; letter-spacing: 0.6px; color: var(--sr-gray-text); margin-top: 2px; }
+
+  .companies-filter { margin: 16px 0 24px; display: flex; gap: 8px; flex-wrap: wrap; align-items: center; }
+  .companies-filter input { flex: 1; min-width: 220px; padding: 12px 16px; border: 1px solid var(--sr-gray-light); border-radius: 3px; font-size: 15px; }
+
+  .companies-table { width: 100%; border-collapse: collapse; font-size: 14px; }
+  .companies-table th, .companies-table td { text-align: left; padding: 10px 12px; border-bottom: 1px solid var(--sr-gray-light); }
+  .companies-table th { font-size: 12px; text-transform: uppercase; letter-spacing: 0.5px; color: var(--sr-gray-text); }
+  .companies-table tr:hover { background: var(--sr-gray-bg); }
+  .companies-table a { color: var(--sr-blue-dark); font-weight: 600; text-decoration: none; }
+  .companies-table a:hover { color: var(--sr-red); }
+  .tag { display: inline-block; font-size: 11px; padding: 2px 8px; border-radius: 999px; font-weight: 700; text-transform: uppercase; letter-spacing: 0.5px; }
+  .tag.direct { background: #fdecea; color: #6c1411; }
+  .tag.indirect { background: #fff3e0; color: #7c4a03; }
+  .tag.historical { background: #eef2f7; color: #1a2c4d; }
+  .tag.none { background: #e8f5e9; color: #1b4d1f; }
+  .tag.unknown { background: var(--sr-gray-bg); color: var(--sr-gray-text); }
+
+  .letter-anchor { padding-top: 12px; padding-bottom: 8px; font-family: var(--font-serif); font-size: 22px; color: var(--sr-blue-dark); border-top: 2px solid var(--sr-blue); margin-top: 24px; }
+  .letter-anchor:first-of-type { margin-top: 8px; }
+  .letter-jump { margin: 12px 0 24px; font-size: 13px; }
+  .letter-jump a { display: inline-block; padding: 4px 8px; margin-right: 2px; color: var(--sr-blue); font-weight: 700; }
+</style>
+{% endblock %}
+
+{% block content %}
+<section class="container">
+
+  <nav class="breadcrumbs" aria-label="Breadcrumb">
+    <a href="/">Home</a>
+    <span>›</span>
+    <strong>S&amp;P 500 Venezuela Exposure</strong>
+  </nav>
+
+  <header style="margin: 16px 0 12px;">
+    <div style="font-size:12px; text-transform:uppercase; letter-spacing:1.4px; color:#cc0000; font-weight:700;">
+      Index · {{ rows|length }} S&amp;P 500 companies audited
+    </div>
+    <h1 style="font-family:var(--font-serif); font-size:36px; color:var(--sr-blue-dark); margin:8px 0 12px;">
+      S&amp;P 500 Venezuela Exposure Register
+    </h1>
+    <p style="font-family:var(--font-serif); font-style:italic; color:var(--sr-gray-text); font-size:18px;">
+      For every S&amp;P 500 ticker, a one-page audit of OFAC SDN matches,
+      SEC filing disclosures, and Caracas Research analyst notes
+      relating to Venezuela. Free, citation-grade, refreshed daily.
+    </p>
+  </header>
+
+  <div class="companies-summary">
+    <div class="stat"><span class="num">{{ rows|length }}</span><span class="label">Companies</span></div>
+    <div class="stat"><span class="num">{{ counts.direct }}</span><span class="label">Direct</span></div>
+    <div class="stat"><span class="num">{{ counts.indirect }}</span><span class="label">Indirect</span></div>
+    <div class="stat"><span class="num">{{ counts.historical }}</span><span class="label">Historical</span></div>
+    <div class="stat"><span class="num">{{ counts.unknown }}</span><span class="label">No exposure on record</span></div>
+  </div>
+
+  <div class="companies-filter">
+    <input type="text" id="company-filter" placeholder="Filter by ticker or company name (e.g. CVX or Chevron)" autocomplete="off">
+  </div>
+
+  <div class="letter-jump">
+    Jump:
+    {% for letter, _ in grouped %}
+      <a href="#letter-{{ letter|lower }}">{{ letter }}</a>
+    {% endfor %}
+  </div>
+
+  <table class="companies-table" id="companies-table">
+    <thead>
+      <tr>
+        <th>Ticker</th>
+        <th>Company</th>
+        <th>Sector</th>
+        <th>Exposure</th>
+        <th>OFAC matches</th>
+      </tr>
+    </thead>
+    <tbody>
+      {% for letter, group in grouped %}
+        <tr><td colspan="5" id="letter-{{ letter|lower }}" class="letter-anchor">{{ letter }}</td></tr>
+        {% for r in group %}
+        <tr data-name="{{ r.name|lower }}" data-ticker="{{ r.ticker|lower }}">
+          <td><strong>{{ r.ticker }}</strong></td>
+          <td><a href="{{ r.url_path }}">{{ r.name }}</a></td>
+          <td>{{ r.sector }}</td>
+          <td><span class="tag {{ r.classification }}">{{ {
+                'direct': 'Direct',
+                'indirect': 'Indirect',
+                'historical': 'Historical',
+                'none': 'None',
+                'unknown': 'No record',
+              }.get(r.classification, r.classification) }}</span></td>
+          <td>{{ r.sdn_match_count or '—' }}</td>
+        </tr>
+        {% endfor %}
+      {% endfor %}
+    </tbody>
+  </table>
+
+  <p style="margin-top:24px; font-size:14px; color:var(--sr-gray-text);">
+    Looking for a name not on the S&amp;P 500? Use the
+    <a href="/tools/public-company-venezuela-exposure-check">public-company Venezuela exposure check</a>
+    to search any listed name against OFAC, EDGAR, and the Caracas
+    Research corpus.
+  </p>
+
+  {{ cluster_nav(cluster_ctx) }}
+</section>
+
+<script>
+(function () {
+  var input = document.getElementById('company-filter');
+  if (!input) return;
+  input.addEventListener('input', function () {
+    var q = input.value.trim().toLowerCase();
+    var rows = document.querySelectorAll('#companies-table tbody tr');
+    rows.forEach(function (tr) {
+      if (tr.classList.contains('letter-anchor') || tr.querySelector('.letter-anchor')) {
+        tr.style.display = q ? 'none' : '';
+        return;
+      }
+      var name = tr.getAttribute('data-name') || '';
+      var ticker = tr.getAttribute('data-ticker') || '';
+      var match = !q || name.indexOf(q) !== -1 || ticker.indexOf(q) !== -1;
+      tr.style.display = match ? '' : 'none';
+    });
+  });
+})();
+</script>
+{% endblock %}

@@ -819,6 +819,12 @@ def tools_index():
                 "summary": "Search any name, company, vessel IMO, aircraft tail number, or Venezuelan cédula against every active Venezuela-related OFAC SDN designation, with fuzzy matching and a clean compliance disclaimer.",
             },
             {
+                "url": "/tools/public-company-venezuela-exposure-check",
+                "name": "Public Company Venezuela Exposure Check",
+                "category": "Compliance",
+                "summary": "Type any S&P 500 company name or ticker — instantly see whether the company has Venezuela exposure on the OFAC SDN list, in its recent SEC filings, or in our Federal Register / news corpus. Backed by 500+ per-ticker landing pages.",
+            },
+            {
                 "url": "/tools/ofac-venezuela-general-licenses",
                 "name": "OFAC Venezuela General License Lookup",
                 "category": "Compliance",
@@ -1643,6 +1649,387 @@ def sanctions_profile_page(bucket: str, slug: str):
         abort(500)
 
 
+# ──────────────────────────────────────────────────────────────────────
+# Public-company Venezuela exposure pages — a per-S&P-500-ticker
+# landing-page corpus and the interactive lookup tool that funnels
+# searches into it. See src/data/company_exposure.py for the engine.
+#
+# Routes:
+#   /companies                                       → A-Z directory
+#   /companies/<slug>/venezuela-exposure             → per-company page
+#   /companies/<slug>                                → 301 → above
+#   /tools/public-company-venezuela-exposure-check   → interactive tool
+#
+# The slug format is `{shortname}-{ticker}` (see slugify_company in
+# src/data/sp500_companies.py) so collisions are impossible. Pages are
+# rendered live (cheap; the engine caches both SDN scans and EDGAR
+# results), and every URL is enumerated in /sitemap.xml so Google can
+# crawl the full ~500-page corpus on first encounter.
+# ──────────────────────────────────────────────────────────────────────
+
+
+def _company_index_letter(name: str) -> str:
+    letter = (name[:1] or "#").upper()
+    return letter if letter.isalpha() else "#"
+
+
+@app.route("/companies")
+@app.route("/companies/")
+def companies_index_page():
+    """A-Z directory of every S&P 500 ticker with a Venezuela-exposure page."""
+    try:
+        from src.data.company_exposure import list_company_index_rows
+        from src.page_renderer import _env, _base_url, _iso, settings as _s
+        from datetime import date as _date, datetime as _dt
+        import json as _json
+
+        rows = list_company_index_rows(include_sdn_scan=True)
+
+        # Group A-Z; counts power the summary strip.
+        grouped: list[tuple[str, list]] = []
+        current_letter: str | None = None
+        current_items: list = []
+        counts = {"direct": 0, "indirect": 0, "historical": 0, "none": 0, "unknown": 0}
+        for r in rows:
+            counts[r.classification] = counts.get(r.classification, 0) + 1
+            letter = _company_index_letter(r.name)
+            if letter != current_letter:
+                if current_items:
+                    grouped.append((current_letter, current_items))
+                current_letter = letter
+                current_items = []
+            current_items.append(r)
+        if current_items:
+            grouped.append((current_letter, current_items))
+
+        base = _base_url()
+        canonical = f"{base}/companies"
+        seo = {
+            "title": (
+                f"S&P 500 Venezuela Exposure Register — {len(rows)} companies audited"
+            ),
+            "description": (
+                f"Free Venezuela-exposure audit for every S&P 500 company. OFAC SDN "
+                f"matches, SEC filing disclosures, and Caracas Research analyst notes "
+                f"for {len(rows)} tickers. Refreshed daily."
+            ),
+            "keywords": (
+                "S&P 500 Venezuela exposure, public company Venezuela exposure, "
+                "OFAC sanctions S&P 500, Venezuela exposure check, EDGAR Venezuela filings"
+            ),
+            "canonical": canonical,
+            "site_name": _s.site_name,
+            "site_url": base,
+            "locale": _s.site_locale,
+            "og_image": f"{base}/static/og-image.png?v=3",
+            "og_type": "website",
+            "published_iso": _iso(_dt.utcnow()),
+            "modified_iso": _iso(_dt.utcnow()),
+        }
+        jsonld = _json.dumps({
+            "@context": "https://schema.org",
+            "@graph": [
+                {
+                    "@type": "BreadcrumbList",
+                    "itemListElement": [
+                        {"@type": "ListItem", "position": 1, "name": "Home", "item": f"{base}/"},
+                        {"@type": "ListItem", "position": 2, "name": "S&P 500 Venezuela Exposure", "item": canonical},
+                    ],
+                },
+                {
+                    "@type": "ItemList",
+                    "@id": f"{canonical}#list",
+                    "name": "S&P 500 Venezuela Exposure Register",
+                    "numberOfItems": len(rows),
+                    "itemListElement": [
+                        {
+                            "@type": "ListItem",
+                            "position": idx + 1,
+                            "url": f"{base}{r.url_path}",
+                            "name": r.name,
+                        }
+                        for idx, r in enumerate(rows[:200])
+                    ],
+                },
+            ],
+        }, ensure_ascii=False)
+
+        from src.seo.cluster_topology import build_cluster_ctx
+        cluster_ctx = build_cluster_ctx("/companies")
+
+        template = _env.get_template("companies/index.html.j2")
+        html = template.render(
+            rows=rows,
+            grouped=grouped,
+            counts=counts,
+            seo=seo,
+            jsonld=jsonld,
+            cluster_ctx=cluster_ctx,
+            current_year=_date.today().year,
+        )
+        return Response(html, mimetype="text/html")
+    except HTTPException:
+        raise
+    except Exception as exc:
+        logger.exception("companies index render failed: %s", exc)
+        abort(500)
+
+
+@app.route("/companies/<slug>")
+@app.route("/companies/<slug>/")
+def companies_slug_redirect(slug: str):
+    """Send /companies/<slug> → /companies/<slug>/venezuela-exposure.
+
+    The "venezuela-exposure" suffix is the SEO-bearing keyword in the
+    URL, so we want the canonical page to live at the longer path.
+    Bare /companies/<slug> exists only to catch backlinks people might
+    paste without the suffix."""
+    return redirect(f"/companies/{slug}/venezuela-exposure", code=301)
+
+
+@app.route("/companies/<slug>/venezuela-exposure")
+@app.route("/companies/<slug>/venezuela-exposure/")
+def companies_profile_page(slug: str):
+    """Per-company Venezuela-exposure landing page."""
+    try:
+        from src.data.company_exposure import (
+            build_exposure_report, find_company_by_slug, list_company_index_rows,
+        )
+        from src.page_renderer import _env, _base_url, _iso, settings as _s
+        from datetime import date as _date, datetime as _dt
+        import json as _json
+
+        company = find_company_by_slug(slug)
+        if company is None:
+            abort(404)
+
+        # If the resolver matched a different canonical slug than the URL
+        # (e.g. user typed a ticker alone), 301 to the canonical so we
+        # don't spawn duplicate-content variants in Google's index.
+        if company.slug != slug:
+            return redirect(f"/companies/{company.slug}/venezuela-exposure", code=301)
+
+        report = build_exposure_report(company)
+
+        # Sibling cohort: up to 6 other companies in the same sector with
+        # a curated/SDN signal (interesting clicks come first; if there
+        # aren't enough, fill with alphabetically-adjacent rows).
+        all_rows = list_company_index_rows(include_sdn_scan=False)
+        same_sector = [
+            r for r in all_rows
+            if r.sector == company.sector and r.ticker != company.ticker
+        ]
+        siblings = [r for r in same_sector if r.has_curated][:6]
+        if len(siblings) < 6:
+            for r in same_sector:
+                if r in siblings:
+                    continue
+                siblings.append(r)
+                if len(siblings) >= 6:
+                    break
+
+        base = _base_url()
+        canonical = f"{base}/companies/{company.slug}/venezuela-exposure"
+
+        title = (
+            f"{company.short_name} ({company.ticker}) Venezuela Exposure — "
+            "OFAC, SEC Filings & Sanctions Check"
+        )[:120]
+        description = report.headline + " " + (report.summary or "")
+        description = description.strip()[:300]
+
+        seo = {
+            "title": title,
+            "description": description,
+            "keywords": (
+                f"{company.short_name} Venezuela, {company.ticker} Venezuela exposure, "
+                f"{company.short_name} OFAC, {company.short_name} PDVSA, "
+                f"{company.ticker} sanctions, public company Venezuela exposure"
+            ),
+            "canonical": canonical,
+            "site_name": _s.site_name,
+            "site_url": base,
+            "locale": _s.site_locale,
+            "og_image": f"{base}/static/og-image.png?v=3",
+            "og_type": "article",
+            "published_iso": _iso(_dt.utcnow()),
+            "modified_iso": _iso(_dt.utcnow()),
+        }
+
+        # JSON-LD: BreadcrumbList + a ReviewNewsArticle-style "Report"
+        # node so the page is eligible for the Article rich result. We
+        # also emit Organization for the subject company so SERP/KG
+        # recognise the entity link.
+        breadcrumb = {
+            "@type": "BreadcrumbList",
+            "itemListElement": [
+                {"@type": "ListItem", "position": 1, "name": "Home", "item": f"{base}/"},
+                {"@type": "ListItem", "position": 2, "name": "S&P 500 Venezuela Exposure", "item": f"{base}/companies"},
+                {"@type": "ListItem", "position": 3, "name": company.short_name, "item": canonical},
+            ],
+        }
+        article_node = {
+            "@type": "Article",
+            "@id": f"{canonical}#article",
+            "url": canonical,
+            "headline": title,
+            "description": description,
+            "datePublished": _iso(_dt.utcnow()),
+            "dateModified": _iso(_dt.utcnow()),
+            "inLanguage": "en-US",
+            "isAccessibleForFree": True,
+            "author": {"@type": "Organization", "name": _s.site_name, "url": f"{base}/"},
+            "publisher": {
+                "@type": "Organization",
+                "name": _s.site_name,
+                "url": f"{base}/",
+                "logo": {"@type": "ImageObject", "url": f"{base}/static/og-image.png?v=3"},
+            },
+            "about": {
+                "@type": "Organization",
+                "name": company.name,
+                "alternateName": company.ticker,
+            },
+        }
+        jsonld = _json.dumps(
+            {"@context": "https://schema.org", "@graph": [breadcrumb, article_node]},
+            ensure_ascii=False,
+        )
+
+        from src.seo.cluster_topology import build_cluster_ctx
+        cluster_ctx = build_cluster_ctx(f"/companies/{company.slug}/venezuela-exposure")
+
+        template = _env.get_template("companies/profile.html.j2")
+        html = template.render(
+            report=report,
+            siblings=siblings,
+            seo=seo,
+            jsonld=jsonld,
+            cluster_ctx=cluster_ctx,
+            current_year=_date.today().year,
+        )
+        return Response(html, mimetype="text/html")
+    except HTTPException:
+        raise
+    except Exception as exc:
+        logger.exception("company profile render failed for slug=%s: %s", slug, exc)
+        abort(500)
+
+
+@app.route("/tools/public-company-venezuela-exposure-check")
+@app.route("/tools/public-company-venezuela-exposure-check/")
+def tool_public_company_exposure_check():
+    """Interactive lookup tool that resolves a free-text query to one
+    of the per-company landing pages."""
+    try:
+        from src.data.company_exposure import (
+            build_exposure_report, list_company_index_rows,
+        )
+        from src.data.sp500_companies import find_company
+        from src.page_renderer import _env
+        from datetime import date as _date
+
+        query = (request.args.get("q") or "").strip()
+        report = None
+        if query:
+            company = find_company(query)
+            if company is not None:
+                # Don't run the EDGAR network path on the tool surface —
+                # we want this responsive even when EDGAR is slow. The
+                # full /companies/<slug>/venezuela-exposure page handles
+                # the live fetch and caches it for 30 days.
+                report = build_exposure_report(company, use_edgar=True, network=False)
+
+        # Pre-baked "popular" list for the empty state. Pull from the
+        # curated registry first (those have the richest answers), then
+        # pad with two well-known names.
+        popular_tickers = [
+            ("CVX", "Direct (Chevron PdVSA JVs)"),
+            ("HAL", "Direct (oilfield services)"),
+            ("SLB", "Direct (oilfield services)"),
+            ("BKR", "Direct (oilfield services)"),
+            ("PSX", "Historical (heavy crude refining)"),
+            ("VLO", "Historical (heavy crude refining)"),
+            ("MPC", "Historical (heavy crude refining)"),
+            ("KO",  "Indirect (FEMSA bottling)"),
+            ("PEP", "Indirect (Polar bottling)"),
+            ("PG",  "Historical (manufacturing exit)"),
+            ("F",   "Historical (Valencia plant)"),
+            ("GM",  "Historical (plant seized 2017)"),
+            ("T",   "Historical (DirecTV seized 2020)"),
+            ("JPM", "Historical (EMBI bond holdings)"),
+            ("GS",  "Historical (PdVSA 2017 bond purchase)"),
+            ("BLK", "Historical (passive EM holdings)"),
+        ]
+        popular_lookup = {t: lbl for t, lbl in popular_tickers}
+        popular: list[dict] = []
+        for r in list_company_index_rows(include_sdn_scan=False):
+            if r.ticker in popular_lookup:
+                popular.append({
+                    "ticker": r.ticker,
+                    "short_name": r.short_name,
+                    "url_path": r.url_path,
+                    "label": popular_lookup[r.ticker],
+                })
+        # Stable order matching popular_tickers, not alphabetical.
+        order = {t: i for i, (t, _) in enumerate(popular_tickers)}
+        popular.sort(key=lambda p: order.get(p["ticker"], 999))
+
+        seo, jsonld = _tool_seo_jsonld(
+            slug="public-company-venezuela-exposure-check",
+            title="Public Company Venezuela Exposure Check — Free OFAC + SEC Tool",
+            description=(
+                "Free tool: type any S&P 500 company name or ticker and instantly "
+                "see whether the company has Venezuela exposure on the OFAC SDN "
+                "list, in its recent SEC filings, or in our Federal Register / "
+                "news corpus. Backed by 500+ per-ticker landing pages."
+            ),
+            keywords=(
+                "public company Venezuela exposure, S&P 500 Venezuela check, "
+                "OFAC company screening, Venezuela exposure search, "
+                "PDVSA exposure check, SEC filings Venezuela"
+            ),
+            faq=[
+                {
+                    "q": "How do I check if a public company has Venezuela exposure?",
+                    "a": "Type the company name or its ticker into the search box above. The tool resolves the query against the S&P 500 list, runs an OFAC SDN scan, checks recent SEC filings (10-K, 10-Q, 8-K, 20-F, 6-K) for Venezuela-related disclosures, and surfaces matching Federal Register notices and news articles from the Caracas Research corpus.",
+                },
+                {
+                    "q": "Which companies are covered?",
+                    "a": "Every S&P 500 constituent (about 500 tickers) has a dedicated profile page at /companies/<slug>/venezuela-exposure. About 30 of those have a hand-curated analyst note with subsidiary names and OFAC general-license context; the rest rely on algorithmic signals (OFAC SDN match, EDGAR full-text search, news corpus scan).",
+                },
+                {
+                    "q": "What does \"no exposure on the public record\" mean?",
+                    "a": "It means there is no entry on the OFAC Venezuela SDN list matching the company or any of its known subsidiaries, no Venezuela-related disclosure in the company's recent SEC filings that we have indexed, and no analyzed news article in our corpus naming the company alongside Venezuelan context. This is the answer most analysts come to verify.",
+                },
+                {
+                    "q": "Is this tool a substitute for sanctions counsel?",
+                    "a": "No. The tool surfaces signals that justify deeper diligence; it does not perform full ownership-chain analysis (the OFAC 50% Rule), check non-SDN sectoral lists, or verify enforcement context. For high-stakes counterparties, retain qualified sanctions counsel.",
+                },
+            ],
+        )
+
+        from src.seo.cluster_topology import build_cluster_ctx
+        cluster_ctx = build_cluster_ctx("/tools/public-company-venezuela-exposure-check")
+
+        template = _env.get_template("tools/public_company_exposure_check.html.j2")
+        html = template.render(
+            query=query,
+            report=report,
+            popular=popular,
+            seo=seo,
+            jsonld=jsonld,
+            cluster_ctx=cluster_ctx,
+            current_year=_date.today().year,
+        )
+        return Response(html, mimetype="text/html")
+    except HTTPException:
+        raise
+    except Exception as exc:
+        logger.exception("public company exposure tool render failed: %s", exc)
+        abort(500)
+
+
 @app.route("/calendar")
 @app.route("/calendar/")
 def calendar_page():
@@ -2325,6 +2712,8 @@ def sitemap_xml():
         {"loc": f"{base}/explainers", "lastmod": today_iso, "changefreq": "weekly", "priority": "0.8"},
         {"loc": f"{base}/tools/bolivar-usd-exchange-rate", "lastmod": today_iso, "changefreq": "daily", "priority": "0.7"},
         {"loc": f"{base}/tools/ofac-venezuela-sanctions-checker", "lastmod": today_iso, "changefreq": "weekly", "priority": "0.7"},
+        {"loc": f"{base}/tools/public-company-venezuela-exposure-check", "lastmod": today_iso, "changefreq": "weekly", "priority": "0.75"},
+        {"loc": f"{base}/companies", "lastmod": today_iso, "changefreq": "weekly", "priority": "0.85"},
         {"loc": f"{base}/tools/ofac-venezuela-general-licenses", "lastmod": today_iso, "changefreq": "weekly", "priority": "0.7"},
         {"loc": f"{base}/tools/caracas-safety-by-neighborhood", "lastmod": today_iso, "changefreq": "weekly", "priority": "0.6"},
         {"loc": f"{base}/tools/venezuela-investment-roi-calculator", "lastmod": today_iso, "changefreq": "monthly", "priority": "0.6"},
@@ -2393,6 +2782,24 @@ def sitemap_xml():
                     })
             except Exception as exc:
                 logger.warning("sitemap: failed to enumerate SDN profiles: %s", exc)
+
+            # Per-company Venezuela-exposure URLs — one /companies/<slug>/
+            # venezuela-exposure entry per S&P 500 ticker. This is the
+            # long-tail SEO bet: even when the answer is "no exposure",
+            # the page exists and ranks for "{Company} Venezuela exposure"
+            # and similar queries (Simon Property, Franklin Resources,
+            # etc.) that we don't otherwise serve.
+            try:
+                from src.data.company_exposure import companies_for_sitemap
+                for entry in companies_for_sitemap():
+                    dynamic_urls.append({
+                        "loc": f"{base}{entry['url_path']}",
+                        "lastmod": today_iso,
+                        "changefreq": "weekly",
+                        "priority": "0.55",
+                    })
+            except Exception as exc:
+                logger.warning("sitemap: failed to enumerate company pages: %s", exc)
 
             ext_articles = (
                 db.query(ExternalArticleEntry)

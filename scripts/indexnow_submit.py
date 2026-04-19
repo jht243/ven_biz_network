@@ -46,6 +46,7 @@ STATIC_PATHS: tuple[str, ...] = (
     "/tools/bolivar-usd-exchange-rate",
     "/tools/ofac-venezuela-sanctions-checker",
     "/tools/ofac-venezuela-general-licenses",
+    "/tools/public-company-venezuela-exposure-check",
     "/explainers",
     "/travel",
     "/calendar",
@@ -54,6 +55,7 @@ STATIC_PATHS: tuple[str, ...] = (
     "/sanctions/entities",
     "/sanctions/vessels",
     "/sanctions/aircraft",
+    "/companies",
 )
 
 
@@ -94,6 +96,17 @@ def collect_urls() -> list[tuple[str, str, int | None]]:
             out.append((f"{base}{p.url_path}", "sdn_profile", p.db_id))
     except Exception as exc:
         print(f"WARN: could not enumerate SDN profiles for IndexNow: {exc}")
+
+    # Per-company Venezuela-exposure pages — one per S&P 500 ticker.
+    # Same rationale as SDN profiles: long-tail SEO bet that only pays
+    # off if Bing/Yandex see the URLs early. Use the dedicated helper
+    # so this stays in lock-step with /sitemap.xml.
+    try:
+        from src.data.company_exposure import companies_for_sitemap
+        for entry in companies_for_sitemap():
+            out.append((f"{base}{entry['url_path']}", "company_profile", None))
+    except Exception as exc:
+        print(f"WARN: could not enumerate company profiles for IndexNow: {exc}")
 
     # Dedupe while preserving order.
     seen: set[str] = set()
