@@ -1704,9 +1704,21 @@ def travel_emergency_card():
         }
 
         template = _env.get_template("emergency_card.html.j2")
+        # Hotel pre-fill list for the dropdown — use the curated HOTELS
+        # set as a starting point; the user always has an "Other" option.
+        hotels_picker = []
+        for h in travel_data.HOTELS:
+            hotels_picker.append({
+                "name": h.get("name", ""),
+                "neighborhood": h.get("neighborhood", ""),
+                "address": h.get("address", ""),
+                "phone": h.get("phone", ""),
+            })
+
         html = template.render(
             seo=seo,
             embassies_top=embassies_top,
+            hotels_picker=hotels_picker,
             medical=travel_data.MEDICAL_PROVIDERS,
             emergency=travel_data.EMERGENCY_NUMBERS,
             updated_label=_date.today().strftime("%B %-d, %Y"),

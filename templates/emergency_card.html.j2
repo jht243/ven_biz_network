@@ -322,6 +322,55 @@
     .me-box label .en { display: block; font-weight: 500; color: var(--ink-soft); text-transform: none; letter-spacing: 0; font-size: 7pt; }
     .me-box .val { flex: 1; min-height: 12px; font-size: 9.5pt; font-weight: 700; line-height: 1.2; }
 
+    /* ---- Hotel picker (dropdown + auto-fill display + Other inputs) ----- */
+    .me-box .row.hotel-row {
+      grid-column: 1 / -1;
+      align-items: flex-start;
+      padding-top: 4px;
+      border-top: 1px solid #c8c8c2;
+      margin-top: 2px;
+      border-bottom: 0;
+    }
+    .hotel-val { display: block !important; }
+    select.hotel-picker {
+      font-family: var(--sans);
+      font-size: 9pt;
+      font-weight: 600;
+      padding: 3px 24px 3px 6px;
+      background: var(--edit-bg);
+      border: 0;
+      border-bottom: 1.5px dotted var(--edit-line);
+      width: 100%;
+      max-width: 100%;
+      cursor: pointer;
+      appearance: none;
+      -webkit-appearance: none;
+      background-image: url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='10' height='6' viewBox='0 0 10 6'><path fill='%238a7900' d='M0 0l5 6 5-6z'/></svg>");
+      background-repeat: no-repeat;
+      background-position: right 6px center;
+    }
+    select.hotel-picker:focus { outline: 2px solid var(--navy); outline-offset: 1px; }
+    .hotel-display {
+      margin-top: 3px;
+      font-size: 9pt;
+      line-height: 1.3;
+      color: var(--ink);
+    }
+    .hotel-display .h-name { font-weight: 700; font-size: 9.5pt; }
+    .hotel-display .h-addr { font-weight: 500; color: var(--ink-soft); font-size: 8.5pt; margin-top: 1px; }
+    .hotel-display .h-phone { font-weight: 700; color: var(--red); margin-top: 1px; }
+    .hotel-other { margin-top: 4px; display: grid; gap: 3px; }
+    .hotel-other-row { display: flex; gap: 6px; align-items: baseline; }
+    .hotel-other-label {
+      font-size: 7.5pt;
+      font-weight: 800;
+      color: var(--navy);
+      text-transform: uppercase;
+      letter-spacing: 0.6px;
+      min-width: 14mm;
+    }
+    .hotel-other-input { flex: 1; font-size: 9.5pt; font-weight: 700; min-height: 12px; }
+
     /* ---- Big call-this-number panel (911 + embassy) ---------------------- */
     .call-row { display: grid; grid-template-columns: 1fr 1fr; gap: 3mm; }
     .call {
@@ -474,6 +523,10 @@
         padding: 0 !important;
       }
       [contenteditable="true"]:empty::before { content: ""; }
+      /* Hotel picker on print: hide the dropdown UI; only the chosen
+         hotel name + address + phone (or the typed Other values) prints. */
+      select.hotel-picker { display: none !important; }
+      .hotel-other-input { background: transparent !important; border-bottom: 0 !important; }
       a { color: inherit; text-decoration: none; }
     }
 
@@ -536,9 +589,40 @@
         <div class="row"><label>Nacionalidad <span class="en">Nationality</span></label><div class="val" contenteditable="true" data-field="nationality" data-placeholder="USA"></div></div>
         <div class="row"><label>Sangre <span class="en">Blood type</span></label><div class="val" contenteditable="true" data-field="blood" data-placeholder="O+"></div></div>
         <div class="row"><label>Alergias / med. <span class="en">Allergies / meds</span></label><div class="val" contenteditable="true" data-field="medical" data-placeholder="Penicillin · diabetic"></div></div>
-        <div class="row"><label>Mi hotel <span class="en">My hotel</span></label><div class="val" contenteditable="true" data-field="hotel" data-placeholder="JW Marriott, El Rosal"></div></div>
-        <div class="row"><label>Tel. hotel <span class="en">Hotel phone</span></label><div class="val" contenteditable="true" data-field="hotel_phone" data-placeholder="+58 212 957-2222"></div></div>
         <div class="row"><label>Contacto <span class="en">Home contact + WhatsApp</span></label><div class="val" contenteditable="true" data-field="home_contact" data-placeholder="John Doe · +1 415 555-0100"></div></div>
+
+        <div class="row hotel-row">
+          <label>Mi hotel <span class="en">My hotel — pick from list</span></label>
+          <div class="val hotel-val">
+            <select id="hotel-picker" class="hotel-picker">
+              <option value="">— Pick from the list —</option>
+              {% for h in hotels_picker %}
+              <option
+                value="{{ loop.index0 }}"
+                data-name="{{ h.name }}"
+                data-neighborhood="{{ h.neighborhood }}"
+                data-address="{{ h.address }}"
+                data-phone="{{ h.phone }}">{{ h.name }} ({{ h.neighborhood }})</option>
+              {% endfor %}
+              <option value="other">Other (type your own &darr;)</option>
+            </select>
+            <div class="hotel-display" id="hotel-display" hidden>
+              <div class="h-name" id="hotel-display-name"></div>
+              <div class="h-addr" id="hotel-display-addr"></div>
+              <div class="h-phone" id="hotel-display-phone"></div>
+            </div>
+            <div class="hotel-other" id="hotel-other" hidden>
+              <div class="hotel-other-row">
+                <span class="hotel-other-label">Hotel</span>
+                <span class="hotel-other-input" contenteditable="true" data-field="hotel_other_name" data-placeholder="Hotel name"></span>
+              </div>
+              <div class="hotel-other-row">
+                <span class="hotel-other-label">Tel.</span>
+                <span class="hotel-other-input" contenteditable="true" data-field="hotel_other_phone" data-placeholder="+58 212 ..."></span>
+              </div>
+            </div>
+          </div>
+        </div>
       </div>
     </section>
 
@@ -675,8 +759,59 @@
   window.resetFields = function() {
     if (!confirm('Clear all your saved info on this card?')) return;
     fields.forEach(function(el) { el.textContent = ''; });
-    try { localStorage.removeItem(KEY); } catch (e) {}
+    try {
+      localStorage.removeItem(KEY);
+      localStorage.removeItem('caracas-emergency-card.hotel');
+    } catch (e) {}
+    const picker = document.getElementById('hotel-picker');
+    if (picker) {
+      picker.value = '';
+      picker.dispatchEvent(new Event('change'));
+    }
   };
+})();
+
+// --------- Hotel picker: pre-fill name / address / phone, with Other ---------
+(function() {
+  const KEY = 'caracas-emergency-card.hotel';
+  const picker  = document.getElementById('hotel-picker');
+  const display = document.getElementById('hotel-display');
+  const dName   = document.getElementById('hotel-display-name');
+  const dAddr   = document.getElementById('hotel-display-addr');
+  const dPhone  = document.getElementById('hotel-display-phone');
+  const otherEl = document.getElementById('hotel-other');
+  if (!picker) return;
+
+  function applySelection(persist) {
+    const v = picker.value;
+    if (v === '' || v === undefined) {
+      display.hidden = true;
+      otherEl.hidden = true;
+    } else if (v === 'other') {
+      display.hidden = true;
+      otherEl.hidden = false;
+    } else {
+      const opt = picker.options[picker.selectedIndex];
+      dName.textContent  = opt.dataset.name || '';
+      dAddr.textContent  = [opt.dataset.address, opt.dataset.neighborhood].filter(Boolean).join(' · ');
+      dPhone.textContent = opt.dataset.phone || '';
+      display.hidden = false;
+      otherEl.hidden = true;
+    }
+    if (persist !== false) { try { localStorage.setItem(KEY, v); } catch (e) {} }
+  }
+
+  // Restore prior choice.
+  try {
+    const saved = localStorage.getItem(KEY);
+    if (saved) {
+      for (const opt of picker.options) {
+        if (opt.value === saved) { picker.value = saved; break; }
+      }
+    }
+  } catch (e) {}
+  applySelection(false);
+  picker.addEventListener('change', function() { applySelection(true); });
 })();
 
 // --------- Embassy picker: show only the selected embassy ---------
