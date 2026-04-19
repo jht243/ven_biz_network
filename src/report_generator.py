@@ -301,24 +301,44 @@ _TOPIC_TAGS: list[tuple[str, tuple[str, ...]]] = [
     ("constitutional_court_minas", ("tsj declara constitucionalidad de la ley de minas", "constitutionality of the mining law", "constitutionality of the organic mining law")),
     # Specific OFAC/sanctions actions
     ("ofac_general_license", ("general license 5", "general license 6", "general license 7", "general license 8", "general license 9", "licencia general 5", "licencia general 6")),
-    ("ofac_sanctions_relief", ("levantamiento de las sanciones", "sanctions easing", "ease sanctions", "ease the sanctions", "lift sanctions", "us eases sanctions")),
     ("ofac_designations", ("notice of ofac sanctions actions", "ofac sdn list update", "ofac sanctions actions")),
     ("travel_advisory", ("travel advisory", "do not travel advisory", "reconsider travel", "advisory level")),
     # Recurring public-mobilization campaigns (one campaign, many headlines).
-    # Used primarily by the calendar dedup so we don't list the same anti-
-    # sanctions march under two different LLM-generated titles.
+    # MUST come BEFORE ofac_sanctions_relief: protest articles routinely
+    # mention "lifting sanctions" as the protest's stated goal, which would
+    # otherwise let ofac_sanctions_relief steal the tag and split a single
+    # event into two non-merging buckets (e.g. one article emphasizing
+    # 'national mobilization' tagged as protest, sister article emphasizing
+    # 'levantamiento de las sanciones' tagged as relief).
     ("anti_sanctions_protest", (
+        # English: march, mobilization, pilgrimage are all the same
+        # campaign reframed by different reporters / press releases.
         "march against sanctions",
-        "marcha contra las sanciones",
         "national mobilization against sanctions",
         "nationwide march against sanctions",
+        "anti-sanctions march",
+        "anti-sanctions mobilization",
+        "pilgrimage against sanctions",
+        "national pilgrimage against sanctions",
+        "national pilgrimage",
+        # Spanish: official AN framing rotates between marcha,
+        # movilizacion, peregrinacion. Add both the bare keyword
+        # ("peregrinacion") and the longer canonical phrasing.
+        "marcha contra las sanciones",
         "movilizacion contra las sanciones",
         "movilizacion nacional antiimperialista",
         "marcha por la paz y contra las sanciones",
         "movilizacion antiimperialista",
-        "anti-sanctions march",
-        "anti-sanctions mobilization",
+        "peregrinacion contra las sanciones",
+        "peregrinacion nacional contra las sanciones",
+        "peregrinacion nacional",
+        "gran peregrinacion",
+        "peregrinacion unidos",
+        "venezuela sin sanciones y en paz",
     )),
+    # Generic sanctions-relief commentary (no specific protest framing).
+    # Sits AFTER anti_sanctions_protest so protest pieces win the tag.
+    ("ofac_sanctions_relief", ("levantamiento de las sanciones", "sanctions easing", "ease sanctions", "ease the sanctions", "lift sanctions", "us eases sanctions")),
     # Diplomatic ties (specific bilaterals)
     ("eu_dialogue", ("grupo de amistad venezuela-ue", "venezuela-eu friendship group", "european parliament delegation")),
     ("us_relations_specific", ("us senate resolution", "us state department releases", "us-venezuela bilateral")),
@@ -772,6 +792,74 @@ def _deduplicate_calendar_events(events: list[dict]) -> list[dict]:
     return kept
 
 
+def _refresh_calendar_label(
+    raw_urgency: str,
+    raw_date_label: str,
+    published_date: date,
+) -> tuple[str, str]:
+    """Recompute a calendar event's urgency + date_label against today.
+
+    The LLM writes urgency="today" + date_label="…— TODAY" into
+    analysis_json on the day the article is analyzed. Those values
+    are then frozen in the DB, so an event analyzed on Apr 17 still
+    renders as "TODAY" on Apr 19 unless we re-anchor at render time.
+
+    Behavior:
+      • If the LLM said "today" but the source article isn't actually
+        from today, demote urgency → "dated" and rewrite the label to
+        a relative-day form ("Yesterday", "2 days ago", "Apr 17", etc).
+      • If urgency != "today" but the date_label literally contains
+        "TODAY"/"Today"/"today" while the article isn't from today,
+        strip the stale "TODAY" suffix.
+      • Otherwise return the LLM's values unchanged.
+
+    Anchored to UTC date because the cron + reader timezones diverge
+    enough that anything else is misleading (Render cron runs UTC,
+    reader is in Medellín, content is global).
+    """
+    today = date.today()
+    age_days = (today - published_date).days
+
+    # Case 1: explicit urgency=today on a stale event → recompute fully.
+    if raw_urgency == "today" and age_days != 0:
+        return "dated", _relative_date_label(published_date, age_days)
+
+    # Case 2: urgency is fine, but the LLM-baked label has a stale
+    # "— TODAY" suffix. Strip it and fall back to a real date.
+    if age_days != 0 and re.search(r"\bTODAY\b", raw_date_label, flags=re.IGNORECASE):
+        return raw_urgency, _relative_date_label(published_date, age_days)
+
+    # Case 3: urgency=today AND it actually is today — keep the
+    # LLM label, just normalise to ALL-CAPS for visual consistency
+    # with the existing template styling.
+    if raw_urgency == "today" and age_days == 0:
+        return "today", raw_date_label
+
+    return raw_urgency, raw_date_label
+
+
+def _relative_date_label(d: date, age_days: int) -> str:
+    """Short human label for a past date, mirroring the LLM style.
+
+    Examples:
+      0       → "TODAY"
+      1       → "YESTERDAY"
+      2-6     → "APR 17 (3 DAYS AGO)"
+      7-89    → "APR 17"  (drop year for current year)
+      else    → "APR 17, 2025"
+    """
+    if age_days <= 0:
+        return "TODAY"
+    if age_days == 1:
+        return "YESTERDAY"
+    base = d.strftime("%b %d").upper()
+    if age_days <= 6:
+        return f"{base} ({age_days} DAYS AGO)"
+    if d.year == date.today().year:
+        return base
+    return d.strftime("%b %d, %Y").upper()
+
+
 def _build_calendar(ext_articles, assembly_news) -> list[dict]:
     """Forward-looking investor calendar built from recent analyzed news.
 
@@ -810,9 +898,22 @@ def _build_calendar(ext_articles, assembly_news) -> list[dict]:
             " ".join(filter(None, [title, ev.get("subtitle"), ev.get("note")]))
         )
 
-        urgency = (ev.get("urgency") or "dated").lower()
+        raw_urgency = (ev.get("urgency") or "dated").lower()
+        raw_date_label = ev.get("date_label") or item.published_date.strftime("%b %d, %Y")
+
+        # Re-anchor to today. The LLM serialized "today"/"TODAY" into
+        # analysis_json on the day the article was first analyzed, so
+        # those labels go stale as soon as the calendar rolls forward
+        # (e.g. an Apr 17 event still rendering as "APR 17 — TODAY"
+        # on Apr 19). We trust the article's published_date as the
+        # event-anchor date — for the LLM to have set urgency="today"
+        # the event almost always coincided with the article's date.
+        urgency, date_label = _refresh_calendar_label(
+            raw_urgency, raw_date_label, item.published_date,
+        )
+
         candidates.append({
-            "date_label": ev.get("date_label") or item.published_date.strftime("%b %d, %Y"),
+            "date_label": date_label,
             "title": title,
             "subtitle": ev.get("subtitle"),
             "note": ev.get("note") or "",
