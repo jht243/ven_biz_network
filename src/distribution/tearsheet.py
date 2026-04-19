@@ -105,22 +105,22 @@ def _styles():
         "subtitle": ParagraphStyle(
             "subtitle", parent=base["Normal"],
             fontName="Helvetica-Oblique", fontSize=9, leading=12,
-            textColor=BRAND_MUTED, spaceAfter=8,
+            textColor=BRAND_MUTED, spaceAfter=4,
         ),
         "section": ParagraphStyle(
             "section", parent=base["Normal"],
             fontName="Helvetica-Bold", fontSize=10, leading=12,
-            textColor=BRAND_BLUE, spaceBefore=6, spaceAfter=3,
+            textColor=BRAND_BLUE, spaceBefore=2, spaceAfter=3,
         ),
         "lede_head": ParagraphStyle(
             "lede_head", parent=base["Normal"],
             fontName="Helvetica-Bold", fontSize=11, leading=14,
-            textColor=BRAND_INK, spaceAfter=3,
+            textColor=BRAND_INK, spaceAfter=2,
         ),
         "body": ParagraphStyle(
             "body", parent=base["Normal"],
             fontName="Helvetica", fontSize=9, leading=12,
-            textColor=BRAND_INK, spaceAfter=4,
+            textColor=BRAND_INK, spaceAfter=3,
         ),
         "body_sm": ParagraphStyle(
             "body_sm", parent=base["Normal"],
@@ -154,8 +154,8 @@ def _styles():
         ),
         "footer": ParagraphStyle(
             "footer", parent=base["Normal"],
-            fontName="Helvetica", fontSize=7, leading=9,
-            textColor=BRAND_MUTED, alignment=1,
+            fontName="Helvetica", fontSize=7.5, leading=11,
+            textColor=BRAND_MUTED, alignment=0,
         ),
     }
 
@@ -250,15 +250,16 @@ def collect_tearsheet_data() -> dict:
 
 
 # ── Layout primitives ─────────────────────────────────────────────────
-def _header_table(generated_at: datetime, styles) -> Table:
-    """Brand banner row. Two cells: brand on left, date+volume on right."""
+def _header_block(generated_at: datetime, styles) -> list:
+    """Brand banner. Two-row layout:
+      Row 1: brand + title (left)  |  date + volume + URL (right)
+      Row 2: full-width subtitle (so it never wraps)
+    Followed by a thin brand-blue rule that visually anchors the page."""
     today = generated_at.date()
-    # Volume number = days since site launch (gives a stable monotonically-
-    # increasing identifier without needing a DB counter).
+    # Volume number = days since site launch (stable monotonic identifier
+    # without a DB counter).
     launch = date(2026, 4, 1)
     vol = max(1, (today - launch).days + 1)
-    issue_label = today.strftime("%A, %B %-d, %Y") if hasattr(today, "strftime") else str(today)
-    # Use %#d on Windows, %-d on Unix; fall back manually for safety.
     try:
         issue_label = today.strftime("%A, %B %-d, %Y")
     except ValueError:
@@ -267,11 +268,6 @@ def _header_table(generated_at: datetime, styles) -> Table:
     left = [
         Paragraph("CARACAS RESEARCH", styles["brand"]),
         Paragraph("Daily Venezuela Investor Tearsheet", styles["title"]),
-        Paragraph(
-            "Independent investment intelligence on Venezuela — "
-            "sanctions, FX, calendar, and policy",
-            styles["subtitle"],
-        ),
     ]
     right = [
         Paragraph(f"<para align='right'><b>{issue_label}</b></para>", styles["body"]),
@@ -291,10 +287,33 @@ def _header_table(generated_at: datetime, styles) -> Table:
     )
     t.setStyle(TableStyle([
         ("VALIGN", (0, 0), (-1, -1), "TOP"),
-        ("LINEBELOW", (0, 0), (-1, -1), 1.2, BRAND_BLUE),
-        ("BOTTOMPADDING", (0, 0), (-1, -1), 6),
+        ("BOTTOMPADDING", (0, 0), (-1, -1), 2),
     ]))
-    return t
+
+    # Full-width subtitle (one line, no wrap)
+    subtitle = Paragraph(
+        "Independent investment intelligence on Venezuela — "
+        "sanctions, FX, calendar, and policy",
+        styles["subtitle"],
+    )
+
+    # Thin brand-blue rule below — visual anchor for the masthead.
+    rule = Table(
+        [[""]], colWidths=[PAGE_W - 2 * MARGIN], rowHeights=[0.5],
+        style=TableStyle([("LINEABOVE", (0, 0), (-1, -1), 1.2, BRAND_BLUE)]),
+    )
+
+    return [t, subtitle, rule]
+
+
+def _section_rule() -> Table:
+    """Hair-thin gray separator placed above each major section title.
+    Provides a clear visual end-of-block / start-of-block cue without
+    using up real vertical space."""
+    return Table(
+        [[""]], colWidths=[PAGE_W - 2 * MARGIN], rowHeights=[0.5],
+        style=TableStyle([("LINEABOVE", (0, 0), (-1, -1), 0.5, BRAND_RULE)]),
+    )
 
 
 def _kpi_row(ticker_items: list[dict], styles) -> Table:
@@ -363,8 +382,8 @@ def _kpi_row(ticker_items: list[dict], styles) -> Table:
         ("BOX", (0, 0), (-1, -1), 0.5, BRAND_RULE),
         ("LINEBEFORE", (1, 0), (-1, -1), 0.5, BRAND_RULE),
         ("VALIGN", (0, 0), (-1, -1), "MIDDLE"),
-        ("TOPPADDING", (0, 0), (-1, -1), 8),
-        ("BOTTOMPADDING", (0, 0), (-1, -1), 8),
+        ("TOPPADDING", (0, 0), (-1, -1), 6),
+        ("BOTTOMPADDING", (0, 0), (-1, -1), 6),
         ("LEFTPADDING", (0, 0), (-1, -1), 4),
         ("RIGHTPADDING", (0, 0), (-1, -1), 4),
     ]))
@@ -381,10 +400,12 @@ def _top_dev_block(top: Optional[dict], styles) -> list:
     date_disp = top.get("date_display") or ""
     meta = " · ".join(filter(None, [date_disp, cat, src]))
     return [
+        Spacer(1, 4),
+        _section_rule(),
         Paragraph("TODAY'S TOP DEVELOPMENT", styles["section"]),
         Paragraph(head, styles["lede_head"]),
         Paragraph(f"<i>{meta}</i>", styles["muted_sm"]),
-        Spacer(1, 4),
+        Spacer(1, 3),
         Paragraph(take, styles["body"]),
     ]
 
@@ -392,7 +413,11 @@ def _top_dev_block(top: Optional[dict], styles) -> list:
 def _other_items_block(other: list[dict], styles) -> list:
     if not other:
         return []
-    out = [Paragraph("OTHER NOTABLE ITEMS", styles["section"])]
+    out = [
+        Spacer(1, 4),
+        _section_rule(),
+        Paragraph("OTHER NOTABLE ITEMS", styles["section"]),
+    ]
     for e in other:
         head = _strip_html(e.get("headline_short") or e.get("headline") or "")
         take = _strip_html(e.get("takeaway_plain") or "")
@@ -454,12 +479,14 @@ def _climate_block(climate: dict, styles) -> list:
         ("INNERGRID", (0, 0), (-1, -1), 0.5, BRAND_RULE),
         ("LEFTPADDING", (0, 0), (-1, -1), 6),
         ("RIGHTPADDING", (0, 0), (-1, -1), 6),
-        ("TOPPADDING", (0, 0), (-1, -1), 6),
-        ("BOTTOMPADDING", (0, 0), (-1, -1), 6),
+        ("TOPPADDING", (0, 0), (-1, -1), 4),
+        ("BOTTOMPADDING", (0, 0), (-1, -1), 4),
     ]))
 
     period = climate.get("period") or ""
     return [
+        Spacer(1, 4),
+        _section_rule(),
         Paragraph("INVESTMENT CLIMATE SCORECARD", styles["section"]),
         Paragraph(f"<i>{period}</i>", styles["muted_sm"]),
         Spacer(1, 3),
@@ -499,38 +526,50 @@ def _calendar_block(upcoming: list[dict], styles) -> list:
         ("BOTTOMPADDING", (0, 0), (-1, -1), 4),
     ]))
     return [
+        Spacer(1, 4),
+        _section_rule(),
         Paragraph("UPCOMING CALENDAR (NEXT 14 DAYS)", styles["section"]),
         t,
     ]
 
 
 def _footer(generated_at: datetime, styles) -> list:
+    """Two-paragraph footer, left-aligned and justified so lines fill the
+    full column width naturally instead of leaving 2-word orphans."""
     ts = generated_at.strftime("%Y-%m-%d %H:%M UTC")
+
+    # Justified variant of the footer style — fills each line to the
+    # column edge, eliminating the awkward orphaned phrases we saw in
+    # the centered version.
+    footer_just = ParagraphStyle(
+        "footer_just", parent=styles["footer"], alignment=4,  # justify
+    )
+
+    line1 = (
+        f"<b>Generated {ts}.</b> "
+        f"<b>Sources:</b> BCV (live scrape), OFAC SDN, US State Department, "
+        f"Federal Register, GDELT, Asamblea Nacional. "
+        f"<b>Methodology:</b> "
+        f"<font color='{BRAND_BLUE.hexval()[:-2]}'>caracasresearch.com/methodology</font>."
+    )
+    line2 = (
+        "<b>Disclaimer:</b> This document is for informational purposes only "
+        "and does not constitute investment, legal, or tax advice. Sanctions "
+        "regimes change frequently — always verify current OFAC guidance and "
+        "consult qualified counsel before any transaction. "
+        "© Caracas Research · "
+        f"<font color='{BRAND_BLUE.hexval()[:-2]}'>caracasresearch.com</font>."
+    )
+
     parts = [
         Table([[""]], colWidths=[PAGE_W - 2 * MARGIN], rowHeights=[0.5],
-              style=TableStyle([("LINEABOVE", (0, 0), (-1, -1), 0.6, BRAND_BLUE)])),
-        Spacer(1, 4),
-        Paragraph(
-            f"Generated {ts} · "
-            f"Sources: BCV (live scrape), OFAC SDN, US State Dept, "
-            f"Federal Register, GDELT, Asamblea Nacional. "
-            f"Methodology: <font color='{BRAND_BLUE.hexval()[:-2]}'>"
-            f"caracasresearch.com/methodology</font>.",
-            styles["footer"],
-        ),
-        Paragraph(
-            "<b>Disclaimer:</b> This document is for informational purposes only "
-            "and does not constitute investment, legal, or tax advice. Sanctions "
-            "regimes change frequently — always verify current OFAC guidance and "
-            "consult qualified counsel before any transaction.",
-            styles["footer"],
-        ),
-        Paragraph(
-            "© Caracas Research · caracasresearch.com",
-            styles["footer"],
-        ),
+              style=TableStyle([("LINEABOVE", (0, 0), (-1, -1), 0.8, BRAND_BLUE)])),
+        Spacer(1, 5),
+        Paragraph(line1, footer_just),
+        Spacer(1, 2),
+        Paragraph(line2, footer_just),
     ]
-    return [Spacer(1, 8), KeepTogether(parts)]
+    return [Spacer(1, 6), KeepTogether(parts)]
 
 
 # ── Public API ────────────────────────────────────────────────────────
@@ -553,8 +592,8 @@ def render_daily_tearsheet_pdf(data: Optional[dict] = None) -> bytes:
     )
 
     flow = []
-    flow.append(_header_table(data["generated_at"], styles))
-    flow.append(Spacer(1, 8))
+    flow.extend(_header_block(data["generated_at"], styles))
+    flow.append(Spacer(1, 6))
     flow.append(_kpi_row(data["ticker"], styles))
     flow.extend(_top_dev_block(data["top"], styles))
     flow.extend(_other_items_block(data["other"], styles))
