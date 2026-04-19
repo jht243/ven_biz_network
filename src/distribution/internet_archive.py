@@ -20,6 +20,7 @@ behavior matches the other channels.
 
 from __future__ import annotations
 
+import io
 import logging
 from dataclasses import dataclass
 from datetime import date, datetime
@@ -132,9 +133,15 @@ def upload_tearsheet(pdf_bytes: bytes, d: date) -> IAUploadResult:
     metadata = _build_metadata(d)
 
     try:
+        # IA's SDK accepts either local file paths or file-like objects in
+        # the `files` dict; passing raw bytes makes it try to interpret
+        # them as a path ("File name too long" if the bytes are non-empty).
+        # Wrap in BytesIO so the SDK uploads the in-memory bytes directly.
+        pdf_stream = io.BytesIO(pdf_bytes)
+        pdf_stream.name = filename  # SDK reads .name to set the remote filename
         responses = ia_upload(
             identifier,
-            files={filename: pdf_bytes},
+            files={filename: pdf_stream},
             metadata=metadata,
             access_key=settings.internet_archive_access_key,
             secret_key=settings.internet_archive_secret_key,
