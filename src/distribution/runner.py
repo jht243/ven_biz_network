@@ -52,6 +52,10 @@ _STATIC_URLS_TO_PING_DAILY = (
     "/",
     "/sanctions-tracker",
     "/calendar",
+    "/sanctions/individuals",
+    "/sanctions/entities",
+    "/sanctions/vessels",
+    "/sanctions/aircraft",
 )
 
 
@@ -223,6 +227,19 @@ def run_indexnow() -> dict:
             if url in already_submitted:
                 continue
             candidates.append((url, "static", None))
+
+        # Newly added SDN profile pages — when the OFAC scraper picks up
+        # a fresh designation, its profile URL won't have been pinged
+        # yet. Submit it now so Bing/Yandex index the name within hours.
+        try:
+            from src.data.sdn_profiles import list_all_profiles
+            for p in list_all_profiles():
+                url = _site_base() + p.url_path
+                if url in already_submitted:
+                    continue
+                candidates.append((url, "sdn_profile", p.db_id))
+        except Exception as exc:
+            logger.warning("indexnow: could not enumerate SDN profiles: %s", exc)
 
         if not candidates:
             return {"status": "ok", "submitted": 0, "reason": "nothing new"}

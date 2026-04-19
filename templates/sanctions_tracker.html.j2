@@ -67,11 +67,22 @@
 
   <div class="stats-row">
     <div class="stat-card"><span class="num">{{ stats.total }}</span><span class="lbl">Total designations</span></div>
-    <div class="stat-card"><span class="num">{{ stats.individuals }}</span><span class="lbl">Individuals</span></div>
-    <div class="stat-card"><span class="num">{{ stats.entities }}</span><span class="lbl">Entities</span></div>
-    <div class="stat-card"><span class="num">{{ stats.vessels }}</span><span class="lbl">Vessels</span></div>
-    <div class="stat-card"><span class="num">{{ stats.aircraft }}</span><span class="lbl">Aircraft</span></div>
+    <a class="stat-card" href="/sanctions/individuals" style="text-decoration:none;color:inherit;"><span class="num">{{ stats.individuals }}</span><span class="lbl">Individuals →</span></a>
+    <a class="stat-card" href="/sanctions/entities" style="text-decoration:none;color:inherit;"><span class="num">{{ stats.entities }}</span><span class="lbl">Entities →</span></a>
+    <a class="stat-card" href="/sanctions/vessels" style="text-decoration:none;color:inherit;"><span class="num">{{ stats.vessels }}</span><span class="lbl">Vessels →</span></a>
+    <a class="stat-card" href="/sanctions/aircraft" style="text-decoration:none;color:inherit;"><span class="num">{{ stats.aircraft }}</span><span class="lbl">Aircraft →</span></a>
   </div>
+
+  {# Each stat card above links to a full A-Z directory; the search table
+     below stays the fast-filter UX. Per-name profile pages
+     (/sanctions/<bucket>/<slug>) are linked from those directories. #}
+  <p style="font-size:14px;color:var(--sr-gray-text);margin:-12px 0 24px;">
+    Looking for a specific name? Browse the
+    <a href="/sanctions/individuals">individuals</a>,
+    <a href="/sanctions/entities">entities</a>,
+    <a href="/sanctions/vessels">vessels</a>, or
+    <a href="/sanctions/aircraft">aircraft</a> directories — each entry has its own profile page.
+  </p>
 
   <div class="filter-bar">
     <input type="text" id="sdn-search" placeholder="Search by name, program, or remarks…" aria-label="Search SDN entries">

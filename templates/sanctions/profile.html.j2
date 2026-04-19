@@ -1,0 +1,173 @@
+{#
+  One OFAC SDN entry → one indexable page.
+  Title and H1 carry the entity name verbatim so a search like
+  "vicente carretero" or "saab halabi" lands directly here, with the
+  matching name in the SERP snippet.
+
+  Structured data: Person / Organization / Vehicle (vessel) / Vehicle
+  (aircraft) inside an @graph that also carries BreadcrumbList. We
+  intentionally lean on schema.org/Person + nationality/birthDate/
+  identifier so Knowledge Panel features have the structured fields
+  they need to recognise the page as authoritative.
+#}
+{% extends "_base.html.j2" %}
+
+{% block content %}
+<div class="container">
+  <nav class="breadcrumbs" aria-label="Breadcrumb">
+    <a href="/">Home</a>
+    <span>›</span>
+    <a href="/sanctions-tracker">OFAC Venezuela Sanctions</a>
+    <span>›</span>
+    <a href="/sanctions/{{ profile.bucket }}">{{ profile.bucket|capitalize }}</a>
+    <span>›</span>
+    <strong>{{ profile.display_name }}</strong>
+  </nav>
+
+  <article>
+    <header>
+      <h1>{{ profile.display_name }}</h1>
+      <p class="subtitle">
+        OFAC Venezuela Sanctions Profile —
+        {{ profile.category_singular|capitalize }} listed under
+        {{ profile.program or 'Venezuela-related sanctions' }}
+      </p>
+      <div class="meta">
+        <span><strong>Status:</strong> Active SDN designation</span>
+        <span><strong>Program:</strong> {{ profile.program_label }}</span>
+        {% if profile.designation_date %}
+        <span><strong>First indexed:</strong> {{ profile.designation_date }}</span>
+        {% endif %}
+      </div>
+    </header>
+
+    <div class="body">
+      <div class="takeaways">
+        <h3>Key Facts</h3>
+        <ul>
+          <li><strong>OFAC name on file:</strong> {{ profile.raw_name }}</li>
+          <li><strong>Type:</strong> {{ profile.category_singular|capitalize }}</li>
+          <li><strong>Sanctions program:</strong> {{ profile.program_label }}</li>
+          {% if profile.parsed.dob %}<li><strong>Date of birth:</strong> {{ profile.parsed.dob }}</li>{% endif %}
+          {% if profile.parsed.pob %}<li><strong>Place of birth:</strong> {{ profile.parsed.pob }}</li>{% endif %}
+          {% if profile.parsed.nationality %}<li><strong>Nationality:</strong> {{ profile.parsed.nationality }}</li>{% endif %}
+          {% if profile.parsed.citizenship %}<li><strong>Citizenship:</strong> {{ profile.parsed.citizenship }}</li>{% endif %}
+          {% if profile.parsed.cedula %}<li><strong>Cedula:</strong> {{ profile.parsed.cedula }}</li>{% endif %}
+          {% if profile.parsed.passport %}<li><strong>Passport:</strong> {{ profile.parsed.passport }}</li>{% endif %}
+          {% if profile.parsed.national_id %}<li><strong>National ID:</strong> {{ profile.parsed.national_id }}</li>{% endif %}
+          {% if profile.parsed.imo %}<li><strong>IMO:</strong> {{ profile.parsed.imo }}</li>{% endif %}
+          {% if profile.parsed.mmsi %}<li><strong>MMSI:</strong> {{ profile.parsed.mmsi }}</li>{% endif %}
+          {% if profile.parsed.vessel_year %}<li><strong>Year of build:</strong> {{ profile.parsed.vessel_year }}</li>{% endif %}
+          {% if profile.parsed.vessel_flag %}<li><strong>Flag:</strong> {{ profile.parsed.vessel_flag }}</li>{% endif %}
+          {% if profile.parsed.aircraft_model %}<li><strong>Model:</strong> {{ profile.parsed.aircraft_model }}</li>{% endif %}
+          {% if profile.parsed.aircraft_serial %}<li><strong>Serial (MSN):</strong> {{ profile.parsed.aircraft_serial }}</li>{% endif %}
+          {% if profile.parsed.aircraft_tail %}<li><strong>Tail number:</strong> {{ profile.parsed.aircraft_tail }}</li>{% endif %}
+        </ul>
+      </div>
+
+      <h2>About this designation</h2>
+      <p>
+        <strong>{{ profile.display_name }}</strong> appears on the US Treasury Office of
+        Foreign Assets Control (OFAC) Specially Designated Nationals (SDN) List under the
+        <em>{{ profile.program_label }}</em> program. US persons and entities are
+        prohibited from engaging in transactions with this {{ profile.category_singular }},
+        and any property or interests in property within US jurisdiction must be blocked
+        and reported to OFAC.
+      </p>
+      {% if profile.is_individual %}
+      <p>
+        For compliance teams: this profile is a starting point for diligence — always
+        confirm against OFAC's primary <a href="https://sanctions-search.ofac.treasury.gov/" rel="nofollow">SDN Search</a>
+        before relying on a screen for decision-making, since the SDN list updates
+        continuously and individuals can be added or delisted between our scrape windows.
+      </p>
+      {% endif %}
+
+      {% if profile.raw_remarks %}
+      <h2>OFAC remarks (full text)</h2>
+      <div class="source-citation">
+        <strong>Verbatim from OFAC SDN listing:</strong><br>
+        {{ profile.raw_remarks }}
+      </div>
+      {% endif %}
+
+      {% if linked_to %}
+      <h2>Linked entities</h2>
+      <p>
+        OFAC's SDN listing for {{ profile.display_name }} explicitly references the
+        following {{ 'entity' if linked_to|length == 1 else 'entities' }}, which means a
+        relationship documented by US Treasury (ownership, control, agency, or beneficial
+        interest):
+      </p>
+      <ul>
+        {% for raw, matched in linked_to %}
+        <li>
+          {% if matched %}<a href="{{ matched.url_path }}"><strong>{{ matched.display_name }}</strong></a>{% else %}<strong>{{ raw }}</strong>{% endif %}
+          {% if matched %}<small>— {{ matched.category_singular }}, {{ matched.program }}</small>{% endif %}
+        </li>
+        {% endfor %}
+      </ul>
+      {% endif %}
+
+      {% if family %}
+      <h2>Other sanctioned individuals with the same surname</h2>
+      <p>
+        These individuals share the surname <em>{{ profile.raw_name.split(',')[0]|title }}</em>
+        and are also listed on OFAC's Venezuela-related SDN. The relationship is
+        inferred from naming convention only — not from any explicit OFAC family
+        designation — but the cluster is a useful diligence signal.
+      </p>
+      <ul class="related">
+        {% for f in family %}
+        <li>
+          <a href="{{ f.url_path }}">{{ f.display_name }}</a>
+          <small>— {{ f.program }}{% if f.parsed.dob %} · DOB {{ f.parsed.dob }}{% endif %}</small>
+        </li>
+        {% endfor %}
+      </ul>
+      {% endif %}
+
+      {% if related_news %}
+      <h2>Recent news mentioning this {{ profile.category_singular }}</h2>
+      <ul class="related">
+        {% for n in related_news %}
+        <li>
+          {% if n.url %}<a href="{{ n.url }}" rel="nofollow">{{ n.headline }}</a>{% else %}{{ n.headline }}{% endif %}
+          <small>— {{ n.source }}{% if n.date %} · {{ n.date }}{% endif %}</small>
+        </li>
+        {% endfor %}
+      </ul>
+      {% endif %}
+
+      <h2>Verifying this designation</h2>
+      <ul>
+        <li><a href="{{ profile.source_url }}" rel="nofollow">OFAC SDN List entry (treasury.gov)</a></li>
+        <li><a href="https://sanctions-search.ofac.treasury.gov/" rel="nofollow">OFAC official Sanctions Search</a></li>
+        {% if profile.program_eo_url %}
+        <li><a href="{{ profile.program_eo_url }}" rel="nofollow">{{ profile.program }} executive order text</a></li>
+        {% endif %}
+      </ul>
+
+      <h2>Useful tools and explainers</h2>
+      <ul>
+        <li><a href="/tools/ofac-venezuela-sanctions-checker">Search the full Venezuela SDN list</a> — paste any name to see if it's currently designated.</li>
+        <li><a href="/tools/ofac-venezuela-general-licenses">OFAC General Licenses for Venezuela</a> — the active GLs that authorize otherwise-prohibited transactions.</li>
+        <li><a href="/explainers/what-are-ofac-sanctions-on-venezuela">What are OFAC sanctions on Venezuela? (plain-English guide)</a></li>
+        <li><a href="/sanctions-tracker">Browse all {{ stats.total }} active Venezuela-program SDN designations</a></li>
+      </ul>
+    </div>
+
+    <div class="related">
+      <h3>Other {{ profile.bucket }} on the Venezuela SDN list</h3>
+      <ul>
+        {% for sib in siblings %}
+        <li><a href="{{ sib.url_path }}">{{ sib.display_name }}</a> <small>— {{ sib.program }}</small></li>
+        {% endfor %}
+      </ul>
+      <p style="margin-top:14px;font-size:14px;">
+        <a href="/sanctions/{{ profile.bucket }}"><strong>See all {{ stats[profile.bucket] }} {{ profile.bucket }} →</strong></a>
+      </p>
+    </div>
+  </article>
+</div>
+{% endblock %}

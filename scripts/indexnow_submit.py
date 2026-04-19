@@ -50,6 +50,10 @@ STATIC_PATHS: tuple[str, ...] = (
     "/travel",
     "/calendar",
     "/sources",
+    "/sanctions/individuals",
+    "/sanctions/entities",
+    "/sanctions/vessels",
+    "/sanctions/aircraft",
 )
 
 
@@ -80,6 +84,16 @@ def collect_urls() -> list[tuple[str, str, int | None]]:
             out.append((f"{base}{path}", "landing_page", page.id))
     finally:
         db.close()
+
+    # Per-SDN profile pages — every OFAC Venezuela-program designation
+    # is its own indexable URL. We submit them all so Bing/Yandex
+    # discover the corpus immediately rather than waiting on link-walking.
+    try:
+        from src.data.sdn_profiles import list_all_profiles
+        for p in list_all_profiles():
+            out.append((f"{base}{p.url_path}", "sdn_profile", p.db_id))
+    except Exception as exc:
+        print(f"WARN: could not enumerate SDN profiles for IndexNow: {exc}")
 
     # Dedupe while preserving order.
     seen: set[str] = set()

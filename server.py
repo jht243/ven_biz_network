@@ -1311,6 +1311,316 @@ def sanctions_tracker():
         abort(500)
 
 
+# ──────────────────────────────────────────────────────────────────────
+# Per-SDN profile pages — /sanctions/<bucket>/<slug> and the bucket
+# index pages /sanctions/<bucket>. Each of OFAC's ~410 Venezuela-program
+# designations gets its own permanent, indexable URL so that a search
+# like "vicente carretero sanctions" lands directly on the matching
+# profile (with the entity's name in the title and H1) instead of on
+# our generic /sanctions-tracker table.
+#
+# Why two routes instead of one collapsed route:
+#   • The bucket arg is a fixed enum (4 values) — keeping it in the URL
+#     gives Google a clean breadcrumb hierarchy (Home → Sanctions →
+#     Individuals → Person) which surfaces in SERP rich results.
+#   • The slug arg is generated deterministically by data/sdn_profiles.py
+#     so collisions are handled there, not here.
+# ──────────────────────────────────────────────────────────────────────
+@app.route("/sanctions/<bucket>")
+@app.route("/sanctions/<bucket>/")
+def sanctions_index_page(bucket: str):
+    """A-Z directory of every SDN entry in one bucket
+    (individuals / entities / vessels / aircraft)."""
+    from src.data.sdn_profiles import (
+        ENTITY_BUCKETS, _BUCKET_SINGULAR, list_profiles, stats as sdn_stats,
+    )
+    from src.page_renderer import _env, _base_url, _iso, settings as _s
+    from datetime import date as _date, datetime as _dt
+    import json as _json
+
+    if bucket not in ENTITY_BUCKETS:
+        abort(404)
+
+    try:
+        profiles = list_profiles(bucket)
+        s = sdn_stats()
+        singular = _BUCKET_SINGULAR.get(bucket, bucket)
+
+        grouped: list[tuple[str, list]] = []
+        current_letter = None
+        current_items: list = []
+        for p in profiles:
+            letter = (p.raw_name[:1] or "#").upper()
+            if not letter.isalpha():
+                letter = "#"
+            if letter != current_letter:
+                if current_items:
+                    grouped.append((current_letter, current_items))
+                current_letter = letter
+                current_items = []
+            current_items.append(p)
+        if current_items:
+            grouped.append((current_letter, current_items))
+
+        base = _base_url()
+        canonical = f"{base}/sanctions/{bucket}"
+        seo = {
+            "title": f"OFAC Venezuela SDN — {bucket.capitalize()} ({len(profiles)} active designations)",
+            "description": (
+                f"Complete list of {len(profiles)} {singular}{'s' if not singular.endswith('s') else ''} "
+                f"on the US Treasury OFAC SDN List under Venezuela-related sanctions programs. "
+                f"Each entry links to a full profile with biographical data, linked entities, and recent news."
+            ),
+            "keywords": f"OFAC {bucket} Venezuela, Venezuela SDN {bucket}, OFAC Venezuela sanctions list, OFAC SDN search",
+            "canonical": canonical,
+            "site_name": _s.site_name,
+            "site_url": base,
+            "locale": _s.site_locale,
+            "og_image": f"{base}/static/og-image.png?v=3",
+            "og_type": "website",
+            "published_iso": _iso(_dt.utcnow()),
+            "modified_iso": _iso(_dt.utcnow()),
+        }
+
+        jsonld = _json.dumps({
+            "@context": "https://schema.org",
+            "@graph": [
+                {
+                    "@type": "BreadcrumbList",
+                    "itemListElement": [
+                        {"@type": "ListItem", "position": 1, "name": "Home", "item": f"{base}/"},
+                        {"@type": "ListItem", "position": 2, "name": "OFAC Venezuela Sanctions", "item": f"{base}/sanctions-tracker"},
+                        {"@type": "ListItem", "position": 3, "name": bucket.capitalize(), "item": canonical},
+                    ],
+                },
+                {
+                    "@type": "ItemList",
+                    "@id": f"{canonical}#list",
+                    "name": f"OFAC Venezuela SDN — {bucket.capitalize()}",
+                    "numberOfItems": len(profiles),
+                    "itemListElement": [
+                        {
+                            "@type": "ListItem",
+                            "position": idx + 1,
+                            "url": f"{base}{p.url_path}",
+                            "name": p.display_name,
+                        }
+                        for idx, p in enumerate(profiles[:200])
+                    ],
+                },
+            ],
+        }, ensure_ascii=False)
+
+        template = _env.get_template("sanctions/index.html.j2")
+        html = template.render(
+            bucket=bucket,
+            singular=singular,
+            profiles=profiles,
+            grouped=grouped,
+            stats=s,
+            seo=seo,
+            jsonld=jsonld,
+            current_year=_date.today().year,
+        )
+        return Response(html, mimetype="text/html")
+    except HTTPException:
+        raise
+    except Exception as exc:
+        logger.exception("sanctions index render failed for bucket=%s: %s", bucket, exc)
+        abort(500)
+
+
+@app.route("/sanctions/<bucket>/<slug>")
+@app.route("/sanctions/<bucket>/<slug>/")
+def sanctions_profile_page(bucket: str, slug: str):
+    """One OFAC SDN entry's permanent, indexable profile page."""
+    from src.data.sdn_profiles import (
+        ENTITY_BUCKETS, family_members, find_related_news, get_profile,
+        list_profiles, resolve_linked_to, stats as sdn_stats,
+    )
+    from src.page_renderer import _env, _base_url, _iso, settings as _s
+    from datetime import date as _date, datetime as _dt
+    import json as _json
+
+    if bucket not in ENTITY_BUCKETS:
+        abort(404)
+    profile = get_profile(bucket, slug)
+    if profile is None:
+        abort(404)
+
+    try:
+        family = family_members(profile)
+        linked_to = resolve_linked_to(profile)
+        related_news = find_related_news(profile)
+        s = sdn_stats()
+
+        # Up to 6 alphabetical neighbors of the same bucket — gives Googlebot
+        # 6 fresh outbound links from every profile page, which dramatically
+        # accelerates how fast the whole 410-page corpus gets crawled.
+        all_in_bucket = list_profiles(bucket)
+        siblings: list = []
+        try:
+            idx = next(i for i, p in enumerate(all_in_bucket) if p.db_id == profile.db_id)
+            for i in range(max(0, idx - 3), min(len(all_in_bucket), idx + 4)):
+                if all_in_bucket[i].db_id == profile.db_id:
+                    continue
+                siblings.append(all_in_bucket[i])
+                if len(siblings) >= 6:
+                    break
+        except StopIteration:
+            siblings = []
+
+        base = _base_url()
+        canonical = f"{base}{profile.url_path}"
+
+        # Description emphasises the entity's NAME first (matching how people
+        # search) and includes the program for context. Keep <=160 chars so
+        # SERP doesn't truncate.
+        desc_bits = [f"{profile.display_name} — OFAC Venezuela SDN profile"]
+        if profile.parsed.get("dob"):
+            desc_bits.append(f"DOB {profile.parsed['dob']}")
+        if profile.parsed.get("nationality"):
+            desc_bits.append(profile.parsed["nationality"])
+        if profile.program:
+            desc_bits.append(profile.program)
+        desc_bits.append("biographical data, linked entities, and source links.")
+        description = ". ".join(desc_bits)[:300]
+
+        # Title carries the name verbatim → SERP click magnet.
+        title = (
+            f"{profile.display_name} — OFAC Venezuela SDN profile "
+            f"({profile.program or 'sanctions'})"
+        )[:120]
+
+        seo = {
+            "title": title,
+            "description": description,
+            "keywords": (
+                f"{profile.display_name} OFAC, {profile.display_name} sanctions, "
+                f"{profile.raw_name}, OFAC Venezuela {profile.category_singular}, "
+                f"OFAC SDN {profile.category_singular}, {profile.program}"
+            ),
+            "canonical": canonical,
+            "site_name": _s.site_name,
+            "site_url": base,
+            "locale": _s.site_locale,
+            "og_image": f"{base}/static/og-image.png?v=3",
+            "og_type": "profile",
+            "published_iso": _iso(_dt.utcnow()),
+            "modified_iso": _iso(_dt.utcnow()),
+        }
+
+        # Build the schema.org @graph: BreadcrumbList + the bucket-specific
+        # entity type. We use Person for individuals (Knowledge-Graph eligible),
+        # Organization for entities (B2B compliance crawlers respect it),
+        # Vehicle for both vessels and aircraft (closest schema.org type that
+        # supports identifier fields).
+        breadcrumb = {
+            "@type": "BreadcrumbList",
+            "itemListElement": [
+                {"@type": "ListItem", "position": 1, "name": "Home", "item": f"{base}/"},
+                {"@type": "ListItem", "position": 2, "name": "OFAC Venezuela Sanctions", "item": f"{base}/sanctions-tracker"},
+                {"@type": "ListItem", "position": 3, "name": profile.bucket.capitalize(), "item": f"{base}/sanctions/{profile.bucket}"},
+                {"@type": "ListItem", "position": 4, "name": profile.display_name, "item": canonical},
+            ],
+        }
+
+        identifiers: list = []
+        if profile.parsed.get("cedula"):
+            identifiers.append({"@type": "PropertyValue", "propertyID": "Cedula", "value": profile.parsed["cedula"]})
+        if profile.parsed.get("passport"):
+            identifiers.append({"@type": "PropertyValue", "propertyID": "Passport", "value": profile.parsed["passport"]})
+        if profile.parsed.get("national_id"):
+            identifiers.append({"@type": "PropertyValue", "propertyID": "NationalID", "value": profile.parsed["national_id"]})
+        if profile.parsed.get("imo"):
+            identifiers.append({"@type": "PropertyValue", "propertyID": "IMO", "value": profile.parsed["imo"]})
+        if profile.parsed.get("mmsi"):
+            identifiers.append({"@type": "PropertyValue", "propertyID": "MMSI", "value": profile.parsed["mmsi"]})
+        if profile.parsed.get("aircraft_tail"):
+            identifiers.append({"@type": "PropertyValue", "propertyID": "AircraftTailNumber", "value": profile.parsed["aircraft_tail"]})
+        if profile.parsed.get("aircraft_serial"):
+            identifiers.append({"@type": "PropertyValue", "propertyID": "AircraftSerialNumber", "value": profile.parsed["aircraft_serial"]})
+
+        if profile.bucket == "individuals":
+            entity_node = {
+                "@type": "Person",
+                "@id": f"{canonical}#person",
+                "name": profile.display_name,
+                "alternateName": profile.raw_name,
+                "url": canonical,
+                "description": description,
+                "subjectOf": {
+                    "@type": "GovernmentService",
+                    "name": profile.program_label,
+                    "provider": {"@type": "GovernmentOrganization", "name": "US Treasury Office of Foreign Assets Control (OFAC)"},
+                },
+            }
+            if profile.parsed.get("dob"):
+                entity_node["birthDate"] = profile.parsed["dob"]
+            if profile.parsed.get("pob"):
+                entity_node["birthPlace"] = profile.parsed["pob"]
+            if profile.parsed.get("nationality"):
+                entity_node["nationality"] = profile.parsed["nationality"]
+            if profile.parsed.get("gender"):
+                entity_node["gender"] = profile.parsed["gender"]
+            if identifiers:
+                entity_node["identifier"] = identifiers
+        elif profile.bucket == "entities":
+            entity_node = {
+                "@type": "Organization",
+                "@id": f"{canonical}#org",
+                "name": profile.display_name,
+                "alternateName": profile.raw_name,
+                "url": canonical,
+                "description": description,
+            }
+            if identifiers:
+                entity_node["identifier"] = identifiers
+        else:
+            entity_node = {
+                "@type": "Vehicle",
+                "@id": f"{canonical}#vehicle",
+                "name": profile.display_name,
+                "alternateName": profile.raw_name,
+                "url": canonical,
+                "description": description,
+                "vehicleConfiguration": "vessel" if profile.bucket == "vessels" else "aircraft",
+            }
+            if profile.parsed.get("aircraft_model"):
+                entity_node["model"] = profile.parsed["aircraft_model"]
+            if profile.parsed.get("vessel_year"):
+                entity_node["vehicleModelDate"] = profile.parsed["vessel_year"]
+            if identifiers:
+                entity_node["identifier"] = identifiers
+
+        jsonld = _json.dumps({
+            "@context": "https://schema.org",
+            "@graph": [breadcrumb, entity_node],
+        }, ensure_ascii=False)
+
+        template = _env.get_template("sanctions/profile.html.j2")
+        html = template.render(
+            profile=profile,
+            family=family,
+            linked_to=linked_to,
+            related_news=related_news,
+            siblings=siblings,
+            stats=s,
+            seo=seo,
+            jsonld=jsonld,
+            current_year=_date.today().year,
+        )
+        return Response(html, mimetype="text/html")
+    except HTTPException:
+        raise
+    except Exception as exc:
+        logger.exception(
+            "sanctions profile render failed for bucket=%s slug=%s: %s",
+            bucket, slug, exc,
+        )
+        abort(500)
+
+
 @app.route("/calendar")
 @app.route("/calendar/")
 def calendar_page():
@@ -1981,6 +2291,10 @@ def sitemap_xml():
         {"loc": f"{base}/", "lastmod": today_iso, "changefreq": "daily", "priority": "1.0"},
         {"loc": f"{base}/invest-in-venezuela", "lastmod": today_iso, "changefreq": "weekly", "priority": "0.9"},
         {"loc": f"{base}/sanctions-tracker", "lastmod": today_iso, "changefreq": "daily", "priority": "0.9"},
+        {"loc": f"{base}/sanctions/individuals", "lastmod": today_iso, "changefreq": "daily", "priority": "0.85"},
+        {"loc": f"{base}/sanctions/entities", "lastmod": today_iso, "changefreq": "daily", "priority": "0.85"},
+        {"loc": f"{base}/sanctions/vessels", "lastmod": today_iso, "changefreq": "daily", "priority": "0.8"},
+        {"loc": f"{base}/sanctions/aircraft", "lastmod": today_iso, "changefreq": "daily", "priority": "0.8"},
         {"loc": f"{base}/calendar", "lastmod": today_iso, "changefreq": "daily", "priority": "0.7"},
         {"loc": f"{base}/travel", "lastmod": today_iso, "changefreq": "weekly", "priority": "0.8"},
         {"loc": f"{base}/sources", "lastmod": today_iso, "changefreq": "weekly", "priority": "0.6"},
@@ -2040,6 +2354,23 @@ def sitemap_xml():
                     "changefreq": changefreq,
                     "priority": priority,
                 })
+
+            # Per-SDN profile URLs — every OFAC Venezuela-program designation
+            # gets its own /sanctions/<bucket>/<slug> page. We feed them all
+            # to Google/Bing through the sitemap so the entire 410-page corpus
+            # gets discovered + crawled fast (without waiting for crawlers
+            # to walk inbound links from the index pages).
+            try:
+                from src.data.sdn_profiles import list_all_profiles
+                for p in list_all_profiles():
+                    dynamic_urls.append({
+                        "loc": f"{base}{p.url_path}",
+                        "lastmod": p.designation_date or today_iso,
+                        "changefreq": "monthly",
+                        "priority": "0.6",
+                    })
+            except Exception as exc:
+                logger.warning("sitemap: failed to enumerate SDN profiles: %s", exc)
 
             ext_articles = (
                 db.query(ExternalArticleEntry)

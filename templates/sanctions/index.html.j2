@@ -1,0 +1,83 @@
+{#
+  Index page for one bucket of OFAC SDN designations
+  (/sanctions/individuals, /sanctions/entities, /sanctions/vessels,
+  /sanctions/aircraft).
+
+  Server-rendered alphabetical directory — every name is a real,
+  crawlable link out to its own profile page. Google + Bing crawlers
+  follow these out of the index, so this page is the structural
+  backbone that gets all 410 children indexed.
+
+  Also serves humans browsing by surname. We group individuals by first
+  letter to keep the page scannable on mobile; entities/vessels/aircraft
+  fall into the same A-Z layout.
+#}
+{% extends "_base.html.j2" %}
+
+{% block content %}
+<div class="container-wide">
+  <nav class="breadcrumbs" aria-label="Breadcrumb">
+    <a href="/">Home</a>
+    <span>›</span>
+    <a href="/sanctions-tracker">OFAC Venezuela Sanctions</a>
+    <span>›</span>
+    <strong>{{ bucket|capitalize }}</strong>
+  </nav>
+
+  <article>
+    <header>
+      <h1>OFAC Venezuela SDN — {{ bucket|capitalize }} ({{ profiles|length }} active)</h1>
+      <p class="subtitle">
+        Every {{ singular }} currently on the US Treasury OFAC SDN list under
+        Venezuela-related sanctions programs. Each entry links to a full
+        profile with biographical data, linked entities, and recent news.
+      </p>
+      <div class="meta">
+        <span><strong>Source:</strong> US Treasury OFAC SDN List</span>
+        <span><strong>Refreshed:</strong> twice daily (10am &amp; 5pm Medellín)</span>
+        <span><strong>Programs covered:</strong> VENEZUELA, EO 13692, EO 13850, EO 13884</span>
+      </div>
+    </header>
+
+    <div class="body">
+      <p>
+        Browse alphabetically below, or use these one-click filters to jump to a
+        specific category:
+      </p>
+      <ul>
+        <li><a href="/sanctions/individuals"><strong>Individuals</strong></a> ({{ stats.individuals }}) — natural persons designated for human-rights, corruption, or government-of-Venezuela activities.</li>
+        <li><a href="/sanctions/entities"><strong>Entities</strong></a> ({{ stats.entities }}) — companies, ministries, holding vehicles, and shell organisations.</li>
+        <li><a href="/sanctions/vessels"><strong>Vessels</strong></a> ({{ stats.vessels }}) — ships blocked under Venezuela-related programs.</li>
+        <li><a href="/sanctions/aircraft"><strong>Aircraft</strong></a> ({{ stats.aircraft }}) — planes blocked under Venezuela-related programs.</li>
+      </ul>
+
+      <h2>All {{ bucket }} (A–Z)</h2>
+      {% if grouped %}
+      {% for letter, items in grouped %}
+      <h3 id="{{ letter }}">{{ letter }}</h3>
+      <ul class="related">
+        {% for p in items %}
+        <li>
+          <a href="{{ p.url_path }}">{{ p.display_name }}</a>
+          <small>— {{ p.program }}{% if p.parsed.dob %} · DOB {{ p.parsed.dob }}{% elif p.parsed.imo %} · IMO {{ p.parsed.imo }}{% elif p.parsed.aircraft_tail %} · Tail {{ p.parsed.aircraft_tail }}{% endif %}</small>
+        </li>
+        {% endfor %}
+      </ul>
+      {% endfor %}
+      {% else %}
+      <p>No designations are currently indexed in this category.</p>
+      {% endif %}
+
+      <h2>Why these pages exist</h2>
+      <p>
+        Each {{ singular }} on this list has its own dedicated profile page so that
+        compliance, M&amp;A, and journalist research workflows can link directly to
+        a permanent URL with the SDN entry's biographical data, OFAC source link,
+        and any related news mentions. We update from OFAC's primary feed twice
+        daily; for live, transactional screening, always cross-check with
+        <a href="https://sanctions-search.ofac.treasury.gov/" rel="nofollow">OFAC's official Sanctions Search</a>.
+      </p>
+    </div>
+  </article>
+</div>
+{% endblock %}
