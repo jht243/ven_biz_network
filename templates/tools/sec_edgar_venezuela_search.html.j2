@@ -216,5 +216,12 @@
   {% endif %}
 
   {{ cluster_nav(cluster_ctx) }}
+
+  {% from "_recent_briefings.html.j2" import recent_briefings_rail %}
+  {{ recent_briefings_rail(
+       recent_briefings,
+       heading="Latest analysis",
+       intro="Recent investor briefings on SEC disclosures, impairments, and US-listed Venezuela exposure.",
+  ) }}
 </section>
 {% endblock %}

@@ -169,5 +169,12 @@
   </p>
 
   {{ cluster_nav(cluster_ctx) }}
+
+  {% from "_recent_briefings.html.j2" import recent_briefings_rail %}
+  {{ recent_briefings_rail(
+       recent_briefings,
+       heading="Latest analysis",
+       intro="Recent investor briefings on public-company Venezuela exposure, impairments, and sanctioned-counterparty risk.",
+  ) }}
 </section>
 {% endblock %}

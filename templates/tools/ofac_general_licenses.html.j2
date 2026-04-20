@@ -121,5 +121,12 @@
   {% from "_cluster_nav.html.j2" import cluster_nav %}
   {{ cluster_nav(cluster_ctx) }}
 
+  {% from "_recent_briefings.html.j2" import recent_briefings_rail %}
+  {{ recent_briefings_rail(
+       recent_briefings,
+       heading="Latest analysis",
+       intro="Recent investor briefings on OFAC Venezuela-program actions, license activity, and enforcement signals.",
+  ) }}
+
 </section>
 {% endblock %}

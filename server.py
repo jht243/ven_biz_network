@@ -404,6 +404,7 @@ def tool_caracas_safety():
             seo=seo,
             jsonld=jsonld,
             current_year=_date.today().year,
+            recent_briefings=_fetch_recent_briefings(),
         )
         return Response(html, mimetype="text/html")
     except HTTPException:
@@ -503,6 +504,7 @@ def tool_visa_requirements():
             seo=seo,
             jsonld=jsonld,
             current_year=_date.today().year,
+            recent_briefings=_fetch_recent_briefings(),
         )
         return Response(html, mimetype="text/html")
     except HTTPException:
@@ -649,6 +651,7 @@ def tool_bolivar_usd():
             seo=seo,
             jsonld=jsonld,
             current_year=_date.today().year,
+            recent_briefings=_fetch_recent_briefings(),
         )
         return Response(html, mimetype="text/html")
     except HTTPException:
@@ -815,6 +818,7 @@ def tool_ofac_general_licenses():
             jsonld=jsonld,
             cluster_ctx=cluster_ctx,
             current_year=_date.today().year,
+            recent_briefings=_fetch_recent_briefings(),
         )
         return Response(html, mimetype="text/html")
     except HTTPException:
@@ -920,6 +924,7 @@ def tool_sec_edgar_venezuela_search():
             cluster_ctx=cluster_ctx,
             current_year=_date.today().year,
             today_human=today_human,
+            recent_briefings=_fetch_recent_briefings(),
         )
         return Response(html, mimetype="text/html")
     except HTTPException:
@@ -2689,6 +2694,7 @@ def tool_public_company_exposure_check():
             jsonld=jsonld,
             cluster_ctx=cluster_ctx,
             current_year=_date.today().year,
+            recent_briefings=_fetch_recent_briefings(),
         )
         return Response(html, mimetype="text/html")
     except HTTPException:
@@ -2769,6 +2775,7 @@ def calendar_page():
                 seo=seo,
                 jsonld=jsonld,
                 current_year=_date.today().year,
+                recent_briefings=_fetch_recent_briefings(),
             )
             return Response(html, mimetype="text/html")
         finally:
@@ -3013,6 +3020,7 @@ def travel_page():
             emergency=travel_data.EMERGENCY_NUMBERS,
             updated_label=_date.today().strftime("%B %-d, %Y"),
             current_year=_date.today().year,
+            recent_briefings=_fetch_recent_briefings(),
         )
         return Response(html, mimetype="text/html")
     except HTTPException:

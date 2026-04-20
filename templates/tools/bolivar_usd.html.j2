@@ -136,5 +136,12 @@
     <a href="/briefing">latest BCV-related briefings</a>.
   </p>
 
+  {% from "_recent_briefings.html.j2" import recent_briefings_rail %}
+  {{ recent_briefings_rail(
+       recent_briefings,
+       heading="Latest analysis",
+       intro="Recent investor briefings on the bolivar, BCV policy, and Venezuelan banking.",
+  ) }}
+
 </section>
 {% endblock %}

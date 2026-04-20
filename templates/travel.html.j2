@@ -588,4 +588,11 @@
   window.addEventListener('hashchange', expandFromHash);
 })();
 </script>
+
+{% from "_recent_briefings.html.j2" import recent_briefings_rail %}
+{{ recent_briefings_rail(
+     recent_briefings,
+     heading="Latest analysis",
+     intro="Recent investor briefings on Caracas conditions, security, and on-the-ground access.",
+) }}
 {% endblock %}

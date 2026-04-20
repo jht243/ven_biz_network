@@ -70,5 +70,12 @@
     <a href="/invest-in-venezuela">investor pillar guide</a>.
   </p>
 
+  {% from "_recent_briefings.html.j2" import recent_briefings_rail %}
+  {{ recent_briefings_rail(
+       recent_briefings,
+       heading="Latest analysis",
+       intro="Recent investor briefings on the events, deadlines, and sessions driving this calendar.",
+  ) }}
+
 </section>
 {% endblock %}
