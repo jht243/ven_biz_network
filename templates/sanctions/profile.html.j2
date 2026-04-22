@@ -58,6 +58,64 @@
       </div>
     </header>
 
+    {% if dossier_url %}
+    <aside class="dossier-callout" aria-label="Deep research dossier available">
+      <div class="dossier-callout__icon" aria-hidden="true">📄</div>
+      <div class="dossier-callout__body">
+        <div class="dossier-callout__eyebrow">Research dossier available</div>
+        <p class="dossier-callout__lede">
+          A full disambiguation-first research dossier on
+          <strong>{{ profile.display_name }}</strong> &mdash; identity card,
+          surname-cluster disambiguation, related-entity network,
+          adverse-media, the OFAC press release, and a tamper-evident PDF
+          export &mdash; is published as a separate page.
+        </p>
+        <a class="dossier-callout__cta" href="{{ dossier_url }}">
+          Open the {{ profile.display_name }} dossier &rarr;
+        </a>
+      </div>
+    </aside>
+    <style>
+      .dossier-callout {
+        display: flex;
+        gap: 16px;
+        align-items: flex-start;
+        background: #f4f8fc;
+        border: 1px solid #cfddee;
+        border-left: 4px solid #002b5e;
+        border-radius: 3px;
+        padding: 14px 18px;
+        margin: 0 0 24px;
+      }
+      .dossier-callout__icon { font-size: 24px; line-height: 1; padding-top: 2px; }
+      .dossier-callout__eyebrow {
+        font-size: 11px;
+        font-weight: 700;
+        text-transform: uppercase;
+        letter-spacing: 1.4px;
+        color: #002b5e;
+        margin-bottom: 4px;
+      }
+      .dossier-callout__lede {
+        font-size: 14px;
+        color: #1a2b3d;
+        margin: 0 0 10px;
+        line-height: 1.5;
+      }
+      .dossier-callout__cta {
+        display: inline-block;
+        font-size: 13px;
+        font-weight: 600;
+        color: #fff;
+        background: #002b5e;
+        padding: 7px 12px;
+        border-radius: 3px;
+        text-decoration: none;
+      }
+      .dossier-callout__cta:hover { background: #001a3a; }
+    </style>
+    {% endif %}
+
     <div class="body">
       <div class="takeaways">
         <h3>Key Facts</h3>

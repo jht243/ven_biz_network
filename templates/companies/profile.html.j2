@@ -259,6 +259,39 @@
       {% endif %}
       {% endif %}
 
+      {# ── Trade-restriction screening ───────────────────────── #}
+      {% if trade_screening_links %}
+      <h2 id="trade-restrictions">US trade-restriction screening (BIS / Commerce)</h2>
+      <p>
+        OFAC sanctions are <em>one</em> of four major US restricted-party
+        registers a counterparty needs to be screened against. The
+        Department of Commerce&rsquo;s Bureau of Industry and Security
+        (BIS) maintains three more &mdash; the
+        <strong>Entity List</strong>, the <strong>Denied Persons List</strong>,
+        and the <strong>Unverified List</strong> &mdash; under the Export
+        Administration Regulations (15 CFR Part 744). All four are
+        consolidated by the International Trade Administration into the
+        single <em>Consolidated Screening List</em>. The links below
+        deep-search each register for
+        <strong>{{ report.company.short_name }}</strong>; a US-domiciled
+        public company will not normally appear, but the official lookup
+        is the only authoritative way to confirm.
+      </p>
+      <ul class="trade-screening-links">
+        {% for link in trade_screening_links %}
+        <li>
+          <a href="{{ link.url }}" rel="nofollow noopener" target="_blank">{{ link.label }} &rarr;</a>
+          <small>&mdash; {{ link.publisher }}</small>
+        </li>
+        {% endfor %}
+      </ul>
+      <style>
+        .trade-screening-links { margin: 6px 0 18px 22px; }
+        .trade-screening-links li { margin-bottom: 8px; line-height: 1.5; }
+        .trade-screening-links small { color: var(--sr-gray-text); display: block; font-size: 12px; margin-top: 2px; }
+      </style>
+      {% endif %}
+
       {# ── Methodology ───────────────────────────────────────── #}
       <div class="methodology">
         <strong>Methodology.</strong>
