@@ -223,21 +223,53 @@ def admin_regen_report():
 
     try:
         from src.report_generator import generate_report
+        from src.storage_remote import (
+            supabase_storage_enabled,
+            supabase_storage_read_enabled,
+            upload_report_html,
+        )
+
         t0 = time.time()
         out_path = generate_report()
         elapsed_ms = int((time.time() - t0) * 1000)
+
+        # generate_report() will only push to Supabase if the WRITE side is
+        # configured (URL + service key). On the web service the service
+        # key is often absent (cron-only by design). Re-attempt the upload
+        # explicitly here so we can surface the actual outcome to the
+        # caller — silent skip is the worst possible failure mode for
+        # this endpoint, since the web reads from Supabase first.
+        upload_status: str
+        if supabase_storage_enabled():
+            try:
+                fresh_html = out_path.read_text(encoding="utf-8")
+                upload_report_html(fresh_html)
+                upload_status = "uploaded"
+            except Exception as upload_exc:
+                logger.exception("admin: supabase upload failed")
+                upload_status = f"failed: {upload_exc}"
+        else:
+            upload_status = "skipped: SUPABASE_SERVICE_KEY not set on this service"
+
         # Bust the in-memory cache so the next "/" request re-fetches
         # the freshly-uploaded HTML from Supabase Storage instead of
         # serving the stale cached copy for up to TTL seconds.
         _REPORT_CACHE["html"] = None
         _REPORT_CACHE["fetched_at"] = 0.0
+
         size = out_path.stat().st_size if out_path.exists() else 0
-        logger.info("admin: report regenerated (%d bytes, %d ms)", size, elapsed_ms)
+        logger.info(
+            "admin: report regenerated (%d bytes, %d ms, supabase=%s)",
+            size, elapsed_ms, upload_status,
+        )
         return jsonify({
             "ok": True,
             "output_path": str(out_path),
             "bytes": size,
             "elapsed_ms": elapsed_ms,
+            "supabase_write_enabled": supabase_storage_enabled(),
+            "supabase_read_enabled": supabase_storage_read_enabled(),
+            "supabase_upload": upload_status,
         })
     except Exception as exc:
         logger.exception("admin: regen-report failed")
