@@ -13,3 +13,4 @@ output/
 .idea/
 .vscode/
 playwright/.auth/
+src/research/_cache/

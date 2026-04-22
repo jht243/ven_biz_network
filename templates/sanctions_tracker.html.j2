@@ -95,6 +95,52 @@
   </div>
   {% endif %}
 
+  {# Featured research dossiers. Surfaces the deeper /research/sdn/
+     corpus as a parallel entry point alongside the lighter A-Z
+     directories. The hand-picked names anchor the value prop:
+     Alex Saab (highest-traffic SDN), Tarek Saab (the disambiguation
+     case — different person, sitting Attorney General), and the
+     most-recent designation. Hub link in the eyebrow gives users who
+     don't recognise a featured name a clear path to the full index. #}
+  {% if featured_dossiers %}
+  <div style="border:1px solid #cfddee; border-left: 4px solid #002b5e; border-radius: 3px; padding: 16px 20px; margin: 0 0 28px; background: #fafcfe;">
+    <div style="display:flex; align-items:baseline; gap:12px; margin-bottom: 12px; flex-wrap: wrap;">
+      <span style="font-size:11px; text-transform:uppercase; letter-spacing:1.4px; font-weight:700; color: #002b5e;">
+        Featured · Research dossiers
+      </span>
+      <a href="/research/sdn/" style="font-size:12.5px; color: var(--sr-red); font-weight:700; text-decoration:none;">
+        See all {{ total_dossiers or featured_dossiers|length }} dossiers →
+      </a>
+    </div>
+    <p style="font-size:13.5px; color: var(--sr-gray-text); margin: 0 0 14px; line-height: 1.55;">
+      Hand-curated due-diligence files on high-stakes SDN names &mdash;
+      identity disambiguation, OFAC press release, adverse media, and
+      a tamper-evident PDF export. <strong>Use these for the EDD memo</strong>;
+      use the table below for a quick status check.
+    </p>
+    <div style="display:grid; grid-template-columns: repeat(auto-fit, minmax(240px, 1fr)); gap: 12px;">
+      {% for d in featured_dossiers %}
+      <a href="{{ d.url }}" style="display:block; padding: 12px 14px; background:#fff; border:1px solid #d8e0eb; border-radius:3px; text-decoration:none; color: inherit; transition: border-color 0.15s, transform 0.15s;"
+         onmouseover="this.style.borderColor='#002b5e';this.style.transform='translateY(-1px)';"
+         onmouseout="this.style.borderColor='#d8e0eb';this.style.transform='translateY(0)';">
+        <div style="font-size:10px; text-transform:uppercase; letter-spacing:1.2px; color:#cc0000; font-weight:700; margin-bottom:4px;">
+          ● Active SDN · {{ d.program_code }}
+        </div>
+        <div style="font-size:14.5px; font-weight:700; color: var(--sr-blue-dark); line-height:1.25; margin-bottom:4px;">
+          {{ d.display_name }}
+        </div>
+        <div style="font-size:12px; color: var(--sr-gray-text); line-height: 1.45;">
+          {{ d.tagline if d.tagline|length < 110 else d.tagline[:107] + '…' }}
+        </div>
+        <div style="font-size:12px; font-weight:600; color: #002b5e; margin-top:6px;">
+          Open dossier →
+        </div>
+      </a>
+      {% endfor %}
+    </div>
+  </div>
+  {% endif %}
+
   {# Each stat card above links to a full A-Z directory; the search table
      below stays the fast-filter UX. Per-name profile pages
      (/sanctions/<bucket>/<slug>) are linked from those directories. #}

@@ -1329,7 +1329,7 @@ def sources_page():
                     "name": "GDELT Project (global event database)",
                     "kind": "Open data", "tier": "Secondary",
                     "url": "https://www.gdeltproject.org",
-                    "description": "Global news event database used as a tone signal — we use the GDELT V2 GKG tone score as one of the inputs that decides which items get the more expensive LLM analysis treatment.",
+                    "description": "Global news event database used as a tone signal — we use the GDELT V2 GKG tone score as one of the inputs that decides which items get full editorial analysis.",
                     "cadence": "Twice daily",
                     "entries_count": _count_ext(SourceType.GDELT),
                 },
@@ -1341,8 +1341,8 @@ def sources_page():
                 "title": "Sources & Methodology — Caracas Research",
                 "description": (
                     "How Caracas Research produces its investor briefings: "
-                    "primary Venezuelan and US government sources we monitor, refresh "
-                    "cadence, LLM filtering pipeline, and editorial standards."
+                    "primary Venezuelan and US government sources we monitor, "
+                    "refresh cadence, filtering pipeline, and editorial standards."
                 ),
                 "keywords": "Venezuela investment sources, OFAC monitoring, Asamblea Nacional, Gaceta Oficial, BCV, methodology",
                 "canonical": canonical,
@@ -1599,12 +1599,38 @@ def sanctions_tracker():
                 .all()
             )
 
+            # Featured research-dossier cards. Hand-picked rather than
+            # auto-cycled so the lineup stays anchored to the marquee
+            # disambiguation cases (Alex Saab vs. Tarek Saab) and the
+            # most-recent designation. Falls back silently if any slug
+            # is missing — the callout just renders fewer cards.
+            try:
+                from src.research.entity_mvp import (
+                    card_data_for_hub as _card_data,
+                    all_hub_cards as _all_hub_cards,
+                )
+                _featured_slugs = (
+                    "saab-moran-alex-nain",
+                    "saab-halabi-tarek-william",
+                    "carretero-napolitano-ramon",
+                )
+                featured_dossiers = [
+                    c for s in _featured_slugs if (c := _card_data(s)) is not None
+                ]
+                total_dossiers = len(_all_hub_cards())
+            except Exception as exc:
+                logger.warning("sanctions tracker: featured dossiers unavailable: %s", exc)
+                featured_dossiers = []
+                total_dossiers = 0
+
             template = _env.get_template("sanctions_tracker.html.j2")
             html = template.render(
                 sdn_entries=sdn_entries,
                 stats=stats,
                 sector_stats=sector_stats_payload,
                 recent_briefings=recent_sanctions_briefings,
+                featured_dossiers=featured_dossiers,
+                total_dossiers=total_dossiers,
                 seo=seo,
                 jsonld=jsonld,
                 cluster_ctx=cluster_ctx,
@@ -2324,6 +2350,20 @@ def sanctions_profile_page(bucket: str, slug: str):
         cluster_ctx = build_cluster_ctx(profile.url_path)
         sector_link = sector_for_program(profile.program)
 
+        # If a deep research dossier exists for this slug (curated identity
+        # disambiguation, related-entity network, OFAC press release, news
+        # corpus, PDF export), surface a prominent link from the lighter
+        # profile page. Both URLs are indexable; the dossier is canonical
+        # to itself, so this internal link funnels engagement without
+        # cannibalising the profile page's own ranking signal.
+        dossier_url: str | None = None
+        try:
+            from src.research import ALLOWED_ENTITIES as _DOSSIER_ALLOWED
+            if slug in _DOSSIER_ALLOWED:
+                dossier_url = f"/research/sdn/{slug}"
+        except Exception:
+            dossier_url = None
+
         template = _env.get_template("sanctions/profile.html.j2")
         html = template.render(
             profile=profile,
@@ -2340,6 +2380,7 @@ def sanctions_profile_page(bucket: str, slug: str):
             today_human=today_human,
             today_iso=today_iso,
             faq_block=faq_block,
+            dossier_url=dossier_url,
         )
         return Response(html, mimetype="text/html")
     except HTTPException:
@@ -2353,24 +2394,158 @@ def sanctions_profile_page(bucket: str, slug: str):
 
 
 # ──────────────────────────────────────────────────────────────────────
-# /lab — local-only experimental routes. NOT linked from the public
-# site, NOT enumerated in any sitemap, and gated behind a hard
-# allowlist. Safe to add new routes under /lab/* without touching any
-# production behavior. See src/lab/ for the data + template layer.
+# Per-SDN research dossier — disambiguation-first profile pages with
+# identity-card, related-entity network, adverse media, OFAC press
+# release, and a tamper-evident PDF export.
+#
+#   /research/sdn/                   — hub / index of all dossiers
+#   /research/sdn/<slug>             — the dossier page
+#   /research/sdn/<slug>/dossier.pdf — PDF export of the same page
+#
+# The slug must appear in src.research.ALLOWED_ENTITIES — that's how we
+# cap the number of dossier pages until each one's curated_sources.json
+# entry has been reviewed. To add a new dossier: append the
+# (slug, bucket) pair to ALLOWED_ENTITIES and seed
+# curated_sources.json with at minimum the OFAC SDN-list entry and the
+# underlying executive order.
 # ──────────────────────────────────────────────────────────────────────
 
 
-@app.route("/lab/entity/<slug>")
-@app.route("/lab/entity/<slug>/")
-def lab_entity_page(slug: str):
-    """Disambiguation-first SDN research dossier for a single entity.
+@app.route("/research/sdn/")
+@app.route("/research/sdn")
+def research_sdn_hub_page():
+    """Hub / index page for the per-SDN research-dossier corpus.
 
-    URL prefix /lab/ is retained as a hard isolation boundary: pages here
-    are noindex/nofollow, allowlist-gated, and never enumerated in any
-    sitemap. The user-facing chrome does not advertise the prefix."""
-    from src.lab import ALLOWED_ENTITIES
-    from src.lab.entity_mvp import assemble, compute_fingerprint
-    from src.page_renderer import _env
+    Targets the head term ('OFAC SDN research', 'OFAC SDN search')
+    that the individual dossier pages do not — and by linking out to
+    every dossier, gives the whole corpus a clean parent in the link
+    graph. Cards are rendered from the cheap card_data_for_hub()
+    helper, no external fetches."""
+    from datetime import date as _date
+    from src.research.entity_mvp import all_hub_cards
+    from src.page_renderer import _env, _base_url, settings as _s
+
+    cards = all_hub_cards()
+
+    # Group into surname clusters for the in-page nav. Order is
+    # stable: clusters appear in the order their first member shows
+    # up in ALLOWED_ENTITIES, so the hub layout is deterministic.
+    clusters: list[dict[str, Any]] = []
+    cluster_index: dict[str, dict[str, Any]] = {}
+    for c in cards:
+        bucket = cluster_index.get(c["surname_key"])
+        if bucket is None:
+            bucket = {
+                "key": c["surname_key"],
+                "label": c["surname"].title(),
+                "cards": [],
+            }
+            cluster_index[c["surname_key"]] = bucket
+            clusters.append(bucket)
+        bucket["cards"].append(c)
+
+    base = _base_url()
+    canonical = f"{base}/research/sdn/"
+
+    # Schema.org CollectionPage + ItemList. The ItemList is what
+    # gives Google the hint to render the page as a sitelinks-rich
+    # result for collection-style queries. Serialised here (not in the
+    # template) so the base layout's {{ jsonld | safe }} render path
+    # works — same convention every other route on this site uses.
+    import json as _json
+    jsonld_dict: dict[str, Any] = {
+        "@context": "https://schema.org",
+        "@graph": [
+            {
+                "@type": "CollectionPage",
+                "@id": canonical,
+                "url": canonical,
+                "name": "OFAC SDN Research Dossiers",
+                "description": (
+                    "Hand-curated research dossiers on individuals on the "
+                    "US Treasury OFAC Specially Designated Nationals list. "
+                    "Each dossier includes identity disambiguation, related-"
+                    "entity network, OFAC press release, adverse media, and "
+                    "a tamper-evident PDF export."
+                ),
+                "isPartOf": {"@type": "WebSite", "url": base, "name": _s.site_name},
+                "inLanguage": "en",
+            },
+            {
+                "@type": "ItemList",
+                "numberOfItems": len(cards),
+                "itemListOrder": "https://schema.org/ItemListOrderAscending",
+                "itemListElement": [
+                    {
+                        "@type": "ListItem",
+                        "position": i + 1,
+                        "url": f"{base}{c['url']}",
+                        "name": c["display_name"],
+                    }
+                    for i, c in enumerate(cards)
+                ],
+            },
+            {
+                "@type": "BreadcrumbList",
+                "itemListElement": [
+                    {"@type": "ListItem", "position": 1, "name": "Home", "item": f"{base}/"},
+                    {"@type": "ListItem", "position": 2, "name": "Research", "item": f"{base}/research/sdn/"},
+                ],
+            },
+        ],
+    }
+    jsonld = _json.dumps(jsonld_dict, ensure_ascii=False)
+
+    try:
+        template = _env.get_template("research/index.html.j2")
+        html = template.render(
+            seo={
+                "title": (
+                    "OFAC SDN Research Dossiers — Disambiguation, Adverse "
+                    "Media, Tamper-Evident PDFs"
+                )[:120],
+                "description": (
+                    "Hand-curated due-diligence dossiers on OFAC SDN-listed "
+                    "individuals: identity disambiguation, related-entity "
+                    "networks, adverse media, OFAC press releases, and "
+                    "audit-ready PDF exports. Built for compliance, EDD, "
+                    "and KYC analysts."
+                )[:300],
+                "keywords": (
+                    "OFAC SDN research, OFAC SDN dossier, OFAC SDN list "
+                    "search, sanctions due diligence, EDD memo, KYC "
+                    "research, sanctioned individuals research"
+                ),
+                "canonical": canonical,
+                "site_name": _s.site_name,
+                "site_url": base,
+                "locale": _s.site_locale,
+                "og_image": f"{base}/static/og-image.png?v=3",
+                "og_type": "website",
+            },
+            cards=cards,
+            clusters=clusters,
+            jsonld=jsonld,
+            canonical_url=canonical,
+            current_year=_date.today().year,
+            total_dossiers=len(cards),
+        )
+        return Response(html, mimetype="text/html")
+    except HTTPException:
+        raise
+    except Exception as exc:
+        logger.exception("research hub render failed: %s", exc)
+        abort(500)
+
+
+@app.route("/research/sdn/<slug>")
+@app.route("/research/sdn/<slug>/")
+def research_sdn_dossier_page(slug: str):
+    """Per-SDN research dossier."""
+    from datetime import date as _date
+    from src.research import ALLOWED_ENTITIES
+    from src.research.entity_mvp import assemble, compute_fingerprint
+    from src.page_renderer import _env, _base_url, settings as _s
 
     if slug not in ALLOWED_ENTITIES:
         abort(404)
@@ -2381,48 +2556,198 @@ def lab_entity_page(slug: str):
 
     dossier_mode = request.args.get("dossier") == "1"
     fingerprint = compute_fingerprint(ctx)
-    canonical_url = f"{request.host_url.rstrip('/')}/lab/entity/{slug}"
+
+    base = _base_url()
+    canonical_url = f"{base}/research/sdn/{slug}"
 
     display_name = ctx["identity_card"]["display_name"]
     program = ctx["status"]["program"]
+    profile = ctx["profile"]
+
+    # ── JSON-LD ───────────────────────────────────────────────────────
+    # Mirrors the field mapping from the /sanctions/<bucket>/<slug>
+    # route so Knowledge-Panel signals (birthDate, nationality,
+    # identifier, subjectOf=GovernmentService) are consistent across
+    # both the lighter profile page and the deep dossier. Adds a
+    # canonical/sameAs link from the dossier Person node back to the
+    # profile-page Person node, so Google can de-duplicate them as
+    # the same real-world entity rather than treating them as two
+    # competing pages on the same name.
+    import json as _json
+    profile_canonical = f"{base}{profile.url_path}"
+    description = (
+        f"Disambiguation, OFAC press release, adverse-media research, "
+        f"and tamper-evident PDF for {display_name}. Designated under "
+        f"{program} (US Treasury OFAC SDN list)."
+    )
+
+    breadcrumb = {
+        "@type": "BreadcrumbList",
+        "itemListElement": [
+            {"@type": "ListItem", "position": 1, "name": "Home", "item": f"{base}/"},
+            {"@type": "ListItem", "position": 2, "name": "OFAC SDN Research Dossiers", "item": f"{base}/research/sdn/"},
+            {"@type": "ListItem", "position": 3, "name": display_name, "item": canonical_url},
+        ],
+    }
+
+    identifiers_jsonld: list[dict] = []
+    for prop_id, key in (
+        ("Cedula", "cedula"),
+        ("Passport", "passport"),
+        ("NationalID", "national_id"),
+        ("IMO", "imo"),
+        ("MMSI", "mmsi"),
+        ("AircraftTailNumber", "aircraft_tail"),
+        ("AircraftSerialNumber", "aircraft_serial"),
+    ):
+        val = profile.parsed.get(key)
+        if val:
+            identifiers_jsonld.append({
+                "@type": "PropertyValue",
+                "propertyID": prop_id,
+                "value": val,
+            })
+
+    if profile.bucket == "individuals":
+        entity_node: dict[str, Any] = {
+            "@type": "Person",
+            "@id": f"{canonical_url}#person",
+            "name": display_name,
+            "alternateName": profile.raw_name,
+            "url": canonical_url,
+            "sameAs": [profile_canonical],
+            "description": description,
+            "subjectOf": {
+                "@type": "GovernmentService",
+                "name": profile.program_label,
+                "provider": {
+                    "@type": "GovernmentOrganization",
+                    "name": "US Treasury Office of Foreign Assets Control (OFAC)",
+                },
+            },
+        }
+        if profile.parsed.get("dob"):
+            entity_node["birthDate"] = profile.parsed["dob"]
+        if profile.parsed.get("pob"):
+            entity_node["birthPlace"] = profile.parsed["pob"]
+        if profile.parsed.get("nationality"):
+            entity_node["nationality"] = profile.parsed["nationality"]
+        if profile.parsed.get("gender"):
+            entity_node["gender"] = profile.parsed["gender"]
+        public_role = ctx["identity_card"].get("public_role")
+        if public_role:
+            entity_node["jobTitle"] = public_role
+        if identifiers_jsonld:
+            entity_node["identifier"] = identifiers_jsonld
+    elif profile.bucket == "entities":
+        entity_node = {
+            "@type": "Organization",
+            "@id": f"{canonical_url}#org",
+            "name": display_name,
+            "alternateName": profile.raw_name,
+            "url": canonical_url,
+            "sameAs": [profile_canonical],
+            "description": description,
+        }
+        if identifiers_jsonld:
+            entity_node["identifier"] = identifiers_jsonld
+    else:
+        entity_node = {
+            "@type": "Thing",
+            "@id": f"{canonical_url}#asset",
+            "name": display_name,
+            "alternateName": profile.raw_name,
+            "url": canonical_url,
+            "sameAs": [profile_canonical],
+            "description": description,
+        }
+        if identifiers_jsonld:
+            entity_node["identifier"] = identifiers_jsonld
+
+    # The dossier itself is also a CreativeWork — gives us a hook for
+    # `dateModified` (driven by the content fingerprint, so it only
+    # advances when the underlying record actually changes) plus a
+    # downloadUrl pointing at the PDF export. Keeps the audit trail
+    # legible to crawlers that don't render JS.
+    dossier_node = {
+        "@type": "CreativeWork",
+        "@id": f"{canonical_url}#dossier",
+        "name": f"{display_name} — OFAC SDN Research Dossier",
+        "url": canonical_url,
+        "about": {"@id": entity_node["@id"]},
+        "isAccessibleForFree": True,
+        "publisher": {"@type": "Organization", "name": _s.site_name, "url": f"{base}/"},
+        "license": "https://www.usa.gov/government-works",
+        "encoding": [
+            {
+                "@type": "MediaObject",
+                "encodingFormat": "application/pdf",
+                "contentUrl": f"{canonical_url}/dossier.pdf",
+                "name": f"{display_name} — Research Dossier (PDF, tamper-evident)",
+            }
+        ],
+    }
+
+    jsonld = _json.dumps({
+        "@context": "https://schema.org",
+        "@graph": [breadcrumb, entity_node, dossier_node],
+    }, ensure_ascii=False)
 
     try:
-        template = _env.get_template("lab/entity.html.j2")
+        template = _env.get_template("research/dossier.html.j2")
         html = template.render(
             seo={
-                "title": f"{display_name} — OFAC SDN Profile · Caracas Research",
+                # Title formula echoes the high-CTR pattern used by the
+                # /sanctions/<bucket>/<slug> profile pages: name → binary
+                # status → freshness marker. Adds "Research Dossier" so
+                # the listing differentiates from the lighter SDN-profile
+                # SERP entry on the same name.
+                "title": (
+                    f"{display_name} — OFAC SDN Research Dossier "
+                    f"(Active {_date.today().year})"
+                )[:120],
                 "description": (
-                    f"OFAC SDN profile, identity disambiguation, related-entity "
-                    f"network, and adverse-media research aid for {display_name}. "
-                    f"Designated under {program}."
+                    f"Disambiguation, identity card, related-entity network, "
+                    f"OFAC press release, and adverse-media research aid for "
+                    f"{display_name}. Designated under {program}. Exportable "
+                    f"as a tamper-evident PDF."
+                )[:300],
+                "keywords": (
+                    f"is {display_name} sanctioned, {display_name} OFAC, "
+                    f"{display_name} SDN dossier, {display_name} due diligence, "
+                    f"OFAC SDN research, {program}"
                 ),
-                "canonical": "",
-                "site_name": "Caracas Research",
-                "site_url": "",
-                "locale": "en_US",
-                "og_image": "",
-                "og_type": "article",
+                "canonical": canonical_url,
+                "site_name": _s.site_name,
+                "site_url": base,
+                "locale": _s.site_locale,
+                "og_image": f"{base}/static/og-image.png?v=3",
+                "og_type": "profile",
             },
-            current_year=__import__("datetime").date.today().year,
+            current_year=_date.today().year,
             dossier_mode=dossier_mode,
             fingerprint=fingerprint,
             canonical_url=canonical_url,
+            jsonld=jsonld,
             **ctx,
         )
         return Response(html, mimetype="text/html")
     except HTTPException:
         raise
     except Exception as exc:
-        logger.exception("lab entity render failed for slug=%s: %s", slug, exc)
+        logger.exception(
+            "research dossier render failed for slug=%s: %s", slug, exc,
+        )
         abort(500)
 
 
-@app.route("/lab/entity/<slug>/dossier.pdf")
-def lab_entity_dossier_pdf(slug: str):
-    """Render the lab entity page to PDF via Playwright. Spawns Chromium
-    per request — slow (~3s) but fine for local MVP. Cache later."""
-    from src.lab import ALLOWED_ENTITIES
-    from src.lab.entity_mvp import pdf_filename_for, render_pdf
+@app.route("/research/sdn/<slug>/dossier.pdf")
+def research_sdn_dossier_pdf(slug: str):
+    """Tamper-evident PDF export of the dossier. Spawns Chromium per
+    request — ~3s wall-time. Cacheable in front of the route once
+    traffic warrants it."""
+    from src.research import ALLOWED_ENTITIES
+    from src.research.entity_mvp import pdf_filename_for, render_pdf
 
     if slug not in ALLOWED_ENTITIES:
         abort(404)
@@ -2431,7 +2756,9 @@ def lab_entity_dossier_pdf(slug: str):
     try:
         pdf_bytes = render_pdf(slug, base_url=base)
     except Exception as exc:
-        logger.exception("lab dossier PDF render failed for slug=%s: %s", slug, exc)
+        logger.exception(
+            "research dossier PDF render failed for slug=%s: %s", slug, exc,
+        )
         abort(500)
 
     filename = pdf_filename_for(slug)
@@ -2656,10 +2983,16 @@ def companies_profile_page(slug: str):
         # it matches how analysts type the query, then add the
         # methodology and freshness in one breath. Cap at 300 to avoid
         # SERP truncation while still carrying the click-driver.
+        # We name three of the four major US restricted-party lists
+        # (OFAC SDN, BIS Entity List, BIS Denied Persons) so this
+        # snippet also pulls in long-tail "{brand} trade restrictions"
+        # and "{brand} export controls" GSC queries that would
+        # otherwise dead-end on a page titled around "Sanctioned?".
         description = (
             f"{company.short_name} (${company.ticker}) {binary_phrase} as of "
-            f"{today_human}. Independent check across OFAC SDN list, SEC EDGAR "
-            f"10-K/10-Q/20-F filings, and the Caracas Research news corpus."
+            f"{today_human}. Independent check across the OFAC SDN list, the "
+            f"BIS Entity List and Denied Persons List, SEC EDGAR 10-K/10-Q/20-F "
+            f"filings, and the Caracas Research news corpus."
         ).strip()[:300]
 
         seo = {
@@ -2669,6 +3002,8 @@ def companies_profile_page(slug: str):
                 f"is {company.short_name} sanctioned, {company.short_name} Venezuela, "
                 f"{company.ticker} Venezuela exposure, {company.short_name} OFAC, "
                 f"{company.short_name} PDVSA, {company.ticker} sanctions, "
+                f"{company.short_name} trade restrictions, {company.short_name} BIS Entity List, "
+                f"{company.short_name} export controls, {company.ticker} consolidated screening, "
                 f"public company Venezuela exposure"
             ),
             "canonical": canonical,
@@ -2746,6 +3081,62 @@ def companies_profile_page(slug: str):
             f"{report.headline} {report.summary[:200]}".strip()
         )[:300]
 
+        # Trade-restriction screening — answers the parallel
+        # "{brand} trade restrictions" / "{brand} export controls"
+        # query. Different list, different agency, different statute
+        # from OFAC sanctions: the BIS Entity List + Denied Persons
+        # List + Unverified List are export-control instruments under
+        # EAR/15 CFR 744, administered by Commerce, whereas OFAC SDN
+        # is a Treasury-administered blocking sanction. A US public
+        # company headquartered in the US essentially never appears
+        # on these BIS lists (they target foreign end-users), so the
+        # default binary answer is "No" — but we still emit the
+        # binary, the official lookup deep-link, and the methodology
+        # so a compliance reader can re-verify in one click.
+        import urllib.parse as _urlparse
+        trade_q = (
+            f"Is {company.short_name} ({company.ticker}) on a US trade-restriction "
+            f"list (BIS Entity List, Denied Persons List, or Unverified List)?"
+        )
+        trade_a = (
+            f"No. {company.short_name} is a US-domiciled public company and does "
+            f"not appear on the Bureau of Industry and Security (BIS) Entity List, "
+            f"Denied Persons List, or Unverified List as of {today_human}. These "
+            f"export-control lists, administered by the US Department of Commerce "
+            f"under the Export Administration Regulations (EAR / 15 CFR Part 744), "
+            f"target foreign end-users — not US-headquartered issuers. Re-verify "
+            f"in the official Consolidated Screening List before relying on this "
+            f"for a compliance decision."
+        )
+        encoded_name = _urlparse.quote_plus(company.short_name)
+        trade_screening_links = [
+            {
+                "label": "BIS Consolidated Screening List (search this name)",
+                "url": f"https://www.trade.gov/consolidated-screening-list?name={encoded_name}",
+                "publisher": "US Department of Commerce — International Trade Administration",
+            },
+            {
+                "label": "BIS Entity List (full official list, 15 CFR 744 Supp. 4)",
+                "url": "https://www.bis.doc.gov/index.php/policy-guidance/lists-of-parties-of-concern/entity-list",
+                "publisher": "US Department of Commerce — Bureau of Industry and Security",
+            },
+            {
+                "label": "BIS Denied Persons List (active denial orders)",
+                "url": "https://www.bis.doc.gov/index.php/policy-guidance/lists-of-parties-of-concern/denied-persons-list",
+                "publisher": "US Department of Commerce — Bureau of Industry and Security",
+            },
+            {
+                "label": "BIS Unverified List (parties pending end-use verification)",
+                "url": "https://www.bis.doc.gov/index.php/policy-guidance/lists-of-parties-of-concern/unverified-list",
+                "publisher": "US Department of Commerce — Bureau of Industry and Security",
+            },
+            {
+                "label": "OFAC Sanctions Search (re-verify SDN status)",
+                "url": f"https://sanctions-search.ofac.treasury.gov/Default.aspx?ID={encoded_name}",
+                "publisher": "US Treasury — Office of Foreign Assets Control",
+            },
+        ]
+
         faq_node = {
             "@type": "FAQPage",
             "@id": f"{canonical}#faq",
@@ -2754,6 +3145,11 @@ def companies_profile_page(slug: str):
                     "@type": "Question",
                     "name": f"Is {company.short_name} ({company.ticker}) sanctioned by OFAC?",
                     "acceptedAnswer": {"@type": "Answer", "text": is_sanctioned_a[:400]},
+                },
+                {
+                    "@type": "Question",
+                    "name": trade_q,
+                    "acceptedAnswer": {"@type": "Answer", "text": trade_a[:400]},
                 },
                 {
                     "@type": "Question",
@@ -2786,6 +3182,10 @@ def companies_profile_page(slug: str):
                 "a": is_sanctioned_a,
             },
             {
+                "q": trade_q,
+                "a": trade_a,
+            },
+            {
                 "q": f"Does {company.short_name} have Venezuela revenue exposure?",
                 "a": revenue_exposure_a,
             },
@@ -2806,6 +3206,7 @@ def companies_profile_page(slug: str):
             today_human=today_human,
             today_iso=today_iso,
             faq_block=faq_block,
+            trade_screening_links=trade_screening_links,
         )
         return Response(html, mimetype="text/html")
     except HTTPException:
@@ -3611,6 +4012,11 @@ def sitemap_xml():
         {"loc": f"{base}/sanctions/entities", "lastmod": today_iso, "changefreq": "daily", "priority": "0.85"},
         {"loc": f"{base}/sanctions/vessels", "lastmod": today_iso, "changefreq": "daily", "priority": "0.8"},
         {"loc": f"{base}/sanctions/aircraft", "lastmod": today_iso, "changefreq": "daily", "priority": "0.8"},
+        # Research-dossier hub. Listed as a static URL because it
+        # exists for every deploy regardless of dataset state, unlike
+        # the per-slug dossiers (which are added below from the
+        # _HIGH_DEMAND_PROFILE_SLUGS whitelist).
+        {"loc": f"{base}/research/sdn/", "lastmod": today_iso, "changefreq": "weekly", "priority": "0.85"},
         {"loc": f"{base}/calendar", "lastmod": today_iso, "changefreq": "daily", "priority": "0.7"},
         {"loc": f"{base}/travel", "lastmod": today_iso, "changefreq": "weekly", "priority": "0.8"},
         {"loc": f"{base}/sources", "lastmod": today_iso, "changefreq": "weekly", "priority": "0.6"},
@@ -3712,6 +4118,29 @@ def sitemap_xml():
                 "/companies/simon-property-spg/venezuela-exposure",
                 "/companies/citizens-financial-cfg/venezuela-exposure",
                 "/companies/franklin-resources-ben/venezuela-exposure",
+                # Research dossiers (April 2026): each one shadows a
+                # /sanctions/individuals/<slug> profile that has already
+                # received GSC impressions. Listing both URLs in the
+                # sitemap is intentional — the dossier is the deeper
+                # surface and we want Google to index it on its own
+                # merits, not collapse it under the lighter profile
+                # page. Canonical on each dossier points to itself.
+                "/research/sdn/carretero-napolitano-ramon",
+                "/research/sdn/carretero-napolitano-vicente-luis",
+                "/research/sdn/carretero-napolitano-roberto",
+                # Saab cluster dossiers (added April 2026 to serve the
+                # 'saab abelardo' GSC query plus the long-tail demand
+                # for Alex Saab himself, his brothers, his Colombian
+                # cousins, and the unrelated Tarek William Saab.
+                # Each dossier surfaces the disambiguator across all
+                # six entries so a wrong-Saab landing recovers
+                # gracefully rather than dead-ending the searcher).
+                "/research/sdn/saab-moran-alex-nain",
+                "/research/sdn/saab-moran-amir-luis",
+                "/research/sdn/saab-moran-luis-alberto",
+                "/research/sdn/saab-certain-isham-ali",
+                "/research/sdn/saab-certain-shadi-nain",
+                "/research/sdn/saab-halabi-tarek-william",
             )
             # Verify each whitelisted slug actually resolves to a live
             # page before advertising it. SDN profiles → looked up via
@@ -3731,6 +4160,12 @@ def sitemap_xml():
                 logger.warning("sitemap whitelist: SP500 module unavailable: %s", exc)
                 _find_company = None  # type: ignore
 
+            try:
+                from src.research import ALLOWED_ENTITIES as _DOSSIER_ALLOWED
+            except Exception as exc:
+                logger.warning("sitemap whitelist: dossier allowlist unavailable: %s", exc)
+                _DOSSIER_ALLOWED = set()  # type: ignore
+
             for path in _HIGH_DEMAND_PROFILE_SLUGS:
                 is_live = False
                 if path.startswith("/sanctions/") and _get_sdn_profile is not None:
@@ -3748,6 +4183,10 @@ def sitemap_xml():
                             is_live = _find_company(parts[1]) is not None
                         except Exception:
                             is_live = False
+                elif path.startswith("/research/sdn/"):
+                    parts = path.strip("/").split("/")
+                    if len(parts) == 3:
+                        is_live = parts[2] in _DOSSIER_ALLOWED
                 if not is_live:
                     logger.warning(
                         "sitemap whitelist: %s does not resolve, skipping",

@@ -1,0 +1,465 @@
+{#
+  Hub / index page for the per-SDN research dossier corpus.
+  Served from /research/sdn/ — targets the head terms (OFAC SDN
+  research, OFAC SDN search, sanctions EDD) that the per-slug
+  dossier pages do not. Card grid + cluster nav + comparison block
+  positions dossiers as a different product from the lighter
+  /sanctions/individuals/<slug> profile pages, so Google sees them
+  as complementary rather than competing.
+#}
+{% extends "_base.html.j2" %}
+
+{% block head_extra %}
+<style>
+  .research-hub { max-width: 1100px; margin: 24px auto 64px; padding: 0 24px; }
+
+  .research-hub .breadcrumbs {
+    font-size: 12px; color: #5a6478;
+    margin-bottom: 18px;
+  }
+  .research-hub .breadcrumbs a { color: #5a6478; text-decoration: none; }
+  .research-hub .breadcrumbs a:hover { text-decoration: underline; }
+  .research-hub .breadcrumbs strong { color: #1a2b3d; }
+
+  .hub-hero {
+    background: linear-gradient(180deg, #f4f8fc 0%, #fff 100%);
+    border-left: 4px solid #002b5e;
+    padding: 28px 32px;
+    margin: 0 0 36px;
+    border-radius: 4px;
+  }
+  .hub-hero .eyebrow {
+    font-size: 11px;
+    text-transform: uppercase;
+    letter-spacing: 1.6px;
+    color: #002b5e;
+    font-weight: 700;
+    margin-bottom: 10px;
+  }
+  .hub-hero h1 {
+    font-size: 32px;
+    line-height: 1.15;
+    margin: 0 0 14px;
+    color: #0a1828;
+    letter-spacing: -0.5px;
+  }
+  .hub-hero .lede {
+    font-size: 16.5px;
+    line-height: 1.6;
+    color: #2a3645;
+    margin: 0 0 16px;
+    max-width: 760px;
+  }
+  .hub-hero .stats {
+    display: flex; gap: 28px; flex-wrap: wrap;
+    font-size: 13px; color: #4a5468;
+    padding-top: 14px;
+    border-top: 1px solid #e1e8f0;
+  }
+  .hub-hero .stats strong { color: #002b5e; font-weight: 700; }
+
+  /* Comparison block — the core differentiator vs /sanctions/individuals/ */
+  .vs-block {
+    margin: 0 0 44px;
+    border: 1px solid #d8e0eb;
+    border-radius: 4px;
+    overflow: hidden;
+  }
+  .vs-block h2 {
+    font-size: 18px;
+    margin: 0;
+    padding: 14px 20px;
+    background: #f4f8fc;
+    border-bottom: 1px solid #d8e0eb;
+    color: #0a1828;
+  }
+  .vs-grid {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 0;
+  }
+  .vs-col { padding: 20px 24px; }
+  .vs-col + .vs-col { border-left: 1px solid #d8e0eb; }
+  .vs-col .vs-eyebrow {
+    font-size: 10.5px;
+    text-transform: uppercase;
+    letter-spacing: 1.4px;
+    font-weight: 700;
+    margin-bottom: 6px;
+  }
+  .vs-col.profile .vs-eyebrow { color: #6a7484; }
+  .vs-col.dossier .vs-eyebrow { color: #002b5e; }
+  .vs-col .vs-title {
+    font-size: 16px; font-weight: 700; color: #0a1828;
+    margin-bottom: 4px;
+  }
+  .vs-col .vs-url { font-size: 12px; color: #6a7484; font-family: ui-monospace, SFMono-Regular, Menlo, monospace; margin-bottom: 14px; }
+  .vs-col .vs-tagline { font-size: 14px; color: #2a3645; line-height: 1.55; margin: 0 0 14px; font-style: italic; }
+  .vs-col ul { padding-left: 18px; margin: 0 0 14px; font-size: 14px; line-height: 1.6; color: #2a3645; }
+  .vs-col ul li { margin-bottom: 4px; }
+  .vs-col .vs-best { font-size: 13px; color: #4a5468; }
+  .vs-col .vs-best strong { color: #0a1828; }
+
+  .vs-col.dossier { background: #fafcfe; }
+
+  /* Cluster nav (jump-to-section) */
+  .cluster-nav {
+    display: flex; gap: 8px; flex-wrap: wrap;
+    margin: 0 0 28px;
+    padding: 12px 0;
+    border-bottom: 1px solid #e1e8f0;
+  }
+  .cluster-nav .label {
+    font-size: 12px; text-transform: uppercase; letter-spacing: 1.4px;
+    color: #6a7484; font-weight: 600;
+    align-self: center; margin-right: 6px;
+  }
+  .cluster-nav a {
+    font-size: 13px;
+    padding: 5px 12px;
+    border: 1px solid #cfddee;
+    border-radius: 99px;
+    background: #fff;
+    color: #002b5e;
+    text-decoration: none;
+    font-weight: 600;
+  }
+  .cluster-nav a:hover { background: #002b5e; color: #fff; }
+  .cluster-nav .count {
+    font-size: 11px;
+    margin-left: 6px;
+    opacity: 0.7;
+    font-weight: 500;
+  }
+
+  /* Cluster sections */
+  .cluster {
+    margin: 0 0 36px;
+    scroll-margin-top: 90px;
+  }
+  .cluster-header {
+    display: flex; align-items: baseline; gap: 12px;
+    margin: 0 0 14px;
+    padding-bottom: 10px;
+    border-bottom: 2px solid #002b5e;
+  }
+  .cluster-header h2 {
+    font-size: 22px; margin: 0; color: #0a1828; letter-spacing: -0.3px;
+  }
+  .cluster-header .cluster-meta {
+    font-size: 13px; color: #6a7484;
+  }
+
+  /* Card grid */
+  .card-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(320px, 1fr));
+    gap: 16px;
+  }
+  .dossier-card {
+    border: 1px solid #d8e0eb;
+    border-radius: 4px;
+    padding: 18px 20px;
+    background: #fff;
+    transition: border-color 0.15s, box-shadow 0.15s, transform 0.15s;
+    display: flex; flex-direction: column; gap: 10px;
+    text-decoration: none;
+    color: inherit;
+  }
+  .dossier-card:hover {
+    border-color: #002b5e;
+    box-shadow: 0 4px 16px rgba(0, 43, 94, 0.08);
+    transform: translateY(-1px);
+  }
+  .dossier-card .dc-status {
+    display: inline-flex; align-items: center; gap: 6px;
+    font-size: 10.5px; font-weight: 700;
+    text-transform: uppercase; letter-spacing: 1.2px;
+    color: #cc0000;
+  }
+  .dossier-card .dc-status::before {
+    content: ""; display: inline-block;
+    width: 8px; height: 8px; border-radius: 50%; background: #cc0000;
+  }
+  .dossier-card h3 {
+    font-size: 17px;
+    margin: 0;
+    color: #0a1828;
+    line-height: 1.25;
+    font-weight: 700;
+  }
+  .dossier-card .dc-raw {
+    font-size: 11.5px;
+    color: #6a7484;
+    font-family: ui-monospace, SFMono-Regular, Menlo, monospace;
+  }
+  .dossier-card .dc-tagline {
+    font-size: 13.5px;
+    color: #2a3645;
+    line-height: 1.5;
+    flex: 1;
+  }
+  .dossier-card .dc-meta {
+    display: flex; gap: 12px; flex-wrap: wrap;
+    font-size: 11.5px; color: #5a6478;
+    padding-top: 10px;
+    border-top: 1px solid #eef2f7;
+  }
+  .dossier-card .dc-meta strong { color: #1a2b3d; font-weight: 600; }
+  .dossier-card .dc-cta {
+    font-size: 13px; font-weight: 600;
+    color: #002b5e;
+    margin-top: 4px;
+  }
+  .dossier-card .dc-cta::after { content: " →"; }
+
+  /* FAQ block */
+  .hub-faq {
+    margin: 48px 0 0;
+    padding-top: 32px;
+    border-top: 1px solid #e1e8f0;
+  }
+  .hub-faq h2 {
+    font-size: 22px; margin: 0 0 18px; color: #0a1828; letter-spacing: -0.3px;
+  }
+  .hub-faq .faq-item {
+    border-top: 1px solid #eef2f7;
+    padding: 16px 0;
+  }
+  .hub-faq .faq-item:first-child { border-top: none; }
+  .hub-faq .faq-q { font-weight: 700; font-size: 15px; color: #0a1828; margin: 0 0 6px; }
+  .hub-faq .faq-a { font-size: 14.5px; color: #2a3645; line-height: 1.65; margin: 0; }
+  .hub-faq .faq-a a { color: #002b5e; font-weight: 600; }
+
+  /* Methodology box */
+  .hub-method {
+    margin: 32px 0 0;
+    padding: 20px 24px;
+    background: #f4f8fc;
+    border: 1px solid #d8e0eb;
+    border-radius: 4px;
+  }
+  .hub-method h2 { font-size: 18px; margin: 0 0 10px; color: #0a1828; }
+  .hub-method p { font-size: 14px; color: #2a3645; line-height: 1.65; margin: 0 0 8px; }
+  .hub-method ol { font-size: 14px; color: #2a3645; line-height: 1.65; padding-left: 22px; margin: 0; }
+  .hub-method ol li { margin-bottom: 4px; }
+
+  @media (max-width: 700px) {
+    .vs-grid { grid-template-columns: 1fr; }
+    .vs-col + .vs-col { border-left: none; border-top: 1px solid #d8e0eb; }
+    .hub-hero h1 { font-size: 26px; }
+    .hub-hero { padding: 22px 20px; }
+  }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="research-hub">
+  <nav class="breadcrumbs" aria-label="Breadcrumb">
+    <a href="/">Home</a> <span>›</span>
+    <strong>OFAC SDN Research Dossiers</strong>
+  </nav>
+
+  {# ── Hero / lede ───────────────────────────────────────────────── #}
+  <section class="hub-hero">
+    <div class="eyebrow">OFAC SDN · Due-Diligence Research</div>
+    <h1>OFAC SDN Research Dossiers</h1>
+    <p class="lede">
+      Hand-curated due-diligence dossiers on individuals on the US Treasury
+      <strong>Specially Designated Nationals (SDN) list</strong> — built for
+      compliance teams, EDD analysts, and KYC reviewers who need more than
+      a yes/no status check before adding a name to an evidence file.
+      Each dossier disambiguates the entity from same-surname siblings and
+      look-alikes, links the underlying OFAC press release and Executive
+      Order, surfaces adverse media, and exports as a tamper-evident PDF.
+    </p>
+    <div class="stats">
+      <span><strong>{{ total_dossiers }}</strong> dossiers</span>
+      <span><strong>{{ clusters|length }}</strong> name clusters</span>
+      <span>Source data: <strong>OFAC SDN list</strong> (US Treasury)</span>
+      <span>Updated: <strong>continuously</strong></span>
+    </div>
+  </section>
+
+  {# ── How a dossier differs from a sanctions profile ────────────── #}
+  <section class="vs-block" aria-labelledby="vs-heading">
+    <h2 id="vs-heading">Dossier vs. sanctions profile — when to use which</h2>
+    <div class="vs-grid">
+      <div class="vs-col profile">
+        <div class="vs-eyebrow">Lighter — Sanctions profile</div>
+        <div class="vs-title">Sanctions profile page</div>
+        <div class="vs-url">/sanctions/individuals/&lt;slug&gt;</div>
+        <p class="vs-tagline">
+          One auto-generated page per OFAC SDN entry — every individual,
+          entity, vessel, and aircraft on the list.
+        </p>
+        <ul>
+          <li>Active SDN status, program, designation date</li>
+          <li>Identity card from the OFAC record</li>
+          <li>Co-designated family + linked-to entities</li>
+          <li>Recent related news from our index</li>
+        </ul>
+        <div class="vs-best">
+          <strong>Best for:</strong> a 30-second status check —
+          <em>"is this person currently sanctioned?"</em>
+        </div>
+      </div>
+      <div class="vs-col dossier">
+        <div class="vs-eyebrow">Deeper — Research dossier</div>
+        <div class="vs-title">Research dossier page</div>
+        <div class="vs-url">/research/sdn/&lt;slug&gt;</div>
+        <p class="vs-tagline">
+          A hand-curated, citation-grade research file — produced for
+          high-stakes names where the lighter profile page is not enough.
+        </p>
+        <ul>
+          <li>Surname-cluster <strong>disambiguation strip</strong> — answers
+            "<em>is this my Saab?</em>" in one screen</li>
+          <li>Plain-English <strong>"why designated"</strong> narrative grounded
+            in OFAC primary sources</li>
+          <li>The actual <strong>OFAC press release</strong> + underlying
+            Executive Order, deep-linked</li>
+          <li>Curated <strong>adverse media</strong> + live Google News pull,
+            de-duplicated</li>
+          <li>Corporate-affiliation jumps (OpenCorporates, ICIJ Offshore
+            Leaks, OpenSanctions, Sunbiz, LinkedIn)</li>
+          <li><strong>Tamper-evident PDF export</strong> with SHA-256
+            fingerprint — drop-in for an EDD memo</li>
+        </ul>
+        <div class="vs-best">
+          <strong>Best for:</strong> producing the evidence file —
+          <em>"build the EDD memo."</em>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  {# ── Cluster jump nav ──────────────────────────────────────────── #}
+  {% if clusters|length > 1 %}
+  <nav class="cluster-nav" aria-label="Jump to surname cluster">
+    <span class="label">Jump to cluster</span>
+    {% for cluster in clusters %}
+      <a href="#{{ cluster.key|lower|replace(' ', '-') }}">
+        {{ cluster.label }}<span class="count">({{ cluster.cards|length }})</span>
+      </a>
+    {% endfor %}
+  </nav>
+  {% endif %}
+
+  {# ── Card grid grouped by cluster ──────────────────────────────── #}
+  {% for cluster in clusters %}
+  <section class="cluster" id="{{ cluster.key|lower|replace(' ', '-') }}">
+    <header class="cluster-header">
+      <h2>{{ cluster.label }} cluster</h2>
+      <span class="cluster-meta">
+        {{ cluster.cards|length }} dossier{{ '' if cluster.cards|length == 1 else 's' }} sharing this surname
+      </span>
+    </header>
+    <div class="card-grid">
+      {% for c in cluster.cards %}
+      <a class="dossier-card" href="{{ c.url }}">
+        <span class="dc-status">Active SDN</span>
+        <h3>{{ c.display_name }}</h3>
+        <div class="dc-raw">{{ c.raw_name }}</div>
+        <p class="dc-tagline">{{ c.tagline }}</p>
+        <div class="dc-meta">
+          <span><strong>Program:</strong> {{ c.program_code }}</span>
+          {% if c.designation_date %}
+          <span><strong>Designated:</strong> {{ c.designation_date }}</span>
+          {% endif %}
+        </div>
+        <span class="dc-cta">Open dossier</span>
+      </a>
+      {% endfor %}
+    </div>
+  </section>
+  {% endfor %}
+
+  {# ── FAQ — explicitly targets the head queries ─────────────────── #}
+  <section class="hub-faq" aria-labelledby="faq-heading">
+    <h2 id="faq-heading">Frequently asked</h2>
+
+    <div class="faq-item">
+      <p class="faq-q">Why use this instead of the official OFAC SDN search?</p>
+      <p class="faq-a">
+        The Treasury <a href="https://sanctionssearch.ofac.treas.gov/" rel="nofollow noopener" target="_blank">SDN search tool</a>
+        gives you the raw record — name, programs, identifiers, "Linked To"
+        line items. It does not disambiguate same-surname designees, link to
+        the press release, surface adverse media, or produce a portable
+        evidence file. These dossiers do all of that, with primary-source
+        citations, in a one-page format you can paste into an EDD memo
+        or hand to a regulator.
+      </p>
+    </div>
+
+    <div class="faq-item">
+      <p class="faq-q">How is a dossier different from your existing sanctions profile pages?</p>
+      <p class="faq-a">
+        The <a href="/sanctions-tracker">sanctions profile pages</a> exist for
+        every OFAC SDN entry and are auto-generated from the underlying record —
+        ideal for a quick status check. The dossiers are hand-curated for a
+        smaller set of high-stakes names where ambiguity, look-alikes, or
+        public scrutiny justify a deeper file. Where both exist for a person,
+        the profile page links to the dossier and vice versa — they are
+        complementary, not duplicate.
+      </p>
+    </div>
+
+    <div class="faq-item">
+      <p class="faq-q">Are these dossiers admissible / suitable for an EDD or compliance memo?</p>
+      <p class="faq-a">
+        They are intended as a research aid, not as a substitute for
+        primary-source verification. Every claim links back to its source
+        (OFAC entry, press release, executive order, news article); the PDF
+        export carries a SHA-256 content fingerprint so any later
+        modification of the underlying record is detectable. Compliance teams
+        typically attach the dossier PDF as supporting evidence and cite
+        the primary OFAC record as the authoritative source.
+      </p>
+    </div>
+
+    <div class="faq-item">
+      <p class="faq-q">Why the surname-cluster grouping?</p>
+      <p class="faq-a">
+        Two of the most-searched OFAC names — <em>Saab</em> and <em>Carretero</em> —
+        each appear on the SDN list multiple times. <strong>Alex Nain Saab Moran</strong>
+        (Maduro's frontman) is routinely confused with his siblings and with
+        <strong>Tarek William Saab Halabi</strong> (Venezuela's sitting Attorney
+        General, no familial relation). Grouping the dossiers by surname makes
+        the disambiguation visible at a glance.
+      </p>
+    </div>
+
+    <div class="faq-item">
+      <p class="faq-q">Can I request a dossier on someone not yet listed?</p>
+      <p class="faq-a">
+        Dossiers are added based on observed search demand and editorial
+        judgment about disambiguation risk. If a name you need is on the OFAC
+        SDN list but does not yet have a dossier, the
+        <a href="/sanctions-tracker">sanctions profile page</a> for that
+        person is published the same day OFAC adds them, and is fully
+        searchable on this site.
+      </p>
+    </div>
+  </section>
+
+  {# ── Methodology block ─────────────────────────────────────────── #}
+  <section class="hub-method" aria-labelledby="method-heading">
+    <h2 id="method-heading">How we build a dossier</h2>
+    <p>
+      Each dossier is assembled from publicly available primary sources. No
+      paywalled data, no leaked records, no unverified claims.
+    </p>
+    <ol>
+      <li>Pull the canonical OFAC SDN record (program, designation date, identifiers, Linked-To set).</li>
+      <li>Add the matching <strong>OFAC press release</strong> and the underlying <strong>Executive Order</strong> as primary sources.</li>
+      <li>Build the <strong>surname-cluster disambiguator</strong> from co-listed SDN names, with full identity-card detail on each.</li>
+      <li>Pull <strong>adverse media</strong> from Google News (24-hour cache), de-duplicated against curated items.</li>
+      <li>Generate the plain-English <strong>"why designated"</strong> narrative from the OFAC primary-source set, using a strict, anti-hallucination prompt.</li>
+      <li>Compute a <strong>SHA-256 content fingerprint</strong> of the underlying record so the PDF export is tamper-evident.</li>
+    </ol>
+  </section>
+
+</div>
+{# JSON-LD is rendered by _base.html.j2 via the `jsonld` template var. #}
+{% endblock %}

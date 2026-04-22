@@ -1,0 +1,228 @@
+{
+  "_comment": "Hand-curated overrides per entity slug. The page renders without any of these — every field has a smart fallback in src/research/enrichment.py — but adding curated content makes the page noticeably better. Fields:  primary[] (always shown), adverse_media[] (prepended to live news), press_release_url (replaces the date-search deep link), narrative_override (replaces templated WHY paragraph), public_role (e.g. 'Director of Mining, Ministry of Petroleum').",
+
+  "carretero-napolitano-ramon": {
+    "press_release_url": null,
+    "narrative_override": null,
+    "public_role": null,
+    "primary": [
+      {
+        "title": "OFAC SDN list entry — Ramon Carretero Napolitano (sdn-56632)",
+        "url": "https://ofac.treasury.gov/specially-designated-nationals-and-blocked-persons-list-sdn-human-readable-lists#sdn-56632-addition",
+        "publisher": "US Treasury / OFAC",
+        "type": "primary_source",
+        "date": "2026-04-17",
+        "note": "The official designation entry on Treasury's SDN list."
+      },
+      {
+        "title": "Executive Order 13850 — Imposing Sanctions on Persons Operating in Venezuela's Gold Sector",
+        "url": "https://ofac.treasury.gov/media/13311/download?inline",
+        "publisher": "White House / OFAC",
+        "type": "executive_order",
+        "date": "2018-11-01",
+        "note": "Underlying authority cited for this designation."
+      }
+    ],
+    "adverse_media": []
+  },
+
+  "carretero-napolitano-vicente-luis": {
+    "press_release_url": null,
+    "narrative_override": null,
+    "public_role": null,
+    "primary": [
+      {
+        "title": "OFAC SDN list entry — Vicente Luis Carretero Napolitano (sdn-56663)",
+        "url": "https://ofac.treasury.gov/specially-designated-nationals-and-blocked-persons-list-sdn-human-readable-lists#sdn-56663-addition",
+        "publisher": "US Treasury / OFAC",
+        "type": "primary_source",
+        "date": "2026-04-17",
+        "note": "The official designation entry on Treasury's SDN list."
+      },
+      {
+        "title": "Executive Order 13850 — Imposing Sanctions on Persons Operating in Venezuela's Gold Sector",
+        "url": "https://ofac.treasury.gov/media/13311/download?inline",
+        "publisher": "White House / OFAC",
+        "type": "executive_order",
+        "date": "2018-11-01",
+        "note": "Underlying authority cited for this designation."
+      }
+    ],
+    "adverse_media": []
+  },
+
+  "carretero-napolitano-roberto": {
+    "press_release_url": null,
+    "narrative_override": null,
+    "public_role": null,
+    "primary": [
+      {
+        "title": "OFAC SDN list entry — Roberto Carretero Napolitano (sdn-56662)",
+        "url": "https://ofac.treasury.gov/specially-designated-nationals-and-blocked-persons-list-sdn-human-readable-lists#sdn-56662-addition",
+        "publisher": "US Treasury / OFAC",
+        "type": "primary_source",
+        "date": "2026-04-17",
+        "note": "The official designation entry on Treasury's SDN list."
+      },
+      {
+        "title": "Executive Order 13850 — Imposing Sanctions on Persons Operating in Venezuela's Gold Sector",
+        "url": "https://ofac.treasury.gov/media/13311/download?inline",
+        "publisher": "White House / OFAC",
+        "type": "executive_order",
+        "date": "2018-11-01",
+        "note": "Underlying authority cited for this designation."
+      }
+    ],
+    "adverse_media": []
+  },
+
+  "saab-moran-alex-nain": {
+    "press_release_url": null,
+    "narrative_override": null,
+    "public_role": null,
+    "primary": [
+      {
+        "title": "OFAC SDN list entry — Alex Nain Saab Moran (sdn-26995)",
+        "url": "https://ofac.treasury.gov/specially-designated-nationals-and-blocked-persons-list-sdn-human-readable-lists#sdn-26995-addition",
+        "publisher": "US Treasury / OFAC",
+        "type": "primary_source",
+        "date": "2019-07-25",
+        "note": "The official designation entry on Treasury's SDN list."
+      },
+      {
+        "title": "Executive Order 13850 — Imposing Sanctions on Persons Operating in Venezuela's Gold Sector",
+        "url": "https://ofac.treasury.gov/media/13311/download?inline",
+        "publisher": "White House / OFAC",
+        "type": "executive_order",
+        "date": "2018-11-01",
+        "note": "Underlying authority cited for this designation."
+      }
+    ],
+    "adverse_media": []
+  },
+
+  "saab-moran-amir-luis": {
+    "press_release_url": null,
+    "narrative_override": null,
+    "public_role": null,
+    "primary": [
+      {
+        "title": "OFAC SDN list entry — Amir Luis Saab Moran (sdn-27241)",
+        "url": "https://ofac.treasury.gov/specially-designated-nationals-and-blocked-persons-list-sdn-human-readable-lists#sdn-27241-addition",
+        "publisher": "US Treasury / OFAC",
+        "type": "primary_source",
+        "date": "2019-09-17",
+        "note": "The official designation entry on Treasury's SDN list."
+      },
+      {
+        "title": "Executive Order 13850 — Imposing Sanctions on Persons Operating in Venezuela's Gold Sector",
+        "url": "https://ofac.treasury.gov/media/13311/download?inline",
+        "publisher": "White House / OFAC",
+        "type": "executive_order",
+        "date": "2018-11-01",
+        "note": "Underlying authority cited for this designation."
+      }
+    ],
+    "adverse_media": []
+  },
+
+  "saab-moran-luis-alberto": {
+    "press_release_url": null,
+    "narrative_override": null,
+    "public_role": null,
+    "primary": [
+      {
+        "title": "OFAC SDN list entry — Luis Alberto Saab Moran (sdn-27242)",
+        "url": "https://ofac.treasury.gov/specially-designated-nationals-and-blocked-persons-list-sdn-human-readable-lists#sdn-27242-addition",
+        "publisher": "US Treasury / OFAC",
+        "type": "primary_source",
+        "date": "2019-09-17",
+        "note": "The official designation entry on Treasury's SDN list."
+      },
+      {
+        "title": "Executive Order 13850 — Imposing Sanctions on Persons Operating in Venezuela's Gold Sector",
+        "url": "https://ofac.treasury.gov/media/13311/download?inline",
+        "publisher": "White House / OFAC",
+        "type": "executive_order",
+        "date": "2018-11-01",
+        "note": "Underlying authority cited for this designation."
+      }
+    ],
+    "adverse_media": []
+  },
+
+  "saab-certain-isham-ali": {
+    "press_release_url": null,
+    "narrative_override": null,
+    "public_role": null,
+    "primary": [
+      {
+        "title": "OFAC SDN list entry — Isham Ali Saab Certain (sdn-27002)",
+        "url": "https://ofac.treasury.gov/specially-designated-nationals-and-blocked-persons-list-sdn-human-readable-lists#sdn-27002-addition",
+        "publisher": "US Treasury / OFAC",
+        "type": "primary_source",
+        "date": "2019-07-25",
+        "note": "The official designation entry on Treasury's SDN list."
+      },
+      {
+        "title": "Executive Order 13850 — Imposing Sanctions on Persons Operating in Venezuela's Gold Sector",
+        "url": "https://ofac.treasury.gov/media/13311/download?inline",
+        "publisher": "White House / OFAC",
+        "type": "executive_order",
+        "date": "2018-11-01",
+        "note": "Underlying authority cited for this designation."
+      }
+    ],
+    "adverse_media": []
+  },
+
+  "saab-certain-shadi-nain": {
+    "press_release_url": null,
+    "narrative_override": null,
+    "public_role": null,
+    "primary": [
+      {
+        "title": "OFAC SDN list entry — Shadi Nain Saab Certain (sdn-27001)",
+        "url": "https://ofac.treasury.gov/specially-designated-nationals-and-blocked-persons-list-sdn-human-readable-lists#sdn-27001-addition",
+        "publisher": "US Treasury / OFAC",
+        "type": "primary_source",
+        "date": "2019-07-25",
+        "note": "The official designation entry on Treasury's SDN list."
+      },
+      {
+        "title": "Executive Order 13850 — Imposing Sanctions on Persons Operating in Venezuela's Gold Sector",
+        "url": "https://ofac.treasury.gov/media/13311/download?inline",
+        "publisher": "White House / OFAC",
+        "type": "executive_order",
+        "date": "2018-11-01",
+        "note": "Underlying authority cited for this designation."
+      }
+    ],
+    "adverse_media": []
+  },
+
+  "saab-halabi-tarek-william": {
+    "press_release_url": null,
+    "narrative_override": null,
+    "public_role": "Attorney General of the Bolivarian Republic of Venezuela (Fiscal General de la República), appointed by the Constituent Assembly in August 2017. Not related to Alex Nain Saab Moran.",
+    "primary": [
+      {
+        "title": "OFAC SDN list entry — Tarek William Saab Halabi (sdn-22750)",
+        "url": "https://ofac.treasury.gov/specially-designated-nationals-and-blocked-persons-list-sdn-human-readable-lists#sdn-22750-addition",
+        "publisher": "US Treasury / OFAC",
+        "type": "primary_source",
+        "date": "2017-09-26",
+        "note": "The official designation entry on Treasury's SDN list."
+      },
+      {
+        "title": "Executive Order 13692 — Blocking Property and Suspending Entry of Certain Persons Contributing to the Situation in Venezuela",
+        "url": "https://ofac.treasury.gov/media/8856/download?inline",
+        "publisher": "White House / OFAC",
+        "type": "executive_order",
+        "date": "2015-03-08",
+        "note": "Underlying authority cited for this designation."
+      }
+    ],
+    "adverse_media": []
+  }
+}

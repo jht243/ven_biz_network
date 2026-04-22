@@ -1,0 +1,898 @@
+{#
+  Research dossier page for a single OFAC SDN entity.
+  Served from /research/sdn/<slug> with a PDF export at
+  /research/sdn/<slug>/dossier.pdf. Indexable; included in the sitemap.
+#}
+{% extends "_base.html.j2" %}
+
+{% block head_extra %}
+  <style>
+    .mvp-wrap { max-width: 920px; margin: 24px auto 64px; padding: 0 24px; }
+
+    .status-banner {
+      background: #fdecea;
+      border-left: 4px solid var(--sr-red);
+      padding: 16px 20px;
+      margin: 0 0 28px;
+      display: flex;
+      flex-wrap: wrap;
+      gap: 16px;
+      align-items: center;
+    }
+    .status-banner .pill {
+      background: var(--sr-red);
+      color: #fff;
+      padding: 4px 10px;
+      border-radius: 3px;
+      font-size: 12px;
+      font-weight: 700;
+      letter-spacing: 1px;
+      text-transform: uppercase;
+    }
+    .status-banner .headline { font-weight: 700; color: var(--sr-blue-dark); font-size: 15px; }
+    .status-banner .links { margin-left: auto; font-size: 13px; }
+    .status-banner .links a { margin-left: 12px; }
+
+    .id-card {
+      display: grid;
+      grid-template-columns: 1fr;
+      gap: 0;
+      border: 1px solid var(--sr-gray-light);
+      border-radius: 4px;
+      margin: 0 0 28px;
+      overflow: hidden;
+    }
+    .id-card-header {
+      background: var(--sr-gray-bg);
+      padding: 16px 20px;
+      border-bottom: 1px solid var(--sr-gray-light);
+    }
+    .id-card-header h1 {
+      font-family: var(--font-serif);
+      color: var(--sr-blue-dark);
+      font-size: 30px;
+      margin: 0 0 4px;
+      line-height: 1.15;
+    }
+    .id-card-header .raw {
+      font-family: 'SFMono-Regular', Menlo, Consolas, monospace;
+      font-size: 13px;
+      color: var(--sr-gray-text);
+      letter-spacing: 0.2px;
+    }
+    .id-card-header .category {
+      display: inline-block;
+      margin-top: 8px;
+      font-size: 11px;
+      font-weight: 700;
+      text-transform: uppercase;
+      letter-spacing: 1px;
+      color: var(--sr-blue);
+      border: 1px solid var(--sr-blue);
+      padding: 2px 8px;
+      border-radius: 3px;
+    }
+    .id-card-body { padding: 0; }
+    .id-row {
+      display: grid;
+      grid-template-columns: 180px 1fr;
+      padding: 12px 20px;
+      border-top: 1px solid #f1f3f5;
+      font-size: 14px;
+    }
+    .id-row:first-child { border-top: 0; }
+    .id-row .label { color: var(--sr-gray-text); font-weight: 600; text-transform: uppercase; font-size: 11px; letter-spacing: 1px; padding-top: 3px; }
+    .id-row .value { color: var(--sr-dark-text); font-size: 15px; }
+    .id-row .value .note { color: var(--sr-gray-text); font-size: 12px; font-style: italic; margin-left: 6px; }
+
+    @media (max-width: 600px) {
+      .id-row { grid-template-columns: 1fr; gap: 2px; }
+    }
+
+    .section { margin: 36px 0; }
+    .section h2 {
+      font-family: var(--font-serif);
+      font-size: 20px;
+      color: var(--sr-blue-dark);
+      margin: 0 0 12px;
+      padding-bottom: 6px;
+      border-bottom: 1px solid var(--sr-gray-light);
+    }
+    .section .lede {
+      font-size: 13px;
+      color: var(--sr-gray-text);
+      margin-bottom: 14px;
+    }
+
+    .disambig {
+      background: #eef5ff;
+      border-left: 3px solid var(--sr-blue);
+      padding: 14px 18px;
+      font-size: 14px;
+      margin-bottom: 14px;
+    }
+    .disambig strong { color: var(--sr-blue-dark); }
+    .disambig .question {
+      font-family: var(--font-serif);
+      font-style: italic;
+      color: var(--sr-blue-dark);
+      font-size: 16px;
+      display: block;
+      margin-bottom: 6px;
+    }
+
+    table.data {
+      width: 100%;
+      border-collapse: collapse;
+      font-size: 14px;
+    }
+    table.data th, table.data td {
+      text-align: left;
+      padding: 10px 12px;
+      border-bottom: 1px solid var(--sr-gray-light);
+      vertical-align: top;
+    }
+    table.data th {
+      font-size: 11px;
+      text-transform: uppercase;
+      color: var(--sr-gray-text);
+      letter-spacing: 1px;
+      background: var(--sr-gray-bg);
+    }
+    table.data tr.you { background: #fff8e1; }
+    table.data tr.you td:first-child::before {
+      content: "▸ ";
+      color: var(--sr-red);
+      font-weight: 700;
+    }
+    ul.timeline { list-style: none; padding: 0; margin: 0; }
+    ul.timeline li {
+      border-left: 2px solid var(--sr-gray-light);
+      padding: 4px 0 14px 16px;
+      position: relative;
+      margin-left: 6px;
+    }
+    ul.timeline li::before {
+      content: "";
+      position: absolute;
+      left: -6px;
+      top: 9px;
+      width: 10px;
+      height: 10px;
+      border-radius: 50%;
+      background: var(--sr-blue);
+    }
+    ul.timeline li.designation::before { background: var(--sr-red); }
+    ul.timeline .date { font-size: 12px; color: var(--sr-gray-text); font-family: 'SFMono-Regular', Menlo, monospace; }
+    ul.timeline .title { font-weight: 600; color: var(--sr-dark-text); display: block; margin: 2px 0; }
+    ul.timeline .src { font-size: 12px; color: var(--sr-gray-text); }
+
+    .source-list { list-style: none; padding: 0; margin: 0; }
+    .source-list li {
+      padding: 12px 0;
+      border-bottom: 1px solid var(--sr-gray-light);
+    }
+    .source-list .src-title { font-weight: 600; color: var(--sr-blue-dark); }
+    .source-list .src-meta { font-size: 12px; color: var(--sr-gray-text); margin-top: 2px; }
+    .source-list .src-note { font-size: 13px; color: var(--sr-dark-text); margin-top: 4px; font-style: italic; }
+    .source-list .src-type {
+      display: inline-block;
+      font-size: 10px;
+      text-transform: uppercase;
+      letter-spacing: 1px;
+      padding: 1px 6px;
+      border-radius: 2px;
+      margin-right: 6px;
+      background: var(--sr-gray-light);
+      color: var(--sr-gray-text);
+    }
+    .source-list .src-type.primary_source,
+    .source-list .src-type.executive_order { background: var(--sr-blue); color: #fff; }
+
+    .empty {
+      background: var(--sr-gray-bg);
+      padding: 14px 18px;
+      color: var(--sr-gray-text);
+      font-size: 14px;
+      border-radius: 3px;
+      font-style: italic;
+    }
+
+    .search-aids { display: grid; grid-template-columns: 1fr; gap: 10px; }
+    .search-aid {
+      border: 1px solid var(--sr-gray-light);
+      border-radius: 4px;
+      padding: 12px 14px;
+      display: flex;
+      align-items: center;
+      gap: 14px;
+    }
+    .search-aid:hover { border-color: var(--sr-blue); }
+    .search-aid .label { font-weight: 600; color: var(--sr-blue-dark); flex: 0 0 auto; min-width: 220px; }
+    .search-aid .why { font-size: 13px; color: var(--sr-gray-text); flex: 1; }
+
+    .actions {
+      display: flex;
+      gap: 10px;
+      margin: 24px 0 8px;
+      flex-wrap: wrap;
+    }
+    .actions .btn {
+      display: inline-block;
+      padding: 9px 16px;
+      border-radius: 3px;
+      font-size: 13px;
+      font-weight: 700;
+      letter-spacing: 0.5px;
+      text-transform: uppercase;
+      text-decoration: none;
+    }
+    .btn.primary { background: var(--sr-red); color: #fff; }
+    .btn.primary:hover { background: #a30000; color: #fff; }
+    .btn.secondary { background: #fff; color: var(--sr-blue); border: 1px solid var(--sr-blue); }
+    .btn.secondary:hover { background: var(--sr-blue); color: #fff; }
+    .btn.disabled { background: var(--sr-gray-light); color: var(--sr-gray-text); cursor: not-allowed; }
+
+    .footer-stamp {
+      font-size: 12px;
+      color: var(--sr-gray-text);
+      margin-top: 40px;
+      padding-top: 16px;
+      border-top: 1px dashed var(--sr-gray-light);
+    }
+
+    /* ── Why-this-designation block ─────────────────────────────── */
+    .why-block {
+      background: #fff;
+      border: 1px solid var(--sr-gray-light);
+      border-left: 4px solid var(--sr-blue);
+      padding: 18px 22px;
+      margin: 0 0 28px;
+    }
+    .why-block .why-eyebrow {
+      font-size: 11px;
+      font-weight: 700;
+      text-transform: uppercase;
+      letter-spacing: 1.4px;
+      color: var(--sr-blue);
+      margin-bottom: 8px;
+    }
+    .why-block .why-tldr {
+      background: #f8fafc;
+      border-left: 3px solid var(--sr-blue);
+      padding: 10px 14px;
+      margin: 0 0 14px;
+      font-size: 14px;
+      line-height: 1.5;
+      color: var(--sr-dark-text);
+    }
+    .why-block p { margin: 0 0 10px; font-size: 15px; line-height: 1.65; }
+    .why-block .why-pr {
+      margin-top: 12px;
+      padding-top: 12px;
+      border-top: 1px solid var(--sr-gray-light);
+      font-size: 13px;
+    }
+    .why-block .why-pr .pr-label { color: var(--sr-gray-text); font-weight: 600; margin-right: 6px; }
+    .why-block .why-pr .pr-source-tag {
+      display: inline-block;
+      background: var(--sr-gray-bg);
+      color: var(--sr-gray-text);
+      font-size: 10px;
+      text-transform: uppercase;
+      letter-spacing: 1px;
+      padding: 1px 6px;
+      border-radius: 2px;
+      margin-left: 8px;
+    }
+    .why-block .why-pr .pr-source-tag.curated { background: var(--sr-blue); color: #fff; }
+    .why-copy-row { display: flex; justify-content: flex-end; margin-top: 8px; }
+    .why-copy-btn {
+      background: transparent;
+      border: 1px solid var(--sr-gray-light);
+      color: var(--sr-gray-text);
+      font-size: 12px;
+      padding: 4px 10px;
+      border-radius: 3px;
+      cursor: pointer;
+    }
+    .why-copy-btn:hover { color: var(--sr-blue); border-color: var(--sr-blue); }
+    .why-copy-btn.copied { color: #166534; border-color: #166534; background: #f0fdf4; }
+
+    /* ── Adverse media live items ───────────────────────────────── */
+    .news-list { list-style: none; padding: 0; margin: 0; }
+    .news-list li {
+      padding: 14px 0;
+      border-bottom: 1px solid var(--sr-gray-light);
+    }
+    .news-list .nm-title { font-weight: 600; color: var(--sr-blue-dark); font-size: 15px; line-height: 1.35; display: block; margin-bottom: 4px; }
+    .news-list .nm-meta { font-size: 12px; color: var(--sr-gray-text); margin-bottom: 6px; }
+    .news-list .nm-meta .src { font-weight: 600; }
+    .news-list .nm-snippet { font-size: 13px; color: var(--sr-dark-text); line-height: 1.5; }
+    .news-list .nm-tag {
+      display: inline-block;
+      font-size: 10px;
+      text-transform: uppercase;
+      letter-spacing: 1px;
+      padding: 1px 6px;
+      border-radius: 2px;
+      margin-right: 6px;
+      vertical-align: 1px;
+    }
+    .news-list .nm-tag.curated { background: var(--sr-blue); color: #fff; }
+    .news-list .nm-tag.live { background: var(--sr-gray-bg); color: var(--sr-gray-text); border: 1px solid var(--sr-gray-light); }
+
+    /* ── Corporate affiliations ─────────────────────────────────── */
+    .corp-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+      gap: 12px;
+    }
+    .corp-link {
+      border: 1px solid var(--sr-gray-light);
+      border-radius: 4px;
+      padding: 12px 14px;
+      text-decoration: none;
+      color: inherit;
+      display: block;
+      transition: border-color 0.15s, transform 0.15s;
+    }
+    .corp-link:hover { border-color: var(--sr-blue); transform: translateY(-1px); }
+    .corp-link .cl-label { font-weight: 600; color: var(--sr-blue-dark); font-size: 14px; display: block; }
+    .corp-link .cl-covers { font-size: 11px; text-transform: uppercase; letter-spacing: 0.8px; color: var(--sr-gray-text); margin: 4px 0 6px; }
+    .corp-link .cl-why { font-size: 12px; color: var(--sr-dark-text); line-height: 1.45; }
+
+    /* ── Dossier (print) mode ────────────────────────────────────────
+       Activated either by ?dossier=1 (Playwright sets `dossier_mode`
+       in the Jinja context, which adds .dossier-mode to <body>) or by
+       the browser's print stylesheet (Cmd+P). Both produce the same
+       audit-trail-style PDF. */
+    .cover-page { display: none; }
+
+    body.dossier-mode .top-nav,
+    body.dossier-mode .footer-cta,
+    body.dossier-mode .site-footer,
+    body.dossier-mode .dossier-breadcrumb,
+    body.dossier-mode .quick-status-link,
+    body.dossier-mode .actions { display: none !important; }
+
+    /* On-screen breadcrumb + back-link to lighter sanctions profile.
+       Hidden during PDF render (above) — the PDF cover page replaces
+       the chrome. */
+    .dossier-breadcrumb {
+      max-width: 920px;
+      margin: 14px auto 0;
+      padding: 0 24px;
+      font-size: 12px;
+      color: #5a6478;
+    }
+    .dossier-breadcrumb a {
+      color: #5a6478;
+      text-decoration: none;
+    }
+    .dossier-breadcrumb a:hover { text-decoration: underline; color: #002b5e; }
+    .dossier-breadcrumb strong { color: #1a2b3d; font-weight: 600; }
+    .dossier-breadcrumb .sep { margin: 0 6px; opacity: 0.6; }
+
+    .quick-status-link {
+      max-width: 920px;
+      margin: 4px auto 0;
+      padding: 8px 24px 0;
+      font-size: 12.5px;
+      color: #5a6478;
+    }
+    .quick-status-link a {
+      color: #002b5e;
+      font-weight: 600;
+      text-decoration: none;
+      border-bottom: 1px dotted #cfddee;
+    }
+    .quick-status-link a:hover { border-bottom-color: #002b5e; }
+
+    body.dossier-mode .cover-page { display: block; page-break-after: always; }
+    body.dossier-mode .mvp-wrap { max-width: none; padding: 0 12px; margin: 0; }
+    body.dossier-mode .section { break-inside: avoid; }
+    body.dossier-mode .id-card,
+    body.dossier-mode .status-banner { break-inside: avoid; }
+
+    .cover-page {
+      padding: 60px 40px 40px;
+      text-align: left;
+    }
+    .cover-page .cover-meta {
+      font-size: 11px;
+      text-transform: uppercase;
+      letter-spacing: 2px;
+      color: var(--sr-gray-text);
+      border-bottom: 2px solid var(--sr-blue);
+      padding-bottom: 8px;
+      margin-bottom: 28px;
+    }
+    .cover-page .cover-eyebrow {
+      font-size: 13px;
+      letter-spacing: 1.2px;
+      text-transform: uppercase;
+      color: var(--sr-red);
+      font-weight: 700;
+      margin-bottom: 14px;
+    }
+    .cover-page h1.cover-title {
+      font-family: var(--font-serif);
+      color: var(--sr-blue-dark);
+      font-size: 44px;
+      line-height: 1.1;
+      margin: 0 0 8px;
+    }
+    .cover-page .cover-subtitle {
+      font-family: var(--font-serif);
+      font-style: italic;
+      color: var(--sr-gray-text);
+      font-size: 18px;
+      margin-bottom: 36px;
+    }
+    .cover-page .cover-block {
+      border-top: 1px solid var(--sr-gray-light);
+      padding: 14px 0;
+      display: grid;
+      grid-template-columns: 200px 1fr;
+      font-size: 14px;
+    }
+    .cover-page .cover-block .k {
+      color: var(--sr-gray-text);
+      font-size: 11px;
+      text-transform: uppercase;
+      letter-spacing: 1px;
+      padding-top: 3px;
+    }
+    .cover-page .cover-block .v { color: var(--sr-dark-text); }
+    .cover-page .cover-block .v code {
+      font-family: 'SFMono-Regular', Menlo, Consolas, monospace;
+      font-size: 12px;
+      background: var(--sr-gray-bg);
+      padding: 2px 6px;
+      border-radius: 3px;
+      letter-spacing: 0;
+    }
+    .cover-page .methodology {
+      margin-top: 36px;
+      padding: 18px;
+      background: var(--sr-gray-bg);
+      border-left: 3px solid var(--sr-blue);
+      font-size: 13px;
+      line-height: 1.55;
+      color: var(--sr-dark-text);
+    }
+    .cover-page .methodology h3 {
+      font-family: var(--font-serif);
+      font-size: 14px;
+      color: var(--sr-blue-dark);
+      margin-bottom: 8px;
+      text-transform: uppercase;
+      letter-spacing: 1.2px;
+    }
+    .cover-page .disclaimer {
+      margin-top: 20px;
+      font-size: 11px;
+      color: var(--sr-gray-text);
+      line-height: 1.6;
+      border-top: 1px solid var(--sr-gray-light);
+      padding-top: 14px;
+    }
+
+    @media print {
+      body { font-size: 12px; }
+      .top-nav, .footer-cta, .site-footer, .actions { display: none !important; }
+      .cover-page { display: block; page-break-after: always; }
+      .section { break-inside: avoid; }
+      .id-card, .status-banner { break-inside: avoid; }
+      .mvp-wrap { max-width: none; padding: 0; margin: 0; }
+      a { color: var(--sr-dark-text); text-decoration: none; }
+      a[href]::after { content: " [" attr(href) "]"; font-size: 9px; color: var(--sr-gray-text); word-break: break-all; }
+      a[href^="#"]::after, a[href^="javascript:"]::after { content: ""; }
+    }
+  </style>
+{% endblock %}
+
+{% block content %}
+<script>
+  // Add .dossier-mode to <body> when ?dossier=1 is present so the
+  // print-only cover page + section-break CSS activates. Playwright
+  // navigates with this query param when generating the PDF.
+  (function () {
+    try {
+      var p = new URLSearchParams(window.location.search);
+      if (p.get('dossier') === '1') {
+        document.documentElement.classList.add('dossier-mode');
+        document.addEventListener('DOMContentLoaded', function () {
+          document.body.classList.add('dossier-mode');
+        });
+      }
+    } catch (e) {}
+  })();
+</script>
+{% set is_dossier = dossier_mode|default(False) %}
+
+{# Cover page — only visible when body.dossier-mode is set (PDF render). #}
+<section class="cover-page">
+  <div class="cover-meta">Caracas Research · Sanctions Dossier</div>
+  <div class="cover-eyebrow">OFAC SDN — Active Designation</div>
+  <h1 class="cover-title">{{ identity_card.display_name }}</h1>
+  <div class="cover-subtitle">{{ identity_card.raw_name }} · {{ status.program }}</div>
+
+  <div class="cover-block">
+    <div class="k">Designated</div>
+    <div class="v">{{ profile.designation_date or '—' }}</div>
+  </div>
+  <div class="cover-block">
+    <div class="k">Program</div>
+    <div class="v">{{ status.program }}</div>
+  </div>
+  {% if profile.parsed.get('dob') %}
+  <div class="cover-block">
+    <div class="k">Date of birth</div>
+    <div class="v">{{ profile.parsed['dob'] }}</div>
+  </div>
+  {% endif %}
+  {% if profile.parsed.get('nationality') %}
+  <div class="cover-block">
+    <div class="k">Nationality</div>
+    <div class="v">{{ profile.parsed['nationality'] }}</div>
+  </div>
+  {% endif %}
+  {% if profile.parsed.get('passport') %}
+  <div class="cover-block">
+    <div class="k">Passport</div>
+    <div class="v">{{ profile.parsed['passport'] }}</div>
+  </div>
+  {% endif %}
+  <div class="cover-block">
+    <div class="k">Generated</div>
+    <div class="v">{{ generated_at.strftime('%Y-%m-%d %H:%M:%S UTC') }}</div>
+  </div>
+  <div class="cover-block">
+    <div class="k">Document fingerprint</div>
+    <div class="v"><code>{{ fingerprint|default('—') }}</code></div>
+  </div>
+  <div class="cover-block">
+    <div class="k">Source URL</div>
+    <div class="v"><code>{{ canonical_url|default(profile.url_path) }}</code></div>
+  </div>
+
+  <div class="methodology">
+    <h3>Executive summary</h3>
+    {% for para in narrative.split('\n\n') %}
+      <p style="margin: 0 0 8px;">{{ para }}</p>
+    {% endfor %}
+    <p style="margin: 12px 0 0; font-size: 11px; color: var(--sr-gray-text);">
+      OFAC press release: <a href="{{ press_release.url }}">{{ press_release.url }}</a>
+    </p>
+  </div>
+
+  <div class="methodology" style="margin-top: 14px;">
+    <h3>Methodology &amp; sources</h3>
+    Designation status and identifiers ingested directly from the US Treasury OFAC
+    SDN human-readable lists. Related-entity relationships derived from OFAC
+    <em>Linked&nbsp;To</em> annotations and shared-surname clustering. Adverse media
+    combines hand-curated items with live results from Google News (cached 24h);
+    each item must be independently verified before relying on it. Corporate
+    affiliations are surfaced via deep links into OpenCorporates, ICIJ Offshore
+    Leaks, OpenSanctions, Florida Sunbiz, and LinkedIn. All primary-source URLs
+    were live at generation time.
+  </div>
+
+  <div class="disclaimer">
+    <strong>Disclaimer.</strong> This dossier is a research aid produced from
+    third-party and public-record data sources. It is not legal advice and is not
+    a substitute for primary-source verification. Users are responsible for
+    independently confirming the identity of any natural person before relying on
+    this document for compliance, financial, or legal purposes. Generated by
+    Caracas Research. The document fingerprint above provides tamper-evidence:
+    any modification to the underlying entity record changes the SHA-256 hash.
+  </div>
+</section>
+
+<nav class="dossier-breadcrumb" aria-label="Breadcrumb">
+  <a href="/">Home</a>
+  <span class="sep">›</span>
+  <a href="/research/sdn/">OFAC SDN Research Dossiers</a>
+  <span class="sep">›</span>
+  <strong>{{ identity_card.display_name }}</strong>
+</nav>
+<div class="quick-status-link">
+  Need a quick status check instead of the full dossier?
+  See the <a href="{{ profile.url_path }}">lighter sanctions profile page</a>.
+</div>
+
+<main class="mvp-wrap">
+
+  {# ── Status banner ──────────────────────────────────────────────── #}
+  <div class="status-banner">
+    <span class="pill">Active SDN</span>
+    <span class="headline">{{ status.headline }}</span>
+    <span class="headline">·</span>
+    <span class="headline">{{ status.program }}</span>
+    <span class="links">
+      <a href="{{ status.source_url }}" target="_blank" rel="noopener">OFAC entry ↗</a>
+      {% if status.program_eo_url %}<a href="{{ status.program_eo_url }}" target="_blank" rel="noopener">Executive Order ↗</a>{% endif %}
+    </span>
+  </div>
+
+  {# ── WHY this designation ─────────────────────────────────────── #}
+  <section class="why-block" id="why-block">
+    <div class="why-eyebrow">Why this designation</div>
+
+    {% if narrative_meta.tldr %}
+      <p class="why-tldr"><strong>TL;DR.</strong> {{ narrative_meta.tldr }}</p>
+    {% endif %}
+
+    {% for para in narrative.split('\n\n') %}
+      <p>{{ para }}</p>
+    {% endfor %}
+
+    <div class="why-pr">
+      <span class="pr-label">OFAC press release:</span>
+      <a href="{{ press_release.url }}" target="_blank" rel="noopener">{{ press_release.label }} ↗</a>
+      <span class="pr-source-tag {% if press_release.is_curated %}curated{% endif %}">{{ press_release.source }}</span>
+    </div>
+
+    <div class="why-copy-row">
+      <button type="button" class="why-copy-btn" id="copy-narrative-btn">Copy paragraph for memo</button>
+    </div>
+  </section>
+
+  {# ── Identity card ──────────────────────────────────────────────── #}
+  <section class="id-card">
+    <header class="id-card-header">
+      <h1>{{ identity_card.display_name }}</h1>
+      <div class="raw">{{ identity_card.raw_name }}</div>
+      <div class="category">
+        {{ identity_card.category }}
+        {%- if identity_card.public_role %} · {{ identity_card.public_role }}{% endif -%}
+      </div>
+    </header>
+    <div class="id-card-body">
+      {% for ident in identifiers %}
+        <div class="id-row">
+          <div class="label">{{ ident.label }}</div>
+          <div class="value">
+            {{ ident.value }}
+            {% if ident.note %}<span class="note">{{ ident.note }}</span>{% endif %}
+          </div>
+        </div>
+      {% else %}
+        <div class="id-row"><div class="label">Identifiers</div><div class="value"><em class="note">None parsed from OFAC remarks.</em></div></div>
+      {% endfor %}
+    </div>
+  </section>
+
+  {# ── Action bar ──────────────────────────────────────────────── #}
+  <div class="actions">
+    <a class="btn primary" href="/research/sdn/{{ profile.slug }}/dossier.pdf">Download PDF dossier</a>
+    <a class="btn secondary" href="{{ status.source_url }}" target="_blank" rel="noopener">Open OFAC source ↗</a>
+    <a class="btn secondary" href="{{ profile.url_path }}">View public site version →</a>
+  </div>
+
+  {# ── Disambiguator ─────────────────────────────────────────────── #}
+  <section class="section">
+    <h2>Is this your person?</h2>
+    <p class="lede">
+      Disambiguation is the leading cause of false positives in name screening.
+      Compare the OFAC identifiers below against the natural person under review
+      before clearing or escalating.
+    </p>
+
+    <div class="disambig">
+      <span class="question">"{{ disambiguator.verbatim_query_format }}"</span>
+      <strong>{{ disambiguator.surname_cluster_size }} OFAC entries</strong>
+      share this surname cluster.
+      Match against the known identifiers (DOB, nationality) before clearing or escalating.
+    </div>
+
+    {% if siblings or disambiguator.this_one %}
+      <table class="data">
+        <thead>
+          <tr><th>Name (verbatim)</th><th>DOB</th><th>Nationality</th><th></th></tr>
+        </thead>
+        <tbody>
+          <tr class="you">
+            <td><strong>{{ disambiguator.this_one.name }}</strong></td>
+            <td>{{ disambiguator.this_one.dob or '—' }}</td>
+            <td>{{ disambiguator.this_one.nationality or '—' }}</td>
+            <td><em style="color:var(--sr-gray-text); font-size:12px;">current</em></td>
+          </tr>
+          {% for s in siblings %}
+            <tr>
+              <td>{{ s.raw_name }}</td>
+              <td>{{ s.dob }}</td>
+              <td>{{ s.nationality }}</td>
+              <td><a href="{{ s.view_url }}">View →</a></td>
+            </tr>
+          {% endfor %}
+        </tbody>
+      </table>
+    {% endif %}
+  </section>
+
+  {# ── Corporate affiliations ───────────────────────────────────── #}
+  <section class="section">
+    <h2>Corporate affiliations &amp; ownership</h2>
+    <p class="lede">
+      Under OFAC's 50% Rule, any entity 50%+ owned by this person is also
+      blocked. Use these registries to identify companies the subject owns,
+      directs, or is named in. Each link runs the search pre-filled with
+      the subject's name.
+    </p>
+
+    <div class="corp-grid">
+      {% for c in corp_affiliations %}
+        <a class="corp-link" href="{{ c.url }}" target="_blank" rel="noopener">
+          <span class="cl-label">{{ c.label }} ↗</span>
+          <span class="cl-covers">{{ c.covers }}</span>
+          <span class="cl-why">{{ c.why }}</span>
+        </a>
+      {% endfor %}
+    </div>
+  </section>
+
+  {# ── Related entities ──────────────────────────────────────────── #}
+  <section class="section">
+    <h2>Related entities &amp; network</h2>
+    <p class="lede">Co-designated, family, and OFAC <em>Linked&nbsp;To</em> relationships.</p>
+
+    {% if related %}
+      <table class="data">
+        <thead>
+          <tr><th>Name</th><th>Relationship</th><th>Designated</th><th>Program</th><th></th></tr>
+        </thead>
+        <tbody>
+          {% for r in related %}
+            <tr>
+              <td><strong>{{ r.name }}</strong></td>
+              <td>{{ r.relationship }}</td>
+              <td>{{ r.designation_date }}</td>
+              <td>{{ r.program }}</td>
+              <td>
+                {% if r.view_url %}<a href="{{ r.view_url }}">View →</a>{% endif %}
+              </td>
+            </tr>
+          {% endfor %}
+        </tbody>
+      </table>
+    {% else %}
+      <div class="empty">No related entities found in our database.</div>
+    {% endif %}
+  </section>
+
+  {# ── Timeline ──────────────────────────────────────────────────── #}
+  <section class="section">
+    <h2>Timeline</h2>
+    <p class="lede">The OFAC designation and any related news, gazette, or regulatory events we have on file for this entity, oldest first.</p>
+
+    {% if timeline %}
+      <ul class="timeline">
+        {% for e in timeline %}
+          <li class="{{ e.type }}">
+            <span class="date">{{ e.date }}</span>
+            <span class="title">{{ e.title }}</span>
+            <span class="src">{{ e.source }} · <a href="{{ e.url }}" target="_blank" rel="noopener">source ↗</a></span>
+          </li>
+        {% endfor %}
+      </ul>
+    {% else %}
+      <div class="empty">No timeline events recorded.</div>
+    {% endif %}
+  </section>
+
+  {# ── Source register ──────────────────────────────────────────── #}
+  <section class="section">
+    <h2>Source register</h2>
+    <p class="lede">Every primary source backing this page. Click through to verify before any compliance decision.</p>
+
+    {% if sources.primary %}
+      <ul class="source-list">
+        {% for s in sources.primary %}
+          <li>
+            <span class="src-type {{ s.type }}">{{ s.type|replace('_', ' ') }}</span>
+            <a class="src-title" href="{{ s.url }}" target="_blank" rel="noopener">{{ s.title }} ↗</a>
+            <div class="src-meta">{{ s.publisher }}{% if s.date %} · {{ s.date }}{% endif %}</div>
+            {% if s.note %}<div class="src-note">{{ s.note }}</div>{% endif %}
+          </li>
+        {% endfor %}
+      </ul>
+    {% endif %}
+
+    <h3 style="margin-top:24px; font-family:var(--font-serif); font-size:15px; color:var(--sr-blue-dark);">Wayback / archive helpers</h3>
+    <ul class="source-list">
+      {% for a in sources.archive_helpers %}
+        <li>
+          <span class="src-type">archive</span>
+          <a class="src-title" href="{{ a.url }}" target="_blank" rel="noopener">{{ a.label }} ↗</a>
+        </li>
+      {% endfor %}
+    </ul>
+  </section>
+
+  {# ── Adverse media ────────────────────────────────────────────── #}
+  <section class="section">
+    <h2>Adverse media</h2>
+    <p class="lede">
+      Hand-curated items first, then live results from Google News for the
+      subject's name. Cached for 24 hours. Verify each source independently
+      before relying on it for compliance decisions.
+    </p>
+
+    {% if sources.adverse_media %}
+      <ul class="news-list">
+        {% for n in sources.adverse_media %}
+          <li>
+            {% if n._is_curated is not defined or n._is_curated %}
+              <span class="nm-tag curated">Curated</span>
+            {% else %}
+              <span class="nm-tag live">Live (Google News)</span>
+            {% endif %}
+            <a class="nm-title" href="{{ n.url }}" target="_blank" rel="noopener">{{ n.title }} ↗</a>
+            <div class="nm-meta"><span class="src">{{ n.publisher }}</span>{% if n.date %} · {{ n.date }}{% endif %}</div>
+            {% if n.note %}<div class="nm-snippet">{{ n.note }}</div>{% endif %}
+          </li>
+        {% endfor %}
+      </ul>
+    {% else %}
+      <div class="empty">
+        Live news fetch returned no results for this name. The subject may have a
+        very low public footprint, or the news upstream is temporarily unavailable.
+        Use the investigator search aids below.
+      </div>
+    {% endif %}
+
+    <h3 style="margin-top:24px; font-family:var(--font-serif); font-size:15px; color:var(--sr-blue-dark);">More investigator search aids</h3>
+    <div class="search-aids">
+      {% for a in search_aids %}
+        <a class="search-aid" href="{{ a.url }}" target="_blank" rel="noopener">
+          <span class="label">{{ a.label }} ↗</span>
+          <span class="why">{{ a.why }}</span>
+        </a>
+      {% endfor %}
+    </div>
+  </section>
+
+  <div class="footer-stamp">
+    Page generated {{ generated_at.strftime('%Y-%m-%d %H:%M:%S UTC') }}.
+    Underlying SDN data sourced from US Treasury OFAC; this page is a research aid,
+    not a substitute for primary-source verification.
+  </div>
+
+</main>
+
+<script>
+  // "Copy paragraph for memo" — the WHY paragraph straight onto Maria's
+  // clipboard, because that's exactly what she pastes into the EDD memo.
+  (function () {
+    var btn = document.getElementById('copy-narrative-btn');
+    var why = document.getElementById('why-block');
+    if (!btn || !why) return;
+    btn.addEventListener('click', function () {
+      var paras = why.querySelectorAll('p');
+      var text = Array.prototype.map.call(paras, function (p) { return p.textContent.trim(); }).join('\n\n');
+      var label = btn.textContent;
+      function done(ok) {
+        btn.classList.toggle('copied', ok);
+        btn.textContent = ok ? 'Copied to clipboard' : 'Copy failed';
+        setTimeout(function () { btn.classList.remove('copied'); btn.textContent = label; }, 1800);
+      }
+      if (navigator.clipboard && navigator.clipboard.writeText) {
+        navigator.clipboard.writeText(text).then(function () { done(true); }, function () { done(false); });
+      } else {
+        try {
+          var ta = document.createElement('textarea');
+          ta.value = text;
+          ta.style.position = 'fixed'; ta.style.opacity = '0';
+          document.body.appendChild(ta); ta.select();
+          document.execCommand('copy');
+          document.body.removeChild(ta);
+          done(true);
+        } catch (e) { done(false); }
+      }
+    });
+  })();
+</script>
+{% endblock %}
