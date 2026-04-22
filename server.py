@@ -1164,7 +1164,11 @@ def explainers_index():
         canonical = f"{base}/explainers"
         seo = {
             "title": "Venezuela Investor Explainers — Plain-English Guides",
-            "description": "Evergreen plain-English explainers covering OFAC sanctions on Venezuela, the Banco Central de Venezuela (BCV), the bolívar, how to buy Venezuelan bonds, and doing business in Caracas.",
+            "description": (
+                "Plain-English guides for foreign investors on Venezuela: "
+                "OFAC sanctions, the BCV, the bolívar, buying bonds, and "
+                "operating in Caracas."
+            ),
             "keywords": "Venezuela explainer, OFAC Venezuela explained, BCV explained, bolivar history, Venezuelan bonds, doing business in Caracas",
             "canonical": canonical,
             "site_name": _s.site_name,
@@ -2359,7 +2363,11 @@ def sanctions_profile_page(bucket: str, slug: str):
 @app.route("/lab/entity/<slug>")
 @app.route("/lab/entity/<slug>/")
 def lab_entity_page(slug: str):
-    """Maria MVP — disambiguation-first SDN entity page. Local experiment."""
+    """Disambiguation-first SDN research dossier for a single entity.
+
+    URL prefix /lab/ is retained as a hard isolation boundary: pages here
+    are noindex/nofollow, allowlist-gated, and never enumerated in any
+    sitemap. The user-facing chrome does not advertise the prefix."""
     from src.lab import ALLOWED_ENTITIES
     from src.lab.entity_mvp import assemble, compute_fingerprint
     from src.page_renderer import _env
@@ -2375,14 +2383,21 @@ def lab_entity_page(slug: str):
     fingerprint = compute_fingerprint(ctx)
     canonical_url = f"{request.host_url.rstrip('/')}/lab/entity/{slug}"
 
+    display_name = ctx["identity_card"]["display_name"]
+    program = ctx["status"]["program"]
+
     try:
         template = _env.get_template("lab/entity.html.j2")
         html = template.render(
             seo={
-                "title": f"[LAB] {ctx['identity_card']['display_name']} — Maria MVP",
-                "description": "Local experiment; not for public consumption.",
+                "title": f"{display_name} — OFAC SDN Profile · Caracas Research",
+                "description": (
+                    f"OFAC SDN profile, identity disambiguation, related-entity "
+                    f"network, and adverse-media research aid for {display_name}. "
+                    f"Designated under {program}."
+                ),
                 "canonical": "",
-                "site_name": "Caracas Research (Lab)",
+                "site_name": "Caracas Research",
                 "site_url": "",
                 "locale": "en_US",
                 "og_image": "",
