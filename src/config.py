@@ -72,6 +72,14 @@ class Settings(BaseSettings):
     # Server
     server_port: int = 8080
 
+    # ── Admin endpoints ────────────────────────────────────────────────
+    # Bearer token for /admin/* routes (e.g. /admin/regen-report which
+    # re-renders the static homepage report.html using current code +
+    # current DB content, without paying for a full scrape/LLM/email
+    # pipeline run). Leave blank to disable the endpoints entirely.
+    # Generate with: python -c "import secrets; print(secrets.token_urlsafe(32))"
+    admin_token: str = ""
+
     # SEO / canonical URL — base URL of the deployed site. Used for
     # canonical <link>, sitemap entries, JSON-LD identifiers, and OG
     # share URLs. Override via SITE_URL env var when a custom domain

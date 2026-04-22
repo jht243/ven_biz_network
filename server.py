@@ -7,6 +7,7 @@ Serves the generated report.html on Render (or locally).
 from __future__ import annotations
 
 import gzip
+import hmac
 import io
 import logging
 import time
@@ -194,6 +195,53 @@ def index():
     if not html:
         abort(503, description="Report not yet generated. Run the daily pipeline first.")
     return Response(html, mimetype="text/html")
+
+
+@app.post("/admin/regen-report")
+def admin_regen_report():
+    """
+    Re-render the static homepage report.html in-place using current
+    code + current DB content. Skips the scrape, LLM analysis, and
+    newsletter phases of the daily pipeline — pure template render
+    against existing data, ~1-5 seconds, $0 in API costs.
+
+    Use case: deploying SEO-only changes (titles, meta descriptions,
+    JSON-LD schema, template tweaks) and getting them live on the
+    pre-rendered homepage without waiting for the next cron tick or
+    paying for an unnecessary full pipeline run.
+
+    Auth: bearer token via `?token=` query arg or `X-Admin-Token`
+    header. Token must match settings.admin_token (env: ADMIN_TOKEN).
+    Unset token → endpoint returns 503 (disabled).
+    """
+    if not settings.admin_token:
+        return jsonify({"ok": False, "error": "ADMIN_TOKEN not configured"}), 503
+
+    supplied = request.args.get("token") or request.headers.get("X-Admin-Token", "")
+    if not hmac.compare_digest(supplied, settings.admin_token):
+        return jsonify({"ok": False, "error": "Invalid token"}), 403
+
+    try:
+        from src.report_generator import generate_report
+        t0 = time.time()
+        out_path = generate_report()
+        elapsed_ms = int((time.time() - t0) * 1000)
+        # Bust the in-memory cache so the next "/" request re-fetches
+        # the freshly-uploaded HTML from Supabase Storage instead of
+        # serving the stale cached copy for up to TTL seconds.
+        _REPORT_CACHE["html"] = None
+        _REPORT_CACHE["fetched_at"] = 0.0
+        size = out_path.stat().st_size if out_path.exists() else 0
+        logger.info("admin: report regenerated (%d bytes, %d ms)", size, elapsed_ms)
+        return jsonify({
+            "ok": True,
+            "output_path": str(out_path),
+            "bytes": size,
+            "elapsed_ms": elapsed_ms,
+        })
+    except Exception as exc:
+        logger.exception("admin: regen-report failed")
+        return jsonify({"ok": False, "error": str(exc)}), 500
 
 
 @app.route("/api/subscribe", methods=["POST"])
@@ -2266,6 +2314,84 @@ def sanctions_profile_page(bucket: str, slug: str):
             bucket, slug, exc,
         )
         abort(500)
+
+
+# ──────────────────────────────────────────────────────────────────────
+# /lab — local-only experimental routes. NOT linked from the public
+# site, NOT enumerated in any sitemap, and gated behind a hard
+# allowlist. Safe to add new routes under /lab/* without touching any
+# production behavior. See src/lab/ for the data + template layer.
+# ──────────────────────────────────────────────────────────────────────
+
+
+@app.route("/lab/entity/<slug>")
+@app.route("/lab/entity/<slug>/")
+def lab_entity_page(slug: str):
+    """Maria MVP — disambiguation-first SDN entity page. Local experiment."""
+    from src.lab import ALLOWED_ENTITIES
+    from src.lab.entity_mvp import assemble, compute_fingerprint
+    from src.page_renderer import _env
+
+    if slug not in ALLOWED_ENTITIES:
+        abort(404)
+
+    ctx = assemble(slug)
+    if ctx is None:
+        abort(404)
+
+    dossier_mode = request.args.get("dossier") == "1"
+    fingerprint = compute_fingerprint(ctx)
+    canonical_url = f"{request.host_url.rstrip('/')}/lab/entity/{slug}"
+
+    try:
+        template = _env.get_template("lab/entity.html.j2")
+        html = template.render(
+            seo={
+                "title": f"[LAB] {ctx['identity_card']['display_name']} — Maria MVP",
+                "description": "Local experiment; not for public consumption.",
+                "canonical": "",
+                "site_name": "Caracas Research (Lab)",
+                "site_url": "",
+                "locale": "en_US",
+                "og_image": "",
+                "og_type": "article",
+            },
+            current_year=__import__("datetime").date.today().year,
+            dossier_mode=dossier_mode,
+            fingerprint=fingerprint,
+            canonical_url=canonical_url,
+            **ctx,
+        )
+        return Response(html, mimetype="text/html")
+    except HTTPException:
+        raise
+    except Exception as exc:
+        logger.exception("lab entity render failed for slug=%s: %s", slug, exc)
+        abort(500)
+
+
+@app.route("/lab/entity/<slug>/dossier.pdf")
+def lab_entity_dossier_pdf(slug: str):
+    """Render the lab entity page to PDF via Playwright. Spawns Chromium
+    per request — slow (~3s) but fine for local MVP. Cache later."""
+    from src.lab import ALLOWED_ENTITIES
+    from src.lab.entity_mvp import pdf_filename_for, render_pdf
+
+    if slug not in ALLOWED_ENTITIES:
+        abort(404)
+
+    base = request.host_url.rstrip("/")
+    try:
+        pdf_bytes = render_pdf(slug, base_url=base)
+    except Exception as exc:
+        logger.exception("lab dossier PDF render failed for slug=%s: %s", slug, exc)
+        abort(500)
+
+    filename = pdf_filename_for(slug)
+    resp = Response(pdf_bytes, mimetype="application/pdf")
+    resp.headers["Content-Disposition"] = f'attachment; filename="{filename}"'
+    resp.headers["Cache-Control"] = "no-store"
+    return resp
 
 
 # ──────────────────────────────────────────────────────────────────────
