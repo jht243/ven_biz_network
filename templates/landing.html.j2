@@ -54,6 +54,25 @@
     {{ page.body_html | safe }}
   </div>
 
+  {# FAQ block — only emitted when src/page_renderer.py supplies a
+     faq_block list via _LANDING_PAGE_SEO_OVERRIDES. Visible HTML
+     mirrors the FAQPage JSON-LD so Google honors the rich result. #}
+  {% if faq_block %}
+  <section class="sdn-faq" aria-label="Frequently asked questions" style="margin-top:32px;">
+    <h2 id="faq">Frequently asked questions</h2>
+    {% for q, a in faq_block %}
+    <details {% if loop.first %}open{% endif %} style="border:1px solid #d8dde6; border-left:3px solid #002b5e; border-radius:3px; padding:12px 16px; margin-bottom:8px; background:#fff;">
+      <summary style="font-family:var(--font-serif); color:#002b5e; font-weight:700; font-size:16px; cursor:pointer; list-style:none;">
+        <span style="color:#cc0000; font-weight:700;">▸</span> {{ q }}
+      </summary>
+      <div style="font-size:14px; color:#222; margin-top:10px; line-height:1.55;">
+        {{ a }}
+      </div>
+    </details>
+    {% endfor %}
+  </section>
+  {% endif %}
+
   {# Cross-cluster bridge: when a sector page maps cleanly to one or
      more OFAC programs (gold sector → EO 13850, gov't block → EO 13884
      etc.), surface the actual sanctioned actors in that sector with

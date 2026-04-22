@@ -250,6 +250,106 @@ def _sdn_actors_for_sector(sector_slug: str, *, limit: int = 10) -> list:
     return candidates[:limit]
 
 
+# Path-keyed SEO overrides for high-impression landing pages whose H1
+# (page.title) is editorially rich but truncates badly in SERPs. Each
+# entry can carry a tighter SERP `title` (≤65 chars), a higher-CTR
+# `description` (≤160 chars), and an optional `faq` list emitted as
+# both visible HTML and FAQPage JSON-LD. Adding a path here lets us
+# tune SERP copy independently of the on-page H1 / body content.
+#
+# Why overrides instead of editing LandingPage rows directly:
+#   - SEO copy is reviewable / version-controlled in code, so changes
+#     can ride a normal PR cycle and a/b iterations are diffable.
+#   - The H1 stays descriptive (good for on-page UX) while the SERP
+#     title competes on CTR vocabulary (count, year-month freshness,
+#     query-matching keywords, US-authority signal).
+#   - DB stays the source of truth for body content.
+_LANDING_PAGE_SEO_OVERRIDES: dict[str, dict] = {
+    # GSC April 2026: 102 impressions, 0 clicks, position ~7. Round-1
+    # title = H1 ("What Are OFAC Sanctions on Venezuela? A Plain-
+    # English Guide") — wasted SERP real estate. Round-2 leads with
+    # the EO numbers compliance officers literally search for, plus
+    # year-tag freshness. FAQ block addresses the four sub-questions
+    # we see clustered in adjacent GSC queries (definition, who is
+    # sanctioned, General Licenses, who must comply).
+    "/explainers/what-are-ofac-sanctions-on-venezuela": {
+        "title": "OFAC Venezuela Sanctions Explained (2026): EOs 13692, 13850 & 13884",
+        "description": (
+            "Plain-English guide to all four US Treasury OFAC programs "
+            "targeting Venezuela: who's blocked, what General Licenses "
+            "allow, who must comply (2026)."
+        ),
+        "faq": [
+            (
+                "What are OFAC sanctions on Venezuela?",
+                "OFAC (the Office of Foreign Assets Control, a unit of the "
+                "US Treasury) administers four overlapping programs targeting "
+                "Venezuelan officials, state companies, and assets: the "
+                "VENEZUELA omnibus program, EO 13692 (human rights and "
+                "corruption, 2015), EO 13850 (gold sector and individual "
+                "officials, 2018), and EO 13884 (Government of Venezuela "
+                "block, 2019). Together they currently designate over 400 "
+                "individuals, entities, vessels, and aircraft."
+            ),
+            (
+                "Who is currently sanctioned by OFAC under the Venezuela programs?",
+                "As of 2026, OFAC has roughly 410 active Venezuela-program "
+                "designations: ~190 individuals (mainly current and former "
+                "regime officials, military leaders, and judges), ~100 "
+                "entities (state-owned companies, holding companies, and "
+                "shell entities), ~30 vessels, and ~87 aircraft. Browse the "
+                "live A–Z list at /sanctions/individuals or /sanctions-tracker."
+            ),
+            (
+                "What is a General License under OFAC's Venezuela sanctions?",
+                "A General License (GL) is a standing OFAC authorization that "
+                "lets US persons engage in specific transactions that would "
+                "otherwise be prohibited. For Venezuela, the most-used GLs "
+                "cover personal remittances, agricultural and medical "
+                "exports, telecommunications and internet services, NGO "
+                "humanitarian work, and certain wind-down activities. Each "
+                "GL has detailed scope limits — see OFAC's General Licenses "
+                "page for current text."
+            ),
+            (
+                "Who has to comply with OFAC Venezuela sanctions?",
+                "All US persons (US citizens, US permanent residents, "
+                "US-incorporated entities, and anyone physically in the "
+                "United States) must comply, regardless of where the "
+                "transaction occurs. Foreign companies that use US dollars, "
+                "US banks, or US persons in their transaction chain face "
+                "secondary sanctions risk. Banks, investment advisors, and "
+                "exporters must screen counterparties against the SDN list "
+                "at every transaction."
+            ),
+            (
+                "How often is the OFAC Venezuela sanctions list updated?",
+                "The OFAC SDN list is updated continuously by the US "
+                "Treasury — sometimes daily — as new designations and "
+                "delistings are published. Caracas Research refreshes its "
+                "live tracker twice daily from the official OFAC SDN feed, "
+                "so the counts and profiles you see reflect the live list "
+                "as of the date stamp on each page."
+            ),
+        ],
+    },
+    # GSC April 2026: 91 impressions, 0 clicks. Original title leads
+    # with "Legal Framework" — investor-intent searchers want
+    # commodities (gold/coltan/diamonds) and ROI signals first. New
+    # title front-loads the three commodities Venezuela is actually
+    # mined for, with year-tag and the OFAC overlay every investor
+    # asks about.
+    "/sectors/mining": {
+        "title": "Venezuela Mining 2026: Gold, Coltan & Diamond Deals Under OFAC",
+        "description": (
+            "Where Venezuela's gold, coltan, and diamond opportunities "
+            "still exist in 2026 under the Organic Mining Law and OFAC "
+            "sanctions. Investor diligence guide."
+        ),
+    },
+}
+
+
 def render_landing_page(page, *, recent_briefings: list | None = None) -> str:
     """Render a LandingPage row (pillar / sector / explainer) to HTML."""
     base = _base_url()
@@ -260,9 +360,17 @@ def render_landing_page(page, *, recent_briefings: list | None = None) -> str:
     if isinstance(keywords, str):
         keywords = [k.strip() for k in keywords.split(",") if k.strip()]
 
+    override = _LANDING_PAGE_SEO_OVERRIDES.get(page.canonical_path, {})
+    seo_title = override.get("title") or (page.title or "")[:110]
+    seo_description = (
+        override.get("description")
+        or (page.summary or page.subtitle or "")[:300]
+    )
+    faq_block = override.get("faq") or []
+
     seo = {
-        "title": (page.title or "")[:110],
-        "description": (page.summary or page.subtitle or "")[:300],
+        "title": seo_title,
+        "description": seo_description,
         "keywords": ", ".join(keywords) if keywords else "",
         "canonical": canonical,
         "site_name": settings.site_name,
@@ -324,8 +432,27 @@ def render_landing_page(page, *, recent_briefings: list | None = None) -> str:
         "isAccessibleForFree": True,
     }
 
+    graph_nodes: list = [breadcrumbs, main_obj]
+    # Emit FAQPage JSON-LD whenever the override carries an FAQ list.
+    # The same list is rendered as visible HTML in the template so the
+    # rich result is honored (Google requires the structured data to
+    # match user-visible content).
+    if faq_block:
+        graph_nodes.append({
+            "@type": "FAQPage",
+            "@id": f"{canonical}#faq",
+            "mainEntity": [
+                {
+                    "@type": "Question",
+                    "name": q,
+                    "acceptedAnswer": {"@type": "Answer", "text": a[:500]},
+                }
+                for q, a in faq_block
+            ],
+        })
+
     jsonld = json.dumps(
-        {"@context": "https://schema.org", "@graph": [breadcrumbs, main_obj]},
+        {"@context": "https://schema.org", "@graph": graph_nodes},
         ensure_ascii=False,
     )
 
@@ -350,6 +477,7 @@ def render_landing_page(page, *, recent_briefings: list | None = None) -> str:
         cluster_ctx=cluster_ctx,
         seo=seo,
         jsonld=jsonld,
+        faq_block=faq_block,
         current_year=date.today().year,
     )
 

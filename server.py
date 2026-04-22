@@ -1406,32 +1406,38 @@ def sanctions_tracker():
 
             base = _base_url()
             canonical = f"{base}/sanctions-tracker"
-            # Title + description rewritten April 2026 to match the
-            # actual GSC top query: "ofac sdn list current military,
-            # economic, diplomatic" — 22 impressions over 3 months at
-            # avg position 6.2, 0% CTR. The previous title
-            # ("OFAC Venezuela Sanctions Tracker — N active
-            # designations") didn't surface any of those query terms,
-            # so even a #6 SERP placement converted at 0%. New copy
-            # leads with the searcher's exact vocabulary ("OFAC SDN
-            # List", sector words, current month/year freshness) so
-            # the snippet matches what they typed.
+            today_human = _date.today().strftime("%B %Y")
+            # Title trimmed April 2026 (round 2) after GSC showed 183
+            # impressions / 2 clicks (1.1% CTR) at avg position 6.8.
+            # Round-1 title (96 chars: "OFAC SDN List — Venezuela
+            # Sanctions: N Current Military, Economic & Diplomatic
+            # Designations") truncated badly in SERPs, killing the
+            # month-year freshness signal at the end. Round-2 keeps
+            # the high-value tokens ("OFAC", "Venezuela SDN List",
+            # count, "US Sanctions", current month-year) inside the
+            # ~60-char SERP display window. Sector words ("military,
+            # economic, diplomatic") move to the description, where
+            # Google still matches them but they don't burn title
+            # budget. "US Sanctions" carries the US-authority signal
+            # that GSC shows we're missing — 356 US impressions / 0
+            # US clicks over 3 months suggests US compliance officers
+            # don't recognise us as a US-Treasury-grade source.
             seo = {
                 "title": (
-                    f"OFAC SDN List — Venezuela Sanctions: {stats['total']} Current "
-                    "Military, Economic & Diplomatic Designations"
+                    f"OFAC Venezuela SDN List — {stats['total']} Active "
+                    f"US Sanctions ({today_human})"
                 ),
                 "description": (
-                    f"Current OFAC SDN List for Venezuela: {stats['total']} active US Treasury "
-                    "designations across military, economic, and diplomatic programs. "
-                    "Search every individual, entity, vessel, and aircraft. Refreshed twice "
-                    "daily from the official OFAC source."
+                    f"Official US Treasury OFAC SDN list for Venezuela — "
+                    f"{stats['total']} active sanctions across military, "
+                    "economic, and diplomatic programs. Refreshed twice daily."
                 ),
                 "keywords": (
                     "OFAC SDN list Venezuela, OFAC Venezuela sanctions, "
-                    "Venezuela military sanctions, Venezuela economic sanctions, "
-                    "Venezuela diplomatic designations, PDVSA sanctions, "
-                    "Venezuela vessel sanctions, OFAC SDN search current"
+                    "US Treasury Venezuela sanctions, Venezuela military "
+                    "sanctions, Venezuela economic sanctions, Venezuela "
+                    "diplomatic designations, PDVSA sanctions, Venezuela "
+                    "vessel sanctions, OFAC SDN search current"
                 ),
                 "canonical": canonical,
                 "site_name": _s.site_name,
@@ -1877,27 +1883,37 @@ def sanctions_index_page(bucket: str):
         today_human = _date.today().strftime("%B %Y")
         today_iso = _date.today().isoformat()
 
-        # Title leads with the question intent ("Currently sanctioned…")
-        # + count + month-year freshness marker. The month marker is the
-        # CTR lever — Google flags listings as "fresh" in the SERP and
-        # users click them first for any "list of currently…" query.
+        # Title trimmed April 2026 (round 2) after GSC showed 84
+        # impressions / 0 clicks on /sanctions/individuals over 3
+        # months. Round-1 title (84 chars: "Currently Sanctioned
+        # Venezuela Individuals — OFAC SDN List (190 Active, April
+        # 2026)") truncated in SERPs, dropping the freshness signal.
+        # Round-2 leads with "OFAC SDN" (the literal compliance
+        # search vocabulary), keeps the count + bucket noun + month
+        # tag inside ~60 chars, and pushes the longer descriptive
+        # frame into the description. "US Treasury OFAC" in the
+        # description carries the US-authority signal we're missing.
         plural = singular if singular.endswith("s") else f"{singular}s"
+        bucket_noun = {
+            "individuals": "Venezuelan Individuals",
+            "entities":    "Venezuelan Entities",
+            "vessels":     "Venezuelan Vessels",
+            "aircraft":    "Venezuelan Aircraft",
+        }.get(bucket, f"Venezuelan {bucket.capitalize()}")
         seo = {
             "title": (
-                f"Currently Sanctioned Venezuela {bucket.capitalize()} — "
-                f"OFAC SDN List ({len(profiles)} Active, {today_human})"
+                f"OFAC SDN: {len(profiles)} Sanctioned {bucket_noun} ({today_human})"
             )[:120],
             "description": (
-                f"All {len(profiles)} Venezuelan {plural} actively sanctioned by "
-                f"OFAC as of {today_human}. Browse the full SDN list A–Z, with "
-                f"each name linking to a permanent profile (program code, executive "
-                f"order, biographical data, and direct OFAC source link). Updated "
-                f"twice daily from the live US Treasury feed."
+                f"All {len(profiles)} Venezuelan {plural} on the US Treasury "
+                f"OFAC SDN list ({today_human}). A–Z directory with program "
+                f"codes, executive orders, and direct OFAC source links."
             )[:300],
             "keywords": (
-                f"currently sanctioned Venezuela {bucket}, OFAC Venezuela "
-                f"{bucket} list, Venezuela SDN {bucket} {today_human.split()[-1]}, "
-                f"OFAC Venezuela sanctions list, OFAC SDN search"
+                f"sanctioned Venezuela {bucket}, OFAC Venezuela {bucket} list, "
+                f"US Treasury Venezuela {bucket}, Venezuela SDN {bucket} "
+                f"{today_human.split()[-1]}, OFAC Venezuela sanctions list, "
+                f"OFAC SDN search"
             ),
             "canonical": canonical,
             "site_name": _s.site_name,
