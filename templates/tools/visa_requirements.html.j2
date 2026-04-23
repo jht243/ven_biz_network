@@ -19,6 +19,31 @@
   .advisory.l1 { background: #e8f5e9; border-left: 4px solid #2e7d32; }
   .advisory .lvl { font-weight:700; }
   .investor-note { background: var(--sr-gray-bg); border-left: 4px solid var(--sr-blue); padding: 14px 18px; margin: 16px 0; font-size: 14px; }
+  .timeline-pill { display: inline-flex; align-items: center; gap: 6px; background: #fff8e1; border: 1px solid #f5d27a; border-radius: 999px; padding: 4px 12px; font-size: 13px; font-weight: 700; color: #6b5612; line-height: 1.3; }
+  .timeline-pill.green { background: #e8f5e9; border-color: #aed7b1; color: #1b4d1f; }
+  .timeline-pill svg { width: 13px; height: 13px; flex-shrink: 0; }
+  .timeline-detail { display: block; font-size: 13px; color: var(--sr-gray-text); margin-top: 6px; line-height: 1.55; }
+  .apply-callout .apply-timeline { background: #fff; border: 1px solid #f1c5c0; border-left: 3px solid #f5b041; padding: 10px 14px; border-radius: 3px; margin: 10px 0 14px; font-size: 13.5px; color: var(--sr-dark-text); display: flex; align-items: center; gap: 10px; }
+  .apply-callout .apply-timeline .apply-timeline-label { font-size: 11px; text-transform: uppercase; letter-spacing: 0.7px; font-weight: 700; color: #6b5612; }
+  .apply-callout .apply-timeline .apply-timeline-value { font-weight: 700; color: var(--sr-dark-text); }
+  .apply-callout { background: #fdf3f2; border: 1px solid #f1c5c0; border-left: 4px solid var(--sr-red); padding: 18px 20px; margin: 18px 0; border-radius: 4px; }
+  .apply-callout .apply-head { font-size: 12px; text-transform: uppercase; letter-spacing: 1px; color: var(--sr-red); font-weight: 700; margin-bottom: 4px; }
+  .apply-callout .apply-title { font-family: var(--font-serif); font-size: 20px; color: var(--sr-blue-dark); margin: 0 0 6px; }
+  .apply-callout .apply-warning { background: #fff; border: 1px solid #f1c5c0; border-left: 3px solid var(--sr-red); padding: 10px 14px; border-radius: 3px; margin: 10px 0 14px; font-size: 13.5px; color: var(--sr-dark-text); }
+  .apply-steps { list-style: none; counter-reset: step; padding: 0; margin: 12px 0 14px; }
+  .apply-steps > li { display: grid; grid-template-columns: 38px 1fr; gap: 12px; padding: 12px 0; border-top: 1px dotted #e5b9b3; counter-increment: step; }
+  .apply-steps > li:first-child { border-top: 0; padding-top: 4px; }
+  .apply-steps .step-num { width: 30px; height: 30px; border-radius: 50%; background: var(--sr-red); color: #fff; font-family: var(--font-sans); font-weight: 700; font-size: 14px; display: flex; align-items: center; justify-content: center; line-height: 1; }
+  .apply-steps .step-num::before { content: counter(step); }
+  .apply-steps h4 { font-family: var(--font-sans); font-size: 14.5px; font-weight: 700; color: var(--sr-dark-text); margin: 4px 0 4px; }
+  .apply-steps p { font-size: 13.5px; color: var(--sr-gray-text); margin: 0 0 6px; line-height: 1.55; }
+  .apply-steps .step-cta { display: inline-block; font-size: 13px; font-weight: 600; color: #fff; background: var(--sr-blue); padding: 6px 14px; border-radius: 999px; text-decoration: none; }
+  .apply-steps .step-cta:hover { background: var(--sr-blue-dark); }
+  .apply-primary-cta { display: inline-block; background: var(--sr-red); color: #fff; padding: 11px 22px; border-radius: 3px; text-decoration: none; font-family: var(--font-sans); font-weight: 700; font-size: 14.5px; margin-top: 4px; }
+  .apply-primary-cta:hover { background: #a01d18; color: #fff; }
+  .apply-secondary-cta { display: inline-block; padding: 11px 22px; border-radius: 3px; font-family: var(--font-sans); font-weight: 600; font-size: 14px; color: var(--sr-blue-dark); border: 1px solid var(--sr-blue); margin-left: 8px; text-decoration: none; }
+  .apply-secondary-cta:hover { background: var(--sr-blue); color: #fff; }
+  @media (max-width: 480px) { .apply-secondary-cta { margin: 8px 0 0; display: block; text-align: center; } .apply-primary-cta { display: block; text-align: center; } }
 </style>
 {% endblock %}
 
@@ -68,7 +93,72 @@
     <div class="field-row"><div class="lbl">Visa type</div><div>{{ v.visa_type }}</div></div>
     <div class="field-row"><div class="lbl">Validity</div><div>{{ v.visa_validity }}</div></div>
     <div class="field-row"><div class="lbl">Maximum stay</div><div>{{ v.tourist_stay }}</div></div>
+    {% if v.processing_time_summary %}
+    <div class="field-row">
+      <div class="lbl">Approval timeline</div>
+      <div>
+        <span class="timeline-pill {% if not v.visa_required %}green{% endif %}" title="{{ v.processing_time_detail or '' }}">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+            <circle cx="12" cy="12" r="9"/>
+            <path d="M12 7v5l3 2"/>
+          </svg>
+          {{ v.processing_time_summary }}
+        </span>
+        {% if v.processing_time_detail %}
+        <span class="timeline-detail">{{ v.processing_time_detail }}</span>
+        {% endif %}
+      </div>
+    </div>
+    {% endif %}
     <div class="field-row"><div class="lbl">Embassy / authority</div><div><a href="{{ v.embassy_url }}" rel="nofollow noopener" target="_blank">Verify with the official source &rarr;</a></div></div>
+
+    {% if v.visa_required and v.visa_application_url %}
+    <div class="apply-callout">
+      <div class="apply-head">How to actually get the visa</div>
+      <h3 class="apply-title">Step-by-step: applying for a Venezuela visa</h3>
+
+      {% if v.visa_application_warning %}
+      <div class="apply-warning">{{ v.visa_application_warning }}</div>
+      {% endif %}
+
+      {% if v.processing_time_summary %}
+      <div class="apply-timeline">
+        <svg viewBox="0 0 24 24" fill="none" stroke="#6b5612" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" style="width:18px;height:18px;flex-shrink:0;">
+          <circle cx="12" cy="12" r="9"/>
+          <path d="M12 7v5l3 2"/>
+        </svg>
+        <div>
+          <div class="apply-timeline-label">Estimated approval timeline</div>
+          <div><span class="apply-timeline-value">{{ v.processing_time_summary }}</span> — {{ v.processing_time_detail }}</div>
+        </div>
+      </div>
+      {% endif %}
+
+      {% if v.visa_application_steps %}
+      <ol class="apply-steps">
+        {% for step in v.visa_application_steps %}
+        <li>
+          <span class="step-num" aria-hidden="true"></span>
+          <div>
+            <h4>{{ step.title }}</h4>
+            <p>{{ step.detail }}</p>
+            {% if step.url %}
+            <a class="step-cta" href="{{ step.url }}" rel="nofollow noopener" target="_blank">{{ step.url_label or 'Open' }} &rarr;</a>
+            {% endif %}
+          </div>
+        </li>
+        {% endfor %}
+      </ol>
+      {% endif %}
+
+      <div style="margin-top: 14px;">
+        <a class="apply-primary-cta" href="{{ v.visa_application_url }}" rel="nofollow noopener" target="_blank">Start your application &rarr;</a>
+        {% if v.visa_application_guide_url %}
+        <a class="apply-secondary-cta" href="{{ v.visa_application_guide_url }}" rel="nofollow noopener" target="_blank">Read the embassy guide</a>
+        {% endif %}
+      </div>
+    </div>
+    {% endif %}
 
     {% if v.advisory_level %}
     <div class="advisory l{{ v.advisory_level }}">

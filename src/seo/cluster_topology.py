@@ -50,7 +50,7 @@ _PROGRAM_TO_SECTOR_SLUG: dict[str, str] = {
 # link from any cluster nav uses these exact strings so Google sees a
 # consistent topical signal (instead of "click here" / "learn more").
 _ANCHOR: dict[str, str] = {
-    "/sanctions-tracker": "OFAC Venezuela Sanctions Tracker (live SDN list)",
+    "/sanctions-tracker": "OFAC Venezuela SDN list — full searchable US Treasury tracker",
     "/sanctions/individuals": "All sanctioned individuals on the Venezuela SDN list",
     "/sanctions/entities": "All sanctioned entities (companies and orgs) on the Venezuela SDN list",
     "/sanctions/vessels": "All sanctioned vessels under Venezuela-related programs",
@@ -65,7 +65,7 @@ _ANCHOR: dict[str, str] = {
     "/tools/public-company-venezuela-exposure-check": "Public company Venezuela exposure check (S&P 500)",
     "/tools/sec-edgar-venezuela-impairment-search": "SEC EDGAR Venezuela / PDVSA / impairment / contingent-liability search (S&P 500)",
     "/companies": "S&P 500 Venezuela exposure register (every ticker, A-Z)",
-    "/explainers/what-are-ofac-sanctions-on-venezuela": "What are OFAC sanctions on Venezuela? (plain-English guide)",
+    "/explainers/what-are-ofac-sanctions-on-venezuela": "OFAC Venezuela: sanctions programs & General Licenses (2026 guide)",
 
     "/invest-in-venezuela": "How to invest in Venezuela (2026 sanctions-safe guide)",
     "/sectors/oil-gas": "Venezuela oil & gas sector — regulation, sanctions, deals",
@@ -85,7 +85,7 @@ _ANCHOR: dict[str, str] = {
     "/explainers/how-to-buy-venezuelan-bonds": "How to buy Venezuelan sovereign and PDVSA bonds (2026)",
     "/explainers/doing-business-in-caracas": "Doing business in Caracas — operating manual for foreign investors",
 
-    "/travel": "Venezuela travel hub — embassies, hotels, safety, drivers",
+    "/travel": "Venezuela & Caracas travel — US advisory, safety, hotels, visa",
     "/travel/emergency-card": "Caracas emergency contact card (printable PDF)",
     "/tools/venezuela-visa-requirements": "Venezuela visa requirements by passport (2026)",
     "/tools/caracas-safety-by-neighborhood": "Caracas safety by neighborhood (interactive map)",

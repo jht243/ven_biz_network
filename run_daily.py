@@ -2,7 +2,8 @@
 """
 Daily orchestrator for the Caracas Research.
 
-Chains: scrape -> analyze -> generate report -> send newsletter
+Chains: scrape -> analyze -> generate report -> Google Indexing API
+-> send newsletter -> IndexNow / social / archive
 
 Usage:
     python run_daily.py                    # Full pipeline
@@ -131,6 +132,28 @@ def main(skip_scrape: bool, skip_email: bool, dry_run: bool, report_only: bool):
             _print_summary(results, start)
             sys.exit(1)
 
+    # Phase 3a: Google Indexing API — right after the report is written so
+    # Google can re-crawl key URLs (homepage, SDN tracker, explainers) before
+    # the newsletter and other channels. Non-fatal; see run_google_indexing.
+    # (The distribution Phase 5 bundle only runs indexnow, bluesky, archive,
+    # etc. — not a second Google ping.)
+    console.print("\n[bold cyan]Phase 3a:[/bold cyan] Google Indexing API (URL notifications)...")
+    try:
+        from src.distribution.runner import run_google_indexing
+        gidx = run_google_indexing()
+        results["google_indexing"] = gidx
+        if gidx.get("status") == "ok":
+            console.print(
+                f"  [green]✓[/green] pinged {gidx.get('pinged', 0)} "
+                f"({gidx.get('succeeded', 0)} ok, {gidx.get('failed', 0)} failed)"
+            )
+        else:
+            console.print(f"  [yellow]·[/yellow] {gidx}")
+    except Exception as e:
+        logger.error("Google Indexing API failed: %s", e, exc_info=True)
+        results["google_indexing"] = {"error": str(e)}
+        console.print(f"  [yellow]![/yellow] Google Indexing (non-fatal): {e}")
+
     # Phase 3b: Daily Tearsheet (PDF). Only runs on the evening cron
     # (5 PM Medellín / 22:00 UTC) — the morning cron skips it so we
     # publish exactly one tearsheet per day, reflecting the full
@@ -178,10 +201,9 @@ def main(skip_scrape: bool, skip_email: bool, dry_run: bool, report_only: bool):
     else:
         console.print("\n[dim]Phase 4: Newsletter — SKIPPED[/dim]")
 
-    # Phase 5: Distribution (Google Indexing API today; Bluesky / Mastodon /
-    # Telegram / LinkedIn / Threads / Medium will be added incrementally).
-    # Always non-fatal — distribution failures must never break the daily
-    # pipeline because the underlying content is already published.
+    # Phase 5: Distribution (IndexNow, Bluesky, archive, Zenodo, OSF).
+    # Google URL_UPDATED is Phase 3a (immediately after the report) so
+    # crawlers are not delayed behind later phases.
     console.print("\n[bold cyan]Phase 5:[/bold cyan] Distributing to discovery channels...")
     try:
         from src.distribution.runner import run_all as run_distribution_all

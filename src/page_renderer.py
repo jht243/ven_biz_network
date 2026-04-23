@@ -318,12 +318,25 @@ _LANDING_PAGE_SEO_OVERRIDES: dict[str, dict] = {
     # year-tag freshness. FAQ block addresses the four sub-questions
     # we see clustered in adjacent GSC queries (definition, who is
     # sanctioned, General Licenses, who must comply).
+    # Round 3 (Apr 2026): pivot back toward natural-language queries.
+    # 28d of GSC data shows the live impressions are coming from
+    # "ofac sanctions on venezuela" (pos 18), "ofac venezuela licenses"
+    # (pos 10), and "ofac venezuela sanctions program summary" (pos 10)
+    # — none of them include the EO numbers Round 2 optimised for. We
+    # exact-match the dominant query in the title and keep the EO/GL
+    # numerics in the description (Google still scores them) plus the
+    # body, so compliance officers searching technically still convert.
+    # Round 4 (Apr 2026): 28d GSC shows clicks on "ofac venezuela licenses",
+    # "ofac venezuela sanctions program summary", and the broad head
+    # "ofac sanctions on venezuela" (positions 5–10). We front-load the exact
+    # query tokens ("Venezuela", "General Licenses", "programs") in the
+    # title; EO numbers and SDN count stay in the description + body.
     "/explainers/what-are-ofac-sanctions-on-venezuela": {
-        "title": "OFAC Venezuela Sanctions: EOs 13692, 13850 & 13884 (2026)",
+        "title": "OFAC & Venezuela: Sanctions Programs & General Licenses (2026)",
         "description": (
-            "Plain-English guide to all four US Treasury OFAC programs "
-            "targeting Venezuela: who's blocked, what General Licenses "
-            "allow, who must comply (2026)."
+            "U.S. Treasury OFAC programs for Venezuela, executive orders, "
+            "VENEZUELA + EO 13692/13850/13884, General Licenses, who must "
+            "comply, and live SDN counts. Independent guide — 2026."
         ),
         "faq": [
             (

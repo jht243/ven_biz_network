@@ -4,8 +4,35 @@
 <style>
   .travel-hero { background: linear-gradient(180deg, #f6f8fa 0%, var(--white) 100%); padding: 28px 0 16px; margin-bottom: 16px; }
   .travel-hero .kicker { font-size: 12px; text-transform: uppercase; letter-spacing: 1.4px; color: #cc0000; font-weight: 700; }
-  .travel-hero h1 { font-family: var(--font-serif); font-size: 36px; color: var(--sr-blue-dark); margin: 8px 0 12px; line-height: 1.2; }
-  .travel-hero p.lead { font-family: var(--font-serif); font-style: italic; color: var(--sr-gray-text); font-size: 18px; max-width: 720px; }
+  .travel-hero h1 { font-family: var(--font-serif); font-size: 32px; color: var(--sr-blue-dark); margin: 8px 0 8px; line-height: 1.2; }
+  .travel-hero p.lead { font-family: var(--font-serif); font-style: italic; color: var(--sr-gray-text); font-size: 16px; max-width: 720px; margin: 0; }
+
+  /* Visual "do these three things in order before you fly" panel.
+     This is the primary entry point for the page; everything else
+     below is reference material. */
+  .steps-grid { display: grid; grid-template-columns: 1fr; gap: 16px; margin: 24px 0 32px; }
+  @media (min-width: 720px) { .steps-grid { grid-template-columns: 1fr 1fr 1fr; gap: 18px; } }
+  .step-card { position: relative; background: var(--white); border: 1px solid var(--sr-gray-light); border-radius: 6px; padding: 22px 22px 20px; display: flex; flex-direction: column; min-height: 280px; transition: border-color 0.15s, transform 0.15s, box-shadow 0.2s; text-decoration: none; color: inherit; overflow: hidden; }
+  .step-card::before { content: ""; position: absolute; top: 0; left: 0; right: 0; height: 4px; background: var(--sr-blue); }
+  .step-card.s1::before { background: #1f6fb2; }
+  .step-card.s2::before { background: #cc0000; }
+  .step-card.s3::before { background: #1b7a3f; }
+  .step-card:hover { border-color: var(--sr-blue); transform: translateY(-2px); box-shadow: 0 6px 20px rgba(13, 36, 64, 0.08); }
+  .step-card .step-meta { display: flex; align-items: center; gap: 10px; margin-bottom: 12px; }
+  .step-card .step-num { display: inline-flex; align-items: center; justify-content: center; width: 36px; height: 36px; border-radius: 50%; background: var(--sr-blue-dark); color: #fff; font-family: var(--font-sans); font-weight: 700; font-size: 16px; line-height: 1; }
+  .step-card.s2 .step-num { background: #cc0000; }
+  .step-card.s3 .step-num { background: #1b7a3f; }
+  .step-card .step-tag { font-size: 11px; text-transform: uppercase; letter-spacing: 1.2px; color: var(--sr-gray-text); font-weight: 700; }
+  .step-card .step-icon { width: 44px; height: 44px; margin-bottom: 14px; color: var(--sr-blue-dark); }
+  .step-card.s2 .step-icon { color: #cc0000; }
+  .step-card.s3 .step-icon { color: #1b7a3f; }
+  .step-card h2 { font-family: var(--font-serif); font-size: 20px; color: var(--sr-blue-dark); margin: 0 0 8px; line-height: 1.25; }
+  .step-card p { font-size: 14px; color: var(--sr-gray-text); margin: 0 0 16px; line-height: 1.55; flex-grow: 1; }
+  .step-card .step-cta { display: inline-flex; align-items: center; gap: 6px; font-size: 13.5px; font-weight: 700; color: var(--sr-blue); align-self: flex-start; }
+  .step-card .step-cta::after { content: "→"; transition: transform 0.15s; }
+  .step-card:hover .step-cta::after { transform: translateX(3px); }
+  .step-card.s2 .step-cta { color: #cc0000; }
+  .step-card.s3 .step-cta { color: #1b7a3f; }
 
   .advisory { padding: 14px 18px; border-radius: 4px; margin: 16px 0 28px; }
   .advisory.l4 { background: #fdecea; border-left: 4px solid var(--sr-red); }
@@ -106,34 +133,93 @@
 
   <header class="travel-hero">
     <div class="kicker">Travel hub · Updated {{ updated_label }}</div>
-    <h1>Travel to Venezuela: Caracas Operational Briefing</h1>
+    <h1>Travel to Venezuela</h1>
     <p class="lead">
-      Embassies, hotels, restaurants, hospitals, transport, security firms,
-      money, comms, and the pre-trip and on-the-ground checklists for
-      foreign business travellers, journalists and NGO staff visiting Caracas.
+      Caracas operational briefing for business travellers, journalists
+      and NGO staff. Start with the three steps below, then use the
+      reference sections for hotels, transport, medical and security.
     </p>
   </header>
 
   {% if advisory %}
   <div class="advisory l{{ advisory.level }}">
     <div><span class="lvl">US State Department: Level {{ advisory.level }} — {{ advisory.label }}</span> (issued {{ advisory.issued }})</div>
-    <div style="font-size: 14px; margin-top: 8px;">{{ advisory.summary }}</div>
-    <div style="font-size: 13px; margin-top: 8px;">
+    <div style="font-size: 13px; margin-top: 6px;">
       <a href="{{ advisory.primary_url }}" rel="nofollow noopener" target="_blank" style="color: inherit;">Read the full advisory &rarr;</a>
     </div>
   </div>
   {% endif %}
 
+  {# ============ Visual "do this in order" three-step entry point ============ #}
+  <div class="steps-grid" aria-label="Three steps to take before you fly">
+
+    <a class="step-card s1" href="/tools/venezuela-visa-requirements" target="_blank" rel="noopener">
+      <div class="step-meta">
+        <span class="step-num">1</span>
+        <span class="step-tag">Do this first</span>
+      </div>
+      <svg class="step-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+        <rect x="5" y="3" width="14" height="18" rx="1.5"/>
+        <circle cx="12" cy="11" r="3"/>
+        <path d="M9 16h6M10 19h4"/>
+      </svg>
+      <h2>Check if you need a visa</h2>
+      <p>Pick your passport country to confirm whether you need a visa and how to apply. US citizens use the official Cancillería Digital e-visa portal &mdash; not a US-based consulate.</p>
+      <span class="step-cta">Open the visa checker</span>
+    </a>
+
+    <a class="step-card s2" href="/travel#register" target="_blank" rel="noopener">
+      <div class="step-meta">
+        <span class="step-num">2</span>
+        <span class="step-tag">Free · 5 minutes</span>
+      </div>
+      <svg class="step-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+        <path d="M3 11l18-7-3 16-6-5-9 4z"/>
+        <path d="M12 15l-3 4"/>
+      </svg>
+      <h2>Enrol in STEP or your country's equivalent</h2>
+      <p>Free traveller-registration with your foreign ministry. Lets your government locate you in a crisis and pushes real-time security alerts to your phone throughout the trip.</p>
+      <span class="step-cta">Pick your country's program</span>
+    </a>
+
+    <a class="step-card s3" href="/travel/emergency-card" target="_blank" rel="noopener">
+      <div class="step-meta">
+        <span class="step-num">3</span>
+        <span class="step-tag">Print one A4 page</span>
+      </div>
+      <svg class="step-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+        <path d="M7 3h7l4 4v14a1 1 0 0 1-1 1H7a1 1 0 0 1-1-1V4a1 1 0 0 1 1-1z"/>
+        <path d="M14 3v5h5"/>
+        <path d="M9 13l2 2 4-4"/>
+      </svg>
+      <h2>Print the Caracas Emergency Card</h2>
+      <p>Bilingual one-page card to fold into your passport &mdash; hospital and embassy addresses a taxi driver can read, plus your blood type and home contact. Saved locally; reprint anytime.</p>
+      <span class="step-cta">Personalize &amp; print</span>
+    </a>
+
+  </div>
+
+  <div class="pillbar" aria-label="Jump to a reference section">
+    <a href="#embassies">Embassies</a>
+    <a href="#hotels">Hotels</a>
+    <a href="#transport">Airport transfer</a>
+    <a href="#medical">Hospitals</a>
+    <a href="#security">Corporate security</a>
+    <a href="#money">Money &amp; banking</a>
+    <a href="#emergency">Emergency numbers</a>
+    <a href="/tools/caracas-safety-by-neighborhood">Caracas safety map &rarr;</a>
+    <a href="/tools/bolivar-usd-exchange-rate">Live FX rate &rarr;</a>
+  </div>
+
+  {# Step 2 detail block — anchored from the hero card #}
   <div id="register" class="register-callout">
-    <div class="kicker">Do this first · Free · Takes about 5 minutes</div>
-    <h2>Register your trip with your embassy before you fly</h2>
+    <div class="kicker">Step 2 detail · Pick your country</div>
+    <h2>Traveller-registration programs</h2>
     <p>
-      Most foreign ministries operate a free traveller-registration service.
-      Enrol once and (a) your government can locate and contact you in a
-      crisis (mass evacuation, family emergency, civil unrest), and
-      (b) you receive real-time security alerts on your phone or email
-      throughout the trip. This is the single most important pre-departure
-      action after booking your flight, and the one most travellers skip.
+      Pick the program for your nationality and enrol before you fly.
+      Other countries: ask your foreign ministry's consular section
+      whether they operate a registration system &mdash; most G20 countries
+      do, and enrolment is always free.
     </p>
     <div class="register-grid section-collapsed" data-limit="3" id="reg-grid">
       {% for r in registration_programs %}
@@ -151,66 +237,6 @@
       </button>
     </div>
     {% endif %}
-    <p class="fine">
-      Other nationalities: ask your foreign ministry's consular section
-      whether they operate a traveller-registration system &mdash; most
-      G20 countries do, and enrolment is always free.
-    </p>
-  </div>
-
-  <div id="emergency-card" class="register-callout" style="border-left-color: var(--sr-red); background: #fdf3f2; border-color: #f1c5c0;">
-    <div class="kicker">Do this second &middot; Free &middot; Print one A4 page</div>
-    <h2>Print the Caracas Emergency Card to fold into your passport</h2>
-    <p>
-      A bilingual one-page card designed for the moment your phone is dead
-      or stolen and you have no internet. The Spanish side has hospital and
-      embassy addresses a taxi driver can read, big phone numbers a stranger
-      can dial, and your blood type, allergies and home contact in clear
-      type. Pick your embassy in the dropdown and the card auto-personalizes
-      to show only that one. A second throwaway sheet prints with a
-      pre-departure checklist (photocopy passport, hide emergency cash, set
-      up Zelle, register with your embassy &hellip;).
-    </p>
-    <div class="register-grid" style="grid-template-columns: 1fr;">
-      <a href="/travel/emergency-card" style="border-color: var(--sr-red);">
-        <span class="country" style="color: var(--sr-red);">Open the card</span>
-        <span class="program">Personalize &amp; print the Caracas Emergency Card &rarr;</span>
-        <span class="blurb">Type your details in the browser &mdash; they&rsquo;re saved locally so you can re-print without re-typing. Designed to print as one A4 sheet plus an optional throwaway prep page.</span>
-      </a>
-    </div>
-  </div>
-
-  <div class="toc">
-    <h3>On this page</h3>
-    <p style="margin: 0 0 6px; font-size: 14px;">
-      <a href="#register" style="color: var(--sr-red); font-weight: 700;">&#9755; Register your trip with your embassy</a>
-      <span style="color: var(--sr-gray-text);"> &mdash; do this first</span>
-    </p>
-    <p style="margin: 0 0 8px; font-size: 14px;">
-      <a href="#emergency-card" style="color: var(--sr-red); font-weight: 700;">&#9755; Print the Caracas Emergency Card</a>
-      <span style="color: var(--sr-gray-text);"> &mdash; do this second</span>
-    </p>
-    <ol>
-      <li><a href="#embassies">Embassies &amp; consulates</a></li>
-      <li><a href="#hotels">Where to stay</a></li>
-      <li><a href="#restaurants">Where to eat</a></li>
-      <li><a href="#medical">Hospitals &amp; medical</a></li>
-      <li><a href="#transport">Ground transport &amp; drivers</a></li>
-      <li><a href="#security">Corporate security advisory</a></li>
-      <li><a href="#comms">Communications &amp; SIM cards</a></li>
-      <li><a href="#money">Money &amp; banking</a></li>
-      <li><a href="#pretrip">Pre-departure checklist</a></li>
-      <li><a href="#safety">Personal safety checklist</a></li>
-      <li><a href="#emergency">Emergency numbers</a></li>
-    </ol>
-  </div>
-
-  <div class="pillbar">
-    <a href="/travel/emergency-card">Printable emergency card &rarr;</a>
-    <a href="/tools/venezuela-visa-requirements">Visa &amp; entry tool &rarr;</a>
-    <a href="/tools/caracas-safety-by-neighborhood">Caracas safety map &rarr;</a>
-    <a href="/tools/bolivar-usd-exchange-rate">Live BCV &amp; parallel rate &rarr;</a>
-    <a href="/sanctions-tracker">OFAC sanctions tracker &rarr;</a>
   </div>
 
   {# ======================================================================= #}

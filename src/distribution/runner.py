@@ -48,6 +48,12 @@ _REPING_COOLDOWN = timedelta(hours=23)
 # Static URLs that change every cron run (the report regenerates) and
 # are worth pinging to encourage Google to re-crawl. We deliberately
 # keep this list short to stay well inside the 200/day quota.
+#
+# When adding a page here, the bar is: live GSC impressions > ~50/28d
+# AND avg position 5–15 (page-1 quick-win zone). Faster recrawl on
+# these pages compounds title/meta rewrites — Google sees the new
+# snippet within hours instead of days. Apr 2026 additions: the
+# explainer, briefing hub, and travel guide — all on the page-1 edge.
 _STATIC_URLS_TO_PING_DAILY = (
     "/",
     "/sanctions-tracker",
@@ -58,6 +64,10 @@ _STATIC_URLS_TO_PING_DAILY = (
     "/sanctions/aircraft",
     "/companies",
     "/tools/public-company-venezuela-exposure-check",
+    "/briefing",
+    "/explainers",
+    "/explainers/what-are-ofac-sanctions-on-venezuela",
+    "/travel",
 )
 
 
@@ -633,9 +643,14 @@ def run_osf() -> dict:
 
 
 def run_all() -> dict:
-    """Run every enabled distribution channel. Returns per-channel summary."""
+    """Run every enabled distribution channel. Returns per-channel summary.
+
+    Note: :func:`run_google_indexing` is *not* included here; it is invoked
+    from ``run_daily`` Phase 3a immediately after the report is written so
+    Google gets URL notifications before the newsletter. Double-pinging the
+    same run would be wasteful and could hit the 200-URL/day quota cap.
+    """
     return {
-        CHANNEL_GOOGLE_INDEXING: run_google_indexing(),
         CHANNEL_INDEXNOW: run_indexnow(),
         CHANNEL_BLUESKY: run_bluesky(),
         CHANNEL_INTERNET_ARCHIVE: run_internet_archive(),

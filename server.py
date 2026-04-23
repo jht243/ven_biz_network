@@ -1491,30 +1491,21 @@ def sanctions_tracker():
             base = _base_url()
             canonical = f"{base}/sanctions-tracker"
             today_human = _date.today().strftime("%B %Y")
-            # Title trimmed April 2026 (round 2) after GSC showed 183
-            # impressions / 2 clicks (1.1% CTR) at avg position 6.8.
-            # Round-1 title (96 chars: "OFAC SDN List — Venezuela
-            # Sanctions: N Current Military, Economic & Diplomatic
-            # Designations") truncated badly in SERPs, killing the
-            # month-year freshness signal at the end. Round-2 keeps
-            # the high-value tokens ("OFAC", "Venezuela SDN List",
-            # count, "US Sanctions", current month-year) inside the
-            # ~60-char SERP display window. Sector words ("military,
-            # economic, diplomatic") move to the description, where
-            # Google still matches them but they don't burn title
-            # budget. "US Sanctions" carries the US-authority signal
-            # that GSC shows we're missing — 356 US impressions / 0
-            # US clicks over 3 months suggests US compliance officers
-            # don't recognise us as a US-Treasury-grade source.
+            # Round 3 (Apr 2026): 28d GSC — strong impressions at pos ~6–7
+            # but sub-2% CTR. "SDN" + "OFAC" + live count in the first 45
+            # characters; "searchable" + program scope in the description
+            # for "ofac sdn venezuela" and compliance long-tail.
             seo = {
                 "title": (
-                    f"OFAC Venezuela SDN List — {stats['total']} Active "
-                    f"US Sanctions ({today_human})"
+                    f"OFAC SDN: {stats['total']} Venezuela Sanctions on US List "
+                    f"({today_human})"
                 ),
                 "description": (
-                    f"Official US Treasury OFAC SDN list for Venezuela — "
-                    f"{stats['total']} active sanctions across military, "
-                    "economic, and diplomatic programs. Refreshed twice daily."
+                    f"Search the full US Treasury OFAC SDN for Venezuela: "
+                    f"{stats['total']} active designations (individuals, "
+                    f"companies, vessels, aircraft). "
+                    f"Table updates twice daily; programs include "
+                    f"VENEZUELA, EO 13692, EO 13850, EO 13884."
                 ),
                 "keywords": (
                     "OFAC SDN list Venezuela, OFAC Venezuela sanctions, "
@@ -3469,13 +3460,14 @@ def travel_page():
 
         base = _base_url()
         canonical = f"{base}/travel"
-        title = "Travel to Venezuela: Caracas Operational Briefing for Business Travellers"
+        # Round 3 (Apr 2026): 28d GSC — "travel" intent + Level-3 in title for
+        # the dominant "travel to Venezuela" / "Caracas safety" queries; desc
+        # keeps OFAC/embassy/printable card signals without repeating the title.
+        title = "Venezuela Travel 2026: US Level-3, Caracas Safety, Visa & Hotels"
         description = (
-            "Embassies, hotels, restaurants, hospitals, ground transport, "
-            "corporate security firms, SIM cards, money, pre-trip and safety "
-            "checklists for foreign business travellers, journalists and NGO "
-            "staff visiting Caracas. Compiled from US State Department, OSAC, "
-            "MPPRE and embassy sources."
+            "Venezuela business travel: State Dept Reconsider (Level-3) advisory, "
+            "Caracas security zones, vetted hotels, airport transfers, embassies, "
+            "cell/SIM, OFAC context — includes printable emergency card (2026)."
         )
         seo = {
             "title": title,
