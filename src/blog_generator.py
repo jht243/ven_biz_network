@@ -126,6 +126,11 @@ def _candidate_external(db) -> list[ExternalArticleEntry]:
         db.query(ExternalArticleEntry)
         .filter(ExternalArticleEntry.status == GazetteStatus.ANALYZED)
         .filter(ExternalArticleEntry.published_date >= cutoff)
+        # Defend against the April 2026 cross-project Postgres contamination
+        # (see src/models.py::SourceType.OPENALEX). A sister project's rows
+        # must never graduate into our briefings pipeline even if they
+        # somehow reach status=ANALYZED.
+        .filter(ExternalArticleEntry.source != SourceType.OPENALEX)
         .order_by(ExternalArticleEntry.published_date.desc())
         .all()
     )

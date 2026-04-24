@@ -70,23 +70,3 @@ services:
         sync: false
       - key: LOG_LEVEL
         value: INFO
-
-  - type: cron
-    name: vij-weekly-climate
-    runtime: python
-    # Mondays 14:00 UTC = 09:00 Medellín (America/Bogota, UTC-5).
-    # Recomputes the Investment Climate Tracker scorecard for the
-    # current quarter and upserts the climate_snapshots row. Idempotent
-    # by quarter_label, so re-running on the same day is a no-op of work
-    # but updates computed_at and any signals that have moved.
-    schedule: "0 14 * * 1"
-    plan: starter
-    buildCommand: "pip install -r requirements.txt"
-    startCommand: "python -c 'from src.climate import run_weekly_climate_refresh; run_weekly_climate_refresh()'"
-    envVars:
-      - key: PYTHON_VERSION
-        value: 3.11.9
-      - key: DATABASE_URL
-        sync: false
-      - key: LOG_LEVEL
-        value: INFO

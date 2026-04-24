@@ -109,6 +109,10 @@ def generate_report(output_path: Path | None = None) -> Path:
             db.query(ExternalArticleEntry)
             .filter(ExternalArticleEntry.status == GazetteStatus.ANALYZED)
             .filter(ExternalArticleEntry.published_date >= cutoff)
+            # Defend against the April 2026 cross-project Postgres
+            # contamination (see src/models.py::SourceType.OPENALEX).
+            # Sister-project rows must never render on the homepage.
+            .filter(ExternalArticleEntry.source != SourceType.OPENALEX)
             .order_by(ExternalArticleEntry.published_date.desc())
             .all()
         )

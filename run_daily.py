@@ -97,26 +97,6 @@ def main(skip_scrape: bool, skip_email: bool, dry_run: bool, report_only: bool):
     else:
         console.print("\n[dim]Phase 2b: Blog generation — SKIPPED (report-only)[/dim]")
 
-    # Phase 2c: Weekly climate refresh (Mondays only as a safety net;
-    # the dedicated weekly cron service is the primary trigger). This is
-    # cheap and idempotent — if it has already run today the upsert just
-    # rewrites the same numbers. Always non-fatal.
-    if not report_only:
-        from datetime import date as _date
-        if _date.today().weekday() == 0:
-            console.print("\n[bold cyan]Phase 2c:[/bold cyan] Refreshing investment climate scorecard (Monday)...")
-            try:
-                from src.climate import run_weekly_climate_refresh
-                climate_result = run_weekly_climate_refresh()
-                results["climate"] = climate_result
-                console.print(f"  [green]\u2713[/green] Climate scorecard refreshed: {climate_result['quarter']} composite={climate_result['composite_score']}")
-            except Exception as e:
-                logger.error("Climate refresh failed: %s", e, exc_info=True)
-                results["climate"] = {"error": str(e)}
-                console.print(f"  [yellow]![/yellow] Climate refresh failed (non-fatal): {e}")
-        else:
-            console.print("\n[dim]Phase 2c: Climate refresh — SKIPPED (runs on Mondays via daily safety net + dedicated weekly cron)[/dim]")
-
     # Phase 3: Generate Report
     console.print("\n[bold cyan]Phase 3:[/bold cyan] Generating report...")
     try:
