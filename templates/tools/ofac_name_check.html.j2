@@ -1,0 +1,251 @@
+{#
+  OFAC SDN name-check answer page.
+
+  One indexable URL per compliance query we want to own — see
+  src/data/ofac_name_check.py for the design rationale.
+
+  SEO contract:
+    • <title> and H1 both contain the literal surname-first query
+      (`RODRIGUEZ HERNANDEZ, JUAN` form) so Google can match on the
+      exact tokenized search string from GSC.
+    • Meta description is the first-line direct answer.
+    • JSON-LD carries FAQPage + BreadcrumbList + one ClaimReview-style
+      Question on the core yes/no so rich snippets can pull through.
+    • Internal links go out to existing /sanctions/individuals/<slug>
+      and /sanctions-tracker — that's the crawl-budget value this page
+      returns to the rest of the site.
+#}
+{% extends "_base.html.j2" %}
+
+{% block head_extra %}
+<style>
+  .nc-hero { background: linear-gradient(180deg, #fafbff, #f4f6fb); border: 1px solid var(--sr-gray-light); border-left: 4px solid #2e7d32; padding: 22px 24px; border-radius: 3px; margin: 18px 0 28px; }
+  .nc-hero.hit { border-left-color: var(--sr-red); }
+  .nc-hero .nc-eyebrow { font-size: 11px; text-transform: uppercase; letter-spacing: 1.6px; color: #2e7d32; font-weight: 700; margin-bottom: 8px; }
+  .nc-hero.hit .nc-eyebrow { color: var(--sr-red); }
+  .nc-hero h2 { font-family: var(--font-serif); font-size: 22px; color: var(--sr-blue-dark); line-height: 1.3; margin-bottom: 10px; }
+  .nc-hero p { font-size: 16px; color: var(--sr-dark-text); margin: 0; }
+  .nc-hero .verified { margin-top: 12px; font-size: 13px; color: var(--sr-gray-text); }
+
+  .nc-crossref { background: #fff8e7; border-left: 4px solid #f5b041; padding: 18px 22px; border-radius: 3px; margin: 22px 0; }
+  .nc-crossref h3 { font-family: var(--font-serif); font-size: 18px; color: #7c4a03; margin-bottom: 8px; }
+  .nc-crossref .xref-card { background: var(--white); border: 1px solid #f5b041; border-radius: 3px; padding: 14px 16px; margin-top: 12px; }
+  .nc-crossref .xref-card h4 { font-family: var(--font-serif); font-size: 16px; color: var(--sr-blue-dark); margin-bottom: 6px; }
+  .nc-crossref .xref-card .xref-meta { font-size: 13px; color: var(--sr-gray-text); margin-bottom: 8px; }
+  .nc-crossref .xref-card .xref-meta strong { color: var(--sr-dark-text); }
+  .nc-crossref .xref-card .xref-body { font-size: 14px; color: var(--sr-dark-text); margin-bottom: 10px; }
+  .nc-crossref .xref-card .xref-links { font-size: 13px; }
+  .nc-crossref .xref-card .xref-links a { margin-right: 14px; font-weight: 600; }
+
+  .nc-cluster { margin: 36px 0 24px; }
+  .nc-cluster h2 { font-family: var(--font-serif); font-size: 22px; color: var(--sr-blue-dark); margin-bottom: 6px; }
+  .nc-cluster .nc-cluster-intro { font-size: 15px; color: var(--sr-gray-text); margin-bottom: 16px; }
+  .nc-cluster-grid { display: grid; grid-template-columns: 1fr; gap: 10px; }
+  @media (min-width: 640px) { .nc-cluster-grid { grid-template-columns: 1fr 1fr; } }
+  .nc-cluster-row { display: flex; justify-content: space-between; align-items: baseline; gap: 12px; padding: 10px 14px; border: 1px solid var(--sr-gray-light); border-radius: 3px; background: var(--white); text-decoration: none; color: inherit; transition: border-color 0.15s, transform 0.15s; }
+  .nc-cluster-row:hover { border-color: var(--sr-blue); transform: translateY(-1px); text-decoration: none; }
+  .nc-cluster-row .nc-row-name { font-family: var(--font-serif); font-size: 15px; color: var(--sr-blue-dark); font-weight: 700; }
+  .nc-cluster-row .nc-row-meta { font-size: 12px; color: var(--sr-gray-text); text-transform: uppercase; letter-spacing: 0.4px; text-align: right; flex-shrink: 0; }
+
+  .nc-section-lead { font-family: var(--font-serif); font-style: italic; color: var(--sr-gray-text); margin-bottom: 12px; }
+  .nc-disambig { background: var(--sr-gray-bg); border-left: 3px solid var(--sr-blue); padding: 16px 20px; margin: 24px 0; font-size: 15px; line-height: 1.7; border-radius: 3px; }
+  .nc-checker-cta { background: var(--sr-blue); color: var(--white); padding: 20px 24px; border-radius: 3px; margin: 28px 0; display: flex; justify-content: space-between; align-items: center; gap: 16px; flex-wrap: wrap; }
+  .nc-checker-cta h3 { font-family: var(--font-serif); font-size: 18px; margin-bottom: 4px; }
+  .nc-checker-cta p { font-size: 14px; opacity: 0.88; margin: 0; }
+  .nc-checker-cta a.btn { background: var(--white); color: var(--sr-blue-dark); padding: 10px 20px; border-radius: 3px; text-decoration: none; font-weight: 700; font-size: 14px; text-transform: uppercase; letter-spacing: 0.5px; white-space: nowrap; }
+
+  .nc-related { margin: 28px 0 16px; font-size: 14px; color: var(--sr-gray-text); }
+  .nc-related strong { color: var(--sr-dark-text); }
+  .nc-related a { margin: 0 4px; }
+
+  .nc-faq { margin: 32px 0 16px; padding-top: 20px; border-top: 1px solid var(--sr-gray-light); }
+  .nc-faq h2 { font-family: var(--font-serif); font-size: 22px; color: var(--sr-blue-dark); margin-bottom: 14px; }
+  .nc-faq details { padding: 12px 0; border-bottom: 1px solid var(--sr-gray-light); }
+  .nc-faq details summary { font-family: var(--font-serif); font-weight: 700; font-size: 16px; color: var(--sr-blue-dark); cursor: pointer; list-style: none; }
+  .nc-faq details summary::-webkit-details-marker { display: none; }
+  .nc-faq details summary::before { content: "＋"; display: inline-block; margin-right: 8px; color: var(--sr-red); font-weight: 700; }
+  .nc-faq details[open] summary::before { content: "−"; }
+  .nc-faq details .nc-answer { margin-top: 10px; font-size: 15px; color: var(--sr-dark-text); line-height: 1.65; }
+  .nc-faq details .nc-answer p { margin: 0 0 8px; }
+
+  .nc-sources { margin: 28px 0 8px; font-size: 13px; color: var(--sr-gray-text); line-height: 1.6; }
+  .nc-sources strong { color: var(--sr-dark-text); }
+</style>
+{% endblock %}
+
+{% block content %}
+<section class="container">
+
+  <nav class="breadcrumbs" aria-label="Breadcrumb">
+    <a href="/">Home</a><span>/</span>
+    <a href="/tools">Tools</a><span>/</span>
+    <a href="/tools/ofac-venezuela-sanctions-checker">OFAC Sanctions Checker</a><span>/</span>
+    <span>{{ answer.query_verbatim }}</span>
+  </nav>
+
+  <header style="margin: 14px 0 12px;">
+    <div style="font-size:12px; text-transform:uppercase; letter-spacing:1.4px; color:{{ '#cc0000' if answer.on_venezuela_sdn else '#2e7d32' }}; font-weight:700;">
+      Compliance name-check · Verified {{ answer.last_verified_iso }}
+    </div>
+    <h1 style="font-family:var(--font-serif); font-size:32px; color:var(--sr-blue-dark); margin:8px 0 8px; line-height:1.25;">
+      Is "{{ answer.query_verbatim }}" on the OFAC SDN list?
+    </h1>
+    <p class="nc-section-lead">
+      A direct compliance answer for the query <code>{{ answer.query_verbatim }}</code>,
+      cross-referenced against every Venezuela-program designation we track
+      plus the full OFAC SDN list.
+    </p>
+  </header>
+
+  <div class="nc-hero {% if answer.on_venezuela_sdn %}hit{% endif %}">
+    <div class="nc-eyebrow">
+      {% if answer.on_venezuela_sdn %}Match on Venezuela SDN list{% else %}No match · Venezuela SDN list{% endif %}
+    </div>
+    <h2>{{ answer.answer_headline }}</h2>
+    <p>{{ answer.answer_summary }}</p>
+    <div class="verified">
+      Checked against the OFAC SDN CSV + alias CSV as published by OFAC Sanctions List Service,
+      dataset snapshot {{ answer.last_verified_iso }}.
+    </div>
+  </div>
+
+  {# ────────────────────────────────────────────────────────────
+     Cross-references: exact-name matches that exist on OFAC SDN
+     but NOT on the Venezuela programs. We surface these in an
+     amber callout so a compliance officer who landed here while
+     actually hunting a non-Venezuela SDN can recover in one click.
+     ──────────────────────────────────────────────────────────── #}
+  {% if answer.external_sdn_matches %}
+  <div class="nc-crossref">
+    <h3>
+      {% if answer.external_sdn_matches|length == 1 %}
+      One exact-surname match exists on the full OFAC SDN list (non-Venezuela)
+      {% else %}
+      {{ answer.external_sdn_matches|length }} exact-surname matches exist on the full OFAC SDN list (non-Venezuela)
+      {% endif %}
+    </h3>
+    <p style="font-size:14px; color:#7c4a03;">
+      If your screening target matches any of the entries below you should verify
+      directly with OFAC's Sanctions List Search. These designations fall under
+      non-Venezuela programs that we do not track in our Venezuela-specific
+      sanctions index.
+    </p>
+    {% for m in answer.external_sdn_matches %}
+    <div class="xref-card">
+      <h4>{{ m.name }}</h4>
+      <div class="xref-meta">
+        <strong>Program:</strong> {{ m.program_label }} ·
+        <strong>Nationality:</strong> {{ m.nationality }} ·
+        <strong>DOB:</strong> {{ m.dob }} ·
+        <strong>Place of birth:</strong> {{ m.place_of_birth }}
+      </div>
+      <div class="xref-body">{{ m.remarks_extract }}</div>
+      <div class="xref-links">
+        <a href="{{ m.ofac_source_url }}" rel="nofollow noopener" target="_blank">
+          Official OFAC record →
+        </a>
+        {% if m.press_release_url %}
+        <a href="{{ m.press_release_url }}" rel="nofollow noopener" target="_blank">
+          Treasury press release →
+        </a>
+        {% endif %}
+      </div>
+    </div>
+    {% endfor %}
+  </div>
+  {% endif %}
+
+  {# ────────────────────────────────────────────────────────────
+     Disambiguation — the "why this name is ambiguous" paragraph.
+     Gives Google + the reader enough semantic context to
+     distinguish the query from its neighbors.
+     ──────────────────────────────────────────────────────────── #}
+  <div class="nc-disambig">
+    <strong>How to read this search:</strong>
+    {{ answer.disambiguation_note }}
+  </div>
+
+  {# ────────────────────────────────────────────────────────────
+     Venezuela cluster — the crawl-budget payoff. Every row links
+     into an existing /sanctions/individuals/<slug> profile.
+     ──────────────────────────────────────────────────────────── #}
+  {% if cluster_by_surname %}
+  <div class="nc-cluster">
+    <h2>Venezuela SDN designations with the surnames "{{ answer.surnames|join('" or "') }}"</h2>
+    <p class="nc-cluster-intro">
+      Active Venezuela-program SDNs that share a surname with
+      <strong>{{ answer.natural_name }}</strong>. These are the
+      Venezuela-specific designations we track in depth. Click any name
+      for the full profile, remarks, and linked-entity network.
+    </p>
+    {% for surname, members in cluster_by_surname %}
+      <h3 style="font-family:var(--font-serif); font-size:17px; color:var(--sr-blue-dark); margin:16px 0 8px;">
+        Surname "{{ surname }}" — {{ members|length }} Venezuela SDN{{ '' if members|length == 1 else 's' }}
+      </h3>
+      <div class="nc-cluster-grid">
+        {% for p in members %}
+        <a class="nc-cluster-row" href="{{ p.url_path }}">
+          <span class="nc-row-name">{{ p.display_name }}</span>
+          <span class="nc-row-meta">{{ p.sector_label }}</span>
+        </a>
+        {% endfor %}
+      </div>
+    {% endfor %}
+  </div>
+  {% endif %}
+
+  {# ────────────────────────────────────────────────────────────
+     CTA back to the live checker for alternative spellings.
+     ──────────────────────────────────────────────────────────── #}
+  <div class="nc-checker-cta">
+    <div>
+      <h3>Checking a different spelling, cédula, or company?</h3>
+      <p>Search every active Venezuela-program SDN by name, alias, IMO, aircraft tail, or cédula.</p>
+    </div>
+    <a class="btn" href="/tools/ofac-venezuela-sanctions-checker">Open the checker</a>
+  </div>
+
+  {% if answer.related_queries %}
+  <div class="nc-related">
+    <strong>Related compliance searches:</strong>
+    {% for q in answer.related_queries %}
+    <a href="/tools/ofac-venezuela-sanctions-checker?q={{ q|urlencode }}">{{ q }}</a>{% if not loop.last %} ·{% endif %}
+    {% endfor %}
+  </div>
+  {% endif %}
+
+  {# ────────────────────────────────────────────────────────────
+     FAQ — mirrors the JSON-LD FAQPage emitted in <head> so
+     the rich snippet has content on the page to back it up.
+     ──────────────────────────────────────────────────────────── #}
+  <div class="nc-faq">
+    <h2>Frequently asked questions about this name check</h2>
+    {% for item in faq %}
+    <details {% if loop.first %}open{% endif %}>
+      <summary>{{ item.q }}</summary>
+      <div class="nc-answer"><p>{{ item.a }}</p></div>
+    </details>
+    {% endfor %}
+  </div>
+
+  <div class="nc-sources">
+    <strong>Sources (verified {{ answer.last_verified_iso }}):</strong>
+    OFAC Sanctions List Service — <a href="https://sanctionslistservice.ofac.treas.gov/api/publicationpreview/exports/sdn.csv" rel="nofollow noopener">SDN CSV</a>,
+    <a href="https://sanctionslistservice.ofac.treas.gov/api/publicationpreview/exports/alt.csv" rel="nofollow noopener">AKA CSV</a>.
+    OFAC Sanctions List Search at
+    <a href="https://sanctionssearch.ofac.treas.gov/" rel="nofollow noopener">sanctionssearch.ofac.treas.gov</a>.
+    For authoritative compliance decisions always confirm with the OFAC primary source.
+  </div>
+
+  {% from "_recent_briefings.html.j2" import recent_briefings_rail %}
+  {{ recent_briefings_rail(
+       recent_briefings,
+       heading="Latest Venezuela sanctions analysis",
+       intro="Recent investor briefings on OFAC Venezuela enforcement, license updates, and material designations.",
+  ) }}
+
+  {% from "_cluster_nav.html.j2" import cluster_nav %}
+  {{ cluster_nav(cluster_ctx) }}
+
+</section>
+{% endblock %}

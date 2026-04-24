@@ -1,6 +1,8 @@
 {% extends "_base.html.j2" %}
 {% from "_base.html.j2" import share_button %}
 {% from "_cluster_nav.html.j2" import cluster_nav %}
+{% from "_card_grid.html.j2" import card_grid_section %}
+{% from "_recent_briefings.html.j2" import recent_briefings_rail %}
 
 {% block content %}
 <article class="container">
@@ -81,41 +83,38 @@
      gives Google a rich, descriptive set of internal links from the
      investment cluster to the sanctions cluster — completing the
      reciprocal link that already runs the other way. #}
+  {#
+    OFAC-sanctioned actors bridge — when a sector page maps cleanly to
+    one or more OFAC programs we surface the current sanctioned actors
+    in that sector here. Two wins: readers get the "who's actually
+    sanctioned" context, and Google sees a rich, descriptive internal-
+    link set from the investment cluster into the sanctions cluster.
+    Rendered as the shared 3-card discovery grid.
+  #}
   {% if sector_sdn_actors %}
-  <section class="related" aria-label="Sanctioned actors in this sector" style="border-top:1px solid #e9ecef;">
-    <h3>OFAC-sanctioned actors in this sector</h3>
-    <p style="font-size:14px;color:#495057;">
-      The following individuals and entities are currently on the US Treasury
-      OFAC SDN list under programs we map to this sector. Each links to a full
-      profile with biographical data, linked entities, and source citations.
-    </p>
-    <ul>
-      {% for p in sector_sdn_actors %}
-      <li>
-        <a href="{{ p.url_path }}"><strong>{{ p.display_name }}</strong></a>
-        <small>— {{ p.category_singular }} · {{ p.program }}</small>
-      </li>
-      {% endfor %}
-    </ul>
-    <p style="margin-top:14px;font-size:14px;">
-      <a href="/sanctions-tracker"><strong>Browse all OFAC Venezuela-program designations →</strong></a>
-    </p>
-  </section>
+  {% set _sdn_cards = [] %}
+  {% for p in sector_sdn_actors %}
+    {% set _ = _sdn_cards.append({
+        'href': p.url_path,
+        'eyebrow': 'ACTIVE SDN',
+        'title': p.display_name,
+        'tagline': 'On the OFAC Venezuela-related SDN list — full profile with biographical data, linked entities, and source citations.',
+        'meta_rows': ['<strong>' ~ p.program ~ '</strong>', p.category_singular|title],
+        'cta': 'Open profile'
+      }) %}
+  {% endfor %}
+  {{ card_grid_section(
+       heading='OFAC-sanctioned actors in this sector',
+       meta=(sector_sdn_actors|length|string) ~ ' currently designated',
+       intro='Individuals and entities currently on the US Treasury OFAC SDN list under programs we map to this sector.',
+       cards=_sdn_cards,
+       aria_label='Sanctioned actors in this sector',
+       footer_link={'href': '/sanctions-tracker', 'label': 'Browse all OFAC Venezuela-program designations'}
+  ) }}
   {% endif %}
 
-  {% if recent_briefings %}
-  <section class="related" aria-label="Latest briefings">
-    <h3>Latest related briefings</h3>
-    <ul>
-      {% for r in recent_briefings %}
-      <li>
-        <a href="/briefing/{{ r.slug }}">{{ r.title }}</a>
-        <small>{{ r.published_date.strftime('%b %d, %Y') }}</small>
-      </li>
-      {% endfor %}
-    </ul>
-  </section>
-  {% endif %}
+  {# Latest related briefings — shared rail reuses the 3-card grid. #}
+  {{ recent_briefings_rail(recent_briefings, heading='Latest related briefings') }}
 
   {{ cluster_nav(cluster_ctx) }}
 

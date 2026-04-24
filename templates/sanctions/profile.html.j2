@@ -15,6 +15,7 @@
 #}
 {% extends "_base.html.j2" %}
 {% from "_cluster_nav.html.j2" import cluster_nav %}
+{% from "_card_grid.html.j2" import card_grid_section %}
 
 {% block content %}
 <div class="container">
@@ -184,22 +185,35 @@
       </ul>
       {% endif %}
 
+      {#
+        Surname-cluster block — identical UX pattern to the Saab Moran
+        card grid on /research/sdn/: "N dossiers sharing this surname"
+        header + a 3-up grid of profile cards. Shared with every other
+        discovery section on the site via _card_grid.html.j2.
+      #}
       {% if family %}
-      <h2>Other sanctioned individuals with the same surname</h2>
-      <p>
-        These individuals share the surname <em>{{ profile.raw_name.split(',')[0]|title }}</em>
-        and are also listed on OFAC's Venezuela-related SDN. The relationship is
-        inferred from naming convention only — not from any explicit OFAC family
-        designation — but the cluster is a useful diligence signal.
-      </p>
-      <ul class="related">
-        {% for f in family %}
-        <li>
-          <a href="{{ f.url_path }}">{{ f.display_name }}</a>
-          <small>— {{ f.program }}{% if f.parsed.dob %} · DOB {{ f.parsed.dob }}{% endif %}</small>
-        </li>
-        {% endfor %}
-      </ul>
+      {% set _family_cards = [] %}
+      {% for f in family %}
+        {% set _meta_rows = ['<strong>' ~ f.program ~ '</strong>'] %}
+        {% if f.parsed.dob %}{% set _ = _meta_rows.append('DOB ' ~ f.parsed.dob) %}{% endif %}
+        {% if f.parsed.nationality %}{% set _ = _meta_rows.append(f.parsed.nationality) %}{% endif %}
+        {% set _ = _family_cards.append({
+            'href': f.url_path,
+            'eyebrow': 'ACTIVE SDN',
+            'title': f.display_name,
+            'raw': f.raw_name if f.raw_name else None,
+            'tagline': 'Listed on the OFAC Venezuela-related SDN. Shares the surname ' ~ profile.raw_name.split(',')[0]|title ~ '; family relationship is inferred from naming convention.',
+            'meta_rows': _meta_rows,
+            'cta': 'Open profile'
+          }) %}
+      {% endfor %}
+      {{ card_grid_section(
+           heading=profile.raw_name.split(',')[0]|title ~ ' cluster',
+           meta=(family|length|string) ~ ' other SDN entr' ~ ('y' if family|length == 1 else 'ies') ~ ' sharing this surname',
+           intro='These individuals share the surname ' ~ profile.raw_name.split(',')[0]|title ~ ' and are also listed on OFAC\'s Venezuela-related SDN. The relationship is inferred from naming convention only — not from any explicit OFAC family designation — but the cluster is a useful diligence signal.',
+           cards=_family_cards,
+           aria_label='Surname cluster'
+      ) }}
       {% endif %}
 
       {% if related_news %}
@@ -265,17 +279,33 @@
     </div>
     {% endif %}
 
-    <div class="related">
-      <h3>Other {{ profile.bucket }} on the Venezuela SDN list</h3>
-      <ul>
-        {% for sib in siblings %}
-        <li><a href="{{ sib.url_path }}">{{ sib.display_name }}</a> <small>— {{ sib.program }}</small></li>
-        {% endfor %}
-      </ul>
-      <p style="margin-top:14px;font-size:14px;">
-        <a href="/sanctions/{{ profile.bucket }}"><strong>See all {{ stats[profile.bucket] }} {{ profile.bucket }} →</strong></a>
-      </p>
-    </div>
+    {#
+      "Other {bucket} on the Venezuela SDN list" — bucket-level siblings
+      surfaced as a short discovery grid so readers can browse to an
+      adjacent profile (another individual, another entity, another
+      vessel) in the same crawl path Googlebot follows. Uses the
+      shared card grid pattern.
+    #}
+    {% if siblings %}
+    {% set _sibling_cards = [] %}
+    {% for sib in siblings %}
+      {% set _ = _sibling_cards.append({
+          'href': sib.url_path,
+          'eyebrow': 'ACTIVE SDN',
+          'title': sib.display_name,
+          'tagline': 'Listed on the OFAC Venezuela-related SDN under ' ~ sib.program ~ '.',
+          'meta_rows': ['<strong>' ~ sib.program ~ '</strong>'],
+          'cta': 'Open profile'
+        }) %}
+    {% endfor %}
+    {{ card_grid_section(
+         heading='Other ' ~ profile.bucket ~ ' on the Venezuela SDN list',
+         meta=stats[profile.bucket]|string ~ ' total',
+         cards=_sibling_cards,
+         aria_label='Other ' ~ profile.bucket ~ ' on the Venezuela SDN list',
+         footer_link={'href': '/sanctions/' ~ profile.bucket, 'label': 'See all ' ~ stats[profile.bucket]|string ~ ' ' ~ profile.bucket}
+    ) }}
+    {% endif %}
   </article>
 
   {{ cluster_nav(cluster_ctx) }}

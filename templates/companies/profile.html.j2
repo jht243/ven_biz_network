@@ -20,6 +20,7 @@
 #}
 {% extends "_base.html.j2" %}
 {% from "_cluster_nav.html.j2" import cluster_nav %}
+{% from "_card_grid.html.j2" import card_grid_section %}
 
 {% block head_extra %}
 <style>
@@ -330,21 +331,42 @@
       </ul>
     </div>
 
+    {#
+      Sibling sector cohort — every S&P 500 company in the same sector
+      as this one, surfaced as a 3-card discovery grid so readers (and
+      Googlebot) can pivot to an adjacent company's exposure page with
+      one click. Shared card pattern used across the site.
+    #}
     {% if siblings %}
-    <div class="related">
-      <h3>Other {{ report.company.sector }} S&amp;P 500 companies in this register</h3>
-      <div class="related-cohort">
-        {% for s in siblings %}
-        <a href="{{ s.url_path }}">
-          {{ s.short_name }}
-          <small>{{ s.ticker }}{% if s.curated_level %} · {{ s.curated_level }} exposure{% elif s.sdn_match_count %} · {{ s.sdn_match_count }} SDN match{{ 'es' if s.sdn_match_count != 1 else '' }}{% else %} · no exposure on record{% endif %}</small>
-        </a>
-        {% endfor %}
-      </div>
-      <p style="margin-top:14px;font-size:14px;">
-        <a href="/companies"><strong>Browse the full S&amp;P 500 Venezuela exposure register →</strong></a>
-      </p>
-    </div>
+    {% set _company_cards = [] %}
+    {% for s in siblings %}
+      {% if s.curated_level %}
+        {% set _eyebrow = (s.curated_level|upper) ~ ' EXPOSURE' %}
+        {% set _tagline = 'Curated ' ~ s.curated_level|lower ~ ' Venezuela exposure on file. Review the full dossier for the underlying evidence.' %}
+      {% elif s.sdn_match_count %}
+        {% set _eyebrow = 'SDN MATCH' %}
+        {% set _tagline = s.sdn_match_count|string ~ ' OFAC SDN name match' ~ ('es' if s.sdn_match_count != 1 else '') ~ ' flagged for review — not yet graded as exposure.' %}
+      {% else %}
+        {% set _eyebrow = 'NO EXPOSURE ON RECORD' %}
+        {% set _tagline = 'No direct or indirect Venezuela exposure currently on file for this S&P 500 issuer.' %}
+      {% endif %}
+      {% set _meta_rows = ['<strong>' ~ s.ticker ~ '</strong>', report.company.sector] %}
+      {% set _ = _company_cards.append({
+          'href': s.url_path,
+          'eyebrow': _eyebrow,
+          'title': s.short_name,
+          'tagline': _tagline,
+          'meta_rows': _meta_rows,
+          'cta': 'Open dossier'
+        }) %}
+    {% endfor %}
+    {{ card_grid_section(
+         heading='Other ' ~ report.company.sector ~ ' S&P 500 companies',
+         meta=(siblings|length|string) ~ ' in this sector cohort',
+         cards=_company_cards,
+         aria_label='Sector cohort',
+         footer_link={'href': '/companies', 'label': 'Browse the full S&P 500 Venezuela exposure register'}
+    ) }}
     {% endif %}
   </article>
 

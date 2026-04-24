@@ -747,6 +747,26 @@ def list_by_sector(sector: str) -> list[SDNProfile]:
     return list(_CACHE["by_sector"].get(sector, []))
 
 
+def list_by_surname(surname: str) -> list[SDNProfile]:
+    """Return every *individual* profile whose OFAC surname matches.
+
+    Used by the OFAC SDN name-check answer pages (`/tools/ofac-sdn-name-check/<slug>`)
+    to render "other Venezuela SDNs that share this surname" clusters when
+    the queried name itself is not on the Venezuela list. Case-insensitive;
+    accent-stripped via `_slugify`-equivalent normalization on both sides.
+
+    Returns an empty list for unknown surnames so callers can render
+    "no matches" copy without a guard clause.
+    """
+    if not surname:
+        return []
+    ensure_loaded()
+    key = unicodedata.normalize("NFKD", surname).encode("ascii", "ignore").decode("ascii").upper().strip()
+    if not key:
+        return []
+    return list(_CACHE["family_clusters"].get(key, []))
+
+
 def sector_stats() -> dict[str, int]:
     """Per-sector counts. Includes a `total` key matching `stats()['total']`
     so callers can render share-of-corpus percentages without a second

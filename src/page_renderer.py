@@ -16,10 +16,90 @@ import logging
 from datetime import date, datetime, timedelta, timezone
 from pathlib import Path
 from typing import Iterable
+from urllib.parse import urlparse
 
 from jinja2 import Environment, FileSystemLoader, select_autoescape
 
 from src.config import settings
+
+
+# Map of known publisher hostnames to their canonical display name.
+# Used by _source_display_name() to convert the raw canonical_source_url
+# stored on a BlogPost row into a short, human-readable anchor label
+# ("Google News" / "Reuters") for the "Primary source:" citation on
+# the briefing page. Anything not in this map falls back to a
+# capitalised bare-domain label ("bloomberg.com" → "Bloomberg"). See
+# templates/blog_post.html.j2 — fixing the rendering of raw Google
+# News RSS URLs was the driver for this helper.
+_KNOWN_SOURCE_DOMAINS: dict[str, str] = {
+    "news.google.com": "Google News",
+    "reuters.com": "Reuters",
+    "bloomberg.com": "Bloomberg",
+    "ft.com": "Financial Times",
+    "wsj.com": "The Wall Street Journal",
+    "nytimes.com": "The New York Times",
+    "washingtonpost.com": "The Washington Post",
+    "economist.com": "The Economist",
+    "bbc.com": "BBC",
+    "bbc.co.uk": "BBC",
+    "apnews.com": "Associated Press",
+    "ap.org": "Associated Press",
+    "aljazeera.com": "Al Jazeera",
+    "cnbc.com": "CNBC",
+    "forbes.com": "Forbes",
+    "caracaschronicles.com": "Caracas Chronicles",
+    "elpais.com": "El País",
+    "eluniversal.com": "El Universal",
+    "efe.com": "EFE",
+    "efecto-cocuyo.com": "Efecto Cocuyo",
+    "runrun.es": "Runrun.es",
+    "tal-cual.com": "Tal Cual",
+    "talcualdigital.com": "Tal Cual",
+    "bancaynegocios.com": "Banca y Negocios",
+    "elnacional.com": "El Nacional",
+    "lapatilla.com": "La Patilla",
+    "venezuelanalysis.com": "Venezuelanalysis",
+    "treasury.gov": "US Treasury",
+    "ofac.treasury.gov": "OFAC",
+    "state.gov": "US State Department",
+    "federalregister.gov": "US Federal Register",
+    "gdelt.org": "GDELT",
+    "sec.gov": "SEC EDGAR",
+}
+
+
+def _source_display_name(url: str | None) -> str:
+    """Map a canonical source URL to a short, human-readable publisher label.
+
+    Used as the visible anchor text for the "Primary source:" citation
+    on briefing pages so the reader sees "Google News" instead of a
+    400-character Google News RSS redirect URL. The underlying URL is
+    preserved verbatim in the href and in the page's JSON-LD citation.
+    """
+    if not url:
+        return "source"
+    try:
+        host = urlparse(url).netloc.lower()
+    except Exception:
+        return "source"
+    if host.startswith("www."):
+        host = host[4:]
+    if not host:
+        return "source"
+    if host in _KNOWN_SOURCE_DOMAINS:
+        return _KNOWN_SOURCE_DOMAINS[host]
+    # Try stripping one subdomain (m.reuters.com → reuters.com).
+    parts = host.split(".")
+    if len(parts) >= 3:
+        tail = ".".join(parts[-2:])
+        if tail in _KNOWN_SOURCE_DOMAINS:
+            return _KNOWN_SOURCE_DOMAINS[tail]
+    # Fallback: capitalise the registrable-domain stem.
+    if len(parts) >= 2:
+        stem = parts[-2]
+    else:
+        stem = parts[0]
+    return stem.replace("-", " ").title()
 
 
 logger = logging.getLogger(__name__)
@@ -191,11 +271,19 @@ def render_blog_post(post, *, related: list | None = None) -> str:
             if s:
                 takeaways.append(s)
 
+    # Resolve a short, human-readable anchor label for the "Primary
+    # source:" citation on the rendered page. Keeps the gnarly Google
+    # News RSS URLs (and every other direct publisher URL) behind a
+    # clean "Google News" / "Reuters" / etc. anchor instead of dumping
+    # 400 characters of opaque query string into the citation box.
+    source_label = _source_display_name(getattr(post, "canonical_source_url", None))
+
     template = _env.get_template("blog_post.html.j2")
     return template.render(
         post=post,
         related=related or [],
         takeaways=takeaways,
+        source_label=source_label,
         seo=seo,
         jsonld=jsonld,
         current_year=date.today().year,

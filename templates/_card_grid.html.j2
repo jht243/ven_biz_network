@@ -1,0 +1,76 @@
+{#
+  Shared "header + 3-card grid" layout for every internal-link discovery
+  section on the site. This is the canonical UI for any section whose
+  job is to say "here are N related pages you should read next" —
+  briefings rails on tool pages, "More on this sector" on a blog post,
+  surname-cluster siblings on a sanctions profile, "Other S&P 500
+  companies in this sector" on a company profile, and so on.
+
+  Why this layout (and why it is centralised):
+    • Reader UX: scannable card grid beats a bullet list with dotted
+      separators, especially once the list has more than 2-3 items.
+      The canonical example is the "Saab Moran cluster — 3 dossiers
+      sharing this surname" block on /research/sdn/; that card grid
+      predates this macro and established the visual language.
+    • Internal-linking SEO: a single shared component means every
+      "related pages" section has identical structural markup, so when
+      we tighten anchor-text conventions or add schema (ItemList /
+      BreadcrumbList) we do it in one place, not 10.
+    • Consistency: before this macro existed, every page hand-rolled
+      its own <ul class="related"> with slightly different CSS and
+      copy. The 2026-04 design audit flagged that drift as both an
+      aesthetic problem and a crawl-signal problem.
+
+  Inputs for card_grid_section():
+      heading      : str   — H2 text for the section
+      meta         : str   — optional right-aligned meta text in the header
+                             (e.g. "3 dossiers sharing this surname")
+      intro        : str   — optional paragraph under the header
+      cards        : list  — list of dicts, each with:
+                               href      (required, str)
+                               title     (required, str)
+                               eyebrow   (optional, str) — red-dot label
+                               raw       (optional, str) — mono secondary line
+                               tagline   (optional, str) — short descriptor
+                               meta_rows (optional, list[str/HTML])
+                               cta       (optional, str, default "Read more")
+      aria_label   : str   — accessible section label
+      footer_link  : dict  — {"href": ..., "label": ...} shown below grid
+
+  CSS lives in templates/_base.html.j2 under the .cr-card-* namespace,
+  so every page that extends _base.html.j2 inherits the look — no per-
+  page style duplication required.
+#}
+{% macro card_grid_section(heading, meta=None, intro=None, cards=None, aria_label=None, footer_link=None) -%}
+{%- set _cards = cards or [] %}
+{%- if _cards %}
+<section class="cr-card-section"{% if aria_label %} aria-label="{{ aria_label }}"{% endif %}>
+  <header class="cr-card-header">
+    <h2 class="cr-card-title">{{ heading }}</h2>
+    {% if meta %}<span class="cr-card-meta">{{ meta }}</span>{% endif %}
+  </header>
+  {% if intro %}<p class="cr-card-intro">{{ intro }}</p>{% endif %}
+  <div class="cr-card-grid">
+    {% for c in _cards %}
+    <a class="cr-card" href="{{ c.href }}">
+      {% if c.eyebrow %}<span class="cr-card-eyebrow">{{ c.eyebrow }}</span>{% endif %}
+      <h3 class="cr-card-headline">{{ c.title }}</h3>
+      {% if c.raw %}<span class="cr-card-raw">{{ c.raw }}</span>{% endif %}
+      {% if c.tagline %}<p class="cr-card-tagline">{{ c.tagline }}</p>{% endif %}
+      {% if c.meta_rows %}
+      <div class="cr-card-meta-rows">
+        {% for m in c.meta_rows %}<span>{{ m|safe }}</span>{% endfor %}
+      </div>
+      {% endif %}
+      <span class="cr-card-cta">{{ c.cta|default('Read more') }}</span>
+    </a>
+    {% endfor %}
+  </div>
+  {% if footer_link %}
+  <p class="cr-card-footer">
+    <a href="{{ footer_link.href }}"><strong>{{ footer_link.label }}</strong></a>
+  </p>
+  {% endif %}
+</section>
+{%- endif %}
+{%- endmacro %}

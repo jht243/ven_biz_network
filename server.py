@@ -1161,6 +1161,136 @@ def tool_ofac_sanctions_checker():
         abort(500)
 
 
+@app.route("/tools/ofac-sdn-name-check/<slug>")
+@app.route("/tools/ofac-sdn-name-check/<slug>/")
+def tool_ofac_sdn_name_check(slug: str):
+    """SEO-optimized "is <NAME> on the OFAC SDN list?" answer page.
+
+    Built for specific high-impression / zero-click compliance queries
+    that we show up for in GSC but can't monetize because our SERP
+    snippet doesn't contain the literal name being searched (see
+    src/data/ofac_name_check.py for the design rationale).
+
+    The <slug> segment is resolved against a hand-curated registry.
+    Unknown slugs 404 rather than falling through to a thin-content
+    placeholder — an empty "no data" page for every conceivable name
+    would dilute crawl budget and tank our sanctions-cluster rankings.
+    """
+    try:
+        from src.data.ofac_name_check import get_answer
+        from src.data.sdn_profiles import list_by_surname
+        from src.page_renderer import _env
+        from datetime import date as _date
+
+        answer = get_answer(slug)
+        if answer is None:
+            abort(404)
+
+        # Pull the Venezuela-program SDN cluster for each surname. We
+        # emit a list of (surname, members) pairs — preserving the
+        # surname ordering from the registry — so the template can
+        # render one "Surname X — N Venezuela SDNs" section per
+        # surname without re-computing the split.
+        cluster_by_surname: list[tuple[str, list]] = []
+        seen_db_ids: set[int] = set()
+        for surname in answer.surnames:
+            members = [
+                p for p in list_by_surname(surname)
+                if p.db_id not in seen_db_ids
+            ]
+            if not members:
+                continue
+            for p in members:
+                seen_db_ids.add(p.db_id)
+            cluster_by_surname.append((surname, members))
+
+        faq: list[dict] = [
+            {
+                "q": f'Is "{answer.query_verbatim}" on the OFAC SDN list?',
+                "a": answer.answer_summary,
+            },
+            {
+                "q": "What is the OFAC Venezuela SDN list?",
+                "a": (
+                    "The OFAC Specially Designated Nationals (SDN) list is the US "
+                    "Treasury's primary sanctions list. Its Venezuela-program subset "
+                    "covers approximately 410 individuals, entities, vessels, and "
+                    "aircraft designated under the VENEZUELA, VENEZUELA-EO13692, "
+                    "VENEZUELA-EO13850, and VENEZUELA-EO13884 executive orders. "
+                    "Property and interests in property of SDNs subject to US "
+                    "jurisdiction are blocked, and US persons are generally "
+                    "prohibited from transacting with them."
+                ),
+            },
+            {
+                "q": "How was this name-check verified?",
+                "a": (
+                    f"We query the official OFAC consolidated SDN CSV and alias CSV "
+                    f"from sanctionslistservice.ofac.treas.gov. The results on this "
+                    f"page reflect the dataset snapshot on "
+                    f"{answer.last_verified_iso} and are re-validated whenever our "
+                    f"scraper ingests a new OFAC publication (typically daily). "
+                    f"For authoritative compliance decisions you must still verify "
+                    f"directly with OFAC's Sanctions List Search."
+                ),
+            },
+            {
+                "q": "What should I do if I am screening a real Venezuelan counterparty?",
+                "a": (
+                    "Re-run the query in our free OFAC Venezuela Sanctions Exposure "
+                    "Checker with alternative spellings (with/without accents, paternal "
+                    "surname only, given name first) and also test the Venezuelan "
+                    "cédula number if you have it. The checker searches names, "
+                    "aliases, IMO numbers, aircraft tail numbers, and cédulas. For "
+                    "high-stakes counterparties retain qualified sanctions counsel and "
+                    "perform an ownership-chain analysis (OFAC 50% Rule)."
+                ),
+            },
+        ]
+
+        seo, jsonld = _tool_seo_jsonld(
+            slug=f"ofac-sdn-name-check/{answer.slug}",
+            title=(
+                f'Is "{answer.query_verbatim}" on the OFAC SDN list? '
+                f'— Venezuela compliance check ({_date.today().year})'
+            ),
+            description=answer.answer_summary,
+            keywords=(
+                f'"{answer.query_verbatim}" OFAC SDN, '
+                f"{answer.natural_name} sanctions, OFAC Venezuela SDN name check, "
+                f"{' '.join(answer.surnames)} OFAC sanctions, "
+                f"Venezuela sanctions compliance screening"
+            ),
+            faq=faq,
+        )
+
+        # _tool_seo_jsonld defaults og_type to "website" but this is an
+        # editorial answer page; upgrade to "article" so social cards
+        # and news surfaces treat it with the correct priors.
+        seo["og_type"] = "article"
+
+        from src.seo.cluster_topology import build_cluster_ctx
+        cluster_ctx = build_cluster_ctx("/tools/ofac-venezuela-sanctions-checker")
+
+        template = _env.get_template("tools/ofac_name_check.html.j2")
+        html = template.render(
+            answer=answer,
+            cluster_by_surname=cluster_by_surname,
+            faq=faq,
+            seo=seo,
+            jsonld=jsonld,
+            cluster_ctx=cluster_ctx,
+            current_year=_date.today().year,
+            recent_briefings=_fetch_recent_briefings(),
+        )
+        return Response(html, mimetype="text/html")
+    except HTTPException:
+        raise
+    except Exception as exc:
+        logger.exception("ofac name-check render failed: %s", exc)
+        abort(500)
+
+
 @app.route("/tools/ofac-venezuela-general-licenses")
 @app.route("/tools/ofac-venezuela-general-licenses/")
 def tool_ofac_general_licenses():
@@ -4422,6 +4552,12 @@ def sitemap_xml():
         {"loc": f"{base}/explainers", "lastmod": today_iso, "changefreq": "weekly", "priority": "0.8"},
         {"loc": f"{base}/tools/bolivar-usd-exchange-rate", "lastmod": today_iso, "changefreq": "daily", "priority": "0.7"},
         {"loc": f"{base}/tools/ofac-venezuela-sanctions-checker", "lastmod": today_iso, "changefreq": "weekly", "priority": "0.7"},
+        # OFAC SDN name-check answer pages — one URL per compliance
+        # query we're hand-curating. See src/data/ofac_name_check.py
+        # for the full design rationale. Listed individually (rather
+        # than walked from the registry) so a typo in the registry
+        # can't silently drop a live URL from the sitemap.
+        {"loc": f"{base}/tools/ofac-sdn-name-check/rodriguez-hernandez-juan", "lastmod": today_iso, "changefreq": "weekly", "priority": "0.75"},
         {"loc": f"{base}/tools/public-company-venezuela-exposure-check", "lastmod": today_iso, "changefreq": "weekly", "priority": "0.75"},
         {"loc": f"{base}/tools/sec-edgar-venezuela-impairment-search", "lastmod": today_iso, "changefreq": "weekly", "priority": "0.75"},
         {"loc": f"{base}/companies", "lastmod": today_iso, "changefreq": "weekly", "priority": "0.85"},

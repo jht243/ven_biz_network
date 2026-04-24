@@ -28,6 +28,8 @@
                               (changes the heading from "Continue exploring"
                               to "What's in this hub")
 #}
+{% from "_card_grid.html.j2" import card_grid_section %}
+
 {% macro cluster_nav(cluster_ctx) -%}
 {% if cluster_ctx and cluster_ctx.cluster %}
 <aside class="topic-cluster-nav" aria-label="Topic cluster navigation">
@@ -52,15 +54,29 @@
   </a>
   {% endif %}
 
+  {#
+    Sister cluster members rendered as the site-wide 3-card discovery
+    grid (see templates/_card_grid.html.j2). Was originally a plain
+    <ul>; upgraded 2026-04 so every "here are the adjacent pages in
+    this topic" block on the site shares a single visual language.
+  #}
   {% if cluster_ctx.others %}
-  <ul class="topic-cluster-list">
-    {% for link in cluster_ctx.others %}
-    <li>
-      <a href="{{ link.path }}">{{ link.anchor }}</a>
-      {% if link.description %}<small>{{ link.description }}</small>{% endif %}
-    </li>
-    {% endfor %}
-  </ul>
+  {% set _cluster_cards = [] %}
+  {% for link in cluster_ctx.others %}
+    {% set _ = _cluster_cards.append({
+        'href': link.path,
+        'eyebrow': 'IN THIS HUB',
+        'title': link.anchor,
+        'tagline': link.description or '',
+        'cta': 'Open page'
+      }) %}
+  {% endfor %}
+  {{ card_grid_section(
+       heading=('More in ' ~ cluster_ctx.cluster.name) if not cluster_ctx.is_pillar else ('Hub pages — ' ~ cluster_ctx.cluster.name),
+       meta=(cluster_ctx.others|length|string) ~ ' related page' ~ ('' if cluster_ctx.others|length == 1 else 's'),
+       cards=_cluster_cards,
+       aria_label='Related pages in this cluster'
+  ) }}
   {% endif %}
 </aside>
 {% endif %}
@@ -139,28 +155,20 @@
     color: #495057;
     margin-top: 4px;
   }
-  .topic-cluster-list {
-    list-style: none;
+  /* When the shared 3-card grid (_card_grid.html.j2) is nested inside
+     the topic-cluster-nav aside, the aside already supplies the outer
+     frame — suppress the card-section's own top border + big margin. */
+  .topic-cluster-nav .cr-card-section {
     margin: 0;
-    padding: 0;
+    padding-top: 0;
+    border-top: 0;
   }
-  .topic-cluster-list li {
-    border-bottom: 1px dotted #e9ecef;
-    padding: 10px 0;
+  .topic-cluster-nav .cr-card-header {
+    border-bottom: 1px solid #d8dde6;
+    padding-bottom: 8px;
   }
-  .topic-cluster-list li:last-child { border-bottom: 0; }
-  .topic-cluster-list li a {
-    font-weight: 600;
-    color: #002b5e;
-    text-decoration: none;
-    line-height: 1.4;
-  }
-  .topic-cluster-list li a:hover { color: #cc0000; }
-  .topic-cluster-list li small {
-    display: block;
-    font-size: 12.5px;
-    color: #6c757d;
-    margin-top: 2px;
+  .topic-cluster-nav .cr-card-title {
+    font-size: 18px;
   }
 </style>
 {%- endmacro %}

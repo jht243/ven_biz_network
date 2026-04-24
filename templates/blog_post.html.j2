@@ -1,5 +1,6 @@
 {% extends "_base.html.j2" %}
 {% from "_base.html.j2" import share_button %}
+{% from "_card_grid.html.j2" import card_grid_section %}
 
 {% block content %}
 <article class="container">
@@ -40,10 +41,21 @@
     {{ post.body_html | safe }}
   </div>
 
+  {#
+    Primary source citation. Historical bug (fixed 2026-04): the source
+    URL was rendered as its own anchor text, which for Google News RSS
+    links produced a wall of ~400 opaque base64-looking characters
+    inside the citation box ("horrible UX" — 2026-04 design review).
+    We now render a short, human-readable publisher label (resolved
+    server-side in src/page_renderer.py::_source_display_name) as the
+    anchor text and keep the underlying URL as the href. The full URL
+    is still reachable with one click and still present in the page's
+    JSON-LD `citation` field for structured-data consumers.
+  #}
   {% if post.canonical_source_url %}
   <div class="source-citation">
     <strong>Primary source:</strong>
-    <a href="{{ post.canonical_source_url }}" rel="nofollow noopener" target="_blank">{{ post.canonical_source_url }}</a>
+    <a href="{{ post.canonical_source_url }}" rel="nofollow noopener" target="_blank">{{ source_label|default('source') }}</a>
     — referenced for fact-checking; this analysis is independent commentary by the
     Caracas Research editorial team.
   </div>
@@ -54,18 +66,36 @@
     {{ share_button('https://caracasresearch.com/briefing/' ~ post.slug, post.title, label='Share analysis') }}
   </div>
 
+  {#
+    "More on this sector" — related briefings from the same primary
+    sector, filled with recency fallbacks when the sector is thin. This
+    block used to be a bullet list; it now uses the canonical 3-card
+    discovery grid so it matches every other "related pages" section on
+    the site (tool-page briefing rails, sanctions surname clusters,
+    etc.). See templates/_card_grid.html.j2 for the shared component.
+  #}
   {% if related %}
-  <section class="related" aria-label="Related analysis">
-    <h3>More on this sector</h3>
-    <ul>
-      {% for r in related %}
-      <li>
-        <a href="/briefing/{{ r.slug }}">{{ r.title }}</a>
-        <small>{{ r.published_date.strftime('%b %d, %Y') }}</small>
-      </li>
-      {% endfor %}
-    </ul>
-  </section>
+  {% set _related_cards = [] %}
+  {% for r in related %}
+    {% set _eyebrow = (r.primary_sector|replace('_',' ')|upper) if r.primary_sector else 'ANALYSIS' %}
+    {% set _meta_rows = [] %}
+    {% if r.published_date %}{% set _ = _meta_rows.append('<strong>' ~ r.published_date.strftime('%b %d, %Y') ~ '</strong>') %}{% endif %}
+    {% if r.reading_minutes %}{% set _ = _meta_rows.append(r.reading_minutes|string ~ ' min read') %}{% endif %}
+    {% set _ = _related_cards.append({
+        'href': '/briefing/' ~ r.slug,
+        'eyebrow': _eyebrow,
+        'title': r.title,
+        'tagline': r.summary or '',
+        'meta_rows': _meta_rows,
+        'cta': 'Read analysis'
+      }) %}
+  {% endfor %}
+  {{ card_grid_section(
+       heading='More on this sector',
+       cards=_related_cards,
+       aria_label='Related analysis',
+       footer_link={'href': '/briefing', 'label': 'Browse all daily briefings'}
+  ) }}
   {% endif %}
 
 </article>
