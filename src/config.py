@@ -74,6 +74,13 @@ class Settings(BaseSettings):
     supabase_url: str = ""
     supabase_service_key: str = ""
     supabase_report_bucket: str = "reports"
+    # Object key for the homepage report HTML inside the bucket. MUST be
+    # unique per project when multiple projects share a Supabase bucket
+    # (e.g. different sites running in the same Render workspace). The
+    # legacy default "report.html" is the cross-project collision vector
+    # we hit in April 2026 — production Caracas now uses
+    # "caracas-report.html" (set via SUPABASE_REPORT_OBJECT_KEY in Render).
+    supabase_report_object_key: str = "report.html"
 
     # Server
     server_port: int = 8080

@@ -62,6 +62,13 @@ class SourceType(str, enum.Enum):
     NEWSDATA = "newsdata"
     EIA = "eia"
     GOOGLE_NEWS = "google_news"
+    # Cross-project pollution recovery (April 2026): the shared
+    # Postgres enum had `openalex` added by a sister project that
+    # was misconfigured to point at this database. We declare it
+    # here so SQLAlchemy can decode the existing rows without
+    # crashing the report renderer; downstream queries should
+    # filter these out (see report_generator / blog_generator).
+    OPENALEX = "openalex"
 
 
 class CredibilityTier(str, enum.Enum):

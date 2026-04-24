@@ -14,7 +14,16 @@ from src.config import settings
 
 logger = logging.getLogger(__name__)
 
+# Legacy module-level constant retained for backward compat with any
+# importer that still references it. Live code should call
+# _report_object_key() so the value tracks the runtime setting (which
+# may be overridden per-deployment via SUPABASE_REPORT_OBJECT_KEY to
+# avoid cross-project bucket collisions — see config.py).
 REPORT_OBJECT_KEY = "report.html"
+
+
+def _report_object_key() -> str:
+    return (settings.supabase_report_object_key or REPORT_OBJECT_KEY).strip() or REPORT_OBJECT_KEY
 
 
 def _supabase_base_url() -> Optional[str]:
@@ -36,7 +45,7 @@ def public_report_url() -> Optional[str]:
     base = _supabase_base_url()
     if not base:
         return None
-    return f"{base}/storage/v1/object/public/{settings.supabase_report_bucket}/{REPORT_OBJECT_KEY}"
+    return f"{base}/storage/v1/object/public/{settings.supabase_report_bucket}/{_report_object_key()}"
 
 
 def upload_report_html(html: str) -> Optional[str]:
@@ -51,7 +60,8 @@ def upload_report_html(html: str) -> Optional[str]:
 
     base = _supabase_base_url()
     bucket = settings.supabase_report_bucket
-    upload_url = f"{base}/storage/v1/object/{bucket}/{REPORT_OBJECT_KEY}"
+    object_key = _report_object_key()
+    upload_url = f"{base}/storage/v1/object/{bucket}/{object_key}"
 
     headers = {
         "Authorization": f"Bearer {settings.supabase_service_key}",
@@ -66,7 +76,7 @@ def upload_report_html(html: str) -> Optional[str]:
         resp.raise_for_status()
 
     public = public_report_url()
-    logger.info("Uploaded report.html to Supabase Storage: %s", public)
+    logger.info("Uploaded %s to Supabase Storage: %s", object_key, public)
     return public
 
 
