@@ -64,6 +64,8 @@ _ANCHOR: dict[str, str] = {
     "/tools/ofac-venezuela-general-licenses": "OFAC General Licenses for Venezuela (full list)",
     "/tools/public-company-venezuela-exposure-check": "Public company Venezuela exposure check (S&P 500)",
     "/tools/sec-edgar-venezuela-impairment-search": "SEC EDGAR Venezuela / PDVSA / impairment / contingent-liability search (S&P 500)",
+    "/tools/venezuela-trade-leads": "Venezuela trade leads for U.S. companies (ITA / trade.gov)",
+    "/tools/venezuela-market-entry-checklist": "Venezuela market-entry checklist for U.S. companies",
     "/companies": "S&P 500 Venezuela exposure register (every ticker, A-Z)",
     "/explainers/what-are-ofac-sanctions-on-venezuela": "OFAC Venezuela: sanctions programs & General Licenses (2026 guide)",
 
@@ -190,6 +192,8 @@ CLUSTERS: dict[str, Cluster] = {
             _ck("/sectors/agriculture",  "Venezuela agriculture sector — regulation, exporter rules, deals."),
             _ck("/sectors/real-estate",  "Real-estate transactions in Venezuela — title, currency, FX risk."),
             _ck("/sectors/sanctions",    "Sanctions-as-a-sector — OFAC licenses + the compliance ecosystem."),
+            _ck("/tools/venezuela-trade-leads", "ITA trade leads for U.S. companies by sector, equipment, units, and HS code."),
+            _ck("/tools/venezuela-market-entry-checklist", "U.S. exporter workflow for Venezuela: ITA, OFAC, BIS, FX, travel."),
             _ck("/tools/venezuela-investment-roi-calculator", "Calculate ROI for any Venezuela sector — currency, country-risk premia."),
             _ck("/explainers/how-to-buy-venezuelan-bonds",     "How institutional investors access Venezuela sovereign and PDVSA bonds."),
             _ck("/explainers/doing-business-in-caracas",       "On-the-ground operating manual for foreign-investor teams in Caracas."),
@@ -250,6 +254,8 @@ _PATH_TO_CLUSTER: tuple[tuple[str, str], ...] = (
 
     ("/invest-in-venezuela",   "investment"),
     ("/sectors/",              "investment"),
+    ("/tools/venezuela-trade-leads", "investment"),
+    ("/tools/venezuela-market-entry-checklist", "investment"),
     ("/tools/venezuela-investment-roi-calculator", "investment"),
     ("/explainers/how-to-buy-venezuelan-bonds",     "investment"),
     ("/explainers/doing-business-in-caracas",       "investment"),

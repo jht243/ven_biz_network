@@ -64,6 +64,8 @@ _STATIC_URLS_TO_PING_DAILY = (
     "/sanctions/aircraft",
     "/companies",
     "/tools/public-company-venezuela-exposure-check",
+    "/tools/venezuela-trade-leads",
+    "/tools/venezuela-market-entry-checklist",
     "/briefing",
     "/explainers",
     "/explainers/what-are-ofac-sanctions-on-venezuela",

@@ -1454,6 +1454,149 @@ def tool_sec_edgar_venezuela_search():
         abort(500)
 
 
+@app.route("/tools/venezuela-trade-leads")
+@app.route("/tools/venezuela-trade-leads/")
+def tool_venezuela_trade_leads():
+    """ITA Venezuela trade-leads finder for U.S. exporters."""
+    try:
+        from datetime import date as _date
+        from src.data.ita_trade import latest_ita_resources, latest_trade_leads, trade_lead_stats
+        from src.page_renderer import _env
+
+        all_leads, source_row = latest_trade_leads()
+        query = (request.args.get("q") or "").strip()
+        selected_sector = (request.args.get("sector") or "").strip()
+
+        leads = all_leads
+        if selected_sector:
+            leads = [l for l in leads if l.sector == selected_sector]
+        if query:
+            q = query.lower()
+            leads = [
+                l for l in leads
+                if q in l.equipment.lower()
+                or q in l.hs_code.lower()
+                or q in l.hs_description.lower()
+                or q in l.sector.lower()
+            ]
+
+        stats = trade_lead_stats(all_leads)
+        seo, jsonld = _tool_seo_jsonld(
+            slug="venezuela-trade-leads",
+            title="Venezuela Trade Leads for U.S. Companies — ITA Opportunity Finder",
+            description=(
+                "Search official International Trade Administration Venezuela "
+                "trade leads by sector, equipment, units requested, and HS code."
+            ),
+            keywords=(
+                "Venezuela trade leads, ITA Venezuela, trade.gov Venezuela, "
+                "Venezuela export opportunities, Venezuela HS codes, US companies Venezuela"
+            ),
+            faq=[
+                {
+                    "q": "Where do these Venezuela trade leads come from?",
+                    "a": "They come from the International Trade Administration's official Venezuela Trade Leads page on trade.gov, maintained for U.S. businesses evaluating export opportunities.",
+                },
+                {
+                    "q": "Who should U.S. companies contact about a listed opportunity?",
+                    "a": "ITA directs companies seeking additional information to contact tradevenezuela@trade.gov.",
+                },
+                {
+                    "q": "Do trade leads remove OFAC or export-control risk?",
+                    "a": "No. A commercial opportunity still requires sanctions screening, export-control review, payment diligence, and legal advice before quoting, shipping, or contracting.",
+                },
+            ],
+            dataset={
+                "name": "ITA Venezuela trade leads",
+                "description": "Structured view of official ITA Venezuela trade-lead line items for U.S. exporters.",
+                "url": "https://www.trade.gov/venezuela-trade-leads",
+                "creator": {"@type": "Organization", "name": "International Trade Administration"},
+            },
+        )
+        resources = [
+            r for r in latest_ita_resources()
+            if r.url.rstrip("/") != "https://www.trade.gov/venezuela-trade-leads"
+        ]
+        from src.seo.cluster_topology import build_cluster_ctx
+        cluster_ctx = build_cluster_ctx("/tools/venezuela-trade-leads")
+
+        template = _env.get_template("tools/venezuela_trade_leads.html.j2")
+        html = template.render(
+            leads=leads,
+            stats=stats,
+            query=query,
+            selected_sector=selected_sector,
+            source_row=source_row,
+            resources=resources,
+            seo=seo,
+            jsonld=jsonld,
+            cluster_ctx=cluster_ctx,
+            current_year=_date.today().year,
+            recent_briefings=_fetch_recent_briefings(),
+        )
+        return Response(html, mimetype="text/html")
+    except HTTPException:
+        raise
+    except Exception as exc:
+        logger.exception("venezuela trade leads render failed: %s", exc)
+        abort(500)
+
+
+@app.route("/tools/venezuela-market-entry-checklist")
+@app.route("/tools/venezuela-market-entry-checklist/")
+def tool_venezuela_market_entry_checklist():
+    """U.S. exporter market-entry workflow for Venezuela."""
+    try:
+        from datetime import date as _date
+        from src.page_renderer import _env
+
+        seo, jsonld = _tool_seo_jsonld(
+            slug="venezuela-market-entry-checklist",
+            title="Venezuela Market-Entry Checklist for U.S. Companies",
+            description=(
+                "Practical Venezuela market-entry checklist for U.S. exporters: "
+                "ITA trade leads, OFAC screening, BIS export controls, FX, "
+                "payments, travel, and contacts."
+            ),
+            keywords=(
+                "Venezuela market entry checklist, export to Venezuela, "
+                "US companies Venezuela, ITA Venezuela, Venezuela export controls, "
+                "Venezuela OFAC checklist"
+            ),
+            faq=[
+                {
+                    "q": "Can U.S. companies do business in Venezuela?",
+                    "a": "Some activity may be possible, but U.S. companies must screen counterparties, review OFAC sanctions, evaluate BIS export controls, and document payment and banking paths before proceeding.",
+                },
+                {
+                    "q": "What is the first U.S. government contact point for Venezuela opportunities?",
+                    "a": "ITA's Venezuela Business Information Center directs companies to tradevenezuela@trade.gov for assistance.",
+                },
+                {
+                    "q": "What should be checked before quoting a Venezuelan buyer?",
+                    "a": "Screen the buyer and beneficial owners, classify the product for export controls, confirm any OFAC authorization needed, assess payment rails, and document end use.",
+                },
+            ],
+        )
+        from src.seo.cluster_topology import build_cluster_ctx
+        cluster_ctx = build_cluster_ctx("/tools/venezuela-market-entry-checklist")
+
+        template = _env.get_template("tools/venezuela_market_entry_checklist.html.j2")
+        html = template.render(
+            seo=seo,
+            jsonld=jsonld,
+            cluster_ctx=cluster_ctx,
+            current_year=_date.today().year,
+            recent_briefings=_fetch_recent_briefings(),
+        )
+        return Response(html, mimetype="text/html")
+    except HTTPException:
+        raise
+    except Exception as exc:
+        logger.exception("venezuela market-entry checklist render failed: %s", exc)
+        abort(500)
+
+
 @app.route("/tools")
 @app.route("/tools/")
 def tools_index():
@@ -1464,6 +1607,18 @@ def tools_index():
         import json as _json
 
         tools = [
+            {
+                "url": "/tools/venezuela-trade-leads",
+                "name": "Venezuela Trade Leads for U.S. Companies",
+                "category": "Trade",
+                "summary": "Search International Trade Administration Venezuela opportunities by sector, equipment requested, units, and HS code — with official trade.gov sourcing and contact path for U.S. exporters.",
+            },
+            {
+                "url": "/tools/venezuela-market-entry-checklist",
+                "name": "Venezuela Market-Entry Checklist for U.S. Companies",
+                "category": "Trade",
+                "summary": "Step-by-step U.S. exporter workflow: ITA trade leads, OFAC screening, BIS export controls, payment friction, FX, travel planning, and contacts.",
+            },
             {
                 "url": "/travel/emergency-card",
                 "name": "Caracas Emergency Card — Printable Pocket Sheet",
@@ -1524,8 +1679,8 @@ def tools_index():
         canonical = f"{base}/tools"
         seo = {
             "title": "Free Venezuela Investor Tools — Sanctions, BCV, ROI Calculator",
-            "description": "Free toolkit for evaluating Venezuelan exposure: OFAC sanctions screening, OFAC general license lookup, live BCV USD rate, sector ROI calculator, Caracas safety map, and visa requirements.",
-            "keywords": "Venezuela investor tools, OFAC checker, BCV rate, Venezuela ROI calculator, Caracas safety, Venezuela visa",
+            "description": "Free toolkit for evaluating Venezuelan exposure: ITA trade leads, OFAC sanctions screening, OFAC general license lookup, live BCV USD rate, sector ROI calculator, Caracas safety map, and visa requirements.",
+            "keywords": "Venezuela investor tools, Venezuela trade leads, ITA Venezuela, OFAC checker, BCV rate, Venezuela ROI calculator, Caracas safety, Venezuela visa",
             "canonical": canonical,
             "site_name": _s.site_name,
             "site_url": base,
@@ -1732,6 +1887,14 @@ def sources_page():
                     "description": "Final rules, proposed rules, executive orders, and notices published by federal agencies. Source of truth for OFAC general licenses, sanctions actions, and trade rule changes.",
                     "cadence": "Twice daily",
                     "entries_count": _count_ext(SourceType.FEDERAL_REGISTER),
+                },
+                {
+                    "name": "International Trade Administration — Venezuela",
+                    "kind": "US Commerce Department", "tier": "Primary",
+                    "url": "https://www.trade.gov/venezuela",
+                    "description": "ITA's Venezuela Business Information Center, trade leads, exporter FAQ, and country contacts for U.S. companies evaluating Venezuelan opportunities. Powers our Venezuela trade-leads finder and market-entry checklist.",
+                    "cadence": "Twice daily",
+                    "entries_count": _count_ext(SourceType.ITA_TRADE),
                 },
                 {
                     "name": "Asamblea Nacional de Venezuela",
@@ -4560,6 +4723,8 @@ def sitemap_xml():
         {"loc": f"{base}/tools/ofac-sdn-name-check/rodriguez-hernandez-juan", "lastmod": today_iso, "changefreq": "weekly", "priority": "0.75"},
         {"loc": f"{base}/tools/public-company-venezuela-exposure-check", "lastmod": today_iso, "changefreq": "weekly", "priority": "0.75"},
         {"loc": f"{base}/tools/sec-edgar-venezuela-impairment-search", "lastmod": today_iso, "changefreq": "weekly", "priority": "0.75"},
+        {"loc": f"{base}/tools/venezuela-trade-leads", "lastmod": today_iso, "changefreq": "daily", "priority": "0.8"},
+        {"loc": f"{base}/tools/venezuela-market-entry-checklist", "lastmod": today_iso, "changefreq": "weekly", "priority": "0.72"},
         {"loc": f"{base}/companies", "lastmod": today_iso, "changefreq": "weekly", "priority": "0.85"},
         {"loc": f"{base}/tools/ofac-venezuela-general-licenses", "lastmod": today_iso, "changefreq": "weekly", "priority": "0.7"},
         {"loc": f"{base}/tools/caracas-safety-by-neighborhood", "lastmod": today_iso, "changefreq": "weekly", "priority": "0.6"},

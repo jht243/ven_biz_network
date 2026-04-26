@@ -1,0 +1,49 @@
+{% extends "_base.html.j2" %}
+{% from "_cluster_nav.html.j2" import cluster_nav %}
+
+{% block content %}
+<section class="container">
+  <nav class="breadcrumbs" aria-label="Breadcrumb">
+    <a href="/">Home</a><span>/</span>
+    <a href="/tools">Tools</a><span>/</span>
+    <span>Market Entry Checklist</span>
+  </nav>
+
+  <header style="margin: 16px 0 24px;">
+    <div style="font-size:12px; text-transform:uppercase; letter-spacing:1.4px; color:#cc0000; font-weight:700;">
+      U.S. exporter workflow · ITA + OFAC + BIS
+    </div>
+    <h1 style="font-family:var(--font-serif); font-size:36px; color:var(--sr-blue-dark); margin:8px 0 12px;">
+      Venezuela Market-Entry Checklist for U.S. Companies
+    </h1>
+    <p style="font-family:var(--font-serif); font-style:italic; color:var(--sr-gray-text); font-size:18px;">
+      A practical pre-flight list for U.S. exporters evaluating Venezuela: trade leads, sanctions screening, export controls, contacts, and travel readiness.
+    </p>
+  </header>
+
+  <ol style="line-height:1.7; max-width:880px;">
+    <li><strong>Start with ITA Venezuela.</strong> Review the <a href="https://www.trade.gov/venezuela" rel="nofollow noopener" target="_blank">Venezuela Business Information Center</a> and email <a href="mailto:tradevenezuela@trade.gov">tradevenezuela@trade.gov</a> for opportunity-specific routing.</li>
+    <li><strong>Check current leads.</strong> Use our <a href="/tools/venezuela-trade-leads">Venezuela trade-leads finder</a> to map equipment needs to HS codes and sector demand.</li>
+    <li><strong>Screen parties.</strong> Run counterparties, owners, vessels, aircraft, and banks through the <a href="/tools/ofac-venezuela-sanctions-checker">OFAC Venezuela sanctions checker</a> and confirm against the official Consolidated Screening List.</li>
+    <li><strong>Map authorization.</strong> Compare the transaction against <a href="/tools/ofac-venezuela-general-licenses">OFAC Venezuela general licenses</a>, then get counsel for anything involving PdVSA, state entities, debt, gold, banking, or blocked persons.</li>
+    <li><strong>Review export controls.</strong> Check BIS Export Administration Regulations and document ECCN / EAR99 classification before quoting or shipping.</li>
+    <li><strong>Model payment and FX friction.</strong> Price in correspondent-bank friction, bolivar volatility, and repatriation risk. Use the <a href="/tools/bolivar-usd-exchange-rate">BCV exchange-rate tool</a> for baseline conversion.</li>
+    <li><strong>Plan travel separately.</strong> Confirm visa channel, security transport, and emergency contacts before any in-country diligence trip.</li>
+  </ol>
+
+  <div class="source-citation">
+    Source foundation: <a href="https://www.trade.gov/venezuela" rel="nofollow noopener" target="_blank">International Trade Administration Venezuela Business Information Center</a>,
+    <a href="https://www.trade.gov/venezuela-trade-leads" rel="nofollow noopener" target="_blank">ITA Venezuela Trade Leads</a>,
+    OFAC Venezuela sanctions resources, and BIS export-control guidance.
+  </div>
+
+  {{ cluster_nav(cluster_ctx) }}
+
+  {% from "_recent_briefings.html.j2" import recent_briefings_rail %}
+  {{ recent_briefings_rail(
+       recent_briefings,
+       heading="Latest analysis",
+       intro="Recent briefings on Venezuelan markets, sanctions, and policy moves.",
+  ) }}
+</section>
+{% endblock %}

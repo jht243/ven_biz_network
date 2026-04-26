@@ -1,0 +1,121 @@
+{% extends "_base.html.j2" %}
+{% from "_card_grid.html.j2" import card_grid_section %}
+{% from "_cluster_nav.html.j2" import cluster_nav %}
+
+{% block content %}
+<style>
+  .tool-form { display:flex; gap:8px; flex-wrap:wrap; margin:18px 0 22px; }
+  .tool-form input, .tool-form select { padding:10px 12px; border:1px solid var(--sr-gray-light); border-radius:3px; font-size:14px; }
+  .tool-form input { flex:1; min-width:240px; }
+  .stat-row { display:grid; grid-template-columns:repeat(4,minmax(0,1fr)); gap:10px; margin:18px 0 22px; }
+  .stat { border-left:3px solid var(--sr-red); background:var(--sr-gray-bg); padding:12px 14px; }
+  .stat strong { display:block; font-size:24px; color:var(--sr-blue-dark); }
+  .stat span { font-size:12px; color:var(--sr-gray-text); text-transform:uppercase; letter-spacing:.6px; }
+  .lead-table { width:100%; border-collapse:collapse; margin:10px 0 24px; font-size:14px; }
+  .lead-table th { text-align:left; border-bottom:2px solid var(--sr-blue-dark); color:var(--sr-blue-dark); padding:9px 8px; }
+  .lead-table td { border-bottom:1px solid var(--sr-gray-light); padding:10px 8px; vertical-align:top; }
+  .lead-table .num { text-align:right; white-space:nowrap; }
+  @media (max-width: 720px) {
+    .stat-row { grid-template-columns:repeat(2,minmax(0,1fr)); }
+    .lead-table { display:block; overflow-x:auto; }
+  }
+</style>
+
+<section class="container">
+  <nav class="breadcrumbs" aria-label="Breadcrumb">
+    <a href="/">Home</a><span>/</span>
+    <a href="/tools">Tools</a><span>/</span>
+    <span>Venezuela Trade Leads</span>
+  </nav>
+
+  <header style="margin: 16px 0 24px;">
+    <div style="font-size:12px; text-transform:uppercase; letter-spacing:1.4px; color:#cc0000; font-weight:700;">
+      ITA trade.gov data · U.S. company opportunity finder
+    </div>
+    <h1 style="font-family:var(--font-serif); font-size:36px; color:var(--sr-blue-dark); margin:8px 0 12px;">
+      Venezuela Trade Leads for U.S. Companies
+    </h1>
+    <p style="font-family:var(--font-serif); font-style:italic; color:var(--sr-gray-text); font-size:18px;">
+      Search current International Trade Administration opportunities by sector, equipment, units requested, and HS code. Source: the official ITA Venezuela Business Information Center.
+    </p>
+  </header>
+
+  <div class="stat-row">
+    <div class="stat"><strong>{{ stats.lead_count }}</strong><span>Line items</span></div>
+    <div class="stat"><strong>{{ stats.sector_count }}</strong><span>Sectors</span></div>
+    <div class="stat"><strong>{{ "{:,}".format(stats.total_units) }}</strong><span>Units requested</span></div>
+    <div class="stat"><strong>{{ stats.hs_code_count }}</strong><span>HS codes</span></div>
+  </div>
+
+  <form class="tool-form" method="get" action="/tools/venezuela-trade-leads">
+    <input type="search" name="q" value="{{ query }}" placeholder="Search equipment or HS description">
+    <select name="sector">
+      <option value="">All sectors</option>
+      {% for sector in stats.sectors %}
+      <option value="{{ sector }}" {% if sector == selected_sector %}selected{% endif %}>{{ sector }}</option>
+      {% endfor %}
+    </select>
+    <button class="btn" type="submit">Search</button>
+  </form>
+
+  <table class="lead-table">
+    <thead>
+      <tr>
+        <th>Sector</th>
+        <th>Equipment</th>
+        <th class="num">Units</th>
+        <th>HS code</th>
+        <th>HS description</th>
+      </tr>
+    </thead>
+    <tbody>
+      {% for lead in leads %}
+      <tr>
+        <td>{{ lead.sector }}</td>
+        <td><strong>{{ lead.equipment }}</strong></td>
+        <td class="num">{{ "{:,}".format(lead.units_requested) if lead.units_requested else "—" }}</td>
+        <td>{{ lead.hs_code }}</td>
+        <td>{{ lead.hs_description }}</td>
+      </tr>
+      {% endfor %}
+    </tbody>
+  </table>
+
+  <div class="source-citation">
+    Authoritative source:
+    <a href="https://www.trade.gov/venezuela-trade-leads" rel="nofollow noopener" target="_blank">International Trade Administration Venezuela Trade Leads</a>.
+    Companies seeking details should contact <a href="mailto:tradevenezuela@trade.gov">tradevenezuela@trade.gov</a>.
+    {% if source_row %}Last captured by Caracas Research: {{ source_row.created_at.strftime("%B %-d, %Y") }}.{% endif %}
+  </div>
+
+  {% if resources %}
+  {% set resource_cards = [] %}
+    {% for r in resources %}
+      {% set _ = resource_cards.append({
+        'href': r.url,
+        'eyebrow': 'ITA SOURCE',
+        'title': r.title,
+        'tagline': r.summary,
+        'raw': r.article_type|replace("_", " ")|upper,
+        'cta': 'Open source'
+      }) %}
+    {% endfor %}
+  {{ card_grid_section(
+       heading="Related ITA Venezuela Resources",
+       meta=(resources|length|string) ~ ' source page' ~ ('' if resources|length == 1 else 's'),
+       cards=resource_cards,
+       aria_label='Related ITA Venezuela source pages',
+       max_cards=3
+  ) }}
+  {% endif %}
+
+  {{ cluster_nav(cluster_ctx) }}
+
+  {% from "_recent_briefings.html.j2" import recent_briefings_rail %}
+  {{ recent_briefings_rail(
+       recent_briefings,
+       heading="Latest Venezuela business analysis",
+       intro="Recent briefings on sanctions, market access, trade flows, and operating risk.",
+  ) }}
+</section>
+{% endblock %}

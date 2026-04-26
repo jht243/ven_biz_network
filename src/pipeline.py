@@ -36,6 +36,7 @@ from src.scraper.ofac_sdn import OFACSdnScraper
 from src.scraper.gdelt import GDELTScraper
 from src.scraper.google_news import GoogleNewsScraper
 from src.scraper.bcv import BCVScraper
+from src.scraper.ita import ITATradeScraper
 from src.scraper.travel_advisory import TravelAdvisoryScraper
 from src.ocr.engine import ocr_pdf
 
@@ -90,6 +91,7 @@ def run_daily_scrape(target_date: Optional[date] = None) -> dict:
         # dedupe by headline-similarity belongs in the report layer.
         GoogleNewsScraper(),
         BCVScraper(),
+        ITATradeScraper(),
         TravelAdvisoryScraper(),
     ]
 
@@ -950,6 +952,9 @@ def _resolve_source_type(source_name: str) -> SourceType:
         "google news": SourceType.GOOGLE_NEWS,
         "banco central": SourceType.BCV_RATES,
         "bcv": SourceType.BCV_RATES,
+        "international trade administration": SourceType.ITA_TRADE,
+        "ita": SourceType.ITA_TRADE,
+        "trade.gov": SourceType.ITA_TRADE,
         "state department": SourceType.TRAVEL_ADVISORY,
         "us state department": SourceType.TRAVEL_ADVISORY,
         "newsdata": SourceType.NEWSDATA,
