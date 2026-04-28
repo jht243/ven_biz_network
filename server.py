@@ -98,6 +98,16 @@ BUTTONDOWN_API_URL = "https://api.buttondown.com/v1/subscribers"
 # Tiny in-memory cache so we don't hit Supabase Storage on every page view.
 _REPORT_CACHE: dict = {"html": None, "fetched_at": 0.0}
 _REPORT_CACHE_TTL_SECONDS = 60
+_GOOGLE_TAG_ID = "G-YQKLKXYCJB"
+_GOOGLE_TAG_HTML = f"""<!-- Google tag (gtag.js) -->
+<script async src="https://www.googletagmanager.com/gtag/js?id={_GOOGLE_TAG_ID}"></script>
+<script>
+  window.dataLayer = window.dataLayer || [];
+  function gtag(){{dataLayer.push(arguments);}}
+  gtag('js', new Date());
+
+  gtag('config', '{_GOOGLE_TAG_ID}');
+</script>"""
 
 # Small in-memory cache for top-nav pages that are expensive to re-render on
 # every click (DB reads + template render). This keeps header navigation
@@ -116,23 +126,32 @@ _NAV_PAGE_CACHE: dict[str, dict] = {}
 _NAV_PAGE_CACHE_TTL_SECONDS = 90
 
 
+def _ensure_google_tag(html: str) -> str:
+    """Add the Google tag to generated report HTML that predates the template update."""
+    if _GOOGLE_TAG_ID in html or "www.googletagmanager.com/gtag/js" in html:
+        return html
+    if "<head>" in html:
+        return html.replace("<head>", f"<head>\n  {_GOOGLE_TAG_HTML}\n", 1)
+    return html
+
+
 def _get_report_html() -> str | None:
     """Return rendered report HTML from Supabase Storage (cached) or local disk."""
     if supabase_storage_read_enabled():
         now = time.time()
         if _REPORT_CACHE["html"] and now - _REPORT_CACHE["fetched_at"] < _REPORT_CACHE_TTL_SECONDS:
-            return _REPORT_CACHE["html"]
+            return _ensure_google_tag(_REPORT_CACHE["html"])
         html = fetch_report_html()
         if html:
             _REPORT_CACHE["html"] = html
             _REPORT_CACHE["fetched_at"] = now
-            return html
+            return _ensure_google_tag(html)
         if _REPORT_CACHE["html"]:
-            return _REPORT_CACHE["html"]
+            return _ensure_google_tag(_REPORT_CACHE["html"])
 
     report = OUTPUT_DIR / "report.html"
     if report.exists():
-        return report.read_text(encoding="utf-8")
+        return _ensure_google_tag(report.read_text(encoding="utf-8"))
     return None
 
 
