@@ -103,6 +103,17 @@
   .register-grid .program { display: block; font-family: var(--font-serif); font-weight: 700; font-size: 15px; color: var(--sr-blue-dark); margin-bottom: 4px; }
   .register-grid .blurb { display: block; font-size: 12.5px; color: var(--sr-gray-text); line-height: 1.5; }
 
+  .visa-service-callout { background: #fff8e1; border: 1px solid #f1d28a; border-left: 5px solid #f5b041; padding: 20px 22px; border-radius: 4px; margin: 10px 0 28px; display: grid; grid-template-columns: 1fr; gap: 12px; align-items: center; }
+  @media (min-width: 760px) { .visa-service-callout { grid-template-columns: 1.6fr 1fr; } }
+  .visa-service-callout .kicker { font-size: 12px; text-transform: uppercase; letter-spacing: 1.2px; color: var(--sr-red); font-weight: 700; margin-bottom: 5px; }
+  .visa-service-callout h2 { font-family: var(--font-serif); color: var(--sr-blue-dark); font-size: 22px; line-height: 1.25; margin: 0 0 8px; }
+  .visa-service-callout p { font-size: 14.5px; color: var(--sr-dark-text); line-height: 1.6; margin: 0; }
+  .visa-service-callout .price { background: #fff; border: 1px solid #efd48d; border-radius: 4px; padding: 13px 15px; }
+  .visa-service-callout .price strong { display: block; font-family: var(--font-serif); color: var(--sr-red); font-size: 30px; line-height: 1.1; }
+  .visa-service-callout .price span { display: block; color: var(--sr-gray-text); font-size: 12.5px; line-height: 1.45; margin-top: 5px; }
+  .visa-service-callout .cta { display: inline-block; margin-top: 12px; padding: 9px 15px; border-radius: 3px; background: var(--sr-red); color: #fff; text-decoration: none; font-size: 13px; font-weight: 700; }
+  .visa-service-callout .cta:hover { background: #a01d18; color: #fff; }
+
   /* "Show top N" collapsible sections — items beyond data-limit are hidden
      until the user clicks "See all". Limits supported: 2, 3, 4. */
   .section-collapsed[data-limit="2"] > :nth-child(n+3),
@@ -205,6 +216,23 @@
     <span style="display:inline-block; margin-top: 6px;">Applying on the e-visa portal? &nbsp;
     <a href="{{ us_embassy_eguide_url }}" target="_blank" rel="noopener" style="color: var(--sr-blue); font-weight: 600;">Embassy Application Instructions &rarr;</a></span>
   </p>
+
+  <div class="visa-service-callout">
+    <div>
+      <div class="kicker">New service · Same-day application filing</div>
+      <h2>Need help filing the Venezuela e-visa application?</h2>
+      <p>
+        We review your documents, prepare the Cancillería Digital filing,
+        submit complete packages the same business day, and monitor ministry
+        follow-up. Approval is never guaranteed by any private service.
+      </p>
+      <a class="cta" href="/get-venezuela-visa">Get Venezuela visa help &rarr;</a>
+    </div>
+    <div class="price">
+      <strong>$49.99</strong>
+      <span>Launch special this month. Regular service fee $79.99; government fees are separate.</span>
+    </div>
+  </div>
 
   <div class="pillbar" aria-label="Jump to a reference section">
     <a href="#embassies">Embassies</a>

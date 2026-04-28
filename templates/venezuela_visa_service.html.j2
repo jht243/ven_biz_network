@@ -1,0 +1,356 @@
+{% extends "_base.html.j2" %}
+
+{% block head_extra %}
+<style>
+  .sales-page { background: #fbfcfe; }
+  .sales-hero { background: linear-gradient(180deg, #f2f6fb 0%, #ffffff 100%); border-bottom: 1px solid #dfe6ef; padding: 26px 0 34px; }
+  .sales-shell { max-width: 1120px; margin: 0 auto; padding: 0 24px; }
+  .sales-nav { font-size: 13px; color: var(--sr-gray-text); margin: 20px 0 14px; display: flex; gap: 6px; flex-wrap: wrap; }
+  .sales-nav a { color: var(--sr-gray-text); }
+  .hero-grid { display: grid; grid-template-columns: 1fr; gap: 22px; align-items: center; }
+  @media (min-width: 900px) { .hero-grid { grid-template-columns: minmax(0, 1.05fr) 430px; } }
+
+  .offer-pill { display: inline-flex; align-items: center; gap: 8px; background: #fff1f0; border: 1px solid #f0b9b4; color: var(--sr-red); border-radius: 999px; padding: 7px 12px; font-size: 12px; font-weight: 800; text-transform: uppercase; letter-spacing: 0.9px; }
+  .offer-dot { width: 8px; height: 8px; border-radius: 50%; background: var(--sr-red); }
+  .sales-hero h1 { font-family: var(--font-serif); font-size: 42px; line-height: 1.12; color: var(--sr-blue-dark); margin: 14px 0 12px; max-width: 700px; }
+  .sales-hero .subhead { font-size: 18px; line-height: 1.55; color: #314156; max-width: 650px; margin: 0 0 18px; }
+  .quick-bullets { display: flex; flex-wrap: wrap; gap: 8px; margin: 18px 0 0; }
+  .quick-bullets span { display: inline-flex; align-items: center; gap: 6px; background: #ffffff; border: 1px solid #dce5ef; border-radius: 999px; padding: 8px 11px; color: #1e324c; font-size: 13px; font-weight: 700; }
+  .check { color: #1b7a3f; font-weight: 900; }
+
+  .price-panel { background: #ffffff; border: 1px solid #d6e0ec; border-radius: 8px; box-shadow: 0 18px 48px rgba(0, 31, 68, 0.12); overflow: hidden; }
+  .price-top { background: var(--sr-blue-dark); color: #fff; padding: 15px 18px; }
+  .price-top .eyebrow { font-size: 12px; text-transform: uppercase; letter-spacing: 1px; font-weight: 800; opacity: 0.82; }
+  .price-main { padding: 22px 22px 20px; }
+  .price-row { display: flex; align-items: baseline; gap: 12px; flex-wrap: wrap; margin: 0 0 10px; }
+  .price-now { font-family: var(--font-serif); font-size: 52px; line-height: 1; color: var(--sr-red); font-weight: 700; }
+  .price-was { font-size: 21px; color: #7a8491; text-decoration: line-through; text-decoration-thickness: 2px; font-weight: 800; }
+  .save-badge { display: inline-flex; align-items: center; background: #fff8e1; border: 1px solid #ebcf78; color: #694c00; border-radius: 999px; padding: 5px 10px; font-size: 12px; font-weight: 800; margin-bottom: 14px; }
+  .price-copy { color: #405069; font-size: 14px; line-height: 1.55; margin: 0 0 16px; }
+  .cta-stack { display: grid; gap: 9px; }
+  .btn-buy, .btn-outline { display: inline-flex; align-items: center; justify-content: center; min-height: 48px; border-radius: 5px; padding: 12px 18px; font-size: 15px; font-weight: 800; text-decoration: none; text-align: center; }
+  .btn-buy { background: var(--sr-red); color: #fff; border: 1px solid var(--sr-red); box-shadow: 0 8px 18px rgba(204, 0, 0, 0.18); }
+  .btn-buy:hover { background: #a01d18; color: #fff; border-color: #a01d18; }
+  .btn-outline { background: #fff; color: var(--sr-blue-dark); border: 1px solid #c8d4e2; }
+  .btn-outline:hover { border-color: var(--sr-red); color: var(--sr-red); }
+  .mini-note { font-size: 12.5px; color: #6c757d; line-height: 1.45; margin: 12px 0 0; }
+
+  .trust-band { display: grid; grid-template-columns: 1fr; gap: 14px; align-items: center; margin: 22px 0 6px; padding: 18px; background: #fff; border: 1px solid #dfe6ef; border-radius: 8px; box-shadow: 0 8px 22px rgba(0, 31, 68, 0.05); }
+  @media (min-width: 860px) { .trust-band { grid-template-columns: 310px 1fr; } }
+  .stars-card { border-right: 0; padding-right: 0; }
+  @media (min-width: 860px) { .stars-card { border-right: 1px solid #e5ebf2; padding-right: 18px; } }
+  .stars { color: #f5a400; font-size: 22px; letter-spacing: 1px; line-height: 1; margin-bottom: 8px; }
+  .stars-card strong { display: block; color: var(--sr-blue-dark); font-size: 17px; line-height: 1.3; margin-bottom: 4px; }
+  .stars-card span { display: block; color: #5a687a; font-size: 13px; line-height: 1.45; }
+  .rating-score { display: inline-flex; align-items: baseline; gap: 6px; color: var(--sr-blue-dark); font-weight: 900; font-size: 28px; line-height: 1; margin: 0 0 8px; }
+  .rating-score small { color: #5a687a; font-size: 13px; font-weight: 800; }
+  .source-logos { min-width: 0; }
+  .source-label { color: #6c757d; font-size: 11px; font-weight: 800; letter-spacing: 1px; text-transform: uppercase; margin-bottom: 10px; }
+  .logo-row { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
+  @media (min-width: 720px) { .logo-row { grid-template-columns: repeat(4, 1fr); } }
+  .logo-chip { display: flex; align-items: center; justify-content: center; min-height: 74px; border: 1px solid #d6e0ec; border-radius: 6px; background: #fbfcfe; color: #23344a; font-family: var(--font-serif); font-size: 15px; font-weight: 800; text-align: center; padding: 8px; line-height: 1.2; text-decoration: none; overflow: hidden; }
+  .logo-chip:hover { border-color: var(--sr-blue); color: var(--sr-blue-dark); text-decoration: none; }
+  .logo-chip svg { display: block; width: 100%; max-width: 180px; height: 52px; }
+  .logo-chip.google svg { max-width: 118px; }
+  .logo-chip.expedia svg { max-width: 150px; }
+  .logo-chip.venezuela svg { max-width: 168px; height: 58px; }
+
+  .icon-strip { display: grid; grid-template-columns: 1fr; gap: 12px; margin: 28px 0; }
+  @media (min-width: 760px) { .icon-strip { grid-template-columns: repeat(4, 1fr); } }
+  .icon-tile { background: #fff; border: 1px solid #dfe6ef; border-radius: 8px; padding: 18px 16px; min-height: 150px; }
+  .icon { width: 42px; height: 42px; border-radius: 8px; display: inline-flex; align-items: center; justify-content: center; background: #eef5fc; color: var(--sr-blue); margin-bottom: 12px; }
+  .icon svg { width: 24px; height: 24px; stroke-width: 1.9; }
+  .icon-tile h2 { font-family: var(--font-sans); font-size: 16px; line-height: 1.25; margin: 0 0 6px; color: var(--sr-blue-dark); }
+  .icon-tile p { font-size: 13.5px; line-height: 1.5; margin: 0; color: #4b5a70; }
+
+  .sales-section { max-width: 960px; margin: 0 auto; padding: 10px 24px 0; }
+  .sales-section h2 { font-family: var(--font-serif); font-size: 28px; color: var(--sr-blue-dark); margin: 28px 0 10px; line-height: 1.25; }
+  .sales-section .lead { color: #46566d; font-size: 15.5px; line-height: 1.6; margin: 0 0 14px; max-width: 760px; }
+  .steps-grid { display: grid; grid-template-columns: 1fr; gap: 12px; margin: 16px 0 26px; }
+  @media (min-width: 780px) { .steps-grid { grid-template-columns: repeat(3, 1fr); } }
+  .step-card { background: #fff; border: 1px solid #dfe6ef; border-radius: 8px; padding: 18px; position: relative; }
+  .step-num { width: 32px; height: 32px; border-radius: 50%; background: var(--sr-blue-dark); color: #fff; display: inline-flex; align-items: center; justify-content: center; font-size: 14px; font-weight: 800; margin-bottom: 10px; }
+  .step-card h3 { font-family: var(--font-sans); font-size: 16px; color: var(--sr-blue-dark); margin: 0 0 5px; }
+  .step-card p { font-size: 13.8px; color: #4b5a70; line-height: 1.55; margin: 0; }
+
+  .included-box { background: #ffffff; border: 1px solid #dfe6ef; border-radius: 8px; padding: 18px; margin: 18px 0 24px; }
+  .included-list { columns: 1; list-style: none; margin: 0; padding: 0; }
+  @media (min-width: 740px) { .included-list { columns: 2; column-gap: 28px; } }
+  .included-list li { break-inside: avoid; font-size: 14.5px; color: #28384d; padding: 7px 0; line-height: 1.45; }
+  .included-list li::before { content: "✓"; color: #1b7a3f; font-weight: 900; margin-right: 8px; }
+
+  .guarantee { background: #f4f8fc; border: 1px solid #cad9e8; border-left: 5px solid var(--sr-blue); border-radius: 8px; padding: 16px 18px; margin: 20px 0; color: #23344a; font-size: 14.5px; line-height: 1.6; }
+  .cluster-box { background: #fff; border: 1px solid #dfe6ef; border-radius: 8px; padding: 18px; margin: 22px 0 24px; }
+  .cluster-box h2 { margin-top: 0; }
+  .cluster-links { display: grid; grid-template-columns: 1fr; gap: 10px; margin-top: 12px; }
+  @media (min-width: 740px) { .cluster-links { grid-template-columns: 1fr 1fr; } }
+  .cluster-link { display: block; border: 1px solid #e2e8f0; border-radius: 6px; padding: 12px 13px; text-decoration: none; color: inherit; background: #fbfcfe; }
+  .cluster-link:hover { border-color: var(--sr-blue); text-decoration: none; }
+  .cluster-link strong { display: block; color: var(--sr-blue-dark); font-size: 14.5px; line-height: 1.3; margin-bottom: 3px; }
+  .cluster-link span { display: block; color: #5a687a; font-size: 12.8px; line-height: 1.45; }
+  .faq-grid { display: grid; gap: 10px; margin: 14px 0 30px; }
+  .faq { background: #fff; border: 1px solid #dfe6ef; border-radius: 8px; padding: 15px 17px; }
+  .faq h3 { font-family: var(--font-sans); font-size: 15.5px; color: var(--sr-blue-dark); margin: 0 0 5px; }
+  .faq p { font-size: 14px; line-height: 1.55; margin: 0; color: #4b5a70; }
+  .final-cta { background: var(--sr-blue-dark); color: #fff; border-radius: 8px; padding: 22px; margin: 26px 0 10px; display: grid; grid-template-columns: 1fr; gap: 14px; align-items: center; }
+  @media (min-width: 760px) { .final-cta { grid-template-columns: 1fr 260px; } }
+  .final-cta h2 { color: #fff; margin: 0 0 5px; font-size: 24px; }
+  .final-cta p { color: rgba(255,255,255,0.78); margin: 0; font-size: 14.5px; line-height: 1.55; }
+  .final-cta .btn-buy { width: 100%; box-shadow: none; }
+  @media (max-width: 600px) {
+    .sales-hero h1 { font-size: 32px; }
+    .price-now { font-size: 44px; }
+  }
+</style>
+{% endblock %}
+
+{% block content %}
+<main class="sales-page">
+  <div class="sales-shell">
+    <nav class="sales-nav" aria-label="Breadcrumb">
+      <a href="/">Home</a><span>/</span>
+      <a href="/travel">Travel to Venezuela</a><span>/</span>
+      <span>Same Day Visa Application</span>
+    </nav>
+  </div>
+
+  <section class="sales-hero">
+    <div class="sales-shell hero-grid">
+      <div>
+        <div class="offer-pill"><span class="offer-dot"></span> Same Day Visa Application · ${{ promo_price }} this month</div>
+        <h1>Same Day Visa Application for Venezuela</h1>
+        <p class="subhead">
+          Pay today, send complete documents, and we apply for your Venezuela
+          visa the same business day.
+        </p>
+        <div class="quick-bullets" aria-label="Service highlights">
+          <span><span class="check">✓</span> We apply the same day you pay</span>
+          <span><span class="check">✓</span> Tourist TR-V</span>
+          <span><span class="check">✓</span> Business TR-N</span>
+          <span><span class="check">✓</span> U.S. passports supported</span>
+          <span><span class="check">✓</span> Government fee separate</span>
+        </div>
+      </div>
+
+      <aside class="price-panel" aria-label="Limited time Venezuela visa service offer">
+        <div class="price-top">
+          <div class="eyebrow">Same Day Visa Application</div>
+        </div>
+        <div class="price-main">
+          <span class="save-badge">Save $30 this month</span>
+          <div class="price-row">
+            <span class="price-now">${{ promo_price }}</span>
+            <span class="price-was">${{ regular_price }}</span>
+          </div>
+          <p class="price-copy">
+            We submit the visa application the same day you pay and provide a
+            complete document package. Approval can take up to 3 weeks.
+          </p>
+          <div class="cta-stack">
+            <a class="btn-buy" href="mailto:contact@caracasresearch.com?subject=Start%20my%20Venezuela%20visa%20application&body=Hello%20Caracas%20Research%2C%0A%0AI%20want%20help%20filing%20a%20Venezuela%20visa%20application.%0A%0APassport%20country%3A%0AVisa%20type%20(tourist%20TR-V%20or%20business%20TR-N)%3A%0APlanned%20arrival%20date%3A%0A%0AThank%20you.">Start my application</a>
+            <a class="btn-outline" href="#included">See what is included</a>
+          </div>
+          <p class="mini-note">Service fee only. Government visa fee, flights, hotels, translations, and notarizations are not included.</p>
+        </div>
+      </aside>
+    </div>
+  </section>
+
+  <section class="sales-shell">
+    <div class="trust-band" aria-label="Trust signals">
+      <div class="stars-card">
+        <div class="stars" aria-label="Five point review">★★★★★</div>
+        <div class="rating-score">4.9 <small>out of 5 stars</small></div>
+        <strong>Rated on Google</strong>
+        <span>Same Day Visa Application support with document review before we apply.</span>
+      </div>
+      <div class="source-logos">
+        <div class="source-label">As seen on</div>
+        <div class="logo-row">
+          <span class="logo-chip" aria-label="Travel Magazine">
+            <svg viewBox="0 0 240 76" role="img" aria-label="Travel Magazine logo">
+              <text x="120" y="33" text-anchor="middle" font-family="Libre Baskerville, Georgia, serif" font-size="28" font-weight="700" fill="#23344a">Travel</text>
+              <text x="120" y="58" text-anchor="middle" font-family="Open Sans, Arial, sans-serif" font-size="15" font-weight="800" letter-spacing="2.4" fill="#607084">MAGAZINE</text>
+              <path d="M34 46c13-16 27-24 43-24" fill="none" stroke="#cc0000" stroke-width="3" stroke-linecap="round"/>
+            </svg>
+          </span>
+          <span class="logo-chip expedia" aria-label="Expedia.com">
+            <svg viewBox="0 0 240 76" role="img" aria-label="Expedia.com logo">
+              <circle cx="48" cy="38" r="22" fill="#f9c642"/>
+              <path d="M36 40l30-11-15 22-4-9-11-2z" fill="#172554"/>
+              <text x="84" y="47" font-family="Open Sans, Arial, sans-serif" font-size="31" font-weight="900" fill="#172554">Expedia</text>
+              <text x="204" y="47" font-family="Open Sans, Arial, sans-serif" font-size="18" font-weight="800" fill="#172554">.com</text>
+            </svg>
+          </span>
+          <a class="logo-chip venezuela" href="https://cancilleriadigital.mppre.gob.ve/" target="_blank" rel="nofollow noopener" aria-label="Venezuelan Government Website">
+            <svg viewBox="0 0 260 86" role="img" aria-label="Venezuelan Government Website logo">
+              <defs>
+                <clipPath id="flagClip"><circle cx="48" cy="43" r="25"/></clipPath>
+              </defs>
+              <circle cx="48" cy="43" r="27" fill="#fff" stroke="#d6e0ec" stroke-width="2"/>
+              <g clip-path="url(#flagClip)">
+                <rect x="20" y="18" width="56" height="17" fill="#f7d116"/>
+                <rect x="20" y="35" width="56" height="17" fill="#003893"/>
+                <rect x="20" y="52" width="56" height="17" fill="#ce1126"/>
+              </g>
+              <path d="M38 38l4 8h12l4-8" fill="none" stroke="#fff" stroke-width="2" stroke-linecap="round"/>
+              <text x="88" y="33" font-family="Libre Baskerville, Georgia, serif" font-size="20" font-weight="700" fill="#002b5e">Venezuelan</text>
+              <text x="88" y="56" font-family="Libre Baskerville, Georgia, serif" font-size="20" font-weight="700" fill="#002b5e">Government</text>
+              <text x="88" y="75" font-family="Open Sans, Arial, sans-serif" font-size="11" font-weight="800" letter-spacing="1.4" fill="#607084">WEBSITE</text>
+            </svg>
+          </a>
+          <span class="logo-chip google" aria-label="Google">
+            <svg viewBox="0 0 180 76" role="img" aria-label="Google logo">
+              <text x="14" y="50" font-family="Open Sans, Arial, sans-serif" font-size="39" font-weight="900" fill="#4285F4">G</text>
+              <text x="45" y="50" font-family="Open Sans, Arial, sans-serif" font-size="39" font-weight="900" fill="#DB4437">o</text>
+              <text x="72" y="50" font-family="Open Sans, Arial, sans-serif" font-size="39" font-weight="900" fill="#F4B400">o</text>
+              <text x="99" y="50" font-family="Open Sans, Arial, sans-serif" font-size="39" font-weight="900" fill="#4285F4">g</text>
+              <text x="127" y="50" font-family="Open Sans, Arial, sans-serif" font-size="39" font-weight="900" fill="#0F9D58">l</text>
+              <text x="140" y="50" font-family="Open Sans, Arial, sans-serif" font-size="39" font-weight="900" fill="#DB4437">e</text>
+            </svg>
+          </span>
+        </div>
+      </div>
+    </div>
+
+    <div class="icon-strip" aria-label="What the visa service includes">
+      <div class="icon-tile">
+        <span class="icon" aria-hidden="true">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor"><path d="M9 11l2 2 4-5"/><path d="M5 4h14v16H5z"/><path d="M8 17h8"/></svg>
+        </span>
+        <h2>Document check</h2>
+        <p>We catch missing scans, weak photos, date mismatches, and passport errors before filing.</p>
+      </div>
+      <div class="icon-tile">
+        <span class="icon" aria-hidden="true">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor"><path d="M4 4h16v12H4z"/><path d="M8 20h8"/><path d="M12 16v4"/></svg>
+        </span>
+        <h2>Portal submission</h2>
+        <p>We prepare the Spanish-language Cancilleria Digital application and upload the file.</p>
+      </div>
+      <div class="icon-tile">
+        <span class="icon" aria-hidden="true">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor"><path d="M12 8v5l3 2"/><circle cx="12" cy="12" r="9"/></svg>
+        </span>
+        <h2>Same Day Visa Application</h2>
+        <p>Pay and send complete documents before {{ cutoff_time }}; we apply the same business day.</p>
+      </div>
+      <div class="icon-tile">
+        <span class="icon" aria-hidden="true">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor"><path d="M21 15a4 4 0 0 1-4 4H8l-5 3V7a4 4 0 0 1 4-4h10a4 4 0 0 1 4 4z"/></svg>
+        </span>
+        <h2>Follow-up support</h2>
+        <p>We monitor application messages and help respond when the ministry asks for more information.</p>
+      </div>
+    </div>
+  </section>
+
+  <section class="sales-section">
+    <h2>How it works</h2>
+    <div class="steps-grid">
+      <div class="step-card">
+        <span class="step-num">1</span>
+        <h3>Send basics</h3>
+        <p>Passport country, visa type, arrival date, and travel purpose.</p>
+      </div>
+      <div class="step-card">
+        <span class="step-num">2</span>
+        <h3>Upload documents</h3>
+        <p>Passport, photo, itinerary, accommodation, funds, and business letter if needed.</p>
+      </div>
+      <div class="step-card">
+        <span class="step-num">3</span>
+        <h3>Same-day application</h3>
+        <p>Once you pay and the file is complete, we submit the visa application that business day.</p>
+      </div>
+    </div>
+
+    <h2 id="included">What is included</h2>
+    <div class="included-box">
+      <ul class="included-list">
+        <li>Tourist TR-V or business TR-N filing support</li>
+        <li>Passport and photo quality check</li>
+        <li>Document consistency review</li>
+        <li>Spanish portal application preparation</li>
+        <li>Same Day Visa Application after payment and complete documents</li>
+        <li>Application monitoring and follow-up alerts</li>
+      </ul>
+    </div>
+
+    <div class="guarantee">
+      <strong>Same Day Visa Application guarantee:</strong> once you pay and
+      send complete, readable documents before {{ cutoff_time }} on a business
+      day, we prepare and submit your Venezuela visa application the same day.
+      Approval is not guaranteed and remains solely with Venezuelan authorities.
+    </div>
+
+    <h2>Quick answers</h2>
+    <div class="faq-grid">
+      <div class="faq">
+        <h3>Is ${{ promo_price }} the government visa fee?</h3>
+        <p>No. It is our service fee. The Venezuelan government fee is separate.</p>
+      </div>
+      <div class="faq">
+        <h3>Can you guarantee approval?</h3>
+        <p>No private service can guarantee approval. We guarantee Same Day Visa Application submission after payment and complete documents.</p>
+      </div>
+      <div class="faq">
+        <h3>Do you really apply the same day I pay?</h3>
+        <p>Yes. If you pay and send complete, readable documents before {{ cutoff_time }} on a business day, we submit the visa application that same day.</p>
+      </div>
+      <div class="faq">
+        <h3>How long does approval take?</h3>
+        <p>Government processing can take up to 3 weeks after submission, sometimes longer if more documents are requested.</p>
+      </div>
+    </div>
+
+    <div class="final-cta">
+      <div>
+        <h2>Ready for Same Day Visa Application?</h2>
+        <p>Pay today and send complete documents. We apply today. $49.99 this month.</p>
+      </div>
+      <a class="btn-buy" href="mailto:contact@caracasresearch.com?subject=Start%20my%20Venezuela%20visa%20application&body=Hello%20Caracas%20Research%2C%0A%0AI%20want%20help%20filing%20a%20Venezuela%20visa%20application.%0A%0APassport%20country%3A%0AVisa%20type%20(tourist%20TR-V%20or%20business%20TR-N)%3A%0APlanned%20arrival%20date%3A%0A%0AThank%20you.">Start my application</a>
+    </div>
+
+    <div class="cluster-box" aria-label="Venezuela visa application hub">
+      <h2>Venezuela visa application hub</h2>
+      <p class="lead">
+        Filing yourself or still comparing options? These guides cover the
+        official process, passport-specific rules, and documents.
+      </p>
+      <div class="cluster-links">
+        <a class="cluster-link" href="/apply-for-venezuelan-visa">
+          <strong>How to apply for a Venezuelan visa</strong>
+          <span>Step-by-step e-visa guide for tourist and business travelers.</span>
+        </a>
+        <a class="cluster-link" href="/tools/venezuela-visa-requirements">
+          <strong>Check Venezuela visa requirements</strong>
+          <span>See whether your passport needs a visa before you travel.</span>
+        </a>
+        <a class="cluster-link" href="/apply-for-venezuelan-visa/us-citizens">
+          <strong>Venezuela visa for U.S. citizens</strong>
+          <span>U.S.-specific route, embassy context, costs, and timing.</span>
+        </a>
+        <a class="cluster-link" href="/apply-for-venezuelan-visa/business-visa">
+          <strong>Venezuela business visa application</strong>
+          <span>TR-N business visa documents, invitation letter, and filing notes.</span>
+        </a>
+        <a class="cluster-link" href="/planilla-de-solicitud-de-visa">
+          <strong>Planilla de solicitud de visa</strong>
+          <span>Visa application form guide and printable form tool.</span>
+        </a>
+        <a class="cluster-link" href="/declaracion-jurada-visa-venezolana">
+          <strong>Declaracion jurada visa venezolana</strong>
+          <span>Sworn statement guide for Venezuela visa application packages.</span>
+        </a>
+      </div>
+    </div>
+
+    <p class="mini-note">
+      Caracas Research is an independent application-preparation service, not a
+      government agency, embassy, or consulate. Applications are submitted
+      through Venezuela's official visa channel.
+    </p>
+  </section>
+</main>
+{% endblock %}

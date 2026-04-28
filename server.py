@@ -744,6 +744,233 @@ def _render_apply_visa(page: dict, *, canonical_path: str, title: str,
     return Response(html, mimetype="text/html")
 
 
+def _visa_service_jsonld(*, canonical: str, title: str, description: str,
+                         regular_price: str, promo_price: str) -> str:
+    """Build Product/Service + Offer + FAQ JSON-LD for the paid visa service."""
+    from calendar import monthrange as _monthrange
+    from datetime import datetime as _dt
+    from src.page_renderer import _base_url, _iso, settings as _s
+    import json as _json
+
+    base = _base_url()
+    now = _dt.utcnow()
+    promo_valid_until = f"{now.year}-{now.month:02d}-{_monthrange(now.year, now.month)[1]:02d}"
+    related_pages = [
+        {
+            "name": "How to apply for a Venezuelan visa",
+            "url": f"{base}/apply-for-venezuelan-visa",
+        },
+        {
+            "name": "Venezuela visa requirements by passport country",
+            "url": f"{base}/tools/venezuela-visa-requirements",
+        },
+        {
+            "name": "Venezuela visa for US citizens",
+            "url": f"{base}/apply-for-venezuelan-visa/us-citizens",
+        },
+        {
+            "name": "Venezuela business visa application",
+            "url": f"{base}/apply-for-venezuelan-visa/business-visa",
+        },
+        {
+            "name": "Venezuela visa application form",
+            "url": f"{base}/planilla-de-solicitud-de-visa",
+        },
+        {
+            "name": "Venezuela travel hub",
+            "url": f"{base}/travel",
+        },
+    ]
+
+    graph = [
+        {
+            "@type": "BreadcrumbList",
+            "itemListElement": [
+                {"@type": "ListItem", "position": 1, "name": "Home", "item": f"{base}/"},
+                {"@type": "ListItem", "position": 2, "name": "Travel to Venezuela", "item": f"{base}/travel"},
+                {"@type": "ListItem", "position": 3, "name": "Venezuela visa application service", "item": canonical},
+            ],
+        },
+        {
+            "@type": "Service",
+            "@id": f"{canonical}#service",
+            "name": "Venezuela visa application service",
+            "serviceType": "Visa application preparation and filing",
+            "areaServed": {"@type": "Country", "name": "Venezuela"},
+            "provider": {"@type": "Organization", "name": _s.site_name, "url": f"{base}/"},
+            "url": canonical,
+            "description": description,
+            "termsOfService": f"{base}/sources",
+            "isRelatedTo": [{"@type": "WebPage", "name": p["name"], "url": p["url"]} for p in related_pages],
+            "offers": {
+                "@type": "Offer",
+                "url": canonical,
+                "price": promo_price,
+                "priceCurrency": "USD",
+                "category": "Launch promotion",
+                "availability": "https://schema.org/InStock",
+                "priceValidUntil": promo_valid_until,
+            },
+        },
+        {
+            "@type": "Product",
+            "@id": f"{canonical}#product",
+            "name": "Venezuela e-visa application filing service",
+            "description": description,
+            "image": f"{base}/static/og-image.png?v=3",
+            "brand": {"@type": "Brand", "name": _s.site_name},
+            "offers": {
+                "@type": "Offer",
+                "price": promo_price,
+                "priceCurrency": "USD",
+                "priceSpecification": {
+                    "@type": "UnitPriceSpecification",
+                    "price": regular_price,
+                    "priceCurrency": "USD",
+                    "description": "Regular service fee before the current-month promotion.",
+                },
+            },
+        },
+        {
+            "@type": "FAQPage",
+            "@id": f"{canonical}#faq",
+            "mainEntity": [
+                {
+                    "@type": "Question",
+                    "name": "Can you guarantee Venezuela visa approval?",
+                    "acceptedAnswer": {
+                        "@type": "Answer",
+                        "text": "No. Caracas Research guarantees Same Day Visa Application submission after you pay and provide a complete, readable document package before the cutoff. Venezuelan authorities decide approval, denial, timing, and requests for more information.",
+                    },
+                },
+                {
+                    "@type": "Question",
+                    "name": "How fast can the Venezuela visa application be filed?",
+                    "acceptedAnswer": {
+                        "@type": "Answer",
+                        "text": "With our Same Day Visa Application service, complete, readable document packages are prepared and submitted the same business day after payment when received before the cutoff. Government processing is often around 2 to 3 weeks after submission and can run longer if authorities request more information.",
+                    },
+                },
+                {
+                    "@type": "Question",
+                    "name": "Is the service fee the same as the government visa fee?",
+                    "acceptedAnswer": {
+                        "@type": "Answer",
+                        "text": "No. The Caracas Research fee covers application preparation, document review, filing, and monitoring. Any Venezuelan government visa fee is separate and paid through the official application channel.",
+                    },
+                },
+            ],
+        },
+        {
+            "@type": "WebPage",
+            "@id": canonical,
+            "url": canonical,
+            "name": title,
+            "description": description,
+            "datePublished": _iso(now),
+            "dateModified": _iso(now),
+            "publisher": {"@type": "Organization", "name": _s.site_name, "url": f"{base}/"},
+            "inLanguage": "en-US",
+            "isPartOf": {"@type": "WebSite", "name": _s.site_name, "url": f"{base}/"},
+            "about": [
+                {"@type": "Thing", "name": "Venezuela visa application service"},
+                {"@type": "Thing", "name": "Venezuela e-visa"},
+                {"@type": "Thing", "name": "Cancilleria Digital"},
+            ],
+        },
+        {
+            "@type": "ItemList",
+            "@id": f"{canonical}#visa-cluster",
+            "name": "Venezuela visa application hub",
+            "itemListElement": [
+                {
+                    "@type": "ListItem",
+                    "position": idx,
+                    "name": page["name"],
+                    "url": page["url"],
+                }
+                for idx, page in enumerate(related_pages, start=1)
+            ],
+        },
+    ]
+    return _json.dumps({"@context": "https://schema.org", "@graph": graph}, ensure_ascii=False)
+
+
+@app.route("/get-venezuela-visa")
+@app.route("/get-venezuela-visa/")
+def venezuela_visa_service():
+    """Paid Venezuela visa application preparation and filing service."""
+    try:
+        from calendar import monthrange
+        from datetime import date as _date, datetime as _dt
+        from src.page_renderer import _env, _base_url, _iso, settings as _s
+
+        base = _base_url()
+        canonical = f"{base}/get-venezuela-visa"
+        title = "Same Day Venezuela Visa Application Help | $49.99"
+        description = (
+            "Same Day Visa Application for Venezuela: we apply the same day "
+            "you pay and send complete documents. $49.99 this month."
+        )
+        regular_price = "79.99"
+        promo_price = "49.99"
+        today = _date.today()
+        offer_expires = today.replace(day=monthrange(today.year, today.month)[1])
+        seo = {
+            "title": title,
+            "description": description,
+            "keywords": (
+                "same day Venezuela visa application, same day visa application, get Venezuela visa, Venezuela visa application service, how to apply "
+                "for Venezuelan visa, Venezuela e-visa help, Venezuela tourist visa "
+                "application, Venezuela business visa application, visa for Venezuela "
+                "US citizens, Cancilleria Digital visa"
+            ),
+            "canonical": canonical,
+            "site_name": _s.site_name,
+            "site_url": base,
+            "locale": _s.site_locale,
+            "og_image": f"{base}/static/og-image.png?v=3",
+            "og_type": "website",
+            "section": "Travel",
+            "published_iso": _iso(_dt.utcnow()),
+            "modified_iso": _iso(_dt.utcnow()),
+        }
+        jsonld = _visa_service_jsonld(
+            canonical=canonical,
+            title=title,
+            description=description,
+            regular_price=regular_price,
+            promo_price=promo_price,
+        )
+        template = _env.get_template("venezuela_visa_service.html.j2")
+        html = template.render(
+            seo=seo,
+            jsonld=jsonld,
+            regular_price=regular_price,
+            promo_price=promo_price,
+            current_month_label=today.strftime("%B"),
+            offer_expires=offer_expires.isoformat(),
+            cutoff_time="2:00 p.m. Caracas time",
+            current_year=today.year,
+            us_embassy_eguide_url=US_EMBASSY_VENEZUELA_EVISA_INSTRUCTIONS,
+        )
+        return Response(html, mimetype="text/html")
+    except HTTPException:
+        raise
+    except Exception as exc:
+        logger.exception("venezuela visa service render failed: %s", exc)
+        abort(500)
+
+
+@app.route("/venezuela-visa-service")
+@app.route("/venezuela-visa-service/")
+@app.route("/tools/venezuela-visa-application-service")
+@app.route("/tools/venezuela-visa-application-service/")
+def venezuela_visa_service_redirect():
+    """Compatibility aliases for users/searchers who expect a service URL."""
+    return redirect("/get-venezuela-visa", code=301)
+
+
 def _visa_document_landing_jsonld(*, canonical: str, title: str, description: str, headline: str) -> str:
     """BreadcrumbList + Article for planilla / declaración SEO landing pages."""
     import json as _json
@@ -1811,6 +2038,12 @@ def tools_index():
 
         tools = [
             {
+                "url": "/get-venezuela-visa",
+                "name": "Venezuela Visa Application Service",
+                "category": "Travel service",
+                "summary": "Paid same-day Venezuela e-visa application preparation and filing service: document review, Cancillería Digital submission, and application monitoring. $49.99 launch special this month; government fees separate.",
+            },
+            {
                 "url": "/tools/venezuela-trade-leads",
                 "name": "Venezuela Trade Leads for U.S. Companies",
                 "category": "Trade",
@@ -1881,9 +2114,9 @@ def tools_index():
         base = _base_url()
         canonical = f"{base}/tools"
         seo = {
-            "title": "Free Venezuela Investor Tools — Sanctions, BCV, ROI Calculator",
-            "description": "Free toolkit for evaluating Venezuelan exposure: ITA trade leads, OFAC sanctions screening, OFAC general license lookup, live BCV USD rate, sector ROI calculator, Caracas safety map, and visa requirements.",
-            "keywords": "Venezuela investor tools, Venezuela trade leads, ITA Venezuela, OFAC checker, BCV rate, Venezuela ROI calculator, Caracas safety, Venezuela visa",
+            "title": "Venezuela Investor Tools & Services — Sanctions, BCV, Visa",
+            "description": "Toolkit for evaluating Venezuelan exposure: ITA trade leads, OFAC sanctions screening, OFAC general license lookup, live BCV USD rate, ROI calculator, Caracas safety, visa requirements, and visa filing help.",
+            "keywords": "Venezuela investor tools, Venezuela trade leads, ITA Venezuela, OFAC checker, BCV rate, Venezuela ROI calculator, Caracas safety, Venezuela visa, Venezuela visa service",
             "canonical": canonical,
             "site_name": _s.site_name,
             "site_url": base,
@@ -4912,6 +5145,7 @@ def sitemap_xml():
         {"loc": f"{base}/research/sdn/", "lastmod": today_iso, "changefreq": "weekly", "priority": "0.85"},
         {"loc": f"{base}/calendar", "lastmod": today_iso, "changefreq": "daily", "priority": "0.7"},
         {"loc": f"{base}/travel", "lastmod": today_iso, "changefreq": "weekly", "priority": "0.8"},
+        {"loc": f"{base}/get-venezuela-visa", "lastmod": today_iso, "changefreq": "weekly", "priority": "0.85"},
         {"loc": f"{base}/sources", "lastmod": today_iso, "changefreq": "weekly", "priority": "0.6"},
         {"loc": f"{base}/briefing", "lastmod": today_iso, "changefreq": "daily", "priority": "0.9"},
         {"loc": f"{base}/tools", "lastmod": today_iso, "changefreq": "weekly", "priority": "0.8"},
