@@ -7,6 +7,21 @@
   .tool-form { display:flex; gap:8px; flex-wrap:wrap; margin:18px 0 22px; }
   .tool-form input, .tool-form select { padding:10px 12px; border:1px solid var(--sr-gray-light); border-radius:3px; font-size:14px; }
   .tool-form input { flex:1; min-width:240px; }
+  .pdf-download {
+    width:38px;
+    height:38px;
+    display:inline-flex;
+    align-items:center;
+    justify-content:center;
+    border:1px solid var(--sr-gray-light);
+    border-radius:3px;
+    color:var(--sr-blue-dark);
+    background:#fff;
+    text-decoration:none;
+    cursor:pointer;
+  }
+  .pdf-download:hover, .pdf-download:focus { border-color:var(--sr-blue-dark); background:var(--sr-gray-bg); }
+  .pdf-download svg { width:18px; height:18px; stroke:currentColor; }
   .stat-row { display:grid; grid-template-columns:repeat(4,minmax(0,1fr)); gap:10px; margin:18px 0 22px; }
   .stat { border-left:3px solid var(--sr-red); background:var(--sr-gray-bg); padding:12px 14px; }
   .stat strong { display:block; font-size:24px; color:var(--sr-blue-dark); }
@@ -56,6 +71,13 @@
       {% endfor %}
     </select>
     <button class="btn" type="submit">Search</button>
+    <button class="pdf-download" type="submit" formaction="/tools/venezuela-trade-leads.pdf" aria-label="Open filtered trade leads PDF" title="Open filtered trade leads PDF">
+      <svg viewBox="0 0 24 24" fill="none" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+        <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path>
+        <path d="M7 10l5 5 5-5"></path>
+        <path d="M12 15V3"></path>
+      </svg>
+    </button>
   </form>
 
   <table class="lead-table">

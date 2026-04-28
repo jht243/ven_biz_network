@@ -10,8 +10,10 @@ import gzip
 import hmac
 import io
 import logging
+import re
 import time
 from pathlib import Path
+from xml.sax.saxutils import escape as _xml_escape
 
 import httpx
 from flask import Flask, send_from_directory, abort, request, jsonify, Response, redirect
@@ -1467,20 +1469,13 @@ def tool_venezuela_trade_leads():
         query = (request.args.get("q") or "").strip()
         selected_sector = (request.args.get("sector") or "").strip()
 
-        leads = all_leads
-        if selected_sector:
-            leads = [l for l in leads if l.sector == selected_sector]
-        if query:
-            q = query.lower()
-            leads = [
-                l for l in leads
-                if q in l.equipment.lower()
-                or q in l.hs_code.lower()
-                or q in l.hs_description.lower()
-                or q in l.sector.lower()
-            ]
+        leads = _filter_ita_trade_leads(all_leads, query, selected_sector)
 
         stats = trade_lead_stats(all_leads)
+        query_string = request.query_string.decode("utf-8")
+        pdf_href = "/tools/venezuela-trade-leads.pdf"
+        if query_string:
+            pdf_href = f"{pdf_href}?{query_string}"
         seo, jsonld = _tool_seo_jsonld(
             slug="venezuela-trade-leads",
             title="Venezuela Trade Leads for U.S. Companies — ITA Opportunity Finder",
@@ -1528,6 +1523,7 @@ def tool_venezuela_trade_leads():
             selected_sector=selected_sector,
             source_row=source_row,
             resources=resources,
+            pdf_href=pdf_href,
             seo=seo,
             jsonld=jsonld,
             cluster_ctx=cluster_ctx,
@@ -1539,6 +1535,194 @@ def tool_venezuela_trade_leads():
         raise
     except Exception as exc:
         logger.exception("venezuela trade leads render failed: %s", exc)
+        abort(500)
+
+
+def _filter_ita_trade_leads(all_leads, query: str, selected_sector: str):
+    leads = all_leads
+    if selected_sector:
+        leads = [l for l in leads if l.sector == selected_sector]
+    if query:
+        q = query.lower()
+        leads = [
+            l for l in leads
+            if q in l.equipment.lower()
+            or q in l.hs_code.lower()
+            or q in l.hs_description.lower()
+            or q in l.sector.lower()
+        ]
+    return leads
+
+
+def _render_trade_leads_pdf(leads, all_count: int, query: str, selected_sector: str, source_row) -> bytes:
+    from datetime import datetime, timezone
+
+    from reportlab.lib import colors
+    from reportlab.lib.enums import TA_RIGHT
+    from reportlab.lib.pagesizes import letter, landscape
+    from reportlab.lib.styles import ParagraphStyle, getSampleStyleSheet
+    from reportlab.lib.units import inch
+    from reportlab.platypus import Paragraph, SimpleDocTemplate, Spacer, Table, TableStyle
+
+    styles = getSampleStyleSheet()
+    styles.add(ParagraphStyle(
+        name="CRSmall",
+        parent=styles["BodyText"],
+        fontSize=8,
+        leading=10,
+        textColor=colors.HexColor("#4f5b66"),
+    ))
+    styles.add(ParagraphStyle(
+        name="CRSmallRight",
+        parent=styles["CRSmall"],
+        alignment=TA_RIGHT,
+    ))
+    styles.add(ParagraphStyle(
+        name="CRHeader",
+        parent=styles["Heading1"],
+        fontName="Helvetica-Bold",
+        fontSize=18,
+        leading=22,
+        textColor=colors.HexColor("#17324d"),
+        spaceAfter=8,
+    ))
+    styles.add(ParagraphStyle(
+        name="CRBody",
+        parent=styles["BodyText"],
+        fontSize=9,
+        leading=11,
+        textColor=colors.HexColor("#1f2933"),
+    ))
+    styles.add(ParagraphStyle(
+        name="CRTableHeader",
+        parent=styles["CRBody"],
+        fontName="Helvetica-Bold",
+        textColor=colors.white,
+    ))
+
+    def para(text: object, style_name: str = "CRBody") -> Paragraph:
+        return Paragraph(_xml_escape(str(text or "")), styles[style_name])
+
+    buf = io.BytesIO()
+    doc = SimpleDocTemplate(
+        buf,
+        pagesize=landscape(letter),
+        leftMargin=0.45 * inch,
+        rightMargin=0.45 * inch,
+        topMargin=0.45 * inch,
+        bottomMargin=0.45 * inch,
+        title="Caracas Research - Venezuela Trade Leads",
+        author="Caracas Research",
+        subject="Filtered ITA Venezuela trade leads",
+        keywords="Venezuela, ITA, trade leads, export opportunities, HS codes",
+    )
+
+    generated_at = datetime.now(timezone.utc).strftime("%Y-%m-%d %H:%M UTC")
+    filters = []
+    if selected_sector:
+        filters.append(f"Sector: {selected_sector}")
+    if query:
+        filters.append(f"Search: {query}")
+    filter_label = "; ".join(filters) if filters else "None"
+    captured = source_row.created_at.strftime("%Y-%m-%d %H:%M UTC") if source_row else "fallback data"
+
+    flow = [
+        para("Venezuela Trade Leads for U.S. Companies", "CRHeader"),
+        para(
+            f"Filtered export from Caracas Research. Rows included: {len(leads)} of {all_count}. "
+            f"Filters: {filter_label}. Generated: {generated_at}.",
+        ),
+        para(
+            "Source: International Trade Administration Venezuela Trade Leads "
+            "(https://www.trade.gov/venezuela-trade-leads). Contact: tradevenezuela@trade.gov. "
+            f"Last captured by Caracas Research: {captured}.",
+            "CRSmall",
+        ),
+        Spacer(1, 10),
+    ]
+
+    table_data = [[
+        para("Sector", "CRTableHeader"),
+        para("Equipment", "CRTableHeader"),
+        para("Units", "CRTableHeader"),
+        para("HS code", "CRTableHeader"),
+        para("HS description", "CRTableHeader"),
+    ]]
+    for lead in leads:
+        table_data.append([
+            para(lead.sector),
+            para(lead.equipment),
+            para(f"{lead.units_requested:,}" if lead.units_requested else "-", "CRSmallRight"),
+            para(lead.hs_code),
+            para(lead.hs_description),
+        ])
+
+    if len(table_data) == 1:
+        table_data.append([
+            para("No matching leads"),
+            para(""),
+            para(""),
+            para(""),
+            para(""),
+        ])
+
+    table = Table(
+        table_data,
+        colWidths=[1.15 * inch, 2.25 * inch, 0.75 * inch, 0.9 * inch, 3.95 * inch],
+        repeatRows=1,
+    )
+    table.setStyle(TableStyle([
+        ("BACKGROUND", (0, 0), (-1, 0), colors.HexColor("#17324d")),
+        ("GRID", (0, 0), (-1, -1), 0.25, colors.HexColor("#d8dee4")),
+        ("VALIGN", (0, 0), (-1, -1), "TOP"),
+        ("LEFTPADDING", (0, 0), (-1, -1), 5),
+        ("RIGHTPADDING", (0, 0), (-1, -1), 5),
+        ("TOPPADDING", (0, 0), (-1, -1), 5),
+        ("BOTTOMPADDING", (0, 0), (-1, -1), 5),
+        ("ROWBACKGROUNDS", (0, 1), (-1, -1), [colors.white, colors.HexColor("#f7f9fb")]),
+    ]))
+    flow.append(table)
+    doc.build(flow)
+    return buf.getvalue()
+
+
+@app.route("/tools/venezuela-trade-leads.pdf")
+def tool_venezuela_trade_leads_pdf():
+    """PDF export of the currently filtered ITA Venezuela trade-leads table."""
+    try:
+        from datetime import date as _date
+        from src.data.ita_trade import latest_trade_leads
+
+        all_leads, source_row = latest_trade_leads()
+        query = (request.args.get("q") or "").strip()
+        selected_sector = (request.args.get("sector") or "").strip()
+        leads = _filter_ita_trade_leads(all_leads, query, selected_sector)
+        pdf_bytes = _render_trade_leads_pdf(
+            leads=leads,
+            all_count=len(all_leads),
+            query=query,
+            selected_sector=selected_sector,
+            source_row=source_row,
+        )
+
+        filename_bits = ["caracas-research-venezuela-trade-leads"]
+        if selected_sector:
+            filename_bits.append(selected_sector.lower().replace(" ", "-"))
+        if query:
+            cleaned_query = re.sub(r"[^a-z0-9]+", "-", query.lower()).strip("-")
+            if cleaned_query:
+                filename_bits.append(cleaned_query[:32])
+        filename_bits.append(_date.today().isoformat())
+        filename = "-".join(filename_bits) + ".pdf"
+
+        resp = Response(pdf_bytes, mimetype="application/pdf")
+        resp.headers["Content-Disposition"] = f'inline; filename="{filename}"'
+        resp.headers["Cache-Control"] = "no-store"
+        return resp
+    except HTTPException:
+        raise
+    except Exception as exc:
+        logger.exception("trade leads PDF export failed: %s", exc)
         abort(500)
 
 
