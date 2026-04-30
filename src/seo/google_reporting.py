@@ -9,7 +9,7 @@ from dataclasses import dataclass
 from datetime import date, datetime, timedelta, timezone
 from pathlib import Path
 from typing import Any
-from urllib.parse import quote
+from urllib.parse import quote, urlparse
 
 import httpx
 from google.auth.transport.requests import Request as GoogleAuthRequest
@@ -336,12 +336,14 @@ def _email_blurb(value: Any) -> str:
 
 def _short_url(value: Any) -> str:
     text = str(value or "").strip()
-    for prefix in ("https://", "http://"):
-        if text.startswith(prefix):
-            text = text[len(prefix):]
+    parsed = urlparse(text)
+    if parsed.scheme and parsed.netloc:
+        text = parsed.path or "/"
+        if parsed.query:
+            text = f"{text}?{parsed.query}"
     if len(text) <= 72:
         return text
-    return text[:45].rstrip("/") + "..." + text[-22:]
+    return text[:46].rstrip("/") + " ... " + text[-18:]
 
 
 def _escape(value: Any) -> str:
@@ -826,15 +828,17 @@ def build_seo_email_html(artifacts: list[ReportArtifact]) -> str:
             query = _escape(row.get("query", "") or "General page improvement")
             recommendation = _escape(row.get("recommendation", "Review this page for SEO improvements."))
             cards.append(
-                "<div style='background:#f8fafc;border:1px solid #dbe3ee;border-radius:12px;"
-                "padding:14px;margin:0 0 12px;'>"
-                f"<div style='font-size:12px;font-weight:700;color:#2563eb;text-transform:uppercase;"
-                f"letter-spacing:.04em;margin-bottom:8px;'>{idx}. {priority}</div>"
-                f"<div style='font-size:13px;color:#475569;margin-bottom:6px;word-break:break-word;'>"
-                f"<strong style='color:#111827;'>Page:</strong> {page}</div>"
-                f"<div style='font-size:13px;color:#475569;margin-bottom:10px;word-break:break-word;'>"
-                f"<strong style='color:#111827;'>Query:</strong> {query}</div>"
-                f"<div style='font-size:15px;line-height:1.45;color:#111827;'>{recommendation}</div>"
+                "<div style='background:#fffaf0;border:1px solid #ead7b7;border-radius:14px;"
+                "padding:15px;margin:0 0 12px;'>"
+                f"<div style='display:inline-block;background:#f4ead7;color:#7c2d12;border-radius:999px;"
+                f"padding:5px 9px;font-size:11px;font-weight:800;text-transform:uppercase;"
+                f"letter-spacing:.05em;margin-bottom:10px;'>Recommendation {idx} · {priority}</div>"
+                f"<div style='font-size:13px;color:#6b4e2e;margin-bottom:6px;word-break:break-word;'>"
+                f"<strong style='color:#111827;'>Page</strong><br>{page}</div>"
+                f"<div style='font-size:13px;color:#6b4e2e;margin-bottom:10px;word-break:break-word;'>"
+                f"<strong style='color:#111827;'>Search query</strong><br>{query}</div>"
+                f"<div style='border-top:1px solid #ead7b7;padding-top:10px;font-size:15px;"
+                f"line-height:1.48;color:#111827;'>{recommendation}</div>"
                 "</div>"
             )
         return "".join(cards)
@@ -848,10 +852,10 @@ def build_seo_email_html(artifacts: list[ReportArtifact]) -> str:
             query = _escape(row.get("query", "") or "General")
             reason = _escape(row.get("reason", "Monitor this signal."))
             cards.append(
-                "<div style='border-top:1px solid #e5e7eb;padding:12px 0;'>"
-                f"<div style='font-size:13px;color:#111827;font-weight:700;word-break:break-word;'>{query}</div>"
-                f"<div style='font-size:12px;color:#64748b;margin:4px 0;word-break:break-word;'>{page}</div>"
-                f"<div style='font-size:13px;color:#475569;line-height:1.4;'>{reason}</div>"
+                "<div style='border-top:1px solid #e5e7eb;padding:13px 0;'>"
+                f"<div style='font-size:13px;color:#111827;font-weight:800;word-break:break-word;'>{query}</div>"
+                f"<div style='font-size:12px;color:#64748b;margin:5px 0;word-break:break-word;'>{page}</div>"
+                f"<div style='font-size:13px;color:#475569;line-height:1.45;'>{reason}</div>"
                 "</div>"
             )
         return "".join(cards)
@@ -902,7 +906,7 @@ def build_seo_email_html(artifacts: list[ReportArtifact]) -> str:
 <html>
   <body style="margin:0;background:#eef2f7;font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Arial,sans-serif;color:#111827;">
     <div style="max-width:640px;margin:0 auto;padding:18px;">
-      <div style="background:#0f172a;color:#ffffff;border-radius:18px;padding:20px;">
+      <div style="background:#161616;color:#ffffff;border-radius:20px;padding:20px;">
         <div style="font-size:13px;color:#cbd5e1;text-transform:uppercase;letter-spacing:.08em;margin-bottom:6px;">Daily SEO memo</div>
         <h1 style="margin:0;font-size:24px;line-height:1.2;color:#ffffff;">{settings.site_name}</h1>
         <p style="margin:10px 0 0;font-size:18px;font-weight:800;color:#ffffff;">{decision_text}</p>
@@ -928,13 +932,19 @@ def build_seo_email_html(artifacts: list[ReportArtifact]) -> str:
         <p style="margin:0;color:#334155;line-height:1.5;font-size:15px;">{why_text}</p>
       </div>
 
-      <div style="background:#ffffff;padding:16px;border:1px solid #dbe3ee;border-radius:16px;margin-bottom:14px;">
-        <h2 style="margin:0 0 12px;font-size:18px;color:#111827;">Suggested updates</h2>
+      <div style="margin:18px 0 8px;border-top:1px solid #cfd8e3;"></div>
+
+      <div style="background:#ffffff;padding:16px;border:1px solid #d9c6a5;border-radius:16px;margin-bottom:14px;">
+        <div style="font-size:12px;color:#7c2d12;text-transform:uppercase;letter-spacing:.08em;font-weight:800;margin-bottom:5px;">What to do</div>
+        <h2 style="margin:0 0 12px;font-size:19px;color:#111827;">Suggested updates</h2>
         {recommendation_cards(suggested_rows)}
       </div>
 
+      <div style="margin:18px 0 8px;border-top:1px solid #cfd8e3;"></div>
+
       <div style="background:#ffffff;padding:16px;border:1px solid #dbe3ee;border-radius:16px;margin-bottom:14px;">
-        <h2 style="margin:0 0 12px;font-size:18px;color:#111827;">At-a-glance data</h2>
+        <div style="font-size:12px;color:#64748b;text-transform:uppercase;letter-spacing:.08em;font-weight:800;margin-bottom:5px;">Signals</div>
+        <h2 style="margin:0 0 12px;font-size:19px;color:#111827;">At-a-glance data</h2>
         <ul style="margin:0;padding-left:18px;color:#334155;line-height:1.55;font-size:14px;">
           <li><strong style="color:#111827;">Top GSC page:</strong> <span style="word-break:break-word;color:#334155;">{_escape(top_page_label)}</span></li>
           <li><strong style="color:#111827;">Top GSC query:</strong> <span style="word-break:break-word;color:#334155;">{_escape(top_query_label)}</span></li>
@@ -945,7 +955,8 @@ def build_seo_email_html(artifacts: list[ReportArtifact]) -> str:
       </div>
 
       <div style="background:#ffffff;padding:16px;border:1px solid #dbe3ee;border-radius:16px;margin-bottom:14px;">
-        <h2 style="margin:0 0 2px;font-size:18px;color:#111827;">Watch next</h2>
+        <div style="font-size:12px;color:#64748b;text-transform:uppercase;letter-spacing:.08em;font-weight:800;margin-bottom:5px;">Monitor</div>
+        <h2 style="margin:0 0 2px;font-size:19px;color:#111827;">Watch next</h2>
         {watch_cards(watch_rows)}
       </div>
 
