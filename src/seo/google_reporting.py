@@ -316,6 +316,23 @@ def _analysis_text(value: Any) -> str:
     return json.dumps(value, ensure_ascii=False, indent=2)
 
 
+def _email_blurb(value: Any) -> str:
+    if isinstance(value, str):
+        return value
+    if isinstance(value, dict):
+        parts: list[str] = []
+        for item in value.values():
+            if isinstance(item, str):
+                parts.append(item)
+            elif isinstance(item, dict):
+                for nested in item.values():
+                    if isinstance(nested, str):
+                        parts.append(nested)
+        if parts:
+            return " ".join(parts[:2])
+    return "The LLM reviewed GSC and GA4 separately, then combined them into the recommendations below."
+
+
 def _artifact_map(artifacts: list[ReportArtifact]) -> dict[str, ReportArtifact]:
     return {a.name: a for a in artifacts}
 
@@ -497,6 +514,8 @@ def _llm_decision(artifacts: list[ReportArtifact]) -> dict[str, Any]:
                     "content": (
                         "Return strict JSON with keys: decision, update_recommended, data_check, "
                         "gsc_analysis, ga4_analysis, combined_analysis, recommended_updates, watchlist. "
+                        "gsc_analysis, ga4_analysis, and combined_analysis must be concise plain-English "
+                        "strings of 1-3 sentences each, not nested objects. "
                         "decision should usually be 'SEO updates recommended.' because the report must "
                         "produce practical suggestions. recommended_updates must be a list of objects with "
                         "priority, source, page, query, evidence, recommendation. watchlist must be a list "
@@ -778,7 +797,6 @@ def build_seo_email_html(artifacts: list[ReportArtifact]) -> str:
     decisions = _compute_decisions(artifacts)
     gsc_pages = amap.get("gsc_pages").rows if amap.get("gsc_pages") else []
     gsc_queries = amap.get("gsc_queries").rows if amap.get("gsc_queries") else []
-    gsc_daily = amap.get("gsc_daily").rows if amap.get("gsc_daily") else []
     ga_content = amap.get("ga_content_pages").rows if amap.get("ga_content_pages") else []
     ga_source = amap.get("ga_source_medium").rows if amap.get("ga_source_medium") else []
     ga_device = amap.get("ga_device").rows if amap.get("ga_device") else []
@@ -803,82 +821,52 @@ def build_seo_email_html(artifacts: list[ReportArtifact]) -> str:
             f"<thead><tr>{head}</tr></thead><tbody>{body}</tbody></table>"
         )
 
-    suggested_rows = decisions["page_query_candidates"][:8]
-    watch_rows = decisions["watchlist"][:10]
-    gsc_page_rows = [
-        {
-            "page": r.get("page", ""),
-            "impressions": _fmt_num(r.get("impressions")),
-            "clicks": _fmt_num(r.get("clicks")),
-            "ctr": _fmt_pct(_pct(r.get("ctr"))),
-            "position": _fmt_pos(r.get("position")),
-        }
-        for r in _top_rows(gsc_pages, "impressions", 8)
-    ]
-    gsc_query_rows = [
-        {
-            "query": r.get("query", ""),
-            "impressions": _fmt_num(r.get("impressions")),
-            "clicks": _fmt_num(r.get("clicks")),
-            "ctr": _fmt_pct(_pct(r.get("ctr"))),
-            "position": _fmt_pos(r.get("position")),
-        }
-        for r in _top_rows(gsc_queries, "impressions", 8)
-    ]
-    ga_content_rows = [
-        {
-            "pageTitle": r.get("pageTitle", ""),
-            "pagePathPlusQueryString": r.get("pagePathPlusQueryString", ""),
-            "screenPageViews": _fmt_num(r.get("screenPageViews")),
-            "sessions": _fmt_num(r.get("sessions")),
-        }
-        for r in _top_rows(ga_content, "screenPageViews", 8)
-    ]
-    ga_source_rows = [
-        {
-            "sessionSourceMedium": r.get("sessionSourceMedium", ""),
-            "sessions": _fmt_num(r.get("sessions")),
-            "totalUsers": _fmt_num(r.get("totalUsers")),
-            "engagementRate": _fmt_pct(_pct(r.get("engagementRate"))),
-        }
-        for r in _top_rows(ga_source, "sessions", 8)
-    ]
-    ga_device_rows = [
-        {
-            "deviceCategory": r.get("deviceCategory", ""),
-            "sessions": _fmt_num(r.get("sessions")),
-            "totalUsers": _fmt_num(r.get("totalUsers")),
-            "engagementRate": _fmt_pct(_pct(r.get("engagementRate"))),
-        }
-        for r in _top_rows(ga_device, "sessions", 8)
-    ]
-    trend_rows = [
-        {
-            "date": r.get("date", ""),
-            "impressions": _fmt_num(r.get("impressions")),
-            "clicks": _fmt_num(r.get("clicks")),
-            "ctr": _fmt_pct(_pct(r.get("ctr"))),
-            "position": _fmt_pos(r.get("position")),
-        }
-        for r in sorted(gsc_daily, key=lambda x: str(x.get("date", "")))[-10:]
-    ]
+    suggested_rows = decisions["page_query_candidates"][:3]
+    watch_rows = decisions["watchlist"][:3]
+    top_page = _top_rows(gsc_pages, "impressions", 1)
+    top_query = _top_rows(gsc_queries, "impressions", 1)
+    top_content = _top_rows(ga_content, "screenPageViews", 1)
+    organic = next(
+        (
+            r
+            for r in ga_source
+            if "google / organic" in str(r.get("sessionSourceMedium", "")).lower()
+        ),
+        None,
+    )
+    primary_device = _top_rows(ga_device, "sessions", 1)
+    search_ctr = (
+        decisions["total_gsc_clicks"] / decisions["total_gsc_impressions"] * 100
+        if decisions["total_gsc_impressions"]
+        else 0.0
+    )
+    top_page_label = top_page[0].get("page", "No GSC page data") if top_page else "No GSC page data"
+    top_query_label = top_query[0].get("query", "No GSC query data") if top_query else "No GSC query data"
+    top_content_label = (
+        top_content[0].get("pageTitle")
+        or top_content[0].get("pagePathPlusQueryString")
+        if top_content
+        else "No GA4 content data"
+    )
+    organic_sessions = _to_int(organic.get("sessions")) if organic else 0
+    device_label = primary_device[0].get("deviceCategory", "unknown") if primary_device else "unknown"
 
     decision_text = (
         "SEO updates recommended"
         if decisions["update_recommended"]
         else "No SEO updates recommended today"
     )
-    why_text = _analysis_text(decisions.get("combined_analysis")) or (
+    why_text = _email_blurb(decisions.get("combined_analysis")) or (
         "GSC and GA4 were analyzed separately, then combined into practical SEO recommendations."
     )
-    gsc_analysis_text = _analysis_text(decisions.get("gsc_analysis", ""))
-    ga4_analysis_text = _analysis_text(decisions.get("ga4_analysis", ""))
+    gsc_analysis_text = _email_blurb(decisions.get("gsc_analysis", ""))
+    ga4_analysis_text = _email_blurb(decisions.get("ga4_analysis", ""))
 
     return f"""
 <!doctype html>
 <html>
   <body style="margin:0;background:#f9fafb;font-family:Arial,sans-serif;color:#111827;">
-    <div style="max-width:980px;margin:0 auto;padding:24px;">
+    <div style="max-width:760px;margin:0 auto;padding:24px;">
       <div style="background:#111827;color:#fff;border-radius:10px;padding:20px;">
         <h1 style="margin:0;font-size:26px;">{settings.site_name} SEO</h1>
         <p style="margin:6px 0 0;font-size:18px;font-weight:700;">{decision_text}</p>
@@ -894,6 +882,10 @@ def build_seo_email_html(artifacts: list[ReportArtifact]) -> str:
           <div style="font-size:22px;font-weight:700;">{decisions['total_gsc_clicks']:,}</div>
         </div>
         <div style="background:#fff;padding:14px;border:1px solid #e5e7eb;border-radius:8px;min-width:180px;">
+          <div style="font-size:12px;color:#6b7280;">Search CTR</div>
+          <div style="font-size:22px;font-weight:700;">{search_ctr:.2f}%</div>
+        </div>
+        <div style="background:#fff;padding:14px;border:1px solid #e5e7eb;border-radius:8px;min-width:180px;">
           <div style="font-size:12px;color:#6b7280;">GA4 Sessions</div>
           <div style="font-size:22px;font-weight:700;">{decisions['ga_sessions']:,}</div>
         </div>
@@ -905,57 +897,28 @@ def build_seo_email_html(artifacts: list[ReportArtifact]) -> str:
       </div>
 
       <div style="background:#fff;padding:16px;border:1px solid #e5e7eb;border-radius:8px;margin-bottom:16px;">
-        <h2 style="margin:0 0 8px;font-size:18px;">GSC analysis</h2>
-        <p style="margin:0;color:#374151;white-space:pre-wrap;">{gsc_analysis_text}</p>
-      </div>
-
-      <div style="background:#fff;padding:16px;border:1px solid #e5e7eb;border-radius:8px;margin-bottom:16px;">
-        <h2 style="margin:0 0 8px;font-size:18px;">GA4 analysis</h2>
-        <p style="margin:0;color:#374151;white-space:pre-wrap;">{ga4_analysis_text}</p>
-      </div>
-
-      <div style="background:#fff;padding:16px;border:1px solid #e5e7eb;border-radius:8px;margin-bottom:16px;">
         <h2 style="margin:0 0 12px;font-size:18px;">Suggested updates</h2>
-        {html_table(["priority", "source", "page", "query", "evidence", "recommendation"], suggested_rows, 10)}
+        {html_table(["priority", "page", "query", "recommendation"], suggested_rows, 3)}
       </div>
 
       <div style="background:#fff;padding:16px;border:1px solid #e5e7eb;border-radius:8px;margin-bottom:16px;">
-        <h2 style="margin:0 0 12px;font-size:18px;">Watchlist</h2>
-        {html_table(["page", "query", "reason"], watch_rows, 10)}
+        <h2 style="margin:0 0 12px;font-size:18px;">At-a-glance data</h2>
+        <ul style="margin:0;padding-left:20px;color:#374151;line-height:1.5;">
+          <li><strong>Top GSC page:</strong> {top_page_label}</li>
+          <li><strong>Top GSC query:</strong> {top_query_label}</li>
+          <li><strong>Organic sessions:</strong> {organic_sessions:,}</li>
+          <li><strong>Top GA4 content:</strong> {top_content_label}</li>
+          <li><strong>Primary device:</strong> {device_label}</li>
+        </ul>
       </div>
 
       <div style="background:#fff;padding:16px;border:1px solid #e5e7eb;border-radius:8px;margin-bottom:16px;">
-        <h2 style="margin:0 0 12px;font-size:18px;">Top search pages</h2>
-        {html_table(["page", "impressions", "clicks", "ctr", "position"], gsc_page_rows, 8)}
-      </div>
-
-      <div style="background:#fff;padding:16px;border:1px solid #e5e7eb;border-radius:8px;margin-bottom:16px;">
-        <h2 style="margin:0 0 12px;font-size:18px;">Top search queries</h2>
-        {html_table(["query", "impressions", "clicks", "ctr", "position"], gsc_query_rows, 8)}
-      </div>
-
-      <div style="background:#fff;padding:16px;border:1px solid #e5e7eb;border-radius:8px;margin-bottom:16px;">
-        <h2 style="margin:0 0 12px;font-size:18px;">Top GA4 content pages</h2>
-        {html_table(["pageTitle", "pagePathPlusQueryString", "screenPageViews", "sessions"], ga_content_rows, 8)}
-      </div>
-
-      <div style="background:#fff;padding:16px;border:1px solid #e5e7eb;border-radius:8px;margin-bottom:16px;">
-        <h2 style="margin:0 0 12px;font-size:18px;">Traffic sources</h2>
-        {html_table(["sessionSourceMedium", "sessions", "totalUsers", "engagementRate"], ga_source_rows, 8)}
-      </div>
-
-      <div style="background:#fff;padding:16px;border:1px solid #e5e7eb;border-radius:8px;margin-bottom:16px;">
-        <h2 style="margin:0 0 12px;font-size:18px;">Device mix</h2>
-        {html_table(["deviceCategory", "sessions", "totalUsers", "engagementRate"], ga_device_rows, 8)}
-      </div>
-
-      <div style="background:#fff;padding:16px;border:1px solid #e5e7eb;border-radius:8px;margin-bottom:16px;">
-        <h2 style="margin:0 0 12px;font-size:18px;">Recent search trend</h2>
-        {html_table(["date", "impressions", "clicks", "ctr", "position"], trend_rows, 10)}
+        <h2 style="margin:0 0 12px;font-size:18px;">Watch next</h2>
+        {html_table(["page", "query", "reason"], watch_rows, 3)}
       </div>
 
       <p style="font-size:12px;color:#6b7280;">
-        This report uses an LLM to analyze GSC and GA4 separately, then together. GA4 traffic volume does not block GSC-driven SEO recommendations.
+        GSC read: {gsc_analysis_text}<br><br>GA4 read: {ga4_analysis_text}
       </p>
     </div>
   </body>
