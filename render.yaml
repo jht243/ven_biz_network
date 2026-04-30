@@ -1,5 +1,5 @@
-# Auto-deploy verification: this comment exists only to force a no-op
-# commit that proves the GitHub -> Render webhook is firing on git push.
+# Auto-deploy verification: this comment exists only to force no-op
+# commits that prove the GitHub -> Render webhook is firing on git push.
 # If you see deploys appearing with trigger=git after this commit, the
 # autoDeploy chain is wired up correctly end-to-end.
 services:
