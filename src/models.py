@@ -63,6 +63,7 @@ class SourceType(str, enum.Enum):
     EIA = "eia"
     GOOGLE_NEWS = "google_news"
     ITA_TRADE = "ita_trade"
+    ANSA_LATINA = "ansa_latina"
     # Cross-project pollution recovery (April 2026): the shared
     # Postgres enum had `openalex` added by a sister project that
     # was misconfigured to point at this database. We declare it
@@ -430,6 +431,7 @@ def _ensure_columns() -> None:
 _SOURCE_TYPE_ENUM_ADDITIONS: tuple[tuple[str, str], ...] = (
     ("source_type", "google_news"),
     ("source_type", "ita_trade"),
+    ("source_type", "ansa_latina"),
 )
 
 

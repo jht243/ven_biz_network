@@ -35,6 +35,7 @@ from src.scraper.federal_register import FederalRegisterScraper
 from src.scraper.ofac_sdn import OFACSdnScraper
 from src.scraper.gdelt import GDELTScraper
 from src.scraper.google_news import GoogleNewsScraper
+from src.scraper.ansa_latina import AnsaLatinaScraper
 from src.scraper.bcv import BCVScraper
 from src.scraper.ita import ITATradeScraper
 from src.scraper.travel_advisory import TravelAdvisoryScraper
@@ -84,6 +85,7 @@ def run_daily_scrape(target_date: Optional[date] = None) -> dict:
         FederalRegisterScraper(),
         OFACSdnScraper(),
         GDELTScraper(),
+        AnsaLatinaScraper(),
         # Parallel feed to GDELT — see src/scraper/google_news.py for
         # the rationale. The DB unique-constraint is (source, source_url)
         # so a Reuters article showing up in BOTH GDELT and Google News
@@ -950,6 +952,8 @@ def _resolve_source_type(source_name: str) -> SourceType:
         "ofac sdn": SourceType.OFAC_SDN,
         "gdelt": SourceType.GDELT,
         "google news": SourceType.GOOGLE_NEWS,
+        "ansa latina": SourceType.ANSA_LATINA,
+        "ansalatina": SourceType.ANSA_LATINA,
         "banco central": SourceType.BCV_RATES,
         "bcv": SourceType.BCV_RATES,
         "international trade administration": SourceType.ITA_TRADE,

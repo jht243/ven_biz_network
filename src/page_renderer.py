@@ -59,6 +59,7 @@ _KNOWN_SOURCE_DOMAINS: dict[str, str] = {
     "elnacional.com": "El Nacional",
     "lapatilla.com": "La Patilla",
     "venezuelanalysis.com": "Venezuelanalysis",
+    "ansalatina.com": "ANSA Latina",
     "treasury.gov": "US Treasury",
     "ofac.treasury.gov": "OFAC",
     "state.gov": "US State Department",
