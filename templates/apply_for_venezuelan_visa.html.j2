@@ -56,6 +56,9 @@
   .apply-steps .step-num::before { content: counter(step); }
   .apply-steps h4 { font-family: var(--font-sans); font-size: 15.5px; font-weight: 700; color: var(--sr-dark-text); margin: 4px 0 6px; }
   .apply-steps p { font-size: 14px; color: var(--sr-dark-text); margin: 0 0 8px; line-height: 1.6; }
+  .apply-steps .step-service-plug { background: #fff8f7; border-left: 3px solid var(--sr-red); padding: 9px 12px; margin-top: 10px; }
+  .apply-steps .step-service-plug a { color: var(--sr-red); font-weight: 700; text-decoration: none; }
+  .apply-steps .step-service-plug a:hover { text-decoration: underline; }
   .apply-steps .step-cta-row { display: flex; flex-wrap: wrap; align-items: center; gap: 8px; margin-top: 4px; }
   .apply-steps .step-cta { display: inline-block; font-size: 13px; font-weight: 600; color: #fff; background: var(--sr-blue); padding: 6px 14px; border-radius: 999px; text-decoration: none; }
   .apply-steps .step-cta:hover { background: var(--sr-blue-dark); }
@@ -87,6 +90,12 @@
 
   .needs-visa-box { background: var(--sr-gray-bg); border-left: 3px solid var(--sr-blue); padding: 14px 18px; margin: 4px 0 0; font-size: 15px; line-height: 1.6; }
   .needs-visa-box a { color: var(--sr-blue); font-weight: 600; }
+
+  .visa-service-callout { background: #f7fafc; border: 1px solid var(--sr-gray-light); border-left: 4px solid var(--sr-red); border-radius: 4px; padding: 18px 20px; margin: 22px 0 0; }
+  .visa-service-callout h3 { font-family: var(--font-serif); font-size: 20px; color: var(--sr-blue-dark); margin: 0 0 8px; line-height: 1.3; }
+  .visa-service-callout p { font-size: 14.5px; color: var(--sr-dark-text); line-height: 1.6; margin: 0 0 12px; max-width: 72ch; }
+  .visa-service-callout .service-cta { display: inline-block; font-size: 13.5px; font-weight: 700; color: #fff; background: var(--sr-red); padding: 8px 16px; border-radius: 3px; text-decoration: none; }
+  .visa-service-callout .service-cta:hover { background: #a01d18; color: #fff; }
 
 </style>
 {% endblock %}
@@ -147,11 +156,17 @@
     {% if page.steps_intro %}<p class="section-intro">{{ page.steps_intro }}</p>{% endif %}
     <ol class="apply-steps">
       {% for s in page.steps %}
-      <li>
+      <li{% if s.anchor %} id="{{ s.anchor }}"{% endif %}>
         <div class="step-num"></div>
         <div>
           <h4>{{ s.title }}</h4>
           <p>{{ s.detail }}</p>
+          {% if s.service_plug and s.service_url %}
+          <p class="step-service-plug">
+            {{ s.service_plug }}
+            <a href="{{ s.service_url }}">{{ s.service_label|default("Get visa help") }} &rarr;</a>
+          </p>
+          {% endif %}
           {% if s.url %}
           <div class="step-cta-row">
             <a class="step-cta" href="{{ s.url }}" target="_blank" rel="noopener">
@@ -166,6 +181,16 @@
       </li>
       {% endfor %}
     </ol>
+  </div>
+
+  <div class="visa-service-callout">
+    <h3>Want help filing the application?</h3>
+    <p>
+      Our same-day Venezuela visa application service prepares the document
+      package, files through the application channel, and monitors the case after
+      submission. Government fees are separate.
+    </p>
+    <a class="service-cta" href="/get-venezuela-visa">Get Venezuela visa help &rarr;</a>
   </div>
 
   <div class="section">

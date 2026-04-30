@@ -64,11 +64,19 @@ SHARED_EVISA_STEPS: list[dict] = [
     },
     {
         "title": "Complete the electronic application form",
+        "anchor": "electronic-application-form",
         "detail": (
             "Fill in personal, passport, travel, and financial information. "
             "You will be asked which visa type you want (Tourist TR-V or "
             "Business TR-N) and your intended dates of travel."
         ),
+        "service_plug": (
+            "Want us to handle the form and filing? Our same-day Venezuela "
+            "visa application service prepares the package, submits the "
+            "application, and monitors the case."
+        ),
+        "service_url": "/get-venezuela-visa",
+        "service_label": "Get Venezuela visa help",
     },
     {
         "title": "Upload supporting documents",

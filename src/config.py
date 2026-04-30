@@ -71,6 +71,15 @@ class Settings(BaseSettings):
     seo_email_subject: str = "SEO Updates <SITE_NAME>"
     resend_api_key: str = ""
 
+    # Stripe checkout notifications for the paid Venezuela visa service.
+    # Set STRIPE_WEBHOOK_SECRET to the endpoint signing secret from Stripe,
+    # and VISA_ORDER_NOTIFICATION_EMAIL to the address that should receive
+    # a notice when a checkout session completes.
+    stripe_webhook_secret: str = ""
+    stripe_visa_payment_link_id: str = "plink_1TS1T2GWYDLBQAio3Z6tN9N2"
+    visa_order_notification_email: str = ""
+    visa_order_email_provider: str = "resend"
+
     # Google reporting (GA4 + Search Console)
     google_reporting_sa_json: str = ""
     google_reporting_sa_file: str = ""

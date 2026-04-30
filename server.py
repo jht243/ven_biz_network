@@ -6,6 +6,8 @@ Serves the generated report.html on Render (or locally).
 
 from __future__ import annotations
 
+import hashlib
+import json
 import gzip
 import hmac
 import io
@@ -124,6 +126,7 @@ _NAV_CACHE_PATHS = frozenset({
 })
 _NAV_PAGE_CACHE: dict[str, dict] = {}
 _NAV_PAGE_CACHE_TTL_SECONDS = 90
+_STRIPE_VISA_NOTIFIED_SESSION_IDS: set[str] = set()
 
 
 def _ensure_google_tag(html: str) -> str:
@@ -161,6 +164,101 @@ def _normalize_cache_path(path: str) -> str:
         return "/"
     normalized = path.rstrip("/")
     return normalized or "/"
+
+
+def _stripe_signature_valid(payload: bytes, signature_header: str | None) -> bool:
+    """Verify Stripe's signed webhook payload without requiring stripe-python."""
+    secret = (settings.stripe_webhook_secret or "").strip()
+    if not secret or not signature_header:
+        return False
+
+    parts: dict[str, list[str]] = {}
+    for item in signature_header.split(","):
+        if "=" not in item:
+            continue
+        key, value = item.split("=", 1)
+        parts.setdefault(key, []).append(value)
+
+    timestamps = parts.get("t") or []
+    signatures = parts.get("v1") or []
+    if not timestamps or not signatures:
+        return False
+
+    try:
+        timestamp = int(timestamps[0])
+    except ValueError:
+        return False
+
+    if abs(time.time() - timestamp) > 300:
+        logger.warning("Stripe webhook rejected: signature timestamp outside tolerance")
+        return False
+
+    signed_payload = f"{timestamp}.".encode("utf-8") + payload
+    expected = hmac.new(secret.encode("utf-8"), signed_payload, hashlib.sha256).hexdigest()
+    return any(hmac.compare_digest(expected, sig) for sig in signatures)
+
+
+def _visa_order_email_recipient() -> str:
+    """Return the configured owner email for visa-order notifications."""
+    recipient = (settings.visa_order_notification_email or "").strip()
+    if recipient:
+        return recipient
+    seo_recipient = (settings.seo_email_recipient or "").strip()
+    if seo_recipient and seo_recipient != "<RECIPIENT_EMAIL>":
+        return seo_recipient
+    return ""
+
+
+def _format_usd_minor_units(amount: int | None, currency: str | None) -> str:
+    if amount is None:
+        return "Unknown"
+    currency_code = (currency or "usd").upper()
+    if currency_code == "USD":
+        return f"${amount / 100:,.2f}"
+    return f"{amount} {currency_code}"
+
+
+def _send_visa_order_notification(session: dict) -> bool:
+    """Email the site owner when the Stripe visa-service checkout completes."""
+    from src.newsletter import send_email
+
+    recipient = _visa_order_email_recipient()
+    if not recipient:
+        logger.error("Stripe visa order notification skipped: VISA_ORDER_NOTIFICATION_EMAIL is not configured")
+        return False
+
+    customer_details = session.get("customer_details") or {}
+    customer_name = customer_details.get("name") or "Unknown"
+    customer_email = customer_details.get("email") or session.get("customer_email") or "Unknown"
+    customer_phone = customer_details.get("phone") or "Not provided"
+    amount = _format_usd_minor_units(session.get("amount_total"), session.get("currency"))
+    session_id = session.get("id") or "Unknown"
+    payment_status = session.get("payment_status") or "unknown"
+    dashboard_url = f"https://dashboard.stripe.com/payments/{session.get('payment_intent')}" if session.get("payment_intent") else "https://dashboard.stripe.com/payments"
+
+    subject = f"New Venezuela visa application order - {amount}"
+    html = f"""
+    <h2>New Venezuela visa application order</h2>
+    <p>A customer completed Stripe checkout for the Same Day Venezuela Visa Application service.</p>
+    <table cellpadding="6" cellspacing="0" style="border-collapse:collapse;">
+      <tr><td><strong>Amount</strong></td><td>{_xml_escape(amount)}</td></tr>
+      <tr><td><strong>Payment status</strong></td><td>{_xml_escape(payment_status)}</td></tr>
+      <tr><td><strong>Customer name</strong></td><td>{_xml_escape(customer_name)}</td></tr>
+      <tr><td><strong>Customer email</strong></td><td>{_xml_escape(customer_email)}</td></tr>
+      <tr><td><strong>Customer phone</strong></td><td>{_xml_escape(customer_phone)}</td></tr>
+      <tr><td><strong>Checkout session</strong></td><td>{_xml_escape(session_id)}</td></tr>
+    </table>
+    <p><a href="{_xml_escape(dashboard_url)}">Open payment in Stripe</a></p>
+    <p>Next step: contact the customer for passport country, visa type, travel date, and document upload instructions.</p>
+    """
+
+    result = send_email(
+        to=recipient,
+        subject=subject,
+        html_body=html,
+        provider_name=settings.visa_order_email_provider,
+    )
+    return bool(result.get("success"))
 
 
 @app.before_request
@@ -217,6 +315,49 @@ def index():
     if not html:
         abort(503, description="Report not yet generated. Run the daily pipeline first.")
     return Response(html, mimetype="text/html")
+
+
+@app.post("/webhooks/stripe")
+def stripe_webhook():
+    """
+    Receive Stripe Checkout events for the paid Venezuela visa service.
+
+    Configure Stripe to send checkout.session.completed events here and set
+    STRIPE_WEBHOOK_SECRET to the endpoint signing secret. The handler filters
+    to the visa-service payment link before emailing the site owner.
+    """
+    payload = request.get_data(cache=False)
+    signature = request.headers.get("Stripe-Signature")
+    if not _stripe_signature_valid(payload, signature):
+        logger.warning("Stripe webhook rejected: invalid signature")
+        return jsonify({"error": "invalid signature"}), 400
+
+    try:
+        event = json.loads(payload.decode("utf-8"))
+    except json.JSONDecodeError:
+        return jsonify({"error": "invalid json"}), 400
+
+    event_type = event.get("type")
+    if event_type != "checkout.session.completed":
+        return jsonify({"received": True, "ignored": event_type}), 200
+
+    session = ((event.get("data") or {}).get("object") or {})
+    payment_link = session.get("payment_link")
+    expected_payment_link = (settings.stripe_visa_payment_link_id or "").strip()
+    if expected_payment_link and payment_link != expected_payment_link:
+        logger.info("Stripe checkout ignored for payment_link=%s", payment_link)
+        return jsonify({"received": True, "ignored": "non_visa_payment_link"}), 200
+
+    session_id = session.get("id")
+    if session_id and session_id in _STRIPE_VISA_NOTIFIED_SESSION_IDS:
+        return jsonify({"received": True, "duplicate": True}), 200
+
+    if not _send_visa_order_notification(session):
+        return jsonify({"error": "email notification failed"}), 500
+
+    if session_id:
+        _STRIPE_VISA_NOTIFIED_SESSION_IDS.add(session_id)
+    return jsonify({"received": True, "notified": True}), 200
 
 
 @app.post("/admin/regen-report")
@@ -914,6 +1055,7 @@ def venezuela_visa_service():
         )
         regular_price = "79.99"
         promo_price = "49.99"
+        stripe_payment_link = "https://buy.stripe.com/dRmcN579Jc8J7YG2el9R607"
         today = _date.today()
         offer_expires = today.replace(day=monthrange(today.year, today.month)[1])
         seo = {
@@ -951,6 +1093,7 @@ def venezuela_visa_service():
             current_month_label=today.strftime("%B"),
             offer_expires=offer_expires.isoformat(),
             cutoff_time="2:00 p.m. Caracas time",
+            stripe_payment_link=stripe_payment_link,
             current_year=today.year,
             us_embassy_eguide_url=US_EMBASSY_VENEZUELA_EVISA_INSTRUCTIONS,
         )

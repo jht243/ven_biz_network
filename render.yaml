@@ -26,6 +26,16 @@ services:
         value: briefing@venezuelanbusiness.net
       - key: NEWSLETTER_API_KEY
         sync: false
+      - key: STRIPE_WEBHOOK_SECRET
+        sync: false
+      - key: STRIPE_VISA_PAYMENT_LINK_ID
+        value: plink_1TS1T2GWYDLBQAio3Z6tN9N2
+      - key: VISA_ORDER_NOTIFICATION_EMAIL
+        sync: false
+      - key: VISA_ORDER_EMAIL_PROVIDER
+        value: resend
+      - key: RESEND_API_KEY
+        sync: false
       - key: GOOGLE_INDEXING_SA_JSON
         sync: false
       - key: BLUESKY_HANDLE
