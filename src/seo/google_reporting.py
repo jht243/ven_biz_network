@@ -24,6 +24,7 @@ SCOPES = [GA_SCOPE, GSC_SCOPE]
 
 GA_API_BASE = "https://analyticsdata.googleapis.com/v1beta"
 GSC_API_BASE = "https://www.googleapis.com/webmasters/v3"
+_DECISION_CACHE: dict[int, dict[str, Any]] = {}
 
 
 @dataclass
@@ -309,6 +310,12 @@ def _markdown_table(rows: list[dict[str, Any]], columns: list[str], limit: int =
     return "\n".join(lines)
 
 
+def _analysis_text(value: Any) -> str:
+    if isinstance(value, str):
+        return value
+    return json.dumps(value, ensure_ascii=False, indent=2)
+
+
 def _artifact_map(artifacts: list[ReportArtifact]) -> dict[str, ReportArtifact]:
     return {a.name: a for a in artifacts}
 
@@ -317,7 +324,38 @@ def _top_rows(rows: list[dict[str, Any]], key: str, n: int = 10) -> list[dict[st
     return sorted(rows, key=lambda r: _to_float(r.get(key)), reverse=True)[:n]
 
 
-def _compute_decisions(artifacts: list[ReportArtifact]) -> dict[str, Any]:
+def _clean_row(row: dict[str, Any]) -> dict[str, Any]:
+    cleaned: dict[str, Any] = {}
+    for key, value in row.items():
+        if key == "ctr":
+            cleaned[key] = _fmt_pct(_pct(value))
+        elif key == "position":
+            cleaned[key] = _fmt_pos(value)
+        elif key in {"sessions", "totalUsers", "screenPageViews", "engagedSessions", "eventCount", "clicks", "impressions"}:
+            cleaned[key] = _to_int(value)
+        elif key == "engagementRate":
+            cleaned[key] = _fmt_pct(_pct(value))
+        elif key == "averageSessionDuration":
+            cleaned[key] = round(_to_float(value), 1)
+        else:
+            cleaned[key] = value
+    return cleaned
+
+
+def _opportunity_rows(rows: list[dict[str, Any]], limit: int = 20) -> list[dict[str, Any]]:
+    def score(row: dict[str, Any]) -> float:
+        impressions = _to_float(row.get("impressions"))
+        clicks = _to_float(row.get("clicks"))
+        ctr = _to_float(row.get("ctr"))
+        position = _to_float(row.get("position"))
+        rank_bonus = max(0.0, 25.0 - position)
+        ctr_gap = max(0.0, 0.10 - ctr)
+        return impressions * (1.0 + ctr_gap * 20.0) + rank_bonus * 10.0 - clicks
+
+    return [_clean_row(r) for r in sorted(rows, key=score, reverse=True)[:limit]]
+
+
+def _analysis_payload(artifacts: list[ReportArtifact]) -> dict[str, Any]:
     amap = _artifact_map(artifacts)
     gsc_daily = amap.get("gsc_daily").rows if amap.get("gsc_daily") else []
     gsc_pages = amap.get("gsc_pages").rows if amap.get("gsc_pages") else []
@@ -328,6 +366,17 @@ def _compute_decisions(artifacts: list[ReportArtifact]) -> dict[str, Any]:
     ga_site_summary = (
         amap.get("ga_site_summary").rows if amap.get("ga_site_summary") else []
     )
+    ga_landing_pages = (
+        amap.get("ga_landing_pages").rows if amap.get("ga_landing_pages") else []
+    )
+    ga_content_pages = (
+        amap.get("ga_content_pages").rows if amap.get("ga_content_pages") else []
+    )
+    ga_source_medium = (
+        amap.get("ga_source_medium").rows if amap.get("ga_source_medium") else []
+    )
+    ga_device = amap.get("ga_device").rows if amap.get("ga_device") else []
+    ga_daily = amap.get("ga_daily_traffic").rows if amap.get("ga_daily_traffic") else []
 
     total_gsc_impressions = (
         sum(_to_float(r.get("impressions")) for r in gsc_daily)
@@ -345,94 +394,155 @@ def _compute_decisions(artifacts: list[ReportArtifact]) -> dict[str, Any]:
         else 0.0
     )
 
-    page_query_candidates = []
-    for row in gsc_page_queries:
-        impressions = _to_float(row.get("impressions"))
-        ctr = _to_float(row.get("ctr"))
-        position = _to_float(row.get("position"))
-        if impressions >= 50 and 3 <= position <= 20 and ctr <= 0.03:
-            page_query_candidates.append(
-                {
-                    "page": row.get("page", ""),
-                    "query": row.get("query", ""),
-                    "impressions": _to_int(impressions),
-                    "clicks": _to_int(row.get("clicks")),
-                    "ctr": _fmt_pct(_pct(ctr)),
-                    "position": _fmt_pos(position),
-                    "action": "Improve title/H1 and answer intent for this query.",
-                }
-            )
+    return {
+        "site_name": settings.site_name,
+        "data_check": {
+            "total_gsc_impressions": _to_int(total_gsc_impressions),
+            "total_gsc_clicks": _to_int(total_gsc_clicks),
+            "ga4_sessions": _to_int(ga_sessions),
+        },
+        "gsc": {
+            "top_pages_by_impressions": [_clean_row(r) for r in _top_rows(gsc_pages, "impressions", 15)],
+            "top_queries_by_impressions": [_clean_row(r) for r in _top_rows(gsc_queries, "impressions", 15)],
+            "top_page_query_pairs_by_impressions": [_clean_row(r) for r in _top_rows(gsc_page_queries, "impressions", 20)],
+            "highest_potential_page_query_pairs": _opportunity_rows(gsc_page_queries, 20),
+            "recent_daily_trend": [_clean_row(r) for r in sorted(gsc_daily, key=lambda x: str(x.get("date", "")))[-14:]],
+        },
+        "ga4": {
+            "site_summary": [_clean_row(r) for r in ga_site_summary[:1]],
+            "top_landing_pages": [_clean_row(r) for r in _top_rows(ga_landing_pages, "sessions", 15)],
+            "top_content_pages": [_clean_row(r) for r in _top_rows(ga_content_pages, "screenPageViews", 15)],
+            "traffic_sources": [_clean_row(r) for r in _top_rows(ga_source_medium, "sessions", 12)],
+            "device_mix": [_clean_row(r) for r in _top_rows(ga_device, "sessions", 8)],
+            "recent_daily_traffic": [_clean_row(r) for r in sorted(ga_daily, key=lambda x: str(x.get("date", "")))[-14:]],
+        },
+    }
 
-    page_candidates = []
-    for row in gsc_pages:
-        impressions = _to_float(row.get("impressions"))
-        ctr = _to_float(row.get("ctr"))
-        position = _to_float(row.get("position"))
-        if impressions >= 100 and 3 <= position <= 20 and ctr <= 0.03:
-            page_candidates.append(
-                {
-                    "page": row.get("page", ""),
-                    "impressions": _to_int(impressions),
-                    "clicks": _to_int(row.get("clicks")),
-                    "ctr": _fmt_pct(_pct(ctr)),
-                    "position": _fmt_pos(position),
-                    "action": "Refresh metadata and on-page structure to increase CTR.",
-                }
-            )
 
-    watchlist = []
-    for row in gsc_page_queries:
-        impressions = _to_float(row.get("impressions"))
-        ctr = _to_float(row.get("ctr"))
-        position = _to_float(row.get("position"))
-        if impressions >= 5 and 3 <= position <= 20 and ctr <= 0.10:
-            watchlist.append(
-                {
-                    "type": "page_query",
-                    "page": row.get("page", ""),
-                    "query": row.get("query", ""),
-                    "impressions": _to_int(impressions),
-                    "ctr": _fmt_pct(_pct(ctr)),
-                    "position": _fmt_pos(position),
-                }
-            )
-    if not watchlist:
-        for row in gsc_queries:
-            impressions = _to_float(row.get("impressions"))
-            ctr = _to_float(row.get("ctr"))
-            position = _to_float(row.get("position"))
-            if impressions >= 5 and 3 <= position <= 20 and ctr <= 0.10:
-                watchlist.append(
-                    {
-                        "type": "query",
-                        "query": row.get("query", ""),
-                        "impressions": _to_int(impressions),
-                        "ctr": _fmt_pct(_pct(ctr)),
-                        "position": _fmt_pos(position),
-                    }
-                )
-
-    update_recommended = (
-        total_gsc_impressions >= 100
-        and ga_sessions >= 25
-        and (len(page_query_candidates) > 0 or len(page_candidates) > 0)
-    )
-    decision = (
-        "SEO updates recommended."
-        if update_recommended
-        else "No SEO updates recommended today."
-    )
+def _fallback_llm_decision(payload: dict[str, Any]) -> dict[str, Any]:
+    opportunities = payload["gsc"]["highest_potential_page_query_pairs"]
+    top_pages = payload["gsc"]["top_pages_by_impressions"]
+    updates = []
+    for row in opportunities[:5]:
+        updates.append(
+            {
+                "priority": "High" if len(updates) == 0 else "Medium",
+                "source": "GSC",
+                "page": row.get("page", ""),
+                "query": row.get("query", ""),
+                "evidence": (
+                    f"{row.get('impressions', 0)} impressions, {row.get('clicks', 0)} clicks, "
+                    f"{row.get('ctr', '0.00%')} CTR, avg position {row.get('position', '')}"
+                ),
+                "recommendation": "Rewrite the title/meta snippet and strengthen on-page copy for this query intent.",
+            }
+        )
+    if not updates:
+        target = top_pages[0].get("page", "top indexed page") if top_pages else "the site"
+        updates.append(
+            {
+                "priority": "High",
+                "source": "Combined",
+                "page": target,
+                "query": "",
+                "evidence": "No strong query table rows were returned, so the first action is diagnostic.",
+                "recommendation": "Verify GA4/GSC tracking, inspect indexed pages, and add clearer title/meta copy to the highest-impression page.",
+            }
+        )
 
     return {
-        "decision": decision,
-        "update_recommended": update_recommended,
-        "total_gsc_impressions": _to_int(total_gsc_impressions),
-        "total_gsc_clicks": _to_int(total_gsc_clicks),
-        "ga_sessions": _to_int(ga_sessions),
-        "page_query_candidates": _top_rows(page_query_candidates, "impressions", 20),
-        "page_candidates": _top_rows(page_candidates, "impressions", 20),
-        "watchlist": _top_rows(watchlist, "impressions", 20),
+        "decision": "SEO updates recommended.",
+        "update_recommended": True,
+        "data_check": payload["data_check"],
+        "gsc_analysis": "GSC is the primary source for search opportunity discovery. The highest-potential page/query pairs show where impressions are already available but clicks can improve.",
+        "ga4_analysis": "GA4 is used as engagement and landing-page context, not as a veto on SEO action.",
+        "combined_analysis": "Prioritize search-snippet and on-page intent improvements where GSC already shows impressions, then use GA4 to watch whether landing engagement improves.",
+        "recommended_updates": updates,
+        "watchlist": [
+            {
+                "page": row.get("page", ""),
+                "query": row.get("query", ""),
+                "reason": f"{row.get('impressions', 0)} impressions at position {row.get('position', '')}",
+            }
+            for row in opportunities[5:15]
+        ],
     }
+
+
+def _llm_decision(artifacts: list[ReportArtifact]) -> dict[str, Any]:
+    payload = _analysis_payload(artifacts)
+    if not settings.openai_api_key:
+        logger.warning("OPENAI_API_KEY missing; using deterministic fallback SEO analysis.")
+        return _fallback_llm_decision(payload)
+
+    try:
+        from openai import OpenAI
+
+        client = OpenAI(api_key=settings.openai_api_key)
+        response = client.chat.completions.create(
+            model=settings.openai_narrative_model or settings.openai_model,
+            messages=[
+                {
+                    "role": "system",
+                    "content": (
+                        "You are a senior technical SEO strategist. Analyze imported Google Search Console "
+                        "and GA4 data without hard minimum traffic thresholds. GSC and GA4 must be analyzed "
+                        "separately first, then together. Always produce at least one practical recommendation. "
+                        "GSC is allowed to drive recommendations even when GA4 traffic is low. Use GA4 as "
+                        "supporting evidence for engagement, source mix, device mix, and landing-page behavior."
+                    ),
+                },
+                {
+                    "role": "user",
+                    "content": (
+                        "Return strict JSON with keys: decision, update_recommended, data_check, "
+                        "gsc_analysis, ga4_analysis, combined_analysis, recommended_updates, watchlist. "
+                        "decision should usually be 'SEO updates recommended.' because the report must "
+                        "produce practical suggestions. recommended_updates must be a list of objects with "
+                        "priority, source, page, query, evidence, recommendation. watchlist must be a list "
+                        "of objects with page, query, reason. Here is the compacted data:\n\n"
+                        + json.dumps(payload, ensure_ascii=False)
+                    ),
+                },
+            ],
+            temperature=0.2,
+            max_tokens=1800,
+            response_format={"type": "json_object"},
+        )
+        raw = response.choices[0].message.content or "{}"
+        parsed = json.loads(raw)
+        fallback = _fallback_llm_decision(payload)
+        parsed["decision"] = parsed.get("decision") or "SEO updates recommended."
+        if "no seo updates recommended" in str(parsed["decision"]).lower():
+            parsed["decision"] = "SEO updates recommended."
+        parsed["update_recommended"] = True
+        parsed.setdefault("data_check", payload["data_check"])
+        parsed.setdefault("gsc_analysis", fallback["gsc_analysis"])
+        parsed.setdefault("ga4_analysis", fallback["ga4_analysis"])
+        parsed.setdefault("combined_analysis", fallback["combined_analysis"])
+        parsed.setdefault("recommended_updates", fallback["recommended_updates"])
+        parsed.setdefault("watchlist", fallback["watchlist"])
+        return parsed
+    except Exception as exc:
+        logger.error("LLM SEO analysis failed; using fallback: %s", exc, exc_info=True)
+        return _fallback_llm_decision(payload)
+
+
+def _compute_decisions(artifacts: list[ReportArtifact]) -> dict[str, Any]:
+    cache_key = id(artifacts)
+    if cache_key not in _DECISION_CACHE:
+        decision = _llm_decision(artifacts)
+        data_check = decision.get("data_check", {})
+        updates = decision.get("recommended_updates") or []
+        watchlist = decision.get("watchlist") or []
+        decision["total_gsc_impressions"] = _to_int(data_check.get("total_gsc_impressions"))
+        decision["total_gsc_clicks"] = _to_int(data_check.get("total_gsc_clicks"))
+        decision["ga_sessions"] = _to_int(data_check.get("ga4_sessions"))
+        decision["page_query_candidates"] = updates
+        decision["page_candidates"] = []
+        decision["watchlist"] = watchlist
+        _DECISION_CACHE[cache_key] = decision
+    return _DECISION_CACHE[cache_key]
 
 
 def _build_summary_markdown(artifacts: list[ReportArtifact]) -> str:
@@ -479,12 +589,13 @@ def _build_summary_markdown(artifacts: list[ReportArtifact]) -> str:
 
     page_opps = [
         {
-            "page": r["page"],
-            "impressions": r["impressions"],
-            "ctr": r["ctr"],
-            "position": r["position"],
+            "priority": r.get("priority", ""),
+            "source": r.get("source", ""),
+            "page": r.get("page", ""),
+            "query": r.get("query", ""),
+            "recommendation": r.get("recommendation", ""),
         }
-        for r in decisions["page_candidates"][:12]
+        for r in decisions["page_query_candidates"][:12]
     ]
 
     daily_trend = []
@@ -559,7 +670,7 @@ def _build_summary_markdown(artifacts: list[ReportArtifact]) -> str:
         _markdown_table(pages_with_clicks[:12], ["page", "impressions", "clicks", "ctr", "position"]),
         "",
         "## Page Opportunities",
-        _markdown_table(page_opps, ["page", "impressions", "ctr", "position"]),
+        _markdown_table(page_opps, ["priority", "source", "page", "query", "recommendation"]),
         "",
         "## Top GSC Queries",
         _markdown_table(
@@ -626,41 +737,36 @@ def _build_seo_decisions_markdown(artifacts: list[ReportArtifact]) -> str:
         f"- Total GSC clicks: {d['total_gsc_clicks']:,}",
         f"- GA4 sessions: {d['ga_sessions']:,}",
         "",
+        "## GSC Analysis",
+        _analysis_text(d.get("gsc_analysis", "")),
+        "",
+        "## GA4 Analysis",
+        _analysis_text(d.get("ga4_analysis", "")),
+        "",
+        "## Combined Analysis",
+        _analysis_text(d.get("combined_analysis", "")),
+        "",
     ]
-    if d["update_recommended"]:
-        lines.extend(
-            [
-                "## Recommended Updates",
-                _markdown_table(
-                    d["page_query_candidates"][:10],
-                    ["page", "query", "impressions", "clicks", "ctr", "position", "action"],
-                ),
-                "",
-                _markdown_table(
-                    d["page_candidates"][:10],
-                    ["page", "impressions", "clicks", "ctr", "position", "action"],
-                ),
-                "",
-            ]
-        )
-    else:
-        lines.extend(
-            [
-                "## Recommended Updates",
-                "- No SEO updates recommended today.",
-                "",
-            ]
-        )
+    lines.extend(
+        [
+            "## Recommended Updates",
+            _markdown_table(
+                d["page_query_candidates"][:10],
+                ["priority", "source", "page", "query", "evidence", "recommendation"],
+            ),
+            "",
+        ]
+    )
     lines.extend(
         [
             "## Watchlist",
             _markdown_table(
                 d["watchlist"][:12],
-                ["type", "page", "query", "impressions", "ctr", "position"],
+                ["page", "query", "reason"],
             ),
             "",
             "## Operating Rule",
-            "- If the decision says no update, do not force edits.",
+            "- GSC and GA4 are analyzed separately, then together. GA4 traffic volume does not veto GSC-driven SEO recommendations.",
             "",
         ]
     )
@@ -697,7 +803,7 @@ def build_seo_email_html(artifacts: list[ReportArtifact]) -> str:
             f"<thead><tr>{head}</tr></thead><tbody>{body}</tbody></table>"
         )
 
-    suggested_rows = decisions["page_query_candidates"][:8] + decisions["page_candidates"][:8]
+    suggested_rows = decisions["page_query_candidates"][:8]
     watch_rows = decisions["watchlist"][:10]
     gsc_page_rows = [
         {
@@ -762,11 +868,11 @@ def build_seo_email_html(artifacts: list[ReportArtifact]) -> str:
         if decisions["update_recommended"]
         else "No SEO updates recommended today"
     )
-    why_text = (
-        "Actionable page/query opportunities crossed the thresholds for impressions, rank, and CTR."
-        if decisions["update_recommended"]
-        else "Data is currently too sparse or not actionable enough against configured thresholds."
+    why_text = _analysis_text(decisions.get("combined_analysis")) or (
+        "GSC and GA4 were analyzed separately, then combined into practical SEO recommendations."
     )
+    gsc_analysis_text = _analysis_text(decisions.get("gsc_analysis", ""))
+    ga4_analysis_text = _analysis_text(decisions.get("ga4_analysis", ""))
 
     return f"""
 <!doctype html>
@@ -799,13 +905,23 @@ def build_seo_email_html(artifacts: list[ReportArtifact]) -> str:
       </div>
 
       <div style="background:#fff;padding:16px;border:1px solid #e5e7eb;border-radius:8px;margin-bottom:16px;">
+        <h2 style="margin:0 0 8px;font-size:18px;">GSC analysis</h2>
+        <p style="margin:0;color:#374151;white-space:pre-wrap;">{gsc_analysis_text}</p>
+      </div>
+
+      <div style="background:#fff;padding:16px;border:1px solid #e5e7eb;border-radius:8px;margin-bottom:16px;">
+        <h2 style="margin:0 0 8px;font-size:18px;">GA4 analysis</h2>
+        <p style="margin:0;color:#374151;white-space:pre-wrap;">{ga4_analysis_text}</p>
+      </div>
+
+      <div style="background:#fff;padding:16px;border:1px solid #e5e7eb;border-radius:8px;margin-bottom:16px;">
         <h2 style="margin:0 0 12px;font-size:18px;">Suggested updates</h2>
-        {html_table(["page", "query", "impressions", "clicks", "ctr", "position", "action"], suggested_rows, 10)}
+        {html_table(["priority", "source", "page", "query", "evidence", "recommendation"], suggested_rows, 10)}
       </div>
 
       <div style="background:#fff;padding:16px;border:1px solid #e5e7eb;border-radius:8px;margin-bottom:16px;">
         <h2 style="margin:0 0 12px;font-size:18px;">Watchlist</h2>
-        {html_table(["type", "page", "query", "impressions", "ctr", "position"], watch_rows, 10)}
+        {html_table(["page", "query", "reason"], watch_rows, 10)}
       </div>
 
       <div style="background:#fff;padding:16px;border:1px solid #e5e7eb;border-radius:8px;margin-bottom:16px;">
@@ -839,7 +955,7 @@ def build_seo_email_html(artifacts: list[ReportArtifact]) -> str:
       </div>
 
       <p style="font-size:12px;color:#6b7280;">
-        If the report says no update, that is intentional: no-change recommendations are expected when data is sparse or signals are not actionable.
+        This report uses an LLM to analyze GSC and GA4 separately, then together. GA4 traffic volume does not block GSC-driven SEO recommendations.
       </p>
     </div>
   </body>
