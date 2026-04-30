@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 import csv
+import html
 import json
 import logging
 import shutil
@@ -331,6 +332,20 @@ def _email_blurb(value: Any) -> str:
         if parts:
             return " ".join(parts[:2])
     return "The LLM reviewed GSC and GA4 separately, then combined them into the recommendations below."
+
+
+def _short_url(value: Any) -> str:
+    text = str(value or "").strip()
+    for prefix in ("https://", "http://"):
+        if text.startswith(prefix):
+            text = text[len(prefix):]
+    if len(text) <= 72:
+        return text
+    return text[:45].rstrip("/") + "..." + text[-22:]
+
+
+def _escape(value: Any) -> str:
+    return html.escape(str(value or ""), quote=True)
 
 
 def _artifact_map(artifacts: list[ReportArtifact]) -> dict[str, ReportArtifact]:
@@ -801,25 +816,45 @@ def build_seo_email_html(artifacts: list[ReportArtifact]) -> str:
     ga_source = amap.get("ga_source_medium").rows if amap.get("ga_source_medium") else []
     ga_device = amap.get("ga_device").rows if amap.get("ga_device") else []
 
-    def html_table(headers: list[str], rows: list[dict[str, Any]], limit: int = 8) -> str:
+    def recommendation_cards(rows: list[dict[str, Any]]) -> str:
         if not rows:
-            return "<p style='color:#6b7280;margin:8px 0 16px;'>No rows returned.</p>"
-        head = "".join(
-            f"<th style='text-align:left;padding:8px;border-bottom:1px solid #e5e7eb;'>{h}</th>"
-            for h in headers
-        )
-        body_rows = []
-        for row in rows[:limit]:
-            cells = "".join(
-                f"<td style='padding:8px;border-bottom:1px solid #f3f4f6;vertical-align:top;'>{row.get(h, '')}</td>"
-                for h in headers
+            return "<p style='color:#4b5563;margin:0;'>No suggested updates returned.</p>"
+        cards = []
+        for idx, row in enumerate(rows, start=1):
+            priority = _escape(row.get("priority", f"#{idx}")).title()
+            page = _escape(_short_url(row.get("page", "")))
+            query = _escape(row.get("query", "") or "General page improvement")
+            recommendation = _escape(row.get("recommendation", "Review this page for SEO improvements."))
+            cards.append(
+                "<div style='background:#f8fafc;border:1px solid #dbe3ee;border-radius:12px;"
+                "padding:14px;margin:0 0 12px;'>"
+                f"<div style='font-size:12px;font-weight:700;color:#2563eb;text-transform:uppercase;"
+                f"letter-spacing:.04em;margin-bottom:8px;'>{idx}. {priority}</div>"
+                f"<div style='font-size:13px;color:#475569;margin-bottom:6px;word-break:break-word;'>"
+                f"<strong style='color:#111827;'>Page:</strong> {page}</div>"
+                f"<div style='font-size:13px;color:#475569;margin-bottom:10px;word-break:break-word;'>"
+                f"<strong style='color:#111827;'>Query:</strong> {query}</div>"
+                f"<div style='font-size:15px;line-height:1.45;color:#111827;'>{recommendation}</div>"
+                "</div>"
             )
-            body_rows.append(f"<tr>{cells}</tr>")
-        body = "".join(body_rows)
-        return (
-            "<table style='width:100%;border-collapse:collapse;font-size:13px;'>"
-            f"<thead><tr>{head}</tr></thead><tbody>{body}</tbody></table>"
-        )
+        return "".join(cards)
+
+    def watch_cards(rows: list[dict[str, Any]]) -> str:
+        if not rows:
+            return "<p style='color:#4b5563;margin:0;'>No watchlist items returned.</p>"
+        cards = []
+        for row in rows:
+            page = _escape(_short_url(row.get("page", "")))
+            query = _escape(row.get("query", "") or "General")
+            reason = _escape(row.get("reason", "Monitor this signal."))
+            cards.append(
+                "<div style='border-top:1px solid #e5e7eb;padding:12px 0;'>"
+                f"<div style='font-size:13px;color:#111827;font-weight:700;word-break:break-word;'>{query}</div>"
+                f"<div style='font-size:12px;color:#64748b;margin:4px 0;word-break:break-word;'>{page}</div>"
+                f"<div style='font-size:13px;color:#475569;line-height:1.4;'>{reason}</div>"
+                "</div>"
+            )
+        return "".join(cards)
 
     suggested_rows = decisions["page_query_candidates"][:3]
     watch_rows = decisions["watchlist"][:3]
@@ -840,7 +875,7 @@ def build_seo_email_html(artifacts: list[ReportArtifact]) -> str:
         if decisions["total_gsc_impressions"]
         else 0.0
     )
-    top_page_label = top_page[0].get("page", "No GSC page data") if top_page else "No GSC page data"
+    top_page_label = _short_url(top_page[0].get("page", "No GSC page data")) if top_page else "No GSC page data"
     top_query_label = top_query[0].get("query", "No GSC query data") if top_query else "No GSC query data"
     top_content_label = (
         top_content[0].get("pageTitle")
@@ -856,68 +891,65 @@ def build_seo_email_html(artifacts: list[ReportArtifact]) -> str:
         if decisions["update_recommended"]
         else "No SEO updates recommended today"
     )
-    why_text = _email_blurb(decisions.get("combined_analysis")) or (
+    why_text = _escape(_email_blurb(decisions.get("combined_analysis")) or (
         "GSC and GA4 were analyzed separately, then combined into practical SEO recommendations."
-    )
-    gsc_analysis_text = _email_blurb(decisions.get("gsc_analysis", ""))
-    ga4_analysis_text = _email_blurb(decisions.get("ga4_analysis", ""))
+    ))
+    gsc_analysis_text = _escape(_email_blurb(decisions.get("gsc_analysis", "")))
+    ga4_analysis_text = _escape(_email_blurb(decisions.get("ga4_analysis", "")))
 
     return f"""
 <!doctype html>
 <html>
-  <body style="margin:0;background:#f9fafb;font-family:Arial,sans-serif;color:#111827;">
-    <div style="max-width:760px;margin:0 auto;padding:24px;">
-      <div style="background:#111827;color:#fff;border-radius:10px;padding:20px;">
-        <h1 style="margin:0;font-size:26px;">{settings.site_name} SEO</h1>
-        <p style="margin:6px 0 0;font-size:18px;font-weight:700;">{decision_text}</p>
+  <body style="margin:0;background:#eef2f7;font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Arial,sans-serif;color:#111827;">
+    <div style="max-width:640px;margin:0 auto;padding:18px;">
+      <div style="background:#0f172a;color:#ffffff;border-radius:18px;padding:20px;">
+        <div style="font-size:13px;color:#cbd5e1;text-transform:uppercase;letter-spacing:.08em;margin-bottom:6px;">Daily SEO memo</div>
+        <h1 style="margin:0;font-size:24px;line-height:1.2;color:#ffffff;">{settings.site_name}</h1>
+        <p style="margin:10px 0 0;font-size:18px;font-weight:800;color:#ffffff;">{decision_text}</p>
       </div>
 
-      <div style="display:flex;gap:12px;flex-wrap:wrap;margin:16px 0;">
-        <div style="background:#fff;padding:14px;border:1px solid #e5e7eb;border-radius:8px;min-width:180px;">
-          <div style="font-size:12px;color:#6b7280;">GSC Impressions</div>
-          <div style="font-size:22px;font-weight:700;">{decisions['total_gsc_impressions']:,}</div>
+      <div style="margin:14px 0;">
+        <div style="background:#ffffff;padding:14px;border:1px solid #dbe3ee;border-radius:14px;margin-bottom:10px;">
+          <div style="font-size:12px;color:#64748b;">GSC Impressions</div>
+          <div style="font-size:24px;font-weight:800;color:#111827;">{decisions['total_gsc_impressions']:,}</div>
         </div>
-        <div style="background:#fff;padding:14px;border:1px solid #e5e7eb;border-radius:8px;min-width:180px;">
-          <div style="font-size:12px;color:#6b7280;">GSC Clicks</div>
-          <div style="font-size:22px;font-weight:700;">{decisions['total_gsc_clicks']:,}</div>
+        <div style="background:#ffffff;padding:14px;border:1px solid #dbe3ee;border-radius:14px;margin-bottom:10px;">
+          <div style="font-size:12px;color:#64748b;">GSC Clicks / CTR</div>
+          <div style="font-size:24px;font-weight:800;color:#111827;">{decisions['total_gsc_clicks']:,} <span style="font-size:16px;color:#64748b;">/ {search_ctr:.2f}%</span></div>
         </div>
-        <div style="background:#fff;padding:14px;border:1px solid #e5e7eb;border-radius:8px;min-width:180px;">
-          <div style="font-size:12px;color:#6b7280;">Search CTR</div>
-          <div style="font-size:22px;font-weight:700;">{search_ctr:.2f}%</div>
-        </div>
-        <div style="background:#fff;padding:14px;border:1px solid #e5e7eb;border-radius:8px;min-width:180px;">
-          <div style="font-size:12px;color:#6b7280;">GA4 Sessions</div>
-          <div style="font-size:22px;font-weight:700;">{decisions['ga_sessions']:,}</div>
+        <div style="background:#ffffff;padding:14px;border:1px solid #dbe3ee;border-radius:14px;">
+          <div style="font-size:12px;color:#64748b;">GA4 Sessions</div>
+          <div style="font-size:24px;font-weight:800;color:#111827;">{decisions['ga_sessions']:,}</div>
         </div>
       </div>
 
-      <div style="background:#fff;padding:16px;border:1px solid #e5e7eb;border-radius:8px;margin-bottom:16px;">
-        <h2 style="margin:0 0 8px;font-size:18px;">Why this decision</h2>
-        <p style="margin:0;color:#374151;">{why_text}</p>
+      <div style="background:#ffffff;padding:16px;border:1px solid #dbe3ee;border-radius:16px;margin-bottom:14px;">
+        <h2 style="margin:0 0 8px;font-size:18px;color:#111827;">Why this matters</h2>
+        <p style="margin:0;color:#334155;line-height:1.5;font-size:15px;">{why_text}</p>
       </div>
 
-      <div style="background:#fff;padding:16px;border:1px solid #e5e7eb;border-radius:8px;margin-bottom:16px;">
-        <h2 style="margin:0 0 12px;font-size:18px;">Suggested updates</h2>
-        {html_table(["priority", "page", "query", "recommendation"], suggested_rows, 3)}
+      <div style="background:#ffffff;padding:16px;border:1px solid #dbe3ee;border-radius:16px;margin-bottom:14px;">
+        <h2 style="margin:0 0 12px;font-size:18px;color:#111827;">Suggested updates</h2>
+        {recommendation_cards(suggested_rows)}
       </div>
 
-      <div style="background:#fff;padding:16px;border:1px solid #e5e7eb;border-radius:8px;margin-bottom:16px;">
-        <h2 style="margin:0 0 12px;font-size:18px;">At-a-glance data</h2>
-        <ul style="margin:0;padding-left:20px;color:#374151;line-height:1.5;">
-          <li><strong>Top GSC page:</strong> {top_page_label}</li>
-          <li><strong>Top GSC query:</strong> {top_query_label}</li>
-          <li><strong>Organic sessions:</strong> {organic_sessions:,}</li>
-          <li><strong>Top GA4 content:</strong> {top_content_label}</li>
-          <li><strong>Primary device:</strong> {device_label}</li>
+      <div style="background:#ffffff;padding:16px;border:1px solid #dbe3ee;border-radius:16px;margin-bottom:14px;">
+        <h2 style="margin:0 0 12px;font-size:18px;color:#111827;">At-a-glance data</h2>
+        <ul style="margin:0;padding-left:18px;color:#334155;line-height:1.55;font-size:14px;">
+          <li><strong style="color:#111827;">Top GSC page:</strong> <span style="word-break:break-word;color:#334155;">{_escape(top_page_label)}</span></li>
+          <li><strong style="color:#111827;">Top GSC query:</strong> <span style="word-break:break-word;color:#334155;">{_escape(top_query_label)}</span></li>
+          <li><strong style="color:#111827;">Organic sessions:</strong> {organic_sessions:,}</li>
+          <li><strong style="color:#111827;">Top GA4 content:</strong> <span style="word-break:break-word;color:#334155;">{_escape(top_content_label)}</span></li>
+          <li><strong style="color:#111827;">Primary device:</strong> {_escape(device_label)}</li>
         </ul>
       </div>
 
-      <div style="background:#fff;padding:16px;border:1px solid #e5e7eb;border-radius:8px;margin-bottom:16px;">
-        <h2 style="margin:0 0 12px;font-size:18px;">Watch next</h2>
-        {html_table(["page", "query", "reason"], watch_rows, 3)}
+      <div style="background:#ffffff;padding:16px;border:1px solid #dbe3ee;border-radius:16px;margin-bottom:14px;">
+        <h2 style="margin:0 0 2px;font-size:18px;color:#111827;">Watch next</h2>
+        {watch_cards(watch_rows)}
       </div>
 
-      <p style="font-size:12px;color:#6b7280;">
+      <p style="font-size:12px;line-height:1.45;color:#64748b;margin:0 2px;">
         GSC read: {gsc_analysis_text}<br><br>GA4 read: {ga4_analysis_text}
       </p>
     </div>
