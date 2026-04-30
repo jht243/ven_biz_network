@@ -66,6 +66,19 @@ class Settings(BaseSettings):
     newsletter_from_email: str = "briefing@venezuelanbusiness.net"
     newsletter_api_key: str = ""
     subscriber_list_path: str = "subscribers.json"
+    seo_email_provider: str = "resend"
+    seo_email_recipient: str = "<RECIPIENT_EMAIL>"
+    seo_email_subject: str = "SEO Updates <SITE_NAME>"
+    resend_api_key: str = ""
+
+    # Google reporting (GA4 + Search Console)
+    google_reporting_sa_json: str = ""
+    google_reporting_sa_file: str = ""
+    google_reporting_ga4_property_id: str = ""
+    google_reporting_gsc_site_url: str = ""
+    google_reporting_output_dir: Path = Path("./output/google_reporting")
+    google_reporting_ga_lookback_days: int = 30
+    google_reporting_gsc_lookback_days: int = 90
 
     # Buttondown (subscriber signup)
     buttondown_api_key: str = ""
@@ -235,3 +248,4 @@ settings.storage_dir.mkdir(parents=True, exist_ok=True)
 (settings.storage_dir / "pdfs").mkdir(exist_ok=True)
 (settings.storage_dir / "ocr_output").mkdir(exist_ok=True)
 settings.output_dir.mkdir(parents=True, exist_ok=True)
+settings.google_reporting_output_dir.mkdir(parents=True, exist_ok=True)

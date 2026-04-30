@@ -1,0 +1,1009 @@
+from __future__ import annotations
+
+import csv
+import json
+import logging
+import shutil
+from dataclasses import dataclass
+from datetime import date, datetime, timedelta, timezone
+from pathlib import Path
+from typing import Any
+from urllib.parse import quote
+
+import httpx
+from google.auth.transport.requests import Request as GoogleAuthRequest
+from google.oauth2 import service_account
+
+from src.config import settings
+
+logger = logging.getLogger(__name__)
+
+GA_SCOPE = "https://www.googleapis.com/auth/analytics.readonly"
+GSC_SCOPE = "https://www.googleapis.com/auth/webmasters.readonly"
+SCOPES = [GA_SCOPE, GSC_SCOPE]
+
+GA_API_BASE = "https://analyticsdata.googleapis.com/v1beta"
+GSC_API_BASE = "https://www.googleapis.com/webmasters/v3"
+
+
+@dataclass
+class ReportArtifact:
+    name: str
+    source: str
+    rows: list[dict[str, Any]]
+    row_count: int
+    json_path: Path
+    csv_path: Path
+    latest_json_path: Path
+    latest_csv_path: Path
+
+
+@dataclass
+class ReportingRun:
+    artifacts: list[ReportArtifact]
+    dated_output_dir: Path
+    latest_output_dir: Path
+    manifest_path: Path
+    summary_path: Path
+    seo_decisions_path: Path
+
+
+GA_REPORT_SPECS: list[dict[str, Any]] = [
+    {
+        "name": "ga_site_summary",
+        "dimensions": [],
+        "metrics": [
+            "sessions",
+            "totalUsers",
+            "screenPageViews",
+            "engagedSessions",
+            "engagementRate",
+            "averageSessionDuration",
+        ],
+        "limit": 1,
+    },
+    {
+        "name": "ga_landing_pages",
+        "dimensions": ["landingPagePlusQueryString"],
+        "metrics": [
+            "sessions",
+            "totalUsers",
+            "screenPageViews",
+            "engagementRate",
+            "averageSessionDuration",
+        ],
+        "limit": 1000,
+    },
+    {
+        "name": "ga_landing_pages_by_source",
+        "dimensions": ["landingPagePlusQueryString", "sessionSourceMedium"],
+        "metrics": ["sessions", "totalUsers", "screenPageViews", "engagementRate"],
+        "limit": 1000,
+    },
+    {
+        "name": "ga_content_pages",
+        "dimensions": ["pagePathPlusQueryString", "pageTitle"],
+        "metrics": [
+            "screenPageViews",
+            "totalUsers",
+            "sessions",
+            "engagementRate",
+            "eventCount",
+        ],
+        "limit": 1000,
+    },
+    {
+        "name": "ga_source_medium",
+        "dimensions": ["sessionSourceMedium"],
+        "metrics": ["sessions", "totalUsers", "screenPageViews", "engagementRate"],
+        "limit": 200,
+    },
+    {
+        "name": "ga_channel_group",
+        "dimensions": ["sessionDefaultChannelGroup"],
+        "metrics": ["sessions", "totalUsers", "screenPageViews", "engagementRate"],
+        "limit": 200,
+    },
+    {
+        "name": "ga_device",
+        "dimensions": ["deviceCategory"],
+        "metrics": ["sessions", "totalUsers", "screenPageViews", "engagementRate"],
+        "limit": 50,
+    },
+    {
+        "name": "ga_country",
+        "dimensions": ["country"],
+        "metrics": ["sessions", "totalUsers", "screenPageViews", "engagementRate"],
+        "limit": 200,
+    },
+    {
+        "name": "ga_city",
+        "dimensions": ["country", "city"],
+        "metrics": ["sessions", "totalUsers", "screenPageViews", "engagementRate"],
+        "limit": 500,
+    },
+    {
+        "name": "ga_events",
+        "dimensions": ["eventName"],
+        "metrics": ["eventCount", "totalUsers"],
+        "limit": 200,
+    },
+    {
+        "name": "ga_daily_traffic",
+        "dimensions": ["date"],
+        "metrics": ["sessions", "totalUsers", "screenPageViews", "engagedSessions"],
+        "limit": 120,
+    },
+]
+
+GSC_REPORT_SPECS: list[dict[str, Any]] = [
+    {"name": "gsc_pages", "dimensions": ["page"]},
+    {"name": "gsc_queries", "dimensions": ["query"]},
+    {"name": "gsc_page_queries", "dimensions": ["page", "query"]},
+    {"name": "gsc_daily", "dimensions": ["date"]},
+    {"name": "gsc_page_daily", "dimensions": ["page", "date"]},
+    {"name": "gsc_query_daily", "dimensions": ["query", "date"]},
+    {"name": "gsc_device", "dimensions": ["device"]},
+    {"name": "gsc_country", "dimensions": ["country"]},
+    {"name": "gsc_page_device", "dimensions": ["page", "device"]},
+    {"name": "gsc_query_device", "dimensions": ["query", "device"]},
+    {"name": "gsc_page_country", "dimensions": ["page", "country"]},
+    {"name": "gsc_query_country", "dimensions": ["query", "country"]},
+    {"name": "gsc_search_appearance", "dimensions": ["searchAppearance"]},
+]
+
+
+def _to_float(value: Any, default: float = 0.0) -> float:
+    try:
+        return float(value)
+    except (TypeError, ValueError):
+        return default
+
+
+def _to_int(value: Any, default: int = 0) -> int:
+    try:
+        return int(float(value))
+    except (TypeError, ValueError):
+        return default
+
+
+def _pct(value: Any) -> float:
+    return _to_float(value) * 100.0
+
+
+def _fmt_num(value: Any) -> str:
+    return f"{_to_int(value):,}"
+
+
+def _fmt_pct(value: Any) -> str:
+    return f"{_to_float(value):.2f}%"
+
+
+def _fmt_pos(value: Any) -> str:
+    return f"{_to_float(value):.1f}"
+
+
+def _date_range(lookback_days: int) -> tuple[str, str]:
+    end_date = date.today()
+    start_date = end_date - timedelta(days=max(1, lookback_days))
+    return start_date.isoformat(), end_date.isoformat()
+
+
+def load_service_account_info(key_file: str | None = None) -> dict[str, Any]:
+    if key_file:
+        path = Path(key_file).expanduser()
+        if not path.exists():
+            raise FileNotFoundError(f"Service account key file not found: {path}")
+        return json.loads(path.read_text(encoding="utf-8"))
+
+    if settings.google_reporting_sa_json:
+        try:
+            return json.loads(settings.google_reporting_sa_json)
+        except json.JSONDecodeError as exc:
+            raise ValueError("GOOGLE_REPORTING_SA_JSON is not valid JSON") from exc
+
+    if settings.google_reporting_sa_file:
+        path = Path(settings.google_reporting_sa_file).expanduser()
+        if not path.exists():
+            raise FileNotFoundError(f"GOOGLE_REPORTING_SA_FILE not found: {path}")
+        return json.loads(path.read_text(encoding="utf-8"))
+
+    raise ValueError(
+        "Google service account credentials missing. "
+        "Set --key-file, GOOGLE_REPORTING_SA_JSON, or GOOGLE_REPORTING_SA_FILE."
+    )
+
+
+def _get_access_token(service_account_info: dict[str, Any]) -> str:
+    creds = service_account.Credentials.from_service_account_info(
+        service_account_info, scopes=SCOPES
+    )
+    creds.refresh(GoogleAuthRequest())
+    if not creds.token:
+        raise RuntimeError("Failed to obtain Google OAuth access token.")
+    return str(creds.token)
+
+
+def _ga_report_body(spec: dict[str, Any], start_date: str, end_date: str) -> dict[str, Any]:
+    return {
+        "dateRanges": [{"startDate": start_date, "endDate": end_date}],
+        "dimensions": [{"name": d} for d in spec["dimensions"]],
+        "metrics": [{"name": m} for m in spec["metrics"]],
+        "limit": str(spec.get("limit", 1000)),
+        "keepEmptyRows": False,
+    }
+
+
+def _parse_ga_rows(payload: dict[str, Any]) -> list[dict[str, Any]]:
+    dimension_headers = [h.get("name", "") for h in payload.get("dimensionHeaders", [])]
+    metric_headers = [h.get("name", "") for h in payload.get("metricHeaders", [])]
+    rows = []
+    for row in payload.get("rows", []):
+        out: dict[str, Any] = {}
+        dim_values = row.get("dimensionValues", [])
+        metric_values = row.get("metricValues", [])
+        for i, header in enumerate(dimension_headers):
+            out[header] = dim_values[i].get("value", "") if i < len(dim_values) else ""
+        for i, header in enumerate(metric_headers):
+            out[header] = metric_values[i].get("value", "") if i < len(metric_values) else ""
+        rows.append(out)
+    return rows
+
+
+def _gsc_report_body(spec: dict[str, Any], start_date: str, end_date: str) -> dict[str, Any]:
+    return {
+        "startDate": start_date,
+        "endDate": end_date,
+        "dimensions": spec["dimensions"],
+        "rowLimit": 25000,
+        "startRow": 0,
+    }
+
+
+def _parse_gsc_rows(payload: dict[str, Any], dimensions: list[str]) -> list[dict[str, Any]]:
+    rows = []
+    for row in payload.get("rows", []):
+        keys = row.get("keys", [])
+        out: dict[str, Any] = {}
+        for idx, dim in enumerate(dimensions):
+            out[dim] = keys[idx] if idx < len(keys) else ""
+        out["clicks"] = row.get("clicks", 0)
+        out["impressions"] = row.get("impressions", 0)
+        out["ctr"] = row.get("ctr", 0)
+        out["position"] = row.get("position", 0)
+        rows.append(out)
+    return rows
+
+
+def _write_json(path: Path, payload: dict[str, Any]) -> None:
+    path.parent.mkdir(parents=True, exist_ok=True)
+    path.write_text(json.dumps(payload, indent=2, ensure_ascii=False), encoding="utf-8")
+
+
+def _write_csv(path: Path, rows: list[dict[str, Any]]) -> None:
+    path.parent.mkdir(parents=True, exist_ok=True)
+    if not rows:
+        path.write_text("", encoding="utf-8")
+        return
+    fieldnames = sorted({k for row in rows for k in row.keys()})
+    with path.open("w", newline="", encoding="utf-8") as f:
+        writer = csv.DictWriter(f, fieldnames=fieldnames)
+        writer.writeheader()
+        writer.writerows(rows)
+
+
+def _copy_to_latest(source_path: Path, latest_path: Path) -> None:
+    latest_path.parent.mkdir(parents=True, exist_ok=True)
+    shutil.copy2(source_path, latest_path)
+
+
+def _markdown_table(rows: list[dict[str, Any]], columns: list[str], limit: int = 10) -> str:
+    if not rows:
+        return "_No rows returned._"
+    lines = [
+        "| " + " | ".join(columns) + " |",
+        "| " + " | ".join(["---"] * len(columns)) + " |",
+    ]
+    for row in rows[:limit]:
+        lines.append("| " + " | ".join(str(row.get(col, "")) for col in columns) + " |")
+    return "\n".join(lines)
+
+
+def _artifact_map(artifacts: list[ReportArtifact]) -> dict[str, ReportArtifact]:
+    return {a.name: a for a in artifacts}
+
+
+def _top_rows(rows: list[dict[str, Any]], key: str, n: int = 10) -> list[dict[str, Any]]:
+    return sorted(rows, key=lambda r: _to_float(r.get(key)), reverse=True)[:n]
+
+
+def _compute_decisions(artifacts: list[ReportArtifact]) -> dict[str, Any]:
+    amap = _artifact_map(artifacts)
+    gsc_daily = amap.get("gsc_daily").rows if amap.get("gsc_daily") else []
+    gsc_pages = amap.get("gsc_pages").rows if amap.get("gsc_pages") else []
+    gsc_queries = amap.get("gsc_queries").rows if amap.get("gsc_queries") else []
+    gsc_page_queries = (
+        amap.get("gsc_page_queries").rows if amap.get("gsc_page_queries") else []
+    )
+    ga_site_summary = (
+        amap.get("ga_site_summary").rows if amap.get("ga_site_summary") else []
+    )
+
+    total_gsc_impressions = (
+        sum(_to_float(r.get("impressions")) for r in gsc_daily)
+        if gsc_daily
+        else sum(_to_float(r.get("impressions")) for r in gsc_pages)
+    )
+    total_gsc_clicks = (
+        sum(_to_float(r.get("clicks")) for r in gsc_daily)
+        if gsc_daily
+        else sum(_to_float(r.get("clicks")) for r in gsc_pages)
+    )
+    ga_sessions = (
+        _to_float(ga_site_summary[0].get("sessions"))
+        if ga_site_summary
+        else 0.0
+    )
+
+    page_query_candidates = []
+    for row in gsc_page_queries:
+        impressions = _to_float(row.get("impressions"))
+        ctr = _to_float(row.get("ctr"))
+        position = _to_float(row.get("position"))
+        if impressions >= 50 and 3 <= position <= 20 and ctr <= 0.03:
+            page_query_candidates.append(
+                {
+                    "page": row.get("page", ""),
+                    "query": row.get("query", ""),
+                    "impressions": _to_int(impressions),
+                    "clicks": _to_int(row.get("clicks")),
+                    "ctr": _fmt_pct(_pct(ctr)),
+                    "position": _fmt_pos(position),
+                    "action": "Improve title/H1 and answer intent for this query.",
+                }
+            )
+
+    page_candidates = []
+    for row in gsc_pages:
+        impressions = _to_float(row.get("impressions"))
+        ctr = _to_float(row.get("ctr"))
+        position = _to_float(row.get("position"))
+        if impressions >= 100 and 3 <= position <= 20 and ctr <= 0.03:
+            page_candidates.append(
+                {
+                    "page": row.get("page", ""),
+                    "impressions": _to_int(impressions),
+                    "clicks": _to_int(row.get("clicks")),
+                    "ctr": _fmt_pct(_pct(ctr)),
+                    "position": _fmt_pos(position),
+                    "action": "Refresh metadata and on-page structure to increase CTR.",
+                }
+            )
+
+    watchlist = []
+    for row in gsc_page_queries:
+        impressions = _to_float(row.get("impressions"))
+        ctr = _to_float(row.get("ctr"))
+        position = _to_float(row.get("position"))
+        if impressions >= 5 and 3 <= position <= 20 and ctr <= 0.10:
+            watchlist.append(
+                {
+                    "type": "page_query",
+                    "page": row.get("page", ""),
+                    "query": row.get("query", ""),
+                    "impressions": _to_int(impressions),
+                    "ctr": _fmt_pct(_pct(ctr)),
+                    "position": _fmt_pos(position),
+                }
+            )
+    if not watchlist:
+        for row in gsc_queries:
+            impressions = _to_float(row.get("impressions"))
+            ctr = _to_float(row.get("ctr"))
+            position = _to_float(row.get("position"))
+            if impressions >= 5 and 3 <= position <= 20 and ctr <= 0.10:
+                watchlist.append(
+                    {
+                        "type": "query",
+                        "query": row.get("query", ""),
+                        "impressions": _to_int(impressions),
+                        "ctr": _fmt_pct(_pct(ctr)),
+                        "position": _fmt_pos(position),
+                    }
+                )
+
+    update_recommended = (
+        total_gsc_impressions >= 100
+        and ga_sessions >= 25
+        and (len(page_query_candidates) > 0 or len(page_candidates) > 0)
+    )
+    decision = (
+        "SEO updates recommended."
+        if update_recommended
+        else "No SEO updates recommended today."
+    )
+
+    return {
+        "decision": decision,
+        "update_recommended": update_recommended,
+        "total_gsc_impressions": _to_int(total_gsc_impressions),
+        "total_gsc_clicks": _to_int(total_gsc_clicks),
+        "ga_sessions": _to_int(ga_sessions),
+        "page_query_candidates": _top_rows(page_query_candidates, "impressions", 20),
+        "page_candidates": _top_rows(page_candidates, "impressions", 20),
+        "watchlist": _top_rows(watchlist, "impressions", 20),
+    }
+
+
+def _build_summary_markdown(artifacts: list[ReportArtifact]) -> str:
+    amap = _artifact_map(artifacts)
+    ga_summary_rows = amap.get("ga_site_summary").rows if amap.get("ga_site_summary") else []
+    ga_landing_rows = amap.get("ga_landing_pages").rows if amap.get("ga_landing_pages") else []
+    ga_content_rows = amap.get("ga_content_pages").rows if amap.get("ga_content_pages") else []
+    ga_source_rows = amap.get("ga_source_medium").rows if amap.get("ga_source_medium") else []
+    ga_device_rows = amap.get("ga_device").rows if amap.get("ga_device") else []
+    gsc_pages_rows = amap.get("gsc_pages").rows if amap.get("gsc_pages") else []
+    gsc_queries_rows = amap.get("gsc_queries").rows if amap.get("gsc_queries") else []
+    gsc_pq_rows = amap.get("gsc_page_queries").rows if amap.get("gsc_page_queries") else []
+    gsc_country_rows = amap.get("gsc_country").rows if amap.get("gsc_country") else []
+    gsc_daily_rows = amap.get("gsc_daily").rows if amap.get("gsc_daily") else []
+    decisions = _compute_decisions(artifacts)
+
+    ga_summary_view = []
+    if ga_summary_rows:
+        row = ga_summary_rows[0]
+        ga_summary_view = [
+            {
+                "sessions": _fmt_num(row.get("sessions")),
+                "totalUsers": _fmt_num(row.get("totalUsers")),
+                "screenPageViews": _fmt_num(row.get("screenPageViews")),
+                "engagedSessions": _fmt_num(row.get("engagedSessions")),
+                "engagementRate": _fmt_pct(_pct(row.get("engagementRate"))),
+                "averageSessionDuration(s)": f"{_to_float(row.get('averageSessionDuration')):.1f}",
+            }
+        ]
+
+    top_gsc_pages = []
+    pages_with_clicks = []
+    for r in _top_rows(gsc_pages_rows, "impressions", 12):
+        row = {
+            "page": r.get("page", ""),
+            "impressions": _fmt_num(r.get("impressions")),
+            "clicks": _fmt_num(r.get("clicks")),
+            "ctr": _fmt_pct(_pct(r.get("ctr"))),
+            "position": _fmt_pos(r.get("position")),
+        }
+        top_gsc_pages.append(row)
+        if _to_float(r.get("clicks")) > 0:
+            pages_with_clicks.append(row)
+
+    page_opps = [
+        {
+            "page": r["page"],
+            "impressions": r["impressions"],
+            "ctr": r["ctr"],
+            "position": r["position"],
+        }
+        for r in decisions["page_candidates"][:12]
+    ]
+
+    daily_trend = []
+    for r in sorted(gsc_daily_rows, key=lambda x: str(x.get("date", "")))[-14:]:
+        daily_trend.append(
+            {
+                "date": r.get("date", ""),
+                "impressions": _fmt_num(r.get("impressions")),
+                "clicks": _fmt_num(r.get("clicks")),
+                "ctr": _fmt_pct(_pct(r.get("ctr"))),
+                "position": _fmt_pos(r.get("position")),
+            }
+        )
+
+    sections = [
+        "# SEO Data Summary",
+        "",
+        "## GA4 Summary",
+        _markdown_table(
+            ga_summary_view,
+            [
+                "sessions",
+                "totalUsers",
+                "screenPageViews",
+                "engagedSessions",
+                "engagementRate",
+                "averageSessionDuration(s)",
+            ],
+        ),
+        "",
+        "## Top Landing Pages",
+        _markdown_table(
+            _top_rows(ga_landing_rows, "sessions", 12),
+            [
+                "landingPagePlusQueryString",
+                "sessions",
+                "totalUsers",
+                "screenPageViews",
+                "engagementRate",
+            ],
+        ),
+        "",
+        "## Top Content Pages",
+        _markdown_table(
+            _top_rows(ga_content_rows, "screenPageViews", 12),
+            [
+                "pagePathPlusQueryString",
+                "pageTitle",
+                "screenPageViews",
+                "totalUsers",
+                "sessions",
+                "engagementRate",
+            ],
+        ),
+        "",
+        "## Traffic Sources",
+        _markdown_table(
+            _top_rows(ga_source_rows, "sessions", 12),
+            ["sessionSourceMedium", "sessions", "totalUsers", "screenPageViews", "engagementRate"],
+        ),
+        "",
+        "## Device Mix",
+        _markdown_table(
+            _top_rows(ga_device_rows, "sessions", 12),
+            ["deviceCategory", "sessions", "totalUsers", "screenPageViews", "engagementRate"],
+        ),
+        "",
+        "## Top GSC Pages by Impressions",
+        _markdown_table(top_gsc_pages, ["page", "impressions", "clicks", "ctr", "position"]),
+        "",
+        "## GSC Pages with Clicks",
+        _markdown_table(pages_with_clicks[:12], ["page", "impressions", "clicks", "ctr", "position"]),
+        "",
+        "## Page Opportunities",
+        _markdown_table(page_opps, ["page", "impressions", "ctr", "position"]),
+        "",
+        "## Top GSC Queries",
+        _markdown_table(
+            [
+                {
+                    "query": r.get("query", ""),
+                    "impressions": _fmt_num(r.get("impressions")),
+                    "clicks": _fmt_num(r.get("clicks")),
+                    "ctr": _fmt_pct(_pct(r.get("ctr"))),
+                    "position": _fmt_pos(r.get("position")),
+                }
+                for r in _top_rows(gsc_queries_rows, "impressions", 12)
+            ],
+            ["query", "impressions", "clicks", "ctr", "position"],
+        ),
+        "",
+        "## Top Page/Query Pairs",
+        _markdown_table(
+            [
+                {
+                    "page": r.get("page", ""),
+                    "query": r.get("query", ""),
+                    "impressions": _fmt_num(r.get("impressions")),
+                    "clicks": _fmt_num(r.get("clicks")),
+                    "ctr": _fmt_pct(_pct(r.get("ctr"))),
+                    "position": _fmt_pos(r.get("position")),
+                }
+                for r in _top_rows(gsc_pq_rows, "impressions", 12)
+            ],
+            ["page", "query", "impressions", "clicks", "ctr", "position"],
+        ),
+        "",
+        "## Country Mix",
+        _markdown_table(
+            [
+                {
+                    "country": r.get("country", ""),
+                    "impressions": _fmt_num(r.get("impressions")),
+                    "clicks": _fmt_num(r.get("clicks")),
+                    "ctr": _fmt_pct(_pct(r.get("ctr"))),
+                    "position": _fmt_pos(r.get("position")),
+                }
+                for r in _top_rows(gsc_country_rows, "impressions", 12)
+            ],
+            ["country", "impressions", "clicks", "ctr", "position"],
+        ),
+        "",
+        "## Daily Trend",
+        _markdown_table(daily_trend, ["date", "impressions", "clicks", "ctr", "position"]),
+        "",
+    ]
+    return "\n".join(sections)
+
+
+def _build_seo_decisions_markdown(artifacts: list[ReportArtifact]) -> str:
+    d = _compute_decisions(artifacts)
+    lines = [
+        "# SEO Decision",
+        "",
+        f"**Decision:** {d['decision']}",
+        "",
+        "## Data Check",
+        f"- Total GSC impressions: {d['total_gsc_impressions']:,}",
+        f"- Total GSC clicks: {d['total_gsc_clicks']:,}",
+        f"- GA4 sessions: {d['ga_sessions']:,}",
+        "",
+    ]
+    if d["update_recommended"]:
+        lines.extend(
+            [
+                "## Recommended Updates",
+                _markdown_table(
+                    d["page_query_candidates"][:10],
+                    ["page", "query", "impressions", "clicks", "ctr", "position", "action"],
+                ),
+                "",
+                _markdown_table(
+                    d["page_candidates"][:10],
+                    ["page", "impressions", "clicks", "ctr", "position", "action"],
+                ),
+                "",
+            ]
+        )
+    else:
+        lines.extend(
+            [
+                "## Recommended Updates",
+                "- No SEO updates recommended today.",
+                "",
+            ]
+        )
+    lines.extend(
+        [
+            "## Watchlist",
+            _markdown_table(
+                d["watchlist"][:12],
+                ["type", "page", "query", "impressions", "ctr", "position"],
+            ),
+            "",
+            "## Operating Rule",
+            "- If the decision says no update, do not force edits.",
+            "",
+        ]
+    )
+    return "\n".join(lines)
+
+
+def build_seo_email_html(artifacts: list[ReportArtifact]) -> str:
+    amap = _artifact_map(artifacts)
+    decisions = _compute_decisions(artifacts)
+    gsc_pages = amap.get("gsc_pages").rows if amap.get("gsc_pages") else []
+    gsc_queries = amap.get("gsc_queries").rows if amap.get("gsc_queries") else []
+    gsc_daily = amap.get("gsc_daily").rows if amap.get("gsc_daily") else []
+    ga_content = amap.get("ga_content_pages").rows if amap.get("ga_content_pages") else []
+    ga_source = amap.get("ga_source_medium").rows if amap.get("ga_source_medium") else []
+    ga_device = amap.get("ga_device").rows if amap.get("ga_device") else []
+
+    def html_table(headers: list[str], rows: list[dict[str, Any]], limit: int = 8) -> str:
+        if not rows:
+            return "<p style='color:#6b7280;margin:8px 0 16px;'>No rows returned.</p>"
+        head = "".join(
+            f"<th style='text-align:left;padding:8px;border-bottom:1px solid #e5e7eb;'>{h}</th>"
+            for h in headers
+        )
+        body_rows = []
+        for row in rows[:limit]:
+            cells = "".join(
+                f"<td style='padding:8px;border-bottom:1px solid #f3f4f6;vertical-align:top;'>{row.get(h, '')}</td>"
+                for h in headers
+            )
+            body_rows.append(f"<tr>{cells}</tr>")
+        body = "".join(body_rows)
+        return (
+            "<table style='width:100%;border-collapse:collapse;font-size:13px;'>"
+            f"<thead><tr>{head}</tr></thead><tbody>{body}</tbody></table>"
+        )
+
+    suggested_rows = decisions["page_query_candidates"][:8] + decisions["page_candidates"][:8]
+    watch_rows = decisions["watchlist"][:10]
+    gsc_page_rows = [
+        {
+            "page": r.get("page", ""),
+            "impressions": _fmt_num(r.get("impressions")),
+            "clicks": _fmt_num(r.get("clicks")),
+            "ctr": _fmt_pct(_pct(r.get("ctr"))),
+            "position": _fmt_pos(r.get("position")),
+        }
+        for r in _top_rows(gsc_pages, "impressions", 8)
+    ]
+    gsc_query_rows = [
+        {
+            "query": r.get("query", ""),
+            "impressions": _fmt_num(r.get("impressions")),
+            "clicks": _fmt_num(r.get("clicks")),
+            "ctr": _fmt_pct(_pct(r.get("ctr"))),
+            "position": _fmt_pos(r.get("position")),
+        }
+        for r in _top_rows(gsc_queries, "impressions", 8)
+    ]
+    ga_content_rows = [
+        {
+            "pageTitle": r.get("pageTitle", ""),
+            "pagePathPlusQueryString": r.get("pagePathPlusQueryString", ""),
+            "screenPageViews": _fmt_num(r.get("screenPageViews")),
+            "sessions": _fmt_num(r.get("sessions")),
+        }
+        for r in _top_rows(ga_content, "screenPageViews", 8)
+    ]
+    ga_source_rows = [
+        {
+            "sessionSourceMedium": r.get("sessionSourceMedium", ""),
+            "sessions": _fmt_num(r.get("sessions")),
+            "totalUsers": _fmt_num(r.get("totalUsers")),
+            "engagementRate": _fmt_pct(_pct(r.get("engagementRate"))),
+        }
+        for r in _top_rows(ga_source, "sessions", 8)
+    ]
+    ga_device_rows = [
+        {
+            "deviceCategory": r.get("deviceCategory", ""),
+            "sessions": _fmt_num(r.get("sessions")),
+            "totalUsers": _fmt_num(r.get("totalUsers")),
+            "engagementRate": _fmt_pct(_pct(r.get("engagementRate"))),
+        }
+        for r in _top_rows(ga_device, "sessions", 8)
+    ]
+    trend_rows = [
+        {
+            "date": r.get("date", ""),
+            "impressions": _fmt_num(r.get("impressions")),
+            "clicks": _fmt_num(r.get("clicks")),
+            "ctr": _fmt_pct(_pct(r.get("ctr"))),
+            "position": _fmt_pos(r.get("position")),
+        }
+        for r in sorted(gsc_daily, key=lambda x: str(x.get("date", "")))[-10:]
+    ]
+
+    decision_text = (
+        "SEO updates recommended"
+        if decisions["update_recommended"]
+        else "No SEO updates recommended today"
+    )
+    why_text = (
+        "Actionable page/query opportunities crossed the thresholds for impressions, rank, and CTR."
+        if decisions["update_recommended"]
+        else "Data is currently too sparse or not actionable enough against configured thresholds."
+    )
+
+    return f"""
+<!doctype html>
+<html>
+  <body style="margin:0;background:#f9fafb;font-family:Arial,sans-serif;color:#111827;">
+    <div style="max-width:980px;margin:0 auto;padding:24px;">
+      <div style="background:#111827;color:#fff;border-radius:10px;padding:20px;">
+        <h1 style="margin:0;font-size:26px;">{settings.site_name} SEO</h1>
+        <p style="margin:6px 0 0;font-size:18px;font-weight:700;">{decision_text}</p>
+      </div>
+
+      <div style="display:flex;gap:12px;flex-wrap:wrap;margin:16px 0;">
+        <div style="background:#fff;padding:14px;border:1px solid #e5e7eb;border-radius:8px;min-width:180px;">
+          <div style="font-size:12px;color:#6b7280;">GSC Impressions</div>
+          <div style="font-size:22px;font-weight:700;">{decisions['total_gsc_impressions']:,}</div>
+        </div>
+        <div style="background:#fff;padding:14px;border:1px solid #e5e7eb;border-radius:8px;min-width:180px;">
+          <div style="font-size:12px;color:#6b7280;">GSC Clicks</div>
+          <div style="font-size:22px;font-weight:700;">{decisions['total_gsc_clicks']:,}</div>
+        </div>
+        <div style="background:#fff;padding:14px;border:1px solid #e5e7eb;border-radius:8px;min-width:180px;">
+          <div style="font-size:12px;color:#6b7280;">GA4 Sessions</div>
+          <div style="font-size:22px;font-weight:700;">{decisions['ga_sessions']:,}</div>
+        </div>
+      </div>
+
+      <div style="background:#fff;padding:16px;border:1px solid #e5e7eb;border-radius:8px;margin-bottom:16px;">
+        <h2 style="margin:0 0 8px;font-size:18px;">Why this decision</h2>
+        <p style="margin:0;color:#374151;">{why_text}</p>
+      </div>
+
+      <div style="background:#fff;padding:16px;border:1px solid #e5e7eb;border-radius:8px;margin-bottom:16px;">
+        <h2 style="margin:0 0 12px;font-size:18px;">Suggested updates</h2>
+        {html_table(["page", "query", "impressions", "clicks", "ctr", "position", "action"], suggested_rows, 10)}
+      </div>
+
+      <div style="background:#fff;padding:16px;border:1px solid #e5e7eb;border-radius:8px;margin-bottom:16px;">
+        <h2 style="margin:0 0 12px;font-size:18px;">Watchlist</h2>
+        {html_table(["type", "page", "query", "impressions", "ctr", "position"], watch_rows, 10)}
+      </div>
+
+      <div style="background:#fff;padding:16px;border:1px solid #e5e7eb;border-radius:8px;margin-bottom:16px;">
+        <h2 style="margin:0 0 12px;font-size:18px;">Top search pages</h2>
+        {html_table(["page", "impressions", "clicks", "ctr", "position"], gsc_page_rows, 8)}
+      </div>
+
+      <div style="background:#fff;padding:16px;border:1px solid #e5e7eb;border-radius:8px;margin-bottom:16px;">
+        <h2 style="margin:0 0 12px;font-size:18px;">Top search queries</h2>
+        {html_table(["query", "impressions", "clicks", "ctr", "position"], gsc_query_rows, 8)}
+      </div>
+
+      <div style="background:#fff;padding:16px;border:1px solid #e5e7eb;border-radius:8px;margin-bottom:16px;">
+        <h2 style="margin:0 0 12px;font-size:18px;">Top GA4 content pages</h2>
+        {html_table(["pageTitle", "pagePathPlusQueryString", "screenPageViews", "sessions"], ga_content_rows, 8)}
+      </div>
+
+      <div style="background:#fff;padding:16px;border:1px solid #e5e7eb;border-radius:8px;margin-bottom:16px;">
+        <h2 style="margin:0 0 12px;font-size:18px;">Traffic sources</h2>
+        {html_table(["sessionSourceMedium", "sessions", "totalUsers", "engagementRate"], ga_source_rows, 8)}
+      </div>
+
+      <div style="background:#fff;padding:16px;border:1px solid #e5e7eb;border-radius:8px;margin-bottom:16px;">
+        <h2 style="margin:0 0 12px;font-size:18px;">Device mix</h2>
+        {html_table(["deviceCategory", "sessions", "totalUsers", "engagementRate"], ga_device_rows, 8)}
+      </div>
+
+      <div style="background:#fff;padding:16px;border:1px solid #e5e7eb;border-radius:8px;margin-bottom:16px;">
+        <h2 style="margin:0 0 12px;font-size:18px;">Recent search trend</h2>
+        {html_table(["date", "impressions", "clicks", "ctr", "position"], trend_rows, 10)}
+      </div>
+
+      <p style="font-size:12px;color:#6b7280;">
+        If the report says no update, that is intentional: no-change recommendations are expected when data is sparse or signals are not actionable.
+      </p>
+    </div>
+  </body>
+</html>
+""".strip()
+
+
+def fetch_google_reporting_data(
+    *,
+    key_file: str | None = None,
+    ga4_property_id: str | None = None,
+    gsc_site_url: str | None = None,
+    ga_lookback_days: int | None = None,
+    gsc_lookback_days: int | None = None,
+    output_dir: Path | None = None,
+    skip_ga: bool = False,
+    skip_gsc: bool = False,
+) -> ReportingRun:
+    ga_property = ga4_property_id or settings.google_reporting_ga4_property_id
+    gsc_property = gsc_site_url or settings.google_reporting_gsc_site_url
+    ga_days = ga_lookback_days or settings.google_reporting_ga_lookback_days
+    gsc_days = gsc_lookback_days or settings.google_reporting_gsc_lookback_days
+    base_output = output_dir or settings.google_reporting_output_dir
+
+    if skip_ga and skip_gsc:
+        raise ValueError("Cannot skip both GA and GSC.")
+    if not skip_ga and not ga_property:
+        raise ValueError("GA4 property ID is required.")
+    if not skip_gsc and not gsc_property:
+        raise ValueError("GSC site URL is required.")
+
+    service_account_info = load_service_account_info(key_file)
+    token = _get_access_token(service_account_info)
+    headers = {"Authorization": f"Bearer {token}", "Content-Type": "application/json"}
+
+    today_label = date.today().isoformat()
+    dated_output = base_output / today_label
+    latest_output = base_output / "latest"
+    dated_output.mkdir(parents=True, exist_ok=True)
+    latest_output.mkdir(parents=True, exist_ok=True)
+
+    artifacts: list[ReportArtifact] = []
+    generated_at = datetime.now(timezone.utc).isoformat()
+
+    ga_start, ga_end = _date_range(ga_days)
+    gsc_start, gsc_end = _date_range(gsc_days)
+
+    with httpx.Client(timeout=60) as client:
+        if not skip_ga:
+            for spec in GA_REPORT_SPECS:
+                report_name = spec["name"]
+                url = f"{GA_API_BASE}/properties/{ga_property}:runReport"
+                payload = client.post(
+                    url,
+                    headers=headers,
+                    json=_ga_report_body(spec, ga_start, ga_end),
+                )
+                payload.raise_for_status()
+                response_json = payload.json()
+                rows = _parse_ga_rows(response_json)
+                json_path = dated_output / f"{report_name}.json"
+                csv_path = dated_output / f"{report_name}.csv"
+                latest_json = latest_output / f"{report_name}.json"
+                latest_csv = latest_output / f"{report_name}.csv"
+                _write_json(json_path, response_json)
+                _write_csv(csv_path, rows)
+                _copy_to_latest(json_path, latest_json)
+                _copy_to_latest(csv_path, latest_csv)
+                artifacts.append(
+                    ReportArtifact(
+                        name=report_name,
+                        source="ga4",
+                        rows=rows,
+                        row_count=len(rows),
+                        json_path=json_path,
+                        csv_path=csv_path,
+                        latest_json_path=latest_json,
+                        latest_csv_path=latest_csv,
+                    )
+                )
+
+        if not skip_gsc:
+            encoded_site = quote(gsc_property, safe="")
+            for spec in GSC_REPORT_SPECS:
+                report_name = spec["name"]
+                url = f"{GSC_API_BASE}/sites/{encoded_site}/searchAnalytics/query"
+                payload = client.post(
+                    url,
+                    headers=headers,
+                    json=_gsc_report_body(spec, gsc_start, gsc_end),
+                )
+                payload.raise_for_status()
+                response_json = payload.json()
+                rows = _parse_gsc_rows(response_json, spec["dimensions"])
+                json_path = dated_output / f"{report_name}.json"
+                csv_path = dated_output / f"{report_name}.csv"
+                latest_json = latest_output / f"{report_name}.json"
+                latest_csv = latest_output / f"{report_name}.csv"
+                _write_json(json_path, response_json)
+                _write_csv(csv_path, rows)
+                _copy_to_latest(json_path, latest_json)
+                _copy_to_latest(csv_path, latest_csv)
+                artifacts.append(
+                    ReportArtifact(
+                        name=report_name,
+                        source="gsc",
+                        rows=rows,
+                        row_count=len(rows),
+                        json_path=json_path,
+                        csv_path=csv_path,
+                        latest_json_path=latest_json,
+                        latest_csv_path=latest_csv,
+                    )
+                )
+
+    summary_md = _build_summary_markdown(artifacts)
+    decisions_md = _build_seo_decisions_markdown(artifacts)
+    summary_path = dated_output / "summary.md"
+    decisions_path = dated_output / "seo_decisions.md"
+    latest_summary = latest_output / "summary.md"
+    latest_decisions = latest_output / "seo_decisions.md"
+    summary_path.write_text(summary_md, encoding="utf-8")
+    decisions_path.write_text(decisions_md, encoding="utf-8")
+    _copy_to_latest(summary_path, latest_summary)
+    _copy_to_latest(decisions_path, latest_decisions)
+
+    manifest = {
+        "generated_at": generated_at,
+        "ga4_property_id": ga_property,
+        "gsc_property": gsc_property,
+        "ga_lookback_days": ga_days,
+        "gsc_lookback_days": gsc_days,
+        "dated_output_dir": str(dated_output),
+        "latest_output_dir": str(latest_output),
+        "reports": [
+            {
+                "name": a.name,
+                "source": a.source,
+                "row_count": a.row_count,
+                "json_path": str(a.json_path),
+                "csv_path": str(a.csv_path),
+                "latest_json_path": str(a.latest_json_path),
+                "latest_csv_path": str(a.latest_csv_path),
+            }
+            for a in artifacts
+        ],
+        "summary_path": str(summary_path),
+        "seo_decisions_path": str(decisions_path),
+    }
+    manifest_path = dated_output / "manifest.json"
+    latest_manifest = latest_output / "manifest.json"
+    _write_json(manifest_path, manifest)
+    _copy_to_latest(manifest_path, latest_manifest)
+
+    logger.info(
+        "Google reporting complete: %d reports written to %s",
+        len(artifacts),
+        dated_output,
+    )
+    return ReportingRun(
+        artifacts=artifacts,
+        dated_output_dir=dated_output,
+        latest_output_dir=latest_output,
+        manifest_path=manifest_path,
+        summary_path=summary_path,
+        seo_decisions_path=decisions_path,
+    )

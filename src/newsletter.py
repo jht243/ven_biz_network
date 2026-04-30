@@ -72,10 +72,72 @@ class SendGridProvider(EmailProvider):
             return False
 
 
+class ResendProvider(EmailProvider):
+    API_URL = "https://api.resend.com/emails"
+
+    def send(self, to: str, subject: str, html_body: str) -> bool:
+        payload = {
+            "from": f"{settings.site_name} <{settings.newsletter_from_email}>",
+            "to": [to],
+            "subject": subject,
+            "html": html_body,
+        }
+        headers = {
+            "Authorization": f"Bearer {settings.resend_api_key}",
+            "Content-Type": "application/json",
+        }
+        resp = httpx.post(
+            self.API_URL,
+            json=payload,
+            headers=headers,
+            timeout=30,
+        )
+        if resp.status_code in (200, 201, 202):
+            logger.info("Email sent to %s via Resend", to)
+            return True
+        logger.error("Resend error %d: %s", resp.status_code, resp.text)
+        return False
+
+
 PROVIDERS = {
     "console": lambda: ConsoleProvider(),
     "sendgrid": lambda: SendGridProvider(settings.newsletter_api_key, settings.newsletter_from_email),
+    "resend": lambda: ResendProvider(),
 }
+
+
+def send_email(
+    to: str,
+    subject: str,
+    html_body: str,
+    provider_name: str | None = None,
+    dry_run: bool = False,
+) -> dict:
+    selected_provider = provider_name or settings.seo_email_provider or settings.newsletter_provider
+    if dry_run:
+        selected_provider = "console"
+
+    builder = PROVIDERS.get(selected_provider)
+    if builder is None:
+        logger.error("Unknown email provider: %s", selected_provider)
+        return {
+            "success": False,
+            "provider": selected_provider,
+            "error": f"Unknown provider: {selected_provider}",
+        }
+
+    try:
+        provider = builder()
+        success = provider.send(to=to, subject=subject, html_body=html_body)
+        return {"success": success, "provider": selected_provider, "to": to}
+    except Exception as exc:
+        logger.error("Failed to send email via %s: %s", selected_provider, exc, exc_info=True)
+        return {
+            "success": False,
+            "provider": selected_provider,
+            "to": to,
+            "error": str(exc),
+        }
 
 
 def _load_subscribers() -> list[str]:

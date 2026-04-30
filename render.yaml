@@ -70,3 +70,34 @@ services:
         sync: false
       - key: LOG_LEVEL
         value: INFO
+
+  - type: cron
+    name: vij-daily-seo-email
+    runtime: python
+    # 11:00 EST = 16:00 UTC. If you want fixed New York wall-clock time
+    # year-round, adjust to 15:00 UTC during EDT or use Render timezone support.
+    schedule: "0 16 * * *"
+    plan: starter
+    buildCommand: "pip install -r requirements.txt"
+    startCommand: "python scripts/send_daily_seo_email.py"
+    envVars:
+      - key: PYTHON_VERSION
+        value: 3.11.9
+      - key: GOOGLE_REPORTING_SA_JSON
+        sync: false
+      - key: GOOGLE_REPORTING_GA4_PROPERTY_ID
+        sync: false
+      - key: GOOGLE_REPORTING_GSC_SITE_URL
+        sync: false
+      - key: SEO_EMAIL_PROVIDER
+        value: resend
+      - key: SEO_EMAIL_RECIPIENT
+        sync: false
+      - key: SEO_EMAIL_SUBJECT
+        value: SEO Updates <SITE_NAME>
+      - key: RESEND_API_KEY
+        sync: false
+      - key: NEWSLETTER_FROM_EMAIL
+        value: onboarding@resend.dev
+      - key: LOG_LEVEL
+        value: INFO
