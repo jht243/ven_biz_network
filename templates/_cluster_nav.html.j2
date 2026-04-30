@@ -32,12 +32,12 @@
 
 {% macro cluster_nav(cluster_ctx) -%}
 {% if cluster_ctx and cluster_ctx.cluster %}
-<aside class="topic-cluster-nav" aria-label="Topic cluster navigation">
+<aside class="topic-cluster-nav" aria-label="Related coverage">
   <div class="topic-cluster-header">
-    <div class="topic-cluster-eyebrow">Topic cluster</div>
+    <div class="topic-cluster-eyebrow">Related coverage</div>
     <h2 class="topic-cluster-title">
-      {% if cluster_ctx.is_pillar %}What's in this hub: {{ cluster_ctx.cluster.name }}
-      {% else %}Continue exploring: {{ cluster_ctx.cluster.name }}{% endif %}
+      {% if cluster_ctx.is_pillar %}More on {{ cluster_ctx.cluster.name }}
+      {% else %}More on {{ cluster_ctx.cluster.name }}{% endif %}
     </h2>
     {% if cluster_ctx.cluster.summary %}
     <p class="topic-cluster-summary">{{ cluster_ctx.cluster.summary }}</p>
@@ -46,7 +46,7 @@
 
   {% if cluster_ctx.pillar %}
   <a class="topic-cluster-pillar" href="{{ cluster_ctx.pillar.path }}">
-    <div class="topic-cluster-pillar-eyebrow">Hub page</div>
+    <div class="topic-cluster-pillar-eyebrow">Start here</div>
     <div class="topic-cluster-pillar-anchor">{{ cluster_ctx.pillar.anchor }}</div>
     {% if cluster_ctx.pillar.description %}
     <div class="topic-cluster-pillar-desc">{{ cluster_ctx.pillar.description }}</div>
@@ -65,22 +65,22 @@
   {% for link in cluster_ctx.others %}
     {% set _ = _cluster_cards.append({
         'href': link.path,
-        'eyebrow': 'IN THIS HUB',
+        'eyebrow': 'RELATED',
         'title': link.anchor,
         'tagline': link.description or '',
-        'cta': 'Open page'
+        'cta': 'Read more'
       }) %}
   {% endfor %}
   {# Cap at 3 cards in the macro; browse link only when the cluster
      lists more than 3 siblings (this nav is capped server-side at 12,
      but readers should not see a second row — they go to the hub). #}
   {% set _hub_path = cluster_ctx.pillar.path if cluster_ctx.pillar else cluster_ctx.cluster.pillar.path %}
-  {% set _hub_label = 'View hub — ' ~ cluster_ctx.cluster.name %}
+  {% set _hub_label = 'See all coverage on ' ~ cluster_ctx.cluster.name %}
   {{ card_grid_section(
-       heading=('More in ' ~ cluster_ctx.cluster.name) if not cluster_ctx.is_pillar else ('Hub pages — ' ~ cluster_ctx.cluster.name),
+       heading=('More on ' ~ cluster_ctx.cluster.name) if not cluster_ctx.is_pillar else ('Pages on ' ~ cluster_ctx.cluster.name),
        meta=(cluster_ctx.others|length|string) ~ ' related page' ~ ('' if cluster_ctx.others|length == 1 else 's'),
        cards=_cluster_cards,
-       aria_label='Related pages in this cluster',
+       aria_label='Related pages',
        footer_link={'href': _hub_path, 'label': _hub_label} if cluster_ctx.others|length > 3 else None,
        footer_mode='always'
   ) }}

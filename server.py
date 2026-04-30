@@ -3567,6 +3567,314 @@ def sanctions_profile_page(bucket: str, slug: str):
 
 
 # ──────────────────────────────────────────────────────────────────────
+# People cluster — /people pillar, /people/by-role/<cohort> hubs, and
+# /people/<slug> per-figure profiles. Captures incidental name-search
+# traffic (GSC shows we already pull queries like "arianny seijo
+# noguera" with zero converting page) and meshes into the existing
+# sanctions / investment / sectors clusters.
+# ──────────────────────────────────────────────────────────────────────
+
+
+@app.route("/people")
+@app.route("/people/")
+def people_index_page():
+    """Pillar page: directory of every Venezuelan power figure we cover."""
+    from src.data.people import all_cohorts, all_people, people_in_cohort
+    from src.page_renderer import _env, _base_url, _iso, settings as _s
+    from src.seo.cluster_topology import build_cluster_ctx
+    from datetime import date as _date, datetime as _dt
+    import json as _json
+
+    try:
+        people = all_people()
+        cohorts = all_cohorts()
+        cohort_people = {key: people_in_cohort(key) for key, _ in cohorts}
+
+        base = _base_url()
+        canonical = f"{base}/people"
+        today_human = _date.today().strftime("%B %Y")
+
+        title = f"Venezuelan power figures — Maduro government, PDVSA, military, opposition ({_date.today().year})"
+        description = (
+            "Profile pages for the people running Venezuela: the Maduro "
+            "cabinet, PDVSA leadership, the FANB military command, the "
+            "judiciary, and the leaders of the democratic opposition. "
+            "Cross-linked to OFAC sanctions data and sector-by-sector "
+            "investment coverage."
+        )
+        seo = {
+            "title": title[:120],
+            "description": description[:300],
+            "keywords": "venezuela government officials, maduro cabinet, pdvsa leadership, fanb military, venezuela opposition, venezuela power figures",
+            "canonical": canonical,
+            "site_name": _s.site_name,
+            "site_url": base,
+            "locale": _s.site_locale,
+            "og_image": f"{base}/static/og-image.png?v=3",
+            "og_type": "website",
+            "published_iso": _iso(_dt.utcnow()),
+            "modified_iso": _iso(_dt.utcnow()),
+        }
+
+        graph = {
+            "@context": "https://schema.org",
+            "@graph": [
+                {
+                    "@type": "BreadcrumbList",
+                    "itemListElement": [
+                        {"@type": "ListItem", "position": 1, "name": "Home", "item": f"{base}/"},
+                        {"@type": "ListItem", "position": 2, "name": "Venezuelan power figures", "item": canonical},
+                    ],
+                },
+                {
+                    "@type": "CollectionPage",
+                    "@id": f"{canonical}#collection",
+                    "name": title,
+                    "description": description,
+                    "url": canonical,
+                    "hasPart": [
+                        {"@type": "Person", "name": p.name, "url": f"{base}{p.url_path}"}
+                        for p in people
+                    ],
+                },
+            ],
+        }
+
+        cluster_ctx = build_cluster_ctx("/people")
+        template = _env.get_template("people/index.html.j2")
+        html = template.render(
+            seo=seo,
+            jsonld=_json.dumps(graph, ensure_ascii=False),
+            people=people,
+            cohorts=cohorts,
+            cohort_people=cohort_people,
+            today_human=today_human,
+            cluster_ctx=cluster_ctx,
+            settings=_s,
+        )
+        return Response(html, mimetype="text/html")
+    except Exception as exc:
+        logger.exception("people index render failed: %s", exc)
+        abort(500)
+
+
+@app.route("/people/by-role/<cohort>")
+@app.route("/people/by-role/<cohort>/")
+def people_by_role_page(cohort: str):
+    """Cohort hub — e.g. /people/by-role/military."""
+    from src.data.people import COHORTS, cohort_meta, people_in_cohort
+    from src.page_renderer import _env, _base_url, _iso, settings as _s
+    from src.seo.cluster_topology import build_cluster_ctx
+    from datetime import date as _date, datetime as _dt
+    import json as _json
+
+    if cohort not in COHORTS:
+        abort(404)
+
+    try:
+        meta = cohort_meta(cohort)
+        members = people_in_cohort(cohort)
+
+        base = _base_url()
+        canonical = f"{base}/people/by-role/{cohort}"
+        today_human = _date.today().strftime("%B %Y")
+
+        title = f"{meta['label']} — Venezuela ({_date.today().year})"
+        description = meta["tagline"] + f" Profiles of {len(members)} figures, cross-linked to OFAC sanctions data and our sector-by-sector investment coverage."
+
+        seo = {
+            "title": title[:120],
+            "description": description[:300],
+            "keywords": f"venezuela {meta['label'].lower()}, {meta['label'].lower()} profiles, venezuela {cohort}",
+            "canonical": canonical,
+            "site_name": _s.site_name,
+            "site_url": base,
+            "locale": _s.site_locale,
+            "og_image": f"{base}/static/og-image.png?v=3",
+            "og_type": "website",
+            "published_iso": _iso(_dt.utcnow()),
+            "modified_iso": _iso(_dt.utcnow()),
+        }
+
+        graph = {
+            "@context": "https://schema.org",
+            "@graph": [
+                {
+                    "@type": "BreadcrumbList",
+                    "itemListElement": [
+                        {"@type": "ListItem", "position": 1, "name": "Home", "item": f"{base}/"},
+                        {"@type": "ListItem", "position": 2, "name": "Venezuelan power figures", "item": f"{base}/people"},
+                        {"@type": "ListItem", "position": 3, "name": meta["label"], "item": canonical},
+                    ],
+                },
+                {
+                    "@type": "CollectionPage",
+                    "@id": f"{canonical}#collection",
+                    "name": title,
+                    "description": description,
+                    "url": canonical,
+                    "hasPart": [
+                        {"@type": "Person", "name": p.name, "url": f"{base}{p.url_path}"}
+                        for p in members
+                    ],
+                },
+            ],
+        }
+
+        cluster_ctx = build_cluster_ctx(f"/people/by-role/{cohort}")
+        template = _env.get_template("people/by_role.html.j2")
+        html = template.render(
+            seo=seo,
+            jsonld=_json.dumps(graph, ensure_ascii=False),
+            cohort=cohort,
+            meta=meta,
+            members=members,
+            today_human=today_human,
+            cluster_ctx=cluster_ctx,
+            settings=_s,
+        )
+        return Response(html, mimetype="text/html")
+    except HTTPException:
+        raise
+    except Exception as exc:
+        logger.exception("people by-role render failed for cohort=%s: %s", cohort, exc)
+        abort(500)
+
+
+@app.route("/people/<slug>")
+@app.route("/people/<slug>/")
+def people_profile_page(slug: str):
+    """One Venezuelan power figure → one indexable page."""
+    from src.data.people import (
+        COHORTS, cohort_meta, cohort_siblings, get_person, related_people,
+    )
+    from src.page_renderer import _env, _base_url, _iso, settings as _s
+    from src.seo.cluster_topology import build_cluster_ctx
+    from datetime import date as _date, datetime as _dt
+    import json as _json
+
+    person = get_person(slug)
+    if person is None:
+        abort(404)
+
+    try:
+        cohort_label = cohort_meta(person.primary_cohort)["label"]
+        cohort_badge = cohort_label.upper()
+        related = related_people(person)
+        siblings = cohort_siblings(person)
+
+        base = _base_url()
+        canonical = f"{base}{person.url_path}"
+        today_human = _date.today().strftime("%B %Y")
+
+        # Title: name verbatim + role + freshness marker. Matches the
+        # SDN-profile pattern that already wins on name-only searches.
+        title = f"{person.name} — {person.role} ({_date.today().year})"
+        description = person.one_liner
+
+        seo = {
+            "title": title[:120],
+            "description": description[:300],
+            "keywords": (
+                f"who is {person.name}, {person.name} venezuela, "
+                f"{person.name} {person.role}, "
+                + ", ".join(person.aliases)
+            ),
+            "canonical": canonical,
+            "site_name": _s.site_name,
+            "site_url": base,
+            "locale": _s.site_locale,
+            "og_image": f"{base}/static/og-image.png?v=3",
+            "og_type": "profile",
+            "published_iso": _iso(_dt.utcnow()),
+            "modified_iso": _iso(_dt.utcnow()),
+        }
+
+        # Person JSON-LD with sameAs → Wikidata if available. Wikidata
+        # sameAs is the single highest-leverage signal for Knowledge
+        # Panel candidacy on a person page.
+        person_node: dict = {
+            "@type": "Person",
+            "@id": f"{canonical}#person",
+            "name": person.name,
+            "url": canonical,
+            "description": description,
+            "jobTitle": person.role,
+            "nationality": person.nationality,
+        }
+        if person.aliases:
+            person_node["alternateName"] = list(person.aliases)
+        if person.born:
+            person_node["birthDate"] = person.born
+        if person.birthplace:
+            person_node["birthPlace"] = person.birthplace
+        if person.affiliations:
+            person_node["affiliation"] = [
+                {"@type": "Organization", "name": a} for a in person.affiliations
+            ]
+        same_as: list[str] = []
+        if person.wikidata_id:
+            same_as.append(f"https://www.wikidata.org/wiki/{person.wikidata_id}")
+        for s in person.sources:
+            if "wikipedia.org" in s.url or "nobelprize.org" in s.url:
+                same_as.append(s.url)
+        if same_as:
+            person_node["sameAs"] = same_as
+
+        breadcrumb = {
+            "@type": "BreadcrumbList",
+            "itemListElement": [
+                {"@type": "ListItem", "position": 1, "name": "Home", "item": f"{base}/"},
+                {"@type": "ListItem", "position": 2, "name": "Venezuelan power figures", "item": f"{base}/people"},
+                {"@type": "ListItem", "position": 3, "name": cohort_label, "item": f"{base}/people/by-role/{person.primary_cohort}"},
+                {"@type": "ListItem", "position": 4, "name": person.name, "item": canonical},
+            ],
+        }
+
+        graph_nodes: list = [breadcrumb, person_node]
+
+        if person.faqs:
+            faq_node = {
+                "@type": "FAQPage",
+                "@id": f"{canonical}#faq",
+                "mainEntity": [
+                    {
+                        "@type": "Question",
+                        "name": f.q,
+                        "acceptedAnswer": {"@type": "Answer", "text": f.a[:500]},
+                    }
+                    for f in person.faqs
+                ],
+            }
+            graph_nodes.append(faq_node)
+
+        graph = {"@context": "https://schema.org", "@graph": graph_nodes}
+
+        cohort_meta_map = COHORTS
+        cluster_ctx = build_cluster_ctx(person.url_path)
+        template = _env.get_template("people/profile.html.j2")
+        html = template.render(
+            seo=seo,
+            jsonld=_json.dumps(graph, ensure_ascii=False),
+            person=person,
+            cohort_label=cohort_label,
+            cohort_badge=cohort_badge,
+            cohort_meta_map=cohort_meta_map,
+            related=related,
+            siblings=siblings,
+            today_human=today_human,
+            cluster_ctx=cluster_ctx,
+            settings=_s,
+        )
+        return Response(html, mimetype="text/html")
+    except HTTPException:
+        raise
+    except Exception as exc:
+        logger.exception("people profile render failed for slug=%s: %s", slug, exc)
+        abort(500)
+
+
+# ──────────────────────────────────────────────────────────────────────
 # Per-SDN research dossier — disambiguation-first profile pages with
 # identity-card, related-entity network, adverse media, OFAC press
 # release, and a tamper-evident PDF export.
@@ -5317,6 +5625,29 @@ def sitemap_xml():
         {"loc": f"{base}/planilla-de-solicitud-de-visa", "lastmod": today_iso, "changefreq": "weekly", "priority": "0.72"},
         {"loc": f"{base}/declaracion-jurada-visa-venezolana", "lastmod": today_iso, "changefreq": "weekly", "priority": "0.72"},
     ]
+
+    # People cluster — pillar + cohort hubs + every per-figure profile.
+    # Walked from the registry rather than hardcoded so adding a new
+    # /people/<slug> profile auto-appears in the sitemap.
+    try:
+        from src.data.people import COHORTS as _PEOPLE_COHORTS, all_people as _all_people
+        static_urls.append({"loc": f"{base}/people", "lastmod": today_iso, "changefreq": "weekly", "priority": "0.85"})
+        for _cohort_key in _PEOPLE_COHORTS:
+            static_urls.append({
+                "loc": f"{base}/people/by-role/{_cohort_key}",
+                "lastmod": today_iso,
+                "changefreq": "weekly",
+                "priority": "0.8",
+            })
+        for _p in _all_people():
+            static_urls.append({
+                "loc": f"{base}{_p.url_path}",
+                "lastmod": today_iso,
+                "changefreq": "weekly",
+                "priority": "0.75",
+            })
+    except Exception as _exc:
+        logger.warning("sitemap: people cluster walk failed: %s", _exc)
 
     dynamic_urls: list[dict] = []
     sector_set: set[str] = set()

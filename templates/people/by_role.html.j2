@@ -1,0 +1,57 @@
+{#
+  /people/by-role/<cohort> — cohort hub.
+
+  These pages are the SEO multiplier on the people cluster: each one
+  ranks on broader-tail queries ("venezuela cabinet members",
+  "venezuelan opposition leaders", "pdvsa executives") that the
+  individual /people/<slug> profiles can't realistically rank for.
+  Every member profile then funnels readers (and crawl signal) up here
+  via the breadcrumb and the "Other people in this cohort" sibling grid.
+#}
+{% extends "_base.html.j2" %}
+{% from "_cluster_nav.html.j2" import cluster_nav %}
+
+{% block content %}
+<div class="container">
+  <nav class="breadcrumbs" aria-label="Breadcrumb">
+    <a href="/">Home</a>
+    <span>›</span>
+    <a href="/people">Venezuelan power figures</a>
+    <span>›</span>
+    <strong>{{ meta.label }}</strong>
+  </nav>
+
+  <article>
+    <header>
+      <h1>{{ meta.label }} — Venezuela</h1>
+      <p class="subtitle">{{ meta.tagline }}</p>
+      <div class="meta">
+        <span><strong>Profiles in this cohort:</strong> {{ members|length }}</span>
+        <span><strong>Updated:</strong> {{ today_human }}</span>
+      </div>
+    </header>
+
+    <div class="body">
+      <h2>All {{ meta.label|lower }} we currently profile</h2>
+      <ul class="related">
+        {% for p in members %}
+        <li>
+          <a href="{{ p.url_path }}"><strong>{{ p.name }}</strong></a>
+          <small>— {{ p.role }}{% if p.sanctioned_slug %} · <span style="color:#cc0000; font-weight:700;">SANCTIONED</span>{% endif %}</small>
+          <div style="margin-top:4px; font-size:14px; color:#444;">{{ p.one_liner }}</div>
+        </li>
+        {% endfor %}
+      </ul>
+
+      <h2>Related coverage</h2>
+      <ul>
+        <li><a href="/people">All Venezuelan power figures (every cohort)</a></li>
+        <li><a href="/sanctions-tracker">OFAC Venezuela SDN list — full searchable tracker</a></li>
+        <li><a href="/invest-in-venezuela">How to invest in Venezuela (2026 sanctions-safe guide)</a></li>
+      </ul>
+    </div>
+  </article>
+
+  {{ cluster_nav(cluster_ctx) }}
+</div>
+{% endblock %}

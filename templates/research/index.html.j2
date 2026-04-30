@@ -323,7 +323,7 @@
           high-stakes names where the lighter profile page is not enough.
         </p>
         <ul>
-          <li>Surname-cluster <strong>disambiguation strip</strong> — answers
+          <li>Same-surname <strong>disambiguation strip</strong> — answers
             "<em>is this my Saab?</em>" in one screen</li>
           <li>Plain-English <strong>"why designated"</strong> narrative grounded
             in OFAC primary sources</li>
@@ -346,8 +346,8 @@
 
   {# ── Cluster jump nav ──────────────────────────────────────────── #}
   {% if clusters|length > 1 %}
-  <nav class="cluster-nav" aria-label="Jump to surname cluster">
-    <span class="label">Jump to cluster</span>
+  <nav class="cluster-nav" aria-label="Jump to surname group">
+    <span class="label">Jump to surname</span>
     {% for cluster in clusters %}
       <a href="#{{ cluster.key|lower|replace(' ', '-') }}">
         {{ cluster.label }}<span class="count">({{ cluster.cards|length }})</span>
@@ -360,7 +360,7 @@
   {% for cluster in clusters %}
   <section class="cluster" id="{{ cluster.key|lower|replace(' ', '-') }}">
     <header class="cluster-header">
-      <h2>{{ cluster.label }} cluster</h2>
+      <h2>{{ cluster.label }} family</h2>
       <span class="cluster-meta">
         {{ cluster.cards|length }} dossier{{ '' if cluster.cards|length == 1 else 's' }} sharing this surname
       </span>
@@ -429,7 +429,7 @@
     </div>
 
     <div class="faq-item">
-      <p class="faq-q">Why the surname-cluster grouping?</p>
+      <p class="faq-q">Why are profiles grouped by surname?</p>
       <p class="faq-a">
         Two of the most-searched OFAC names — <em>Saab</em> and <em>Carretero</em> —
         each appear on the SDN list multiple times. <strong>Alex Nain Saab Moran</strong>
@@ -463,7 +463,7 @@
     <ol>
       <li>Pull the canonical OFAC SDN record (program, designation date, identifiers, Linked-To set).</li>
       <li>Add the matching <strong>OFAC press release</strong> and the underlying <strong>Executive Order</strong> as primary sources.</li>
-      <li>Build the <strong>surname-cluster disambiguator</strong> from co-listed SDN names, with full identity-card detail on each.</li>
+      <li>Build the <strong>same-surname disambiguator</strong> from co-listed SDN names, with full identity-card detail on each.</li>
       <li>Pull <strong>adverse media</strong> from Google News (24-hour cache), de-duplicated against curated items.</li>
       <li>Generate the plain-English <strong>"why designated"</strong> narrative from the OFAC primary-source set, using a strict, anti-hallucination prompt.</li>
       <li>Compute a <strong>SHA-256 content fingerprint</strong> of the underlying record so the PDF export is tamper-evident.</li>

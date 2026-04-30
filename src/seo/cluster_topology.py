@@ -95,6 +95,13 @@ _ANCHOR: dict[str, str] = {
     "/tools/bolivar-usd-exchange-rate": "Bolívar to USD exchange rate (live BCV + parallel)",
     "/explainers/venezuelan-bolivar-explained": "The Venezuelan bolívar explained — history and devaluations",
     "/explainers/what-is-the-banco-central-de-venezuela": "What is the Banco Central de Venezuela (BCV)? — 2026 guide",
+
+    "/people": "Venezuelan power figures — who's who in government, PDVSA, military, judiciary, opposition",
+    "/people/by-role/executive": "Venezuela executive & cabinet — Maduro government and ministers",
+    "/people/by-role/energy": "PDVSA & Venezuela energy-sector leadership",
+    "/people/by-role/military": "Venezuela military & security leadership (FANB, GNB, DGCIM, SEBIN)",
+    "/people/by-role/judiciary": "Venezuela judiciary & electoral leadership (TSJ, CNE, Fiscalía)",
+    "/people/by-role/opposition": "Venezuelan opposition & exile leadership",
 }
 
 
@@ -219,6 +226,29 @@ CLUSTERS: dict[str, Cluster] = {
         ),
     ),
 
+    "people": Cluster(
+        key="people",
+        name="Venezuelan power figures",
+        summary=(
+            "Profile pages for the people running Venezuela — Maduro "
+            "cabinet, PDVSA leadership, FANB military command, the "
+            "judiciary and the CNE, and the leaders of the democratic "
+            "opposition. Each profile is cross-linked to OFAC sanctions "
+            "data and to our sector-by-sector investment coverage."
+        ),
+        pillar=_ck(
+            "/people",
+            "The Caracas Research directory of Venezuelan power figures.",
+        ),
+        members=(
+            _ck("/people/by-role/executive",  "The Maduro cabinet — vice presidents, ministers, and the inner circle."),
+            _ck("/people/by-role/energy",     "PDVSA leadership and the people running Venezuela's oil and energy sector."),
+            _ck("/people/by-role/military",   "FANB, GNB, DGCIM, and SEBIN — Venezuela's armed-forces high command."),
+            _ck("/people/by-role/judiciary",  "Attorney General, TSJ, and CNE — Venezuela's legal and electoral apparatus."),
+            _ck("/people/by-role/opposition", "María Corina Machado, Edmundo González, and the Venezuelan democratic opposition."),
+        ),
+    ),
+
     "fx": Cluster(
         key="fx",
         name="Bolívar / USD & BCV",
@@ -259,6 +289,9 @@ _PATH_TO_CLUSTER: tuple[tuple[str, str], ...] = (
     ("/tools/venezuela-investment-roi-calculator", "investment"),
     ("/explainers/how-to-buy-venezuelan-bonds",     "investment"),
     ("/explainers/doing-business-in-caracas",       "investment"),
+
+    ("/people/by-role/",       "people"),
+    ("/people",                "people"),
 
     ("/travel",                "travel"),
     ("/tools/venezuela-visa-requirements",   "travel"),

@@ -67,7 +67,7 @@
         <p class="dossier-callout__lede">
           A full disambiguation-first research dossier on
           <strong>{{ profile.display_name }}</strong> &mdash; identity card,
-          surname-cluster disambiguation, related-entity network,
+          same-surname disambiguation, related-entity network,
           adverse-media, the OFAC press release, and a tamper-evident PDF
           export &mdash; is published as a separate page.
         </p>
@@ -208,11 +208,11 @@
           }) %}
       {% endfor %}
       {{ card_grid_section(
-           heading=profile.raw_name.split(',')[0]|title ~ ' cluster',
+           heading=profile.raw_name.split(',')[0]|title ~ ' family',
            meta=(family|length|string) ~ ' other SDN entr' ~ ('y' if family|length == 1 else 'ies') ~ ' sharing this surname',
            intro='These individuals share the surname ' ~ profile.raw_name.split(',')[0]|title ~ ' and are also listed on OFAC\'s Venezuela-related SDN. The relationship is inferred from naming convention only — not from any explicit OFAC family designation — but the cluster is a useful diligence signal.',
            cards=_family_cards,
-           aria_label='Surname cluster',
+           aria_label='Same surname',
            footer_link={'href': '/sanctions/individuals', 'label': 'Browse all sanctioned individuals'},
            footer_mode='auto'
       ) }}

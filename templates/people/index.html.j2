@@ -1,0 +1,89 @@
+{#
+  /people — pillar page for the people cluster.
+
+  Two roles:
+    1. Reader-facing hub: scannable directory of every figure we cover,
+       grouped by cohort.
+    2. SEO pillar: this is the page every /people/<slug> profile links
+       up to with descriptive anchor text, and where /people/by-role/*
+       cohort hubs link back to. Pillar/spoke is what gets us topical
+       authority for "venezuelan government officials" and adjacent
+       broad-tail queries.
+#}
+{% extends "_base.html.j2" %}
+{% from "_cluster_nav.html.j2" import cluster_nav %}
+
+{% block content %}
+<div class="container">
+  <nav class="breadcrumbs" aria-label="Breadcrumb">
+    <a href="/">Home</a>
+    <span>›</span>
+    <strong>Venezuelan power figures</strong>
+  </nav>
+
+  <article>
+    <header>
+      <h1>Venezuelan power figures — who's who</h1>
+      <p class="subtitle">
+        Profiles of the people running Venezuela: the Maduro cabinet,
+        PDVSA, the FANB military command, the judiciary and the CNE,
+        and the leaders of the democratic opposition. Each profile is
+        cross-linked to OFAC sanctions data and to our sector-by-sector
+        investment coverage.
+      </p>
+      <div class="meta">
+        <span><strong>Profiles:</strong> {{ people|length }}</span>
+        <span><strong>Cohorts:</strong> {{ cohorts|length }}</span>
+        <span><strong>Updated:</strong> {{ today_human }}</span>
+      </div>
+    </header>
+
+    <div class="body">
+      <div class="takeaways">
+        <h3>How this directory is organised</h3>
+        <p style="margin:0 0 8px; font-size:15px;">
+          Profiles are grouped into five cohorts. Click any cohort to
+          jump to its dedicated hub, or scroll for the full alphabetical
+          list at the bottom of this page.
+        </p>
+        <ul style="margin-top:8px;">
+          {% for key, meta in cohorts %}
+          <li><a href="/people/by-role/{{ key }}"><strong>{{ meta.label }}</strong></a> — {{ meta.tagline }}</li>
+          {% endfor %}
+        </ul>
+      </div>
+
+      {% for key, meta in cohorts %}
+      {% set members = cohort_people[key] %}
+      {% if members %}
+      <h2 id="{{ key }}">{{ meta.label }}</h2>
+      <p>{{ meta.tagline }}</p>
+      <ul class="related">
+        {% for p in members %}
+        <li>
+          <a href="{{ p.url_path }}"><strong>{{ p.name }}</strong></a>
+          <small>— {{ p.role }}{% if p.sanctioned_slug %} · <span style="color:#cc0000; font-weight:700;">SANCTIONED</span>{% endif %}</small>
+        </li>
+        {% endfor %}
+      </ul>
+      <p style="margin-bottom:24px;">
+        <a href="/people/by-role/{{ key }}"><strong>See all {{ meta.label|lower }} →</strong></a>
+      </p>
+      {% endif %}
+      {% endfor %}
+
+      <h2>All profiles A–Z</h2>
+      <ul class="related">
+        {% for p in people %}
+        <li>
+          <a href="{{ p.url_path }}"><strong>{{ p.name }}</strong></a>
+          <small>— {{ p.role }}</small>
+        </li>
+        {% endfor %}
+      </ul>
+    </div>
+  </article>
+
+  {{ cluster_nav(cluster_ctx) }}
+</div>
+{% endblock %}

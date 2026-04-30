@@ -1,0 +1,164 @@
+{#
+  One Venezuelan power figure → one indexable page.
+
+  H1 + <title> carry the canonical name verbatim so a name search
+  ("nicolas maduro", "arianny seijo noguera") lands directly here with
+  the matching name in the SERP snippet. Person + FAQPage JSON-LD is
+  attached server-side via the `jsonld` template var.
+
+  Editorial pattern matches templates/sanctions/profile.html.j2 — same
+  breadcrumb shape, same key-facts box, same FAQ disclosure pattern,
+  same sibling card grid — so internal-link signal is consistent
+  across the site and we don't fork the visual language.
+#}
+{% extends "_base.html.j2" %}
+{% from "_cluster_nav.html.j2" import cluster_nav %}
+{% from "_card_grid.html.j2" import card_grid_section %}
+
+{% block content %}
+<div class="container">
+  <nav class="breadcrumbs" aria-label="Breadcrumb">
+    <a href="/">Home</a>
+    <span>›</span>
+    <a href="/people">Venezuelan power figures</a>
+    <span>›</span>
+    <a href="/people/by-role/{{ person.primary_cohort }}">{{ cohort_label }}</a>
+    <span>›</span>
+    <strong>{{ person.name }}</strong>
+  </nav>
+
+  <article>
+    <header>
+      <div style="font-size:12px; text-transform:uppercase; letter-spacing:1.4px; color:#002b5e; font-weight:700; margin-bottom:6px;">
+        <span style="display:inline-block; padding:2px 8px; background:#002b5e; color:#fff; border-radius:3px; margin-right:8px;">
+          {{ cohort_badge }}
+        </span>
+        Profile updated {{ today_human }}
+        {% if person.sanctioned_slug %}
+        <span style="display:inline-block; padding:2px 8px; background:#cc0000; color:#fff; border-radius:3px; margin-left:8px;">SANCTIONED</span>
+        {% endif %}
+      </div>
+      <h1>{{ person.name }}</h1>
+      <p class="subtitle">{{ person.role }}{% if person.in_office_since %} — in office since {{ person.in_office_since }}{% endif %}</p>
+      <div class="meta">
+        {% if person.born %}<span><strong>Born:</strong> {{ person.born }}{% if person.birthplace %}, {{ person.birthplace }}{% endif %}</span>{% endif %}
+        <span><strong>Nationality:</strong> {{ person.nationality }}</span>
+        {% if person.affiliations %}<span><strong>Affiliations:</strong> {{ person.affiliations|join(', ') }}</span>{% endif %}
+        <span><strong>Cohorts:</strong>
+          {% for c in person.cohorts %}<a href="/people/by-role/{{ c }}">{{ cohort_meta_map[c].label }}</a>{% if not loop.last %}, {% endif %}{% endfor %}
+        </span>
+      </div>
+    </header>
+
+    <div class="body">
+      <div class="takeaways">
+        <h3>At a glance</h3>
+        <p style="margin:0; font-size:15px;">{{ person.one_liner }}</p>
+      </div>
+
+      <h2>Who is {{ person.name }}?</h2>
+      {% for para in person.bio %}
+      <p>{{ para }}</p>
+      {% endfor %}
+
+      {% if person.aliases %}
+      <p><strong>Also known as:</strong> {{ person.aliases|join('; ') }}.</p>
+      {% endif %}
+
+      {% if person.timeline %}
+      <h2>Career timeline</h2>
+      <ul class="timeline">
+        {% for t in person.timeline %}
+        <li><strong>{{ t.year }}</strong> — {{ t.event }}</li>
+        {% endfor %}
+      </ul>
+      {% endif %}
+
+      {% if person.sanctioned_slug %}
+      <div class="source-citation" style="background:#fdecec;border-left-color:#cc0000;">
+        <strong>{{ person.name }}</strong> is on the active OFAC SDN list under
+        Venezuela-related sanctions programs. See the full sanctions profile —
+        program, executive order, identifiers, linked entities — at
+        <a href="/sanctions/individuals/{{ person.sanctioned_slug }}"><strong>{{ person.name }} OFAC SDN profile</strong></a>.
+      </div>
+      {% endif %}
+
+      {% if related %}
+      <h2>Network &amp; connections</h2>
+      <p>The following figures are part of {{ person.name }}'s direct political,
+        cabinet, or institutional network — useful for compliance teams mapping
+        the wider Venezuelan power structure:</p>
+      <ul class="related">
+        {% for r in related %}
+        <li>
+          <a href="{{ r.url_path }}"><strong>{{ r.name }}</strong></a>
+          <small>— {{ r.role }}</small>
+        </li>
+        {% endfor %}
+      </ul>
+      {% endif %}
+
+      {% if person.faqs %}
+      <h2 id="faq">Frequently asked questions</h2>
+      <section class="people-faq">
+        {% for f in person.faqs %}
+        <details {% if loop.first %}open{% endif %} style="border:1px solid #d8dde6; border-left:3px solid #002b5e; border-radius:3px; padding:12px 16px; margin-bottom:8px; background:#fff;">
+          <summary style="font-family:var(--font-serif); color:#002b5e; font-weight:700; font-size:16px; cursor:pointer; list-style:none;">
+            <span style="color:#cc0000; font-weight:700;">▸</span> {{ f.q }}
+          </summary>
+          <div style="font-size:14px; color:#222; margin-top:10px; line-height:1.55;">{{ f.a }}</div>
+        </details>
+        {% endfor %}
+      </section>
+      {% endif %}
+
+      {% if person.sources %}
+      <h2>Sources &amp; further reading</h2>
+      <ul>
+        {% for s in person.sources %}
+        <li><a href="{{ s.url }}" rel="nofollow noopener">{{ s.label }}</a></li>
+        {% endfor %}
+      </ul>
+      {% endif %}
+
+      <h2>Useful tools and explainers</h2>
+      <ul>
+        <li><a href="/sanctions-tracker">Browse all active OFAC Venezuela SDN designations</a> — the live US Treasury tracker for individuals, entities, vessels, and aircraft.</li>
+        <li><a href="/tools/ofac-venezuela-sanctions-checker">OFAC Venezuela sanctions checker</a> — paste any name to check it against the active SDN list.</li>
+        {% if person.sector_path %}<li><a href="{{ person.sector_path }}">Sector context for {{ person.name }}'s role</a> — regulatory framework, OFAC pathways, and current deal flow.</li>{% endif %}
+        <li><a href="/invest-in-venezuela">How to invest in Venezuela (2026 sanctions-safe guide)</a></li>
+        <li><a href="/people">Browse all Venezuelan power figures</a></li>
+      </ul>
+    </div>
+
+    {# Sibling grid — other people in the same primary cohort. Same UX
+       pattern as "Other individuals on the SDN list" on sanctions
+       profiles, so Googlebot follows the same crawl path through this
+       cluster. #}
+    {% if siblings %}
+    {% set _sibling_cards = [] %}
+    {% for sib in siblings %}
+      {% set _ = _sibling_cards.append({
+          'href': sib.url_path,
+          'eyebrow': cohort_meta_map[person.primary_cohort].label|upper,
+          'title': sib.name,
+          'tagline': sib.one_liner,
+          'meta_rows': ['<strong>' ~ sib.role ~ '</strong>'],
+          'cta': 'Open profile'
+        }) %}
+    {% endfor %}
+    {{ card_grid_section(
+         heading='Other ' ~ cohort_meta_map[person.primary_cohort].label|lower,
+         meta=(siblings|length|string) ~ ' more in this cohort',
+         intro=cohort_meta_map[person.primary_cohort].tagline,
+         cards=_sibling_cards,
+         aria_label='Other people in this cohort',
+         footer_link={'href': '/people/by-role/' ~ person.primary_cohort, 'label': 'See everyone in ' ~ cohort_meta_map[person.primary_cohort].label|lower},
+         footer_mode='auto'
+    ) }}
+    {% endif %}
+  </article>
+
+  {{ cluster_nav(cluster_ctx) }}
+</div>
+{% endblock %}
