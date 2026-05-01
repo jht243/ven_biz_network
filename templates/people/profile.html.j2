@@ -29,11 +29,28 @@
 
   <article>
     <header>
+      {#
+        Status badge — driven by person.status from the registry. The
+        text + colour mapping lives here (not in the data) so editorial
+        copy changes are template-only. Keeps the visual treatment
+        uniform across the registry: red for "in custody", amber for
+        "in exile", grey for "former", no badge for "current".
+      #}
+      {% set _status_map = {
+        'in_us_custody':  ('IN U.S. CUSTODY',           '#cc0000'),
+        'in_ven_custody': ('DETAINED IN VENEZUELA',     '#cc0000'),
+        'in_exile':       ('IN EXILE',                  '#b8860b'),
+        'former':         ('FORMER OFFICEHOLDER',       '#6c757d'),
+      } %}
+      {% set _status = _status_map.get(person.status) %}
       <div style="font-size:12px; text-transform:uppercase; letter-spacing:1.4px; color:#002b5e; font-weight:700; margin-bottom:6px;">
         <span style="display:inline-block; padding:2px 8px; background:#002b5e; color:#fff; border-radius:3px; margin-right:8px;">
           {{ cohort_badge }}
         </span>
-        Profile updated {{ today_human }}
+        {% if _status %}
+        <span style="display:inline-block; padding:2px 8px; background:{{ _status[1] }}; color:#fff; border-radius:3px; margin-right:8px;">{{ _status[0] }}</span>
+        {% endif %}
+        Verified {{ verified_as_of_human }}
         {% if person.sanctioned_slug %}
         <span style="display:inline-block; padding:2px 8px; background:#cc0000; color:#fff; border-radius:3px; margin-left:8px;">SANCTIONED</span>
         {% endif %}

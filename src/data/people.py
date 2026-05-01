@@ -44,6 +44,13 @@ from dataclasses import dataclass, field
 from typing import Optional
 
 
+# Editorial verification stamp. Every profile was checked against
+# news coverage on or before this date. Surfaced on every page so the
+# reader can see how recent the data is — and we update it whenever
+# we re-sweep the registry. Bump this when you re-verify.
+VERIFIED_AS_OF = "2026-04-30"
+
+
 # ──────────────────────────────────────────────────────────────────────
 # Cohort taxonomy
 # ──────────────────────────────────────────────────────────────────────
@@ -110,6 +117,27 @@ class Source:
     url: str
 
 
+# Status taxonomy. The badge rendered at the top of each profile is
+# driven by this enum-like string so the visual treatment is uniform
+# across the registry, and so we can audit at a glance how many
+# profiles are stale-by-default ("former") vs operational ("current").
+#
+# Values:
+#   "current"             — currently holds the named role; no badge
+#   "former"              — was in role; recently removed/resigned
+#   "in_us_custody"       — in U.S. federal detention
+#   "in_ven_custody"      — detained by Venezuelan authorities
+#   "in_exile"            — living abroad, not in custody
+#
+# Templates map each value to the badge text and color (see
+# templates/people/profile.html.j2 — the mapping is intentionally
+# defined in the template, not the data, so editorial copy changes
+# don't require a code edit).
+STATUS_VALUES: tuple[str, ...] = (
+    "current", "former", "in_us_custody", "in_ven_custody", "in_exile",
+)
+
+
 @dataclass(frozen=True)
 class Person:
     slug: str
@@ -121,6 +149,7 @@ class Person:
     one_liner: str                     # one-sentence "who is this" — feeds meta description
     bio: tuple[str, ...]               # 2–4 paragraph long-form bio (rendered as <p>s)
 
+    status: str = "current"            # one of STATUS_VALUES — drives the profile-page badge
     aliases: tuple[str, ...] = ()      # alt names → JSON-LD alternateName + aliases section
     born: Optional[str] = None         # ISO date or "1962" — feeds Person.birthDate
     birthplace: Optional[str] = None   # feeds Person.birthPlace
@@ -165,105 +194,151 @@ PEOPLE: dict[str, Person] = {
         slug="nicolas-maduro",
         name="Nicolás Maduro",
         aliases=("Nicolás Maduro Moros", "Maduro"),
-        role="President of Venezuela",
+        role="Former President of Venezuela (in U.S. federal custody)",
         cohorts=("executive",),
+        status="in_us_custody",
         one_liner=(
-            "Nicolás Maduro has been President of Venezuela since 2013, leading "
-            "the PSUV-controlled government and overseeing the country's response "
-            "to U.S. sanctions and the oil-sector crisis."
+            "Nicolás Maduro is the former President of Venezuela. He was "
+            "captured by U.S. military forces in Caracas on January 3, "
+            "2026 and is currently in U.S. federal custody, charged in the "
+            "Southern District of New York with narco-terrorism conspiracy "
+            "and related counts."
         ),
         bio=(
-            "Nicolás Maduro Moros assumed the Venezuelan presidency in April 2013 "
-            "following the death of Hugo Chávez, having previously served as "
-            "Foreign Minister and Vice President. His tenure has been defined by "
-            "U.S.-led sanctions, hyperinflation, the collapse of PDVSA output, and "
-            "a series of contested elections.",
-            "For foreign investors, Maduro's administration is the counterparty "
-            "to every PDVSA joint venture, every license application processed "
-            "by OFAC, and every regulatory ruling issued by the National Assembly "
-            "and the TSJ. His direct circle — Delcy Rodríguez, Jorge Rodríguez, "
-            "and Diosdado Cabello — controls the day-to-day policy apparatus.",
+            "Nicolás Maduro Moros served as President of Venezuela from "
+            "April 2013 — when he assumed the office following the death "
+            "of Hugo Chávez — until January 3, 2026, when U.S. special "
+            "operations forces captured him and his wife Cilia Flores in "
+            "Caracas as part of a wider military operation called "
+            "Operation Resolve. Both were transported to the United States "
+            "and indicted in the Southern District of New York. Maduro was "
+            "charged with narco-terrorism conspiracy, cocaine importation "
+            "conspiracy, and weapons offences against the United States.",
+            "Inside Venezuela, Vice President Delcy Rodríguez was sworn in "
+            "as Acting President on January 5, 2026 under constitutional "
+            "succession. The Venezuelan government and the National "
+            "Assembly continue to assert that Maduro is the de jure "
+            "president of Venezuela; the United States and most of its "
+            "allies treat him as removed from power. The legitimacy of "
+            "the U.S. capture remains contested under international law.",
+            "For foreign-investor and compliance teams, Maduro's "
+            "incarceration is the most significant change to the "
+            "Venezuelan political risk picture in over a decade. PDVSA "
+            "joint ventures, OFAC general licenses, sovereign-debt "
+            "trajectory, and the entire post-2017 sanctions architecture "
+            "were all built around his administration; the Rodríguez-led "
+            "transition is the new counterparty.",
         ),
         born="1962-11-23",
         birthplace="Caracas, Venezuela",
-        in_office_since="2013-04-19",
         affiliations=("PSUV", "GPP coalition"),
         timeline=(
             TimelineEntry("2006–2013", "Foreign Minister of Venezuela"),
             TimelineEntry("2012–2013", "Executive Vice President of Venezuela"),
             TimelineEntry("2013", "Assumed the presidency after the death of Hugo Chávez"),
+            TimelineEntry("2017", "Added to the OFAC SDN list under Venezuela-related sanctions"),
             TimelineEntry("2018", "Re-elected in an election widely rejected by the U.S., EU, and most Latin American governments"),
             TimelineEntry("2024", "Declared winner of the July 28 presidential election; results disputed by the opposition and rejected by the U.S."),
+            TimelineEntry("2026", "Captured by U.S. military forces in Caracas on January 3 (Operation Resolve); arraigned in U.S. federal court in New York"),
         ),
         faqs=(
             FAQ(
-                q="Who is Nicolás Maduro?",
-                a="Nicolás Maduro Moros is the President of Venezuela, in office since April 2013. He leads the PSUV and the GPP coalition government and has been the central figure in Venezuela's relationship with U.S. sanctions, OFAC general licenses, and the PDVSA oil sector throughout his tenure.",
+                q="Where is Nicolás Maduro now?",
+                a="Nicolás Maduro is in U.S. federal custody. He was captured by U.S. special operations forces in Caracas on January 3, 2026 and was arraigned in the Southern District of New York on charges including narco-terrorism conspiracy, cocaine importation conspiracy, and weapons offences against the United States.",
             ),
             FAQ(
-                q="Is Nicolás Maduro sanctioned by the U.S.?",
-                a="Yes. Maduro was added to the OFAC SDN list in 2017 under Venezuela-related sanctions programs. U.S. persons are prohibited from transacting with him, and the U.S. State Department has offered a reward for information leading to his arrest in connection with narcoterrorism charges.",
+                q="Is Maduro still the President of Venezuela?",
+                a="No, in practical terms. Vice President Delcy Rodríguez was sworn in as Acting President on January 5, 2026 and continues to lead the Venezuelan government. The Venezuelan state and the National Assembly continue to assert that Maduro is the de jure president; the United States, the EU, and most Latin American governments treat him as removed from power.",
             ),
             FAQ(
-                q="Why does Maduro matter to foreign investors?",
-                a="Every Venezuela-related investment decision — joint ventures with PDVSA, sovereign or PDVSA bond positions, OFAC license applications, and operational permits — ultimately routes through institutions controlled by the Maduro government. Sector regulation, foreign-exchange access, and dispute resolution all answer to his administration.",
+                q="Why does Maduro's capture matter to foreign investors?",
+                a="The post-2017 Venezuelan sanctions architecture, OFAC general licenses, PDVSA joint-venture frameworks, and sovereign-debt restructuring conversations were all anchored on the Maduro administration. His removal restarts the political-risk calculation: foreign-investor counterparties now negotiate with the Rodríguez-led transition government, not the Maduro circle.",
             ),
         ),
         sources=(
             Source("Wikipedia: Nicolás Maduro", "https://en.wikipedia.org/wiki/Nicol%C3%A1s_Maduro"),
-            Source("OFAC SDN entry", "https://sanctions-search.ofac.treasury.gov/"),
-            Source("U.S. Department of State Rewards for Justice", "https://rewardsforjustice.net/rewards/nicolas-maduro-moros/"),
+            Source("U.S. State Department: Nicolás Maduro Moros (Captured)", "https://www.state.gov/nicolas-maduro-moros"),
+            Source("U.S. Department of War — capture announcement", "https://www.war.gov/News/News-Stories/Article/Article/4370431/trump-announces-us-militarys-capture-of-maduro/"),
+            Source("Wikipedia: Prosecution of Nicolás Maduro and Cilia Flores", "https://en.wikipedia.org/wiki/Prosecution_of_Nicol%C3%A1s_Maduro_and_Cilia_Flores"),
         ),
         wikidata_id="Q333271",
-        related=("delcy-rodriguez", "diosdado-cabello", "vladimir-padrino-lopez", "maria-corina-machado"),
+        related=("cilia-flores", "delcy-rodriguez", "diosdado-cabello", "maria-corina-machado", "edmundo-gonzalez"),
     ),
 
     "delcy-rodriguez": Person(
         slug="delcy-rodriguez",
         name="Delcy Rodríguez",
         aliases=("Delcy Eloína Rodríguez Gómez", "Delcy Rodríguez Gómez"),
-        role="Executive Vice President of Venezuela",
-        cohorts=("executive",),
+        role="Acting President of Venezuela",
+        cohorts=("executive", "energy"),
+        status="current",
         one_liner=(
-            "Delcy Rodríguez is Venezuela's Executive Vice President and Minister "
-            "of Economy and Finance — the senior cabinet figure managing the "
-            "economic relationship with U.S. sanctions and PDVSA."
+            "Delcy Rodríguez is the Acting President of Venezuela, sworn "
+            "in on January 5, 2026 after the U.S. military's capture of "
+            "Nicolás Maduro. She is the senior figure foreign-investor and "
+            "compliance teams now negotiate with on every Venezuelan "
+            "counterparty question."
         ),
         bio=(
-            "Delcy Eloína Rodríguez Gómez has served as Executive Vice President "
-            "of Venezuela since 2018 and concurrently as Minister of Economy, "
-            "Finance, and Foreign Trade. She previously served as Foreign Minister "
-            "and as President of the 2017 Constituent Assembly.",
-            "Rodríguez is the principal point of contact for foreign-investor "
-            "delegations and has led negotiations with international financial "
-            "institutions, foreign creditors, and oil-sector counterparties under "
-            "the OFAC general-license framework.",
+            "Delcy Eloína Rodríguez Gómez served as Executive Vice "
+            "President of Venezuela from June 2018 and concurrently as "
+            "Minister of Economy, Finance, and Foreign Trade. After the "
+            "U.S. military captured Nicolás Maduro on January 3, 2026, "
+            "she was sworn in as Acting President on January 5 under "
+            "constitutional succession rules. Although the National "
+            "Assembly's 90-day cap on her interim role expired in early "
+            "April, she has remained in office as the Venezuelan state "
+            "and the United States negotiate the country's political "
+            "transition.",
+            "Since taking the presidency, Rodríguez has overseen a major "
+            "cabinet overhaul — replacing roughly half of Maduro's "
+            "ministers, dismissing Defense Minister Vladimir Padrino "
+            "López in March 2026, and elevating allies into the "
+            "intelligence and military commands. She also concurrently "
+            "holds the Oil Ministry portfolio and leads the government's "
+            "engagement with the Trump administration on the post-Maduro "
+            "transition timeline.",
+            "Rodríguez was added to the OFAC SDN list in 2018 under "
+            "Venezuela-related sanctions programs. The U.S. Treasury "
+            "delisted her in 2026 as part of the post-capture political "
+            "settlement; other senior officials in her government "
+            "remain sanctioned.",
         ),
         born="1969-05-18",
         birthplace="Caracas, Venezuela",
-        in_office_since="2018-06-14",
+        in_office_since="2026-01-05",
         affiliations=("PSUV",),
         timeline=(
             TimelineEntry("2014–2017", "Foreign Minister of Venezuela"),
             TimelineEntry("2017–2018", "President of the National Constituent Assembly"),
-            TimelineEntry("2018", "Appointed Executive Vice President"),
-            TimelineEntry("2020", "Took on concurrent role as Minister of Economy, Finance, and Foreign Trade"),
+            TimelineEntry("2018–2026", "Executive Vice President of Venezuela"),
+            TimelineEntry("2018", "Added to the OFAC SDN list"),
+            TimelineEntry("2020–2026", "Concurrently Minister of Economy, Finance, and Foreign Trade"),
+            TimelineEntry("2026", "Sworn in as Acting President of Venezuela on January 5 following the U.S. capture of Nicolás Maduro"),
+            TimelineEntry("2026", "Removed from the OFAC SDN list as part of the post-capture political settlement"),
+            TimelineEntry("2026", "Dismissed Defense Minister Vladimir Padrino López on March 18 and replaced him with Gustavo González López"),
         ),
         faqs=(
             FAQ(
                 q="Who is Delcy Rodríguez?",
-                a="Delcy Rodríguez is the Executive Vice President of Venezuela, in office since June 2018, and concurrently the Minister of Economy, Finance, and Foreign Trade. She is the senior cabinet official managing the country's economic policy and the principal counterpart for foreign investor delegations.",
+                a="Delcy Rodríguez is the Acting President of Venezuela, sworn in on January 5, 2026 following the U.S. military's capture of Nicolás Maduro on January 3. She previously served as Executive Vice President from 2018 and as Minister of Economy, Finance, and Foreign Trade from 2020.",
             ),
             FAQ(
-                q="Is Delcy Rodríguez sanctioned?",
-                a="Yes. Rodríguez was added to the OFAC SDN list in 2018 under Venezuela-related programs, and is also subject to EU and Canadian sanctions. U.S. persons are prohibited from transacting with her.",
+                q="Is Delcy Rodríguez sanctioned by the U.S.?",
+                a="No, not currently. Rodríguez was on the OFAC SDN list from 2018 under Venezuela-related sanctions programs but was removed in 2026 as part of the political settlement that followed the U.S. capture of Nicolás Maduro. Other senior officials in her government remain on the SDN list.",
+            ),
+            FAQ(
+                q="Is she really the president, or just acting?",
+                a="Rodríguez was sworn in as Acting President under Venezuelan constitutional succession rules. The TSJ-mandated 90-day cap on her interim role expired in early April 2026 without elections. As of late April 2026 she remains in office, and is the de facto head of the Venezuelan government recognized by the United States as the negotiation counterparty.",
             ),
         ),
         sources=(
             Source("Wikipedia: Delcy Rodríguez", "https://en.wikipedia.org/wiki/Delcy_Rodr%C3%ADguez"),
+            Source("Britannica — Delcy Rodríguez, Acting President of Venezuela", "https://www.britannica.com/biography/Who-Is-Delcy-Rodriguez-the-Acting-President-of-Venezuela"),
+            Source("PBS NewsHour — Who is Delcy Rodríguez", "https://www.pbs.org/newshour/world/who-is-delcy-rodriguez-venezuelas-interim-president-after-maduros-ouster"),
         ),
         wikidata_id="Q5253488",
-        related=("nicolas-maduro", "jorge-rodriguez", "diosdado-cabello"),
+        related=("nicolas-maduro", "jorge-rodriguez", "diosdado-cabello", "gustavo-gonzalez-lopez", "arianny-seijo-noguera"),
         sector_path="/sectors/economic",
     ),
 
@@ -350,88 +425,126 @@ PEOPLE: dict[str, Person] = {
         slug="vladimir-padrino-lopez",
         name="Vladimir Padrino López",
         aliases=("Vladimir Padrino", "Padrino López"),
-        role="Minister of Defense and FANB Strategic Operational Commander",
+        role="Former Defense Minister of Venezuela (until March 2026)",
         cohorts=("military", "executive"),
+        status="former",
         one_liner=(
-            "General Vladimir Padrino López is Venezuela's Minister of Defense "
-            "and the longest-serving head of the FANB armed forces — the senior "
-            "uniformed figure in the Maduro government."
+            "General Vladimir Padrino López served as Venezuela's Defense "
+            "Minister for over 11 years until being dismissed by Acting "
+            "President Delcy Rodríguez on March 18, 2026 — the longest "
+            "tenure of any modern Venezuelan defense chief."
         ),
         bio=(
-            "Vladimir Padrino López has served as Minister of Defense since 2014 "
-            "and as Strategic Operational Commander of the Bolivarian National "
-            "Armed Forces (FANB). He commands the army, navy, air force, "
+            "Vladimir Padrino López served as Minister of Defense from "
+            "October 2014 to March 18, 2026, and as Strategic Operational "
+            "Commander of the Bolivarian National Armed Forces (FANB) "
+            "from 2017. He commanded the army, navy, air force, "
             "Bolivarian National Guard (GNB), and the militia.",
-            "Padrino López is the central figure foreign investors and "
-            "compliance teams watch when assessing the loyalty of the Venezuelan "
-            "military to the Maduro government — historically the decisive "
-            "variable in any political-transition scenario.",
+            "Padrino López was dismissed in March 2026 by Acting President "
+            "Delcy Rodríguez and replaced by General Gustavo González "
+            "López, the former military-counterintelligence chief and a "
+            "Rodríguez ally. The dismissal is widely read as the most "
+            "important post-Maduro cabinet move so far — Padrino had been "
+            "the senior uniformed figure underpinning the previous "
+            "government, and his removal signaled the consolidation of "
+            "the Rodríguez-led transition.",
+            "Padrino López remains on the OFAC SDN list under "
+            "Venezuela-related programs.",
         ),
         affiliations=("FANB",),
         timeline=(
             TimelineEntry("2014", "Appointed Minister of Defense"),
             TimelineEntry("2017", "Added as Strategic Operational Commander of the FANB"),
+            TimelineEntry("2018", "Added to the OFAC SDN list"),
+            TimelineEntry("2026", "Dismissed as Defense Minister on March 18 by Acting President Delcy Rodríguez; replaced by Gustavo González López"),
         ),
         faqs=(
             FAQ(
                 q="Who is Vladimir Padrino López?",
-                a="General Vladimir Padrino López is Venezuela's Minister of Defense and Strategic Operational Commander of the Bolivarian National Armed Forces (FANB). He has been the senior uniformed figure in the Maduro government since 2014.",
+                a="General Vladimir Padrino López is the former Defense Minister of Venezuela. He held the role from October 2014 until March 18, 2026 — the longest tenure of any modern Venezuelan defense chief — and was replaced by General Gustavo González López after the U.S. capture of Nicolás Maduro and the subsequent cabinet overhaul under Acting President Delcy Rodríguez.",
             ),
             FAQ(
                 q="Is Padrino López sanctioned by the U.S.?",
-                a="Yes. Padrino López has been on the OFAC SDN list since 2018, designated under Venezuela-related sanctions programs.",
+                a="Yes. Padrino López has been on the OFAC SDN list since 2018 under Venezuela-related sanctions programs and remains on the list as of April 2026.",
             ),
         ),
         sources=(
             Source("Wikipedia: Vladimir Padrino López", "https://en.wikipedia.org/wiki/Vladimir_Padrino_L%C3%B3pez"),
+            Source("Al Jazeera — Delcy Rodríguez replaces Padrino", "https://www.aljazeera.com/news/2026/3/18/delcy-rodriguez-replaces-venezuelas-defence-minister-vladimir-padrino"),
         ),
         wikidata_id="Q3556283",
-        related=("nicolas-maduro", "diosdado-cabello"),
+        related=("nicolas-maduro", "diosdado-cabello", "gustavo-gonzalez-lopez", "delcy-rodriguez"),
     ),
 
     "arianny-seijo-noguera": Person(
         slug="arianny-seijo-noguera",
         name="Arianny Seijo Noguera",
-        aliases=("Arianny Vanessa Seijo Noguera",),
-        role="Attorney General of Venezuela",
+        aliases=("Arianny Viviana Seijo Noguera", "Arianny Vanessa Seijo Noguera"),
+        role="Attorney General of Venezuela (Procuradora General)",
         cohorts=("judiciary", "executive"),
+        status="current",
+        in_office_since="2026-03-24",
         one_liner=(
             "Arianny Seijo Noguera is the Attorney General of Venezuela "
-            "(Fiscal General de la República), heading the Public Ministry "
-            "and the country's federal-prosecution apparatus."
+            "(Procuradora General de la República), the senior state "
+            "lawyer representing the Venezuelan state in civil and "
+            "commercial litigation. She was appointed by Acting President "
+            "Delcy Rodríguez and confirmed by the National Assembly on "
+            "March 24, 2026."
         ),
         bio=(
-            "Arianny Seijo Noguera serves as Fiscal General de la República — "
-            "the Attorney General of Venezuela — leading the Public Ministry "
-            "(Ministerio Público), the body responsible for criminal "
-            "prosecutions and constitutional oversight of state institutions.",
-            "For foreign investors and compliance teams, the Attorney General "
-            "is the decisive figure on prosecutions involving foreign "
-            "corporations, asset seizures, criminal exposure of executives "
-            "operating in-country, and the legal framework for OFAC-licensed "
-            "transactions. The Public Ministry's posture toward foreign-investor "
-            "litigation is a leading indicator of country risk.",
+            "Arianny Seijo Noguera was appointed Procuradora General de "
+            "la República — the head of Venezuela's State Solicitor "
+            "office, translated as Attorney General — by Acting President "
+            "Delcy Rodríguez and confirmed by the National Assembly on "
+            "March 24, 2026. She replaced Reinaldo Muñoz Pedroza, who "
+            "held the role for nearly a decade.",
+            "Before her appointment, Seijo Noguera served as legal "
+            "counsel for Petróleos de Venezuela (PDVSA) and participated "
+            "in the drafting of the Amnesty Law approved by the National "
+            "Assembly in February 2026. She holds a doctorate in law from "
+            "the University of Westminster and two master's degrees from "
+            "U.K. universities.",
+            "The Procuraduría General is distinct from the Ministerio "
+            "Público (headed by the Fiscal General — currently Larry "
+            "Devoe). The Procuradora represents the Venezuelan state in "
+            "civil, commercial, and arbitration matters — directly "
+            "relevant to foreign-investor disputes including ICSID "
+            "arbitration, the Crystallex / CITGO writ-of-execution "
+            "proceedings, and PDVSA-bond restructuring conversations. "
+            "Seijo Noguera's PDVSA background makes her appointment "
+            "particularly significant for the oil-sector compliance "
+            "framework.",
         ),
-        affiliations=("Ministerio Público",),
+        affiliations=("Procuraduría General de la República",),
+        timeline=(
+            TimelineEntry("2026", "Confirmed by the National Assembly as Procuradora General de la República on March 24, replacing Reinaldo Muñoz Pedroza"),
+        ),
         faqs=(
             FAQ(
                 q="Who is Arianny Seijo Noguera?",
-                a="Arianny Seijo Noguera is the Attorney General of Venezuela (Fiscal General de la República), heading the Public Ministry — the body responsible for criminal prosecutions and constitutional oversight in Venezuela.",
+                a="Arianny Seijo Noguera is the Attorney General of Venezuela (Procuradora General de la República). She was appointed by Acting President Delcy Rodríguez and confirmed by the National Assembly on March 24, 2026, replacing Reinaldo Muñoz Pedroza. Before her appointment she was legal counsel for PDVSA.",
             ),
             FAQ(
-                q="What does the Venezuelan Attorney General do?",
-                a="The Fiscal General leads the Ministerio Público, which prosecutes criminal cases, oversees the constitutional conduct of state institutions, and represents the state in litigation. For foreign investors, the office is the decisive authority on prosecutions involving foreign companies, asset seizures, and the criminal exposure of executives operating in Venezuela.",
+                q="What does the Procuradora General do?",
+                a="The Procurador General de la República heads Venezuela's State Solicitor office. The office represents the Venezuelan state in civil, commercial, and arbitration disputes — including international arbitration cases brought by foreign investors, the Crystallex / CITGO litigation in U.S. courts, and PDVSA-bond restructuring negotiations. It is distinct from the Fiscalía (Public Ministry), which handles criminal prosecutions.",
+            ),
+            FAQ(
+                q="Is the Procuradora the same as the Fiscal General?",
+                a="No. Both are translated as 'Attorney General' in English but are separate offices. The Procurador General de la República (currently Arianny Seijo Noguera) represents the state in civil and commercial litigation. The Fiscal General de la República (currently Larry Devoe) heads the Public Ministry and prosecutes criminal cases.",
             ),
             FAQ(
                 q="Is Arianny Seijo Noguera sanctioned?",
-                a="As of publication, Arianny Seijo Noguera is not listed on the OFAC SDN list. Compliance teams should always verify against the live OFAC Sanctions Search before relying on this for decision-making.",
+                a="As of April 2026, Arianny Seijo Noguera is not listed on the OFAC SDN list. Compliance teams should always verify against the live OFAC Sanctions Search before relying on this for decision-making.",
             ),
         ),
         sources=(
-            Source("Ministerio Público de Venezuela (official)", "https://www.mp.gob.ve/"),
+            Source("Asamblea Nacional approves Seijo Noguera as Procuradora General — Últimas Noticias", "https://en.ultimasnoticias.com.ve/politica/an-aprobo-designacion-de-arianny-seijo-noguera-como-procuradora-general/"),
+            Source("MIPPCI — Designación de Arianny Seijo Noguera", "https://mippci.gob.ve/an-autoriza-designacion-de-arianny-seijo-noguera-como-nueva-procuradora-general-de-la-republica/"),
+            Source("Caracas Research — Venezuela's New Attorney General: Implications for Legal and Energy Sectors", "https://caracasresearch.com/briefing/venezuela-s-new-attorney-general-implications-for-legal-and-energy-sectors-20260324-315"),
         ),
         sector_path="/sectors/legal",
-        related=("nicolas-maduro", "jorge-rodriguez"),
+        related=("delcy-rodriguez", "larry-devoe", "hector-obregon", "tarek-william-saab"),
     ),
 
     "maria-corina-machado": Person(
@@ -488,8 +601,9 @@ PEOPLE: dict[str, Person] = {
         slug="edmundo-gonzalez",
         name="Edmundo González Urrutia",
         aliases=("Edmundo González",),
-        role="Opposition presidential candidate (2024)",
+        role="Opposition presidential candidate (2024; in exile)",
         cohorts=("opposition",),
+        status="in_exile",
         one_liner=(
             "Edmundo González Urrutia is a retired Venezuelan diplomat who ran "
             "as the unity opposition candidate in the July 2024 presidential "
@@ -565,8 +679,9 @@ PEOPLE: dict[str, Person] = {
         slug="tareck-el-aissami",
         name="Tareck El Aissami",
         aliases=("Tareck Zaidan El Aissami Maddah",),
-        role="Former Vice President and Oil Minister of Venezuela",
+        role="Former Vice President and Oil Minister of Venezuela (in Venezuelan custody)",
         cohorts=("executive", "energy"),
+        status="in_ven_custody",
         one_liner=(
             "Tareck El Aissami is a former Executive Vice President and "
             "former Oil Minister of Venezuela — long one of the most "
@@ -618,31 +733,49 @@ PEOPLE: dict[str, Person] = {
         slug="cilia-flores",
         name="Cilia Flores",
         aliases=("Cilia Adela Flores de Maduro",),
-        role="Member of the National Assembly and First Lady of Venezuela",
+        role="Former First Lady of Venezuela (in U.S. federal custody)",
         cohorts=("executive",),
+        status="in_us_custody",
         one_liner=(
-            "Cilia Flores is a member of the Venezuelan National Assembly, "
-            "longtime PSUV leader, and the wife of President Nicolás Maduro "
-            "— a senior figure in her own right within the Bolivarian "
-            "movement."
+            "Cilia Flores is the wife of former president Nicolás Maduro "
+            "and a longtime PSUV leader who was captured alongside him by "
+            "U.S. military forces on January 3, 2026. She is currently in "
+            "U.S. federal custody and has been indicted in the Southern "
+            "District of New York."
         ),
         bio=(
             "Cilia Adela Flores de Maduro is a Venezuelan lawyer and "
-            "politician. She served as Attorney General of Venezuela "
-            "(2006–2007), then as President of the National Assembly "
-            "(2006–2011). She is married to President Nicolás Maduro and "
-            "is widely seen as a key political adviser within his inner "
-            "circle.",
+            "politician who served as Attorney General of Venezuela "
+            "(2006–2007), as President of the National Assembly "
+            "(2006–2011), and as a member of the National Assembly "
+            "thereafter. She has been a senior PSUV figure throughout the "
+            "Bolivarian government and was widely viewed as a principal "
+            "political adviser to her husband, Nicolás Maduro.",
+            "Flores was captured alongside Maduro in Caracas on January "
+            "3, 2026 during the U.S. military's Operation Resolve, "
+            "transported to the United States, and arraigned in the "
+            "Southern District of New York. She has pleaded not guilty "
+            "to the charges.",
         ),
         affiliations=("PSUV",),
+        timeline=(
+            TimelineEntry("2006–2007", "Attorney General of Venezuela"),
+            TimelineEntry("2006–2011", "President of the National Assembly"),
+            TimelineEntry("2026", "Captured by U.S. military forces in Caracas on January 3 alongside Nicolás Maduro; indicted in the Southern District of New York"),
+        ),
         faqs=(
             FAQ(
                 q="Who is Cilia Flores?",
-                a="Cilia Flores is a Venezuelan lawyer and politician, a longtime PSUV leader, a member of the National Assembly, and the wife of President Nicolás Maduro. She previously served as Attorney General (2006–2007) and President of the National Assembly (2006–2011).",
+                a="Cilia Flores is a Venezuelan lawyer, a longtime PSUV leader, the wife of former President Nicolás Maduro, and a former Attorney General of Venezuela (2006–2007) and former President of the National Assembly (2006–2011). She was captured by U.S. military forces in Caracas on January 3, 2026 and is currently in U.S. federal custody.",
+            ),
+            FAQ(
+                q="Is Cilia Flores in U.S. custody?",
+                a="Yes. Flores was captured alongside Nicolás Maduro by U.S. special operations forces in Caracas on January 3, 2026, transported to the United States, and arraigned in the Southern District of New York. She has pleaded not guilty.",
             ),
         ),
         sources=(
             Source("Wikipedia: Cilia Flores", "https://en.wikipedia.org/wiki/Cilia_Flores"),
+            Source("Wikipedia: Prosecution of Nicolás Maduro and Cilia Flores", "https://en.wikipedia.org/wiki/Prosecution_of_Nicol%C3%A1s_Maduro_and_Cilia_Flores"),
         ),
         wikidata_id="Q3680898",
         related=("nicolas-maduro",),
@@ -725,6 +858,7 @@ PEOPLE: dict[str, Person] = {
         aliases=("Jorge Alberto Arreaza Montserrat",),
         role="Former Foreign Minister and former Vice President of Venezuela",
         cohorts=("executive",),
+        status="former",
         one_liner=(
             "Jorge Arreaza is a former Foreign Minister, former Vice "
             "President, and son-in-law of Hugo Chávez — one of the longest-"
@@ -758,8 +892,9 @@ PEOPLE: dict[str, Person] = {
         slug="rafael-ramirez",
         name="Rafael Ramírez",
         aliases=("Rafael Darío Ramírez Carreño",),
-        role="Former PDVSA President and Oil Minister",
+        role="Former PDVSA President and Oil Minister (in exile)",
         cohorts=("energy", "executive"),
+        status="in_exile",
         one_liner=(
             "Rafael Ramírez led PDVSA and the Venezuelan oil sector for 14 "
             "years (2002–2014) — the longest run of any modern PDVSA "
@@ -810,6 +945,7 @@ PEOPLE: dict[str, Person] = {
         aliases=("Pedro Rafael Tellechea Ruiz",),
         role="Former PDVSA President and Oil Minister",
         cohorts=("energy",),
+        status="former",
         one_liner=(
             "Pedro Tellechea is a former President of PDVSA and Oil "
             "Minister of Venezuela — the executive who briefly led the "
@@ -855,6 +991,7 @@ PEOPLE: dict[str, Person] = {
         aliases=("Asdrúbal José Chávez Jiménez",),
         role="Former PDVSA and Citgo President",
         cohorts=("energy",),
+        status="former",
         one_liner=(
             "Asdrúbal Chávez is a Venezuelan oil executive and a cousin "
             "of Hugo Chávez who served as president of CITGO and later "
@@ -886,6 +1023,7 @@ PEOPLE: dict[str, Person] = {
         aliases=("Manuel Salvador Quevedo Fernández",),
         role="Former PDVSA President and Oil Minister",
         cohorts=("energy", "military"),
+        status="former",
         one_liner=(
             "Manuel Quevedo is a retired Venezuelan National Guard "
             "general who served as President of PDVSA and Oil Minister "
@@ -931,32 +1069,43 @@ PEOPLE: dict[str, Person] = {
         slug="nestor-reverol",
         name="Néstor Reverol",
         aliases=("Néstor Luis Reverol Torres",),
-        role="Minister of Electric Energy of Venezuela",
+        role="Former Minister of Interior and Electric Energy; former Corpozulia president",
         cohorts=("military", "executive"),
+        status="former",
         one_liner=(
-            "Néstor Reverol is a retired Bolivarian National Guard general "
-            "who serves as Minister of Electric Energy and previously held "
-            "the Interior Ministry — one of the most-watched figures in "
-            "the senior military-civilian apparatus."
+            "Néstor Reverol is a retired Bolivarian National Guard major "
+            "general who served as Minister of Interior, Justice, and "
+            "Peace (2016–2020), Minister of Electric Energy, and most "
+            "recently as president of Corpozulia (2024–2025). He remains "
+            "under U.S. federal indictment on narcotics charges."
         ),
         bio=(
-            "Néstor Luis Reverol Torres is a retired GNB major general who "
-            "served as Minister of Interior, Justice, and Peace (2016–2020) "
-            "before being appointed Minister of Electric Energy. He is "
-            "under U.S. federal indictment for narcotics-trafficking "
-            "charges issued in 2015, and has been on the OFAC SDN list "
-            "since 2017.",
-            "Reverol's electricity portfolio is consequential: Venezuela's "
-            "national grid has suffered repeated multi-day blackouts since "
-            "2019, with direct impact on industrial operations, oil-sector "
-            "uptime, and any foreign-investor scenario premised on local "
-            "production capacity.",
+            "Néstor Luis Reverol Torres is a retired GNB major general "
+            "who has held a sequence of senior security and infrastructure "
+            "portfolios in the Maduro government — Minister of Interior, "
+            "Justice, and Peace (2016–2020); Minister of Electric Energy "
+            "(2020–2024); and most recently president of Corpozulia "
+            "(2024–2025), the regional development corporation for Zulia "
+            "state. He has been on the OFAC SDN list since 2017 and is "
+            "under U.S. federal indictment on narcotics-trafficking "
+            "charges issued in the Eastern District of New York in 2015.",
+            "Reverol's electricity portfolio coincided with the period of "
+            "repeated multi-day blackouts on the Venezuelan national grid "
+            "that began in 2019 — a continuing constraint on industrial "
+            "operations, oil-sector uptime, and any foreign-investor "
+            "scenario premised on local production capacity.",
         ),
         affiliations=("FANB",),
+        timeline=(
+            TimelineEntry("2016–2020", "Minister of Interior, Justice, and Peace"),
+            TimelineEntry("2017", "Added to the OFAC SDN list; indicted in U.S. federal court on narcotics charges"),
+            TimelineEntry("2020–2024", "Minister of Electric Energy"),
+            TimelineEntry("2024–2025", "President of Corpozulia"),
+        ),
         faqs=(
             FAQ(
                 q="Who is Néstor Reverol?",
-                a="Néstor Reverol is a retired Bolivarian National Guard general and the Venezuelan Minister of Electric Energy. He previously served as Minister of Interior, Justice, and Peace (2016–2020). He is under U.S. federal indictment on narcotics charges and has been on the OFAC SDN list since 2017.",
+                a="Néstor Reverol is a retired Bolivarian National Guard major general who has held senior portfolios in the Maduro government, including Minister of Interior, Justice, and Peace (2016–2020), Minister of Electric Energy (2020–2024), and president of Corpozulia (2024–2025). He has been on the OFAC SDN list since 2017 and is under U.S. federal indictment on narcotics-trafficking charges.",
             ),
         ),
         sources=(
@@ -970,71 +1119,103 @@ PEOPLE: dict[str, Person] = {
         slug="ivan-hernandez-dala",
         name="Iván Hernández Dala",
         aliases=("Iván Rafael Hernández Dala",),
-        role="Director of the General Directorate of Military Counterintelligence (DGCIM)",
+        role="President of CANTV; former DGCIM director (2014–2024)",
         cohorts=("military",),
+        status="former",
         one_liner=(
-            "General Iván Hernández Dala is the head of Venezuela's "
-            "Directorate of Military Counterintelligence (DGCIM) — the "
-            "most consequential internal-security body for foreign and "
-            "domestic dissident activity."
+            "General Iván Hernández Dala headed Venezuela's military "
+            "counterintelligence service (DGCIM) for ten years until "
+            "October 2024, and was named president of CANTV — the state "
+            "telecom operator — in November 2024."
         ),
         bio=(
-            "Iván Rafael Hernández Dala has led Venezuela's General "
-            "Directorate of Military Counterintelligence (DGCIM) since "
-            "2014. The DGCIM is the principal military-intelligence arm "
-            "of the FANB and has been documented by the UN's Independent "
-            "International Fact-Finding Mission as responsible for "
-            "torture and arbitrary-detention practices against dissidents.",
-            "Hernández Dala has been on the OFAC SDN list since 2019 and "
-            "is a sanctions target of the EU, UK, and Canada. For "
-            "foreign-investor and journalist-protection teams, the DGCIM "
-            "is the primary risk variable on any in-country presence "
-            "scenario.",
+            "Iván Rafael Hernández Dala led Venezuela's General "
+            "Directorate of Military Counterintelligence (DGCIM) from "
+            "2014 to October 2024, when Nicolás Maduro replaced him with "
+            "Major General Javier Marcano Tábata. He was subsequently "
+            "appointed president of CANTV, Venezuela's state-owned "
+            "telecommunications operator, in November 2024.",
+            "The DGCIM under Hernández Dala's command was documented by "
+            "the UN's Independent International Fact-Finding Mission on "
+            "Venezuela as responsible for torture and arbitrary-detention "
+            "practices against dissidents. He has been on the OFAC SDN "
+            "list since 2019 and is a sanctions target of the EU, UK, "
+            "and Canada.",
+            "After the U.S. capture of Maduro on January 3, 2026, Acting "
+            "President Delcy Rodríguez appointed General Gustavo "
+            "González López as DGCIM director — a separate appointment "
+            "post-dating Hernández Dala's earlier removal.",
         ),
-        affiliations=("FANB", "DGCIM"),
+        affiliations=("FANB", "CANTV"),
+        timeline=(
+            TimelineEntry("2014–2024", "Director of the General Directorate of Military Counterintelligence (DGCIM)"),
+            TimelineEntry("2019", "Added to the OFAC SDN list"),
+            TimelineEntry("2024", "Removed from DGCIM in October; replaced by Javier Marcano Tábata"),
+            TimelineEntry("2024", "Appointed president of CANTV, Venezuela's state-owned telecommunications operator"),
+        ),
         faqs=(
             FAQ(
-                q="Who is Iván Hernández Dala?",
-                a="General Iván Hernández Dala is the director of Venezuela's General Directorate of Military Counterintelligence (DGCIM). He has been on the OFAC SDN list since 2019 and is a sanctions target of multiple Western governments. The UN Fact-Finding Mission has documented DGCIM responsibility for human-rights violations under his command.",
+                q="Is Iván Hernández Dala still the head of DGCIM?",
+                a="No. Hernández Dala headed Venezuela's military counterintelligence service from 2014 until October 2024, when he was replaced by Javier Marcano Tábata. He was subsequently appointed president of CANTV. After the U.S. capture of Nicolás Maduro in January 2026, General Gustavo González López took over the DGCIM.",
+            ),
+            FAQ(
+                q="Is Iván Hernández Dala sanctioned?",
+                a="Yes. He has been on the OFAC SDN list since 2019 and is a sanctions target of the EU, UK, and Canada for human-rights violations during his command of the DGCIM.",
             ),
         ),
         sources=(
+            Source("Wikipedia: Iván Hernández Dala", "https://en.wikipedia.org/wiki/Iv%C3%A1n_Hern%C3%A1ndez_Dala"),
             Source("UN Independent International Fact-Finding Mission on Venezuela", "https://www.ohchr.org/en/hr-bodies/hrc/ffmv/index"),
         ),
-        related=("vladimir-padrino-lopez", "diosdado-cabello", "nicolas-maduro"),
+        sector_path="/sectors/telecom",
+        related=("gustavo-gonzalez-lopez", "vladimir-padrino-lopez", "diosdado-cabello"),
     ),
 
     "domingo-hernandez-larez": Person(
         slug="domingo-hernandez-larez",
         name="Domingo Hernández Lárez",
         aliases=("Domingo Antonio Hernández Lárez",),
-        role="Strategic Operational Commander of the FANB (CEOFANB)",
+        role="Former Strategic Operational Commander of the FANB (until March 2026)",
         cohorts=("military",),
+        status="former",
         one_liner=(
-            "General-in-Chief Domingo Hernández Lárez is the Strategic "
-            "Operational Commander of the Bolivarian National Armed "
-            "Forces (CEOFANB) — the senior operational figure in the "
-            "FANB chain of command."
+            "General-in-Chief Domingo Hernández Lárez served as the "
+            "Strategic Operational Commander of Venezuela's Bolivarian "
+            "National Armed Forces (CEOFANB) from 2021 until March 19, "
+            "2026, when he was dismissed by Acting President Delcy "
+            "Rodríguez and replaced by Major General Rafael Prieto "
+            "Martínez."
         ),
         bio=(
             "Domingo Antonio Hernández Lárez holds the rank of "
             "General-in-Chief, the highest active rank in the Venezuelan "
-            "armed forces. As Strategic Operational Commander he runs "
-            "the day-to-day operational integration of the army, navy, "
-            "air force, GNB, and militia. He is a sanctions target of "
-            "the U.S., EU, UK, and Canada.",
+            "armed forces. As Strategic Operational Commander of the FANB "
+            "(CEOFANB) from 2021, he ran the day-to-day operational "
+            "integration of the army, navy, air force, GNB, and militia.",
+            "He was dismissed from CEOFANB on March 19, 2026 — one day "
+            "after Defense Minister Vladimir Padrino López was replaced "
+            "in the same Rodríguez cabinet overhaul. Major General "
+            "Rafael Prieto Martínez, who had been serving as Inspector "
+            "General of the FANB since October 2024, was named as his "
+            "successor at CEOFANB. Hernández Lárez is a sanctions target "
+            "of the U.S., EU, UK, and Canada.",
         ),
-        affiliations=("FANB", "CEOFANB"),
+        affiliations=("FANB",),
+        timeline=(
+            TimelineEntry("2021–2026", "Strategic Operational Commander of the FANB (CEOFANB)"),
+            TimelineEntry("2026", "Dismissed from CEOFANB on March 19; replaced by Major General Rafael Prieto Martínez"),
+        ),
         faqs=(
             FAQ(
                 q="Who is Domingo Hernández Lárez?",
-                a="General-in-Chief Domingo Hernández Lárez is the Strategic Operational Commander of Venezuela's Bolivarian National Armed Forces — the senior operational figure in the FANB chain of command, immediately below the Minister of Defense.",
+                a="General-in-Chief Domingo Hernández Lárez is a senior Venezuelan military officer who served as the Strategic Operational Commander of the Bolivarian National Armed Forces (CEOFANB) from 2021 until March 19, 2026, when he was dismissed by Acting President Delcy Rodríguez and replaced by Major General Rafael Prieto Martínez.",
             ),
         ),
         sources=(
-            Source("Wikipedia: Domingo Hernández Lárez", "https://en.wikipedia.org/wiki/Domingo_Hern%C3%A1ndez_L%C3%A1rez"),
+            Source("Wikipedia: Domingo Hernández Lárez", "https://es.wikipedia.org/wiki/Domingo_Hern%C3%A1ndez_L%C3%A1rez"),
+            Source("La Patilla — Hernández Lárez replaced by Rafael Prieto Martínez", "https://lapatilla.com/2026/03/19/le-serrucharon-el-cargo-a-domingo-hernandez-larez-designaron-a-rafael-prieto-martinez-como-nuevo-jefe-del-ceofanb/"),
         ),
-        related=("vladimir-padrino-lopez",),
+        related=("vladimir-padrino-lopez", "gustavo-gonzalez-lopez", "delcy-rodriguez"),
     ),
 
     "henry-rangel-silva": Person(
@@ -1043,6 +1224,7 @@ PEOPLE: dict[str, Person] = {
         aliases=("Henry de Jesús Rangel Silva",),
         role="Former Defense Minister of Venezuela",
         cohorts=("military", "executive"),
+        status="former",
         one_liner=(
             "General-in-Chief Henry Rangel Silva is a former Defense "
             "Minister and former governor of Trujillo state, one of the "
@@ -1077,50 +1259,69 @@ PEOPLE: dict[str, Person] = {
         slug="tarek-william-saab",
         name="Tarek William Saab",
         aliases=("Tarek William Saab Halabi",),
-        role="Former Attorney General of Venezuela",
+        role="Acting Ombudsman; former Fiscal General of Venezuela (2017–2026)",
         cohorts=("judiciary", "executive"),
+        status="former",
         one_liner=(
             "Tarek William Saab is a Venezuelan lawyer who served as "
-            "Attorney General (Fiscal General de la República) following "
-            "his appointment by the 2017 National Constituent Assembly — "
-            "a tenure that lasted nearly a decade."
+            "Fiscal General de la República — head of the Public Ministry "
+            "— from 2017 until February 25, 2026, when he resigned and "
+            "was named acting Defensor del Pueblo (Ombudsman). He was "
+            "replaced as Fiscal by Larry Devoe."
         ),
         bio=(
             "Tarek William Saab Halabi is a Venezuelan lawyer, poet, and "
             "longtime Bolivarian-government official who served as "
             "Ombudsman of Venezuela (2014–2017) before being appointed "
-            "Attorney General by the National Constituent Assembly in "
-            "August 2017. He is on the OFAC SDN list under Venezuela-"
-            "related programs.",
-            "Saab's tenure as Attorney General overlapped with the most "
+            "Fiscal General de la República by the National Constituent "
+            "Assembly in August 2017. He held the Fiscal post for nearly "
+            "a decade and is on the OFAC SDN list under Venezuela-related "
+            "programs.",
+            "His tenure as Fiscal General overlapped with the most "
             "significant period of foreign-investor litigation against "
             "Venezuela — the PDVSA 2020 bond default, the Crystallex "
-            "writ-of-execution proceedings against CITGO, and a string "
-            "of high-profile criminal cases against opposition leaders "
-            "and dissident former officials.",
+            "writ-of-execution proceedings against CITGO, the prosecution "
+            "of opposition leaders, and the major PDVSA-Cripto corruption "
+            "probe that led to the 2024 arrest of former Vice President "
+            "Tareck El Aissami.",
+            "Saab resigned the Fiscal post on February 25, 2026 — four "
+            "days after the National Assembly approved the Amnesty Law "
+            "and ten months after his Ombudsman predecessor Alfredo Ruiz "
+            "left office. The same day, Acting President Delcy Rodríguez "
+            "named him acting Defensor del Pueblo. He was replaced as "
+            "Fiscal General by Larry Devoe, who was formally confirmed "
+            "by the National Assembly on April 9, 2026.",
         ),
         born="1962-09-10",
         affiliations=("PSUV",),
         timeline=(
-            TimelineEntry("2014–2017", "Ombudsman of Venezuela"),
-            TimelineEntry("2017", "Appointed Attorney General by the National Constituent Assembly"),
+            TimelineEntry("2014–2017", "Ombudsman of Venezuela (Defensor del Pueblo)"),
+            TimelineEntry("2017", "Appointed Fiscal General de la República by the National Constituent Assembly"),
+            TimelineEntry("2026", "Resigned as Fiscal General on February 25; named acting Defensor del Pueblo the same day"),
+            TimelineEntry("2026", "Replaced as Fiscal General by Larry Devoe (confirmed by the National Assembly April 9)"),
         ),
         faqs=(
             FAQ(
                 q="Who is Tarek William Saab?",
-                a="Tarek William Saab is a Venezuelan lawyer who served as Attorney General of Venezuela starting in 2017, having previously served as Ombudsman (2014–2017). He has been on the OFAC SDN list under Venezuela-related programs.",
+                a="Tarek William Saab is a Venezuelan lawyer who served as Fiscal General de la República (head of the Public Ministry) from 2017 to February 25, 2026. He resigned the Fiscal post and was named acting Defensor del Pueblo (Ombudsman). He was replaced as Fiscal by Larry Devoe.",
+            ),
+            FAQ(
+                q="Why did Tarek William Saab resign as Fiscal General?",
+                a="Saab announced his resignation on February 25, 2026 by saying he had completed his cycle leading the institution. The move came four days after the National Assembly approved the Amnesty Law and shortly after the cabinet overhaul that began under Acting President Delcy Rodríguez following the U.S. capture of Nicolás Maduro.",
             ),
             FAQ(
                 q="Is Tarek William Saab the same person as Alex Saab?",
-                a="No. Tarek William Saab Halabi (the Attorney General) and Alex Nain Saab Moran (a businessman accused of being a frontman for the Maduro government and the subject of a high-profile U.S. extradition case) share a surname but are not closely related. They are two of the most-confused names in Venezuela-related sanctions research.",
+                a="No. Tarek William Saab Halabi (the Fiscal General / Ombudsman) and Alex Nain Saab Moran (a businessman accused of being a frontman for the Maduro government and the subject of a high-profile U.S. extradition case) share a surname but are not closely related. They are two of the most-confused names in Venezuela-related sanctions research.",
             ),
         ),
         sources=(
             Source("Wikipedia: Tarek William Saab", "https://en.wikipedia.org/wiki/Tarek_William_Saab"),
+            Source("CNN — Saab renuncia como fiscal de Venezuela", "https://cnnespanol.cnn.com/2026/02/25/venezuela/tarek-william-saab-alfredo-ruiz-angulo-renuncias-orix"),
+            Source("CNN — Larry Devoe confirmado como fiscal general", "https://cnnespanol.cnn.com/2026/04/09/venezuela/larry-devoe-nuevo-fiscal-asamblea-orix"),
         ),
         wikidata_id="Q3503497",
         sector_path="/sectors/legal",
-        related=("arianny-seijo-noguera", "nicolas-maduro", "diosdado-cabello"),
+        related=("larry-devoe", "arianny-seijo-noguera", "nicolas-maduro", "delcy-rodriguez"),
     ),
 
     "maikel-moreno": Person(
@@ -1129,6 +1330,7 @@ PEOPLE: dict[str, Person] = {
         aliases=("Maikel José Moreno Pérez",),
         role="Former President of the Supreme Tribunal of Justice (TSJ)",
         cohorts=("judiciary",),
+        status="former",
         one_liner=(
             "Maikel Moreno served as President of Venezuela's Supreme "
             "Tribunal of Justice (TSJ) from 2017 to 2022 — one of the "
@@ -1208,8 +1410,8 @@ PEOPLE: dict[str, Person] = {
 
     "elvis-hidrobo-amoroso": Person(
         slug="elvis-hidrobo-amoroso",
-        name="Elvis Hidrobo Amoroso",
-        aliases=("Elvis Eduardo Hidrobo Amoroso",),
+        name="Elvis Amoroso",
+        aliases=("Elvis Eduardo Amoroso", "Elvis Hidrobo Amoroso"),
         role="President of the National Electoral Council (CNE)",
         cohorts=("judiciary",),
         one_liner=(
@@ -1253,8 +1455,9 @@ PEOPLE: dict[str, Person] = {
         slug="leopoldo-lopez",
         name="Leopoldo López",
         aliases=("Leopoldo Eduardo López Mendoza",),
-        role="Founder of the Voluntad Popular opposition party",
+        role="Founder of the Voluntad Popular opposition party (in exile)",
         cohorts=("opposition",),
+        status="in_exile",
         one_liner=(
             "Leopoldo López is the founder of the Voluntad Popular "
             "opposition party and one of the longest-prominent figures "
@@ -1303,8 +1506,9 @@ PEOPLE: dict[str, Person] = {
         slug="juan-guaido",
         name="Juan Guaidó",
         aliases=("Juan Gerardo Guaidó Márquez",),
-        role="Former President of the National Assembly and Interim President of Venezuela (2019–2023)",
+        role="Former President of the National Assembly and Interim President of Venezuela (2019–2023; in exile)",
         cohorts=("opposition",),
+        status="in_exile",
         one_liner=(
             "Juan Guaidó is a former President of the Venezuelan "
             "National Assembly who declared himself Interim President "
@@ -1352,6 +1556,7 @@ PEOPLE: dict[str, Person] = {
         aliases=("Henrique Capriles Radonski",),
         role="Opposition leader and two-time presidential candidate",
         cohorts=("opposition",),
+        status="current",
         one_liner=(
             "Henrique Capriles is a longtime Venezuelan opposition "
             "leader, former governor of Miranda state, and two-time "
@@ -1386,6 +1591,188 @@ PEOPLE: dict[str, Person] = {
         ),
         wikidata_id="Q1062303",
         related=("maria-corina-machado", "leopoldo-lopez", "edmundo-gonzalez"),
+    ),
+
+    # ── Figures who took office during / after the January 2026 transition ──
+
+    "larry-devoe": Person(
+        slug="larry-devoe",
+        name="Larry Devoe",
+        aliases=("Larry Daniel Devoe Márquez",),
+        role="Fiscal General of Venezuela (head of the Public Ministry)",
+        cohorts=("judiciary",),
+        status="current",
+        in_office_since="2026-02-25",
+        one_liner=(
+            "Larry Devoe is the Fiscal General de la República — head of "
+            "Venezuela's Public Ministry — confirmed by the National "
+            "Assembly on April 9, 2026 after serving as interim Fiscal "
+            "from February 25. He replaced Tarek William Saab, who held "
+            "the role for nearly a decade."
+        ),
+        bio=(
+            "Larry Daniel Devoe Márquez is a Venezuelan lawyer who took "
+            "control of the Fiscalía on February 25, 2026, the same day "
+            "Tarek William Saab announced his resignation. The National "
+            "Assembly formally confirmed Devoe as Fiscal General de la "
+            "República on April 9, 2026 with 275 votes in favor.",
+            "Devoe holds a master's degree in Constitutional Law from "
+            "the University of Valencia and a master's in Democracy, "
+            "Human Rights and the Rule of Law from the University of "
+            "Alcalá. He previously served as Venezuela's representative "
+            "to the UN Human Rights Council and to the Inter-American "
+            "Commission on Human Rights, and as executive secretary of "
+            "the National Human Rights Council (CNDH).",
+            "For foreign-investor and compliance teams, the Fiscalía "
+            "under Devoe is the criminal-prosecution counterparty on "
+            "PDVSA-corruption proceedings (including the ongoing "
+            "PDVSA-Cripto case against former Vice President Tareck El "
+            "Aissami) and on prosecutions involving foreign companies "
+            "operating in Venezuela. Independent observers have "
+            "characterised the Devoe appointment as a 'line of "
+            "continuity' with Saab's tenure rather than a clean break.",
+        ),
+        affiliations=("Ministerio Público",),
+        timeline=(
+            TimelineEntry("2026", "Took control of the Fiscalía as interim Fiscal General on February 25"),
+            TimelineEntry("2026", "Confirmed by the National Assembly as Fiscal General on April 9 with 275 votes"),
+        ),
+        faqs=(
+            FAQ(
+                q="Who is Larry Devoe?",
+                a="Larry Devoe is the Fiscal General de la República — the head of Venezuela's Public Ministry — confirmed by the National Assembly on April 9, 2026. He had been serving as interim Fiscal since February 25, when Tarek William Saab resigned. Devoe is a constitutional and human-rights lawyer who previously represented Venezuela at the UN Human Rights Council.",
+            ),
+            FAQ(
+                q="What does the Fiscal General do?",
+                a="The Fiscal General de la República heads the Ministerio Público, the Venezuelan Public Ministry. The office prosecutes criminal cases, oversees the constitutional conduct of state institutions, and is the body that has prosecuted the PDVSA-Cripto corruption case against former Vice President Tareck El Aissami.",
+            ),
+            FAQ(
+                q="Is the Fiscal General the same as the Procuradora General?",
+                a="No. Both are translated as 'Attorney General' in English but are separate Venezuelan offices. The Fiscal General de la República (currently Larry Devoe) heads the Public Ministry and prosecutes criminal cases. The Procuradora General de la República (currently Arianny Seijo Noguera) represents the Venezuelan state in civil and commercial litigation, including international arbitration disputes.",
+            ),
+        ),
+        sources=(
+            Source("CNN — Larry Devoe confirmado como nuevo fiscal general", "https://cnnespanol.cnn.com/2026/04/09/venezuela/larry-devoe-nuevo-fiscal-asamblea-orix"),
+            Source("CNN — Quién es Larry Devoe", "https://cnnespanol.cnn.com/2026/04/15/venezuela/larry-devoe-nuevo-fiscal-general-perfil-orix"),
+            Source("Infobae — Larry Devoe colaborador cercano del chavismo", "https://www.infobae.com/venezuela/2026/04/09/larry-devoe-colaborador-cercano-del-chavismo-fue-designado-como-nuevo-fiscal-general-de-venezuela/"),
+        ),
+        sector_path="/sectors/legal",
+        related=("tarek-william-saab", "arianny-seijo-noguera", "delcy-rodriguez", "tareck-el-aissami"),
+    ),
+
+    "gustavo-gonzalez-lopez": Person(
+        slug="gustavo-gonzalez-lopez",
+        name="Gustavo González López",
+        aliases=("Gustavo Enrique González López",),
+        role="Defense Minister of Venezuela",
+        cohorts=("military", "executive"),
+        status="current",
+        in_office_since="2026-03-18",
+        one_liner=(
+            "General Gustavo González López is Venezuela's Defense "
+            "Minister, appointed by Acting President Delcy Rodríguez on "
+            "March 18, 2026 to replace Vladimir Padrino López. A "
+            "U.S.-trained intelligence officer, he was previously head "
+            "of the DGCIM and SEBIN."
+        ),
+        bio=(
+            "Gustavo Enrique González López is a 65-year-old Venezuelan "
+            "general who was appointed Minister of Defense on March 18, "
+            "2026 by Acting President Delcy Rodríguez, replacing Vladimir "
+            "Padrino López after Padrino's 11-year tenure. The "
+            "appointment is the most consequential cabinet move so far "
+            "of the Rodríguez transition government — replacing the "
+            "uniformed figure who held the FANB together under Maduro "
+            "with a Rodríguez-aligned intelligence chief.",
+            "González López's background is in intelligence rather than "
+            "operational command. He served as Venezuela's domestic "
+            "intelligence director (SEBIN) until mid-2024, then worked "
+            "with Rodríguez as head of strategic affairs at PDVSA. After "
+            "the U.S. capture of Maduro on January 3, 2026, Rodríguez "
+            "promoted him to head the DGCIM (military counterintelligence) "
+            "and the Presidential Honor Guard before elevating him to "
+            "the Defense Ministry in March.",
+            "González López is sanctioned by the U.S. and the EU for "
+            "human-rights abuses connected to his time leading SEBIN.",
+        ),
+        affiliations=("FANB", "SEBIN", "DGCIM"),
+        timeline=(
+            TimelineEntry("?–2024", "Director of SEBIN (Venezuelan domestic intelligence)"),
+            TimelineEntry("2024", "Head of strategic affairs at PDVSA"),
+            TimelineEntry("2026", "Appointed director of DGCIM and head of the Presidential Honor Guard by Acting President Delcy Rodríguez (January)"),
+            TimelineEntry("2026", "Appointed Minister of Defense on March 18, replacing Vladimir Padrino López"),
+        ),
+        faqs=(
+            FAQ(
+                q="Who is Gustavo González López?",
+                a="General Gustavo González López is the current Minister of Defense of Venezuela, appointed by Acting President Delcy Rodríguez on March 18, 2026 to replace Vladimir Padrino López. He is a longtime intelligence officer who previously led SEBIN (domestic intelligence) and the DGCIM (military counterintelligence). He is sanctioned by the U.S. and EU for human-rights abuses.",
+            ),
+            FAQ(
+                q="Why was González López appointed Defense Minister?",
+                a="His appointment is widely read as Acting President Delcy Rodríguez consolidating control of the Venezuelan armed forces by replacing longtime Padrino loyalists with a Rodríguez-aligned intelligence chief. The Trump administration views the move as a meaningful step in the post-Maduro transition.",
+            ),
+        ),
+        sources=(
+            Source("NBC News — Venezuela's acting president replaces longtime defense minister with intelligence head", "https://www.nbcnews.com/world/venezuela/venezuelas-acting-president-replaces-long-time-defense-minister-rcna264159"),
+            Source("Al Jazeera — Delcy Rodriguez replaces Padrino", "https://www.aljazeera.com/news/2026/3/18/delcy-rodriguez-replaces-venezuelas-defence-minister-vladimir-padrino"),
+            Source("PBS NewsHour — Venezuela's acting president names new defense chief", "https://www.pbs.org/newshour/world/venezuelas-acting-president-names-new-defense-chief-to-replace-longtime-maduro-loyalist"),
+        ),
+        related=("vladimir-padrino-lopez", "delcy-rodriguez", "ivan-hernandez-dala", "diosdado-cabello"),
+    ),
+
+    "hector-obregon": Person(
+        slug="hector-obregon",
+        name="Héctor Obregón",
+        aliases=("Héctor Andrés Obregón Pérez",),
+        role="President of PDVSA",
+        cohorts=("energy",),
+        status="current",
+        in_office_since="2024-08",
+        one_liner=(
+            "Héctor Obregón is the President of Petróleos de Venezuela "
+            "(PDVSA) — Venezuela's state oil company — originally named "
+            "by Nicolás Maduro in August 2024 and ratified by Acting "
+            "President Delcy Rodríguez in March 2026."
+        ),
+        bio=(
+            "Héctor Andrés Obregón Pérez is a longtime PDVSA insider "
+            "who was named President of the company by Nicolás Maduro "
+            "in August 2024, succeeding Pedro Tellechea. He was "
+            "ratified in the role by Acting President Delcy Rodríguez "
+            "via Decree No. 5,273 published in the Official Gazette on "
+            "March 13, 2026 — making him one of the senior figures "
+            "from the Maduro era who has retained his post under the "
+            "Rodríguez transition government.",
+            "As PDVSA president, Obregón has set a target of growing "
+            "Venezuelan oil production by 18 percent in 2026. His "
+            "tenure spans the politically consequential expiry of OFAC "
+            "General License 44, the ongoing CITGO writ-of-execution "
+            "proceedings in U.S. courts, and the PDVSA-Cripto "
+            "corruption probe — making him the central operational "
+            "counterparty for any foreign oil-sector engagement with "
+            "Venezuela.",
+        ),
+        affiliations=("PDVSA",),
+        timeline=(
+            TimelineEntry("2024", "Named President of PDVSA in August by Nicolás Maduro, replacing Pedro Tellechea"),
+            TimelineEntry("2026", "Ratified as PDVSA President by Acting President Delcy Rodríguez via Official Gazette decree on March 13"),
+        ),
+        faqs=(
+            FAQ(
+                q="Who is the current president of PDVSA?",
+                a="Héctor Obregón is the President of PDVSA. He was originally appointed by Nicolás Maduro in August 2024 and was ratified in the role by Acting President Delcy Rodríguez via Official Gazette decree on March 13, 2026.",
+            ),
+            FAQ(
+                q="What is PDVSA's oil-production target for 2026?",
+                a="Obregón has stated that PDVSA's target for 2026 is to grow oil production by at least 18 percent.",
+            ),
+        ),
+        sources=(
+            Source("Últimas Noticias — Héctor Obregón ratificado como presidente de PDVSA", "https://ultimasnoticias.com.ve/economia/petroleo/hector-obregon-ratificado-como-presidente-de-pdvsa/"),
+            Source("Bloomberg — Héctor Obregón profile", "https://www.bloomberg.com/profile/person/23599579"),
+        ),
+        sector_path="/sectors/oil-gas",
+        related=("pedro-tellechea", "delcy-rodriguez", "tareck-el-aissami", "rafael-ramirez"),
     ),
 }
 

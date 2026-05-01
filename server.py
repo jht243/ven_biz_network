@@ -4282,7 +4282,8 @@ def people_by_role_page(cohort: str):
 def people_profile_page(slug: str):
     """One Venezuelan power figure → one indexable page."""
     from src.data.people import (
-        COHORTS, cohort_meta, cohort_siblings, get_person, related_people,
+        COHORTS, VERIFIED_AS_OF, cohort_meta, cohort_siblings, get_person,
+        related_people,
     )
     from src.page_renderer import _env, _base_url, _iso, settings as _s
     from src.seo.cluster_topology import build_cluster_ctx
@@ -4399,6 +4400,7 @@ def people_profile_page(slug: str):
             related=related,
             siblings=siblings,
             today_human=today_human,
+            verified_as_of_human=_dt.fromisoformat(VERIFIED_AS_OF).strftime("%B %Y"),
             cluster_ctx=cluster_ctx,
             settings=_s,
         )
