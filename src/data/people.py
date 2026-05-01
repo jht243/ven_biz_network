@@ -520,6 +520,873 @@ PEOPLE: dict[str, Person] = {
         wikidata_id="Q113533432",
         related=("maria-corina-machado",),
     ),
+
+    # ── Executive / cabinet ──────────────────────────────────────────
+
+    "yvan-gil": Person(
+        slug="yvan-gil",
+        name="Yván Gil",
+        aliases=("Yván Gil Pinto",),
+        role="Foreign Minister of Venezuela",
+        cohorts=("executive",),
+        one_liner=(
+            "Yván Gil is Venezuela's Foreign Minister, the senior diplomat "
+            "managing the Maduro government's external relations including "
+            "negotiations with the U.S., the EU, and Latin American "
+            "neighbours over sanctions and recognition."
+        ),
+        bio=(
+            "Yván Gil Pinto serves as Minister of People's Power for Foreign "
+            "Affairs of Venezuela. Before taking the foreign-affairs portfolio "
+            "he served as Minister of Agriculture and Land. He is the public "
+            "face of the Maduro government in international forums, including "
+            "the UN, ALBA-TCP, and CELAC.",
+            "For foreign-investor and compliance teams, the Foreign Ministry "
+            "is the principal Venezuelan channel for diplomatic-protocol "
+            "matters affecting business operations — visa coordination, "
+            "embassy access, and the formal counterpart for foreign-state "
+            "engagement on commercial and consular questions.",
+        ),
+        affiliations=("PSUV",),
+        faqs=(
+            FAQ(
+                q="Who is Yván Gil?",
+                a="Yván Gil is the Foreign Minister of Venezuela, the senior diplomat representing the Maduro government in international relations. He previously served as Minister of Agriculture and Land.",
+            ),
+        ),
+        sources=(
+            Source("Ministerio del Poder Popular para Relaciones Exteriores", "https://mppre.gob.ve/"),
+        ),
+        sector_path="/sectors/diplomatic",
+        related=("nicolas-maduro", "delcy-rodriguez"),
+    ),
+
+    "tareck-el-aissami": Person(
+        slug="tareck-el-aissami",
+        name="Tareck El Aissami",
+        aliases=("Tareck Zaidan El Aissami Maddah",),
+        role="Former Vice President and Oil Minister of Venezuela",
+        cohorts=("executive", "energy"),
+        one_liner=(
+            "Tareck El Aissami is a former Executive Vice President and "
+            "former Oil Minister of Venezuela — long one of the most "
+            "powerful figures in the Maduro government before being arrested "
+            "in 2024 on corruption charges."
+        ),
+        bio=(
+            "Tareck Zaidan El Aissami Maddah served as Executive Vice "
+            "President of Venezuela (2017–2018), Minister of Industries and "
+            "National Production, and Minister of Petroleum (2020–2023). He "
+            "was added to the OFAC SDN list in 2017, with the U.S. Treasury "
+            "calling him a 'prominent Venezuelan drug trafficker' in the "
+            "designation announcement.",
+            "El Aissami resigned the Oil Ministry in March 2023 amid a major "
+            "PDVSA corruption probe and was arrested by Venezuelan authorities "
+            "in April 2024 on charges including treason and money laundering. "
+            "His arrest is one of the most consequential internal "
+            "Bolivarian-government rifts since the death of Hugo Chávez.",
+        ),
+        born="1974-11-12",
+        affiliations=("PSUV",),
+        timeline=(
+            TimelineEntry("2017", "Added to the OFAC SDN list under Venezuela-related sanctions"),
+            TimelineEntry("2017–2018", "Executive Vice President of Venezuela"),
+            TimelineEntry("2020–2023", "Minister of Petroleum and President of PDVSA's holding board"),
+            TimelineEntry("2023", "Resigned the Oil Ministry amid a major PDVSA corruption probe"),
+            TimelineEntry("2024", "Arrested by Venezuelan authorities on treason and money-laundering charges"),
+        ),
+        faqs=(
+            FAQ(
+                q="Who is Tareck El Aissami?",
+                a="Tareck El Aissami is a former Executive Vice President of Venezuela (2017–2018) and former Oil Minister (2020–2023). He has been on the OFAC SDN list since 2017 and was arrested in 2024 by Venezuelan authorities on treason and money-laundering charges connected to a major PDVSA corruption investigation.",
+            ),
+            FAQ(
+                q="Why is Tareck El Aissami significant for sanctions and oil-sector compliance?",
+                a="As Oil Minister and de-facto head of PDVSA's holding board from 2020–2023, El Aissami was the central counterparty for foreign oil-sector negotiations with Venezuela during the OFAC general-license window. His subsequent arrest signaled a significant internal rupture and reshaped the PDVSA leadership team.",
+            ),
+        ),
+        sources=(
+            Source("Wikipedia: Tareck El Aissami", "https://en.wikipedia.org/wiki/Tareck_El_Aissami"),
+            Source("US Treasury OFAC press release (2017)", "https://home.treasury.gov/news/press-releases/sm0021"),
+        ),
+        wikidata_id="Q1717693",
+        sector_path="/sectors/oil-gas",
+        related=("nicolas-maduro", "rafael-ramirez", "pedro-tellechea"),
+    ),
+
+    "cilia-flores": Person(
+        slug="cilia-flores",
+        name="Cilia Flores",
+        aliases=("Cilia Adela Flores de Maduro",),
+        role="Member of the National Assembly and First Lady of Venezuela",
+        cohorts=("executive",),
+        one_liner=(
+            "Cilia Flores is a member of the Venezuelan National Assembly, "
+            "longtime PSUV leader, and the wife of President Nicolás Maduro "
+            "— a senior figure in her own right within the Bolivarian "
+            "movement."
+        ),
+        bio=(
+            "Cilia Adela Flores de Maduro is a Venezuelan lawyer and "
+            "politician. She served as Attorney General of Venezuela "
+            "(2006–2007), then as President of the National Assembly "
+            "(2006–2011). She is married to President Nicolás Maduro and "
+            "is widely seen as a key political adviser within his inner "
+            "circle.",
+        ),
+        affiliations=("PSUV",),
+        faqs=(
+            FAQ(
+                q="Who is Cilia Flores?",
+                a="Cilia Flores is a Venezuelan lawyer and politician, a longtime PSUV leader, a member of the National Assembly, and the wife of President Nicolás Maduro. She previously served as Attorney General (2006–2007) and President of the National Assembly (2006–2011).",
+            ),
+        ),
+        sources=(
+            Source("Wikipedia: Cilia Flores", "https://en.wikipedia.org/wiki/Cilia_Flores"),
+        ),
+        wikidata_id="Q3680898",
+        related=("nicolas-maduro",),
+    ),
+
+    "freddy-bernal": Person(
+        slug="freddy-bernal",
+        name="Freddy Bernal",
+        aliases=("Freddy Alirio Bernal Rosales",),
+        role="Governor of Táchira state",
+        cohorts=("executive",),
+        one_liner=(
+            "Freddy Bernal is the governor of Táchira — Venezuela's main "
+            "border state with Colombia — and a longtime senior PSUV "
+            "official with a security and intelligence background."
+        ),
+        bio=(
+            "Freddy Alirio Bernal Rosales is a former Caracas mayor "
+            "(Libertador municipality, 2000–2008) and a longtime senior "
+            "PSUV operator with a background in the police and intelligence "
+            "services. He has been governor of Táchira state, on the "
+            "Colombian border, where his portfolio touches smuggling, "
+            "border security, and the bilateral relationship with Bogotá.",
+            "Bernal has been on the OFAC SDN list since 2018. The Táchira "
+            "governorship is consequential for foreign-investor and "
+            "compliance teams because it sits at the centre of the "
+            "Venezuela-Colombia trade corridor and the informal-economy "
+            "flows that move across it.",
+        ),
+        affiliations=("PSUV",),
+        faqs=(
+            FAQ(
+                q="Who is Freddy Bernal?",
+                a="Freddy Bernal is the governor of Táchira state in Venezuela, on the Colombian border. He is a longtime PSUV official, a former Caracas mayor, and has been on the OFAC SDN list since 2018.",
+            ),
+        ),
+        sources=(
+            Source("Wikipedia: Freddy Bernal", "https://en.wikipedia.org/wiki/Freddy_Bernal"),
+        ),
+        wikidata_id="Q3087089",
+        related=("nicolas-maduro", "diosdado-cabello"),
+    ),
+
+    "hector-rodriguez": Person(
+        slug="hector-rodriguez",
+        name="Héctor Rodríguez",
+        aliases=("Héctor Rodríguez Castro",),
+        role="Governor of Miranda state",
+        cohorts=("executive",),
+        one_liner=(
+            "Héctor Rodríguez is the governor of Miranda state — which "
+            "includes much of the Caracas metropolitan area — and a former "
+            "Education Minister widely seen as one of the PSUV's "
+            "next-generation leaders."
+        ),
+        bio=(
+            "Héctor Rodríguez Castro is a Venezuelan politician who served "
+            "as Minister of Education (2014–2017) before being elected "
+            "governor of Miranda in 2017. Miranda includes most of the "
+            "eastern Caracas metropolitan area, making the governorship one "
+            "of the most politically and economically consequential in the "
+            "country.",
+        ),
+        affiliations=("PSUV",),
+        faqs=(
+            FAQ(
+                q="Who is Héctor Rodríguez?",
+                a="Héctor Rodríguez is the governor of Miranda state in Venezuela and a former Minister of Education (2014–2017). Miranda includes most of the eastern Caracas metropolitan area, making the governorship one of the most consequential political positions outside the federal cabinet.",
+            ),
+        ),
+        sources=(
+            Source("Wikipedia: Héctor Rodríguez Castro", "https://en.wikipedia.org/wiki/H%C3%A9ctor_Rodr%C3%ADguez_Castro"),
+        ),
+        related=("nicolas-maduro", "diosdado-cabello"),
+    ),
+
+    "jorge-arreaza": Person(
+        slug="jorge-arreaza",
+        name="Jorge Arreaza",
+        aliases=("Jorge Alberto Arreaza Montserrat",),
+        role="Former Foreign Minister and former Vice President of Venezuela",
+        cohorts=("executive",),
+        one_liner=(
+            "Jorge Arreaza is a former Foreign Minister, former Vice "
+            "President, and son-in-law of Hugo Chávez — one of the longest-"
+            "serving senior figures in the Bolivarian government."
+        ),
+        bio=(
+            "Jorge Alberto Arreaza Montserrat served as Executive Vice "
+            "President of Venezuela (2013–2016) and as Foreign Minister "
+            "(2017–2021). He is married to Rosa Virginia Chávez, the eldest "
+            "daughter of Hugo Chávez, giving him an unusual position of "
+            "continuity between the Chávez and Maduro eras.",
+        ),
+        born="1973-06-06",
+        affiliations=("PSUV",),
+        faqs=(
+            FAQ(
+                q="Who is Jorge Arreaza?",
+                a="Jorge Arreaza is a former Foreign Minister of Venezuela (2017–2021) and former Vice President (2013–2016). He is married to Rosa Virginia Chávez, the eldest daughter of Hugo Chávez, and has been one of the longest-serving senior figures in the Bolivarian government.",
+            ),
+        ),
+        sources=(
+            Source("Wikipedia: Jorge Arreaza", "https://en.wikipedia.org/wiki/Jorge_Arreaza"),
+        ),
+        wikidata_id="Q3499942",
+        related=("nicolas-maduro", "delcy-rodriguez"),
+    ),
+
+    # ── PDVSA & energy ───────────────────────────────────────────────
+
+    "rafael-ramirez": Person(
+        slug="rafael-ramirez",
+        name="Rafael Ramírez",
+        aliases=("Rafael Darío Ramírez Carreño",),
+        role="Former PDVSA President and Oil Minister",
+        cohorts=("energy", "executive"),
+        one_liner=(
+            "Rafael Ramírez led PDVSA and the Venezuelan oil sector for 14 "
+            "years (2002–2014) — the longest run of any modern PDVSA "
+            "president — and is now a prominent dissident living in exile."
+        ),
+        bio=(
+            "Rafael Darío Ramírez Carreño was President of PDVSA and "
+            "Minister of Petroleum and Mining of Venezuela from 2002 to "
+            "2014, the period during which Hugo Chávez restructured PDVSA "
+            "after the 2002–2003 oil-industry strike. Under Ramírez, PDVSA "
+            "became the central instrument of Bolivarian fiscal and foreign "
+            "policy, including the founding of joint-venture vehicles with "
+            "foreign majors.",
+            "Ramírez was Venezuela's ambassador to the UN (2014–2017) before "
+            "breaking publicly with the Maduro government and going into "
+            "exile in Italy. He has since become one of the most "
+            "well-informed dissident voices on PDVSA's internal "
+            "decision-making — a useful primary commentator for foreign "
+            "investors trying to read the oil-sector politics.",
+        ),
+        born="1962-12-22",
+        timeline=(
+            TimelineEntry("2002–2014", "President of PDVSA and Minister of Petroleum and Mining"),
+            TimelineEntry("2014–2017", "Permanent Representative of Venezuela to the UN"),
+            TimelineEntry("2017", "Broke publicly with the Maduro government and went into exile"),
+        ),
+        faqs=(
+            FAQ(
+                q="Who is Rafael Ramírez?",
+                a="Rafael Ramírez is a former President of PDVSA and former Minister of Petroleum and Mining of Venezuela (2002–2014), the longest tenure of any modern PDVSA chief. He has lived in exile since 2017 and has become one of the most prominent dissident voices on PDVSA's internal decision-making.",
+            ),
+            FAQ(
+                q="Why does Rafael Ramírez matter to investors today?",
+                a="Although out of office for over a decade, Ramírez retains deep first-hand knowledge of PDVSA's joint-venture architecture, debt-issuance history, and operational state. His public commentary in exile is among the more substantive primary-source readings of how PDVSA actually works internally.",
+            ),
+        ),
+        sources=(
+            Source("Wikipedia: Rafael Ramírez", "https://en.wikipedia.org/wiki/Rafael_Ram%C3%ADrez_(politician)"),
+        ),
+        wikidata_id="Q1366090",
+        sector_path="/sectors/oil-gas",
+        related=("tareck-el-aissami", "pedro-tellechea", "nicolas-maduro"),
+    ),
+
+    "pedro-tellechea": Person(
+        slug="pedro-tellechea",
+        name="Pedro Tellechea",
+        aliases=("Pedro Rafael Tellechea Ruiz",),
+        role="Former PDVSA President and Oil Minister",
+        cohorts=("energy",),
+        one_liner=(
+            "Pedro Tellechea is a former President of PDVSA and Oil "
+            "Minister of Venezuela — the executive who briefly led the "
+            "Venezuelan oil sector during the OFAC General License 44 "
+            "window before being removed in 2024."
+        ),
+        bio=(
+            "Pedro Rafael Tellechea Ruiz, an industrial engineer and "
+            "longtime executive at petrochemical conglomerate Pequiven, "
+            "was appointed President of PDVSA in January 2023 after the "
+            "departure of Asdrúbal Chávez and was given the Petroleum "
+            "Ministry portfolio in March 2023 after Tareck El Aissami's "
+            "resignation. His tenure coincided with the U.S. Treasury's "
+            "issuance of OFAC General License 44, which briefly authorized "
+            "previously-prohibited oil-sector transactions with PDVSA.",
+            "Tellechea was removed from both roles in 2024 amid the "
+            "ongoing PDVSA corruption probe and the expiry of GL 44. His "
+            "trajectory is the canonical case study for foreign investors "
+            "tracking how political volatility inside PDVSA's leadership "
+            "interacts with the U.S. sanctions regime.",
+        ),
+        timeline=(
+            TimelineEntry("2023", "Appointed President of PDVSA (January) and Oil Minister (March)"),
+            TimelineEntry("2023", "OFAC issued General License 44 authorizing certain oil-sector transactions"),
+            TimelineEntry("2024", "Removed from both PDVSA and the Oil Ministry"),
+        ),
+        faqs=(
+            FAQ(
+                q="Who is Pedro Tellechea?",
+                a="Pedro Tellechea is a former President of PDVSA (2023–2024) and former Minister of Petroleum (2023–2024). He led the Venezuelan oil sector during the OFAC General License 44 window before being removed in 2024.",
+            ),
+        ),
+        sources=(
+            Source("Wikipedia: Pedro Tellechea", "https://en.wikipedia.org/wiki/Pedro_Tellechea"),
+        ),
+        sector_path="/sectors/oil-gas",
+        related=("rafael-ramirez", "tareck-el-aissami", "nicolas-maduro"),
+    ),
+
+    "asdrubal-chavez": Person(
+        slug="asdrubal-chavez",
+        name="Asdrúbal Chávez",
+        aliases=("Asdrúbal José Chávez Jiménez",),
+        role="Former PDVSA and Citgo President",
+        cohorts=("energy",),
+        one_liner=(
+            "Asdrúbal Chávez is a Venezuelan oil executive and a cousin "
+            "of Hugo Chávez who served as president of CITGO and later "
+            "as president of PDVSA."
+        ),
+        bio=(
+            "Asdrúbal José Chávez Jiménez is a chemical engineer who spent "
+            "his career inside PDVSA before being appointed CEO of CITGO "
+            "Petroleum, PDVSA's U.S. refining subsidiary, in 2014. He has "
+            "subsequently held senior PDVSA leadership roles. He is a "
+            "first cousin of Hugo Chávez.",
+            "CITGO is the central asset in any analysis of Venezuela's "
+            "U.S.-jurisdiction footprint: it is the ultimate collateral "
+            "behind PDVSA 2020 bonds and the contested asset in the "
+            "Crystallex-led writ-of-execution proceedings in Delaware. "
+            "Asdrúbal Chávez's tenure spans the period in which CITGO's "
+            "control passed effectively to U.S. courts.",
+        ),
+        sources=(
+            Source("Wikipedia: Asdrúbal Chávez", "https://en.wikipedia.org/wiki/Asdr%C3%BAbal_Ch%C3%A1vez"),
+        ),
+        sector_path="/sectors/oil-gas",
+        related=("rafael-ramirez", "pedro-tellechea"),
+    ),
+
+    "manuel-quevedo": Person(
+        slug="manuel-quevedo",
+        name="Manuel Quevedo",
+        aliases=("Manuel Salvador Quevedo Fernández",),
+        role="Former PDVSA President and Oil Minister",
+        cohorts=("energy", "military"),
+        one_liner=(
+            "Manuel Quevedo is a retired Venezuelan National Guard "
+            "general who served as President of PDVSA and Oil Minister "
+            "from 2017 to 2020, during a steep collapse in oil output."
+        ),
+        bio=(
+            "Manuel Salvador Quevedo Fernández is a retired Bolivarian "
+            "National Guard (GNB) major general who was appointed "
+            "President of PDVSA and Minister of Petroleum by Nicolás "
+            "Maduro in November 2017 — the first time PDVSA was led by an "
+            "active military officer with no oil-industry background. "
+            "During his tenure, Venezuelan oil output fell from "
+            "approximately 1.9 million barrels per day to under 700,000 "
+            "bpd, the steepest non-conflict-driven production collapse in "
+            "modern oil history.",
+            "Quevedo was removed from both roles in April 2020. His "
+            "appointment is widely cited as the inflection point at which "
+            "PDVSA's operational capacity broke down, and his replacement "
+            "by Tareck El Aissami marked the start of the "
+            "OFAC-license-driven rebuild attempts.",
+        ),
+        timeline=(
+            TimelineEntry("2017–2020", "President of PDVSA and Minister of Petroleum"),
+            TimelineEntry("2017–2020", "Venezuelan oil output collapsed from ~1.9M bpd to <700k bpd"),
+            TimelineEntry("2020", "Removed and replaced by Tareck El Aissami"),
+        ),
+        faqs=(
+            FAQ(
+                q="Who is Manuel Quevedo?",
+                a="Manuel Quevedo is a retired Venezuelan National Guard general who served as President of PDVSA and Minister of Petroleum from 2017 to 2020. His tenure coincided with the steepest collapse in Venezuelan oil output in modern history.",
+            ),
+        ),
+        sources=(
+            Source("Wikipedia: Manuel Quevedo", "https://en.wikipedia.org/wiki/Manuel_Quevedo"),
+        ),
+        sector_path="/sectors/oil-gas",
+        related=("rafael-ramirez", "tareck-el-aissami", "vladimir-padrino-lopez"),
+    ),
+
+    # ── Military & security ──────────────────────────────────────────
+
+    "nestor-reverol": Person(
+        slug="nestor-reverol",
+        name="Néstor Reverol",
+        aliases=("Néstor Luis Reverol Torres",),
+        role="Minister of Electric Energy of Venezuela",
+        cohorts=("military", "executive"),
+        one_liner=(
+            "Néstor Reverol is a retired Bolivarian National Guard general "
+            "who serves as Minister of Electric Energy and previously held "
+            "the Interior Ministry — one of the most-watched figures in "
+            "the senior military-civilian apparatus."
+        ),
+        bio=(
+            "Néstor Luis Reverol Torres is a retired GNB major general who "
+            "served as Minister of Interior, Justice, and Peace (2016–2020) "
+            "before being appointed Minister of Electric Energy. He is "
+            "under U.S. federal indictment for narcotics-trafficking "
+            "charges issued in 2015, and has been on the OFAC SDN list "
+            "since 2017.",
+            "Reverol's electricity portfolio is consequential: Venezuela's "
+            "national grid has suffered repeated multi-day blackouts since "
+            "2019, with direct impact on industrial operations, oil-sector "
+            "uptime, and any foreign-investor scenario premised on local "
+            "production capacity.",
+        ),
+        affiliations=("FANB",),
+        faqs=(
+            FAQ(
+                q="Who is Néstor Reverol?",
+                a="Néstor Reverol is a retired Bolivarian National Guard general and the Venezuelan Minister of Electric Energy. He previously served as Minister of Interior, Justice, and Peace (2016–2020). He is under U.S. federal indictment on narcotics charges and has been on the OFAC SDN list since 2017.",
+            ),
+        ),
+        sources=(
+            Source("Wikipedia: Néstor Reverol", "https://en.wikipedia.org/wiki/N%C3%A9stor_Reverol"),
+        ),
+        sector_path="/sectors/energy",
+        related=("vladimir-padrino-lopez", "diosdado-cabello"),
+    ),
+
+    "ivan-hernandez-dala": Person(
+        slug="ivan-hernandez-dala",
+        name="Iván Hernández Dala",
+        aliases=("Iván Rafael Hernández Dala",),
+        role="Director of the General Directorate of Military Counterintelligence (DGCIM)",
+        cohorts=("military",),
+        one_liner=(
+            "General Iván Hernández Dala is the head of Venezuela's "
+            "Directorate of Military Counterintelligence (DGCIM) — the "
+            "most consequential internal-security body for foreign and "
+            "domestic dissident activity."
+        ),
+        bio=(
+            "Iván Rafael Hernández Dala has led Venezuela's General "
+            "Directorate of Military Counterintelligence (DGCIM) since "
+            "2014. The DGCIM is the principal military-intelligence arm "
+            "of the FANB and has been documented by the UN's Independent "
+            "International Fact-Finding Mission as responsible for "
+            "torture and arbitrary-detention practices against dissidents.",
+            "Hernández Dala has been on the OFAC SDN list since 2019 and "
+            "is a sanctions target of the EU, UK, and Canada. For "
+            "foreign-investor and journalist-protection teams, the DGCIM "
+            "is the primary risk variable on any in-country presence "
+            "scenario.",
+        ),
+        affiliations=("FANB", "DGCIM"),
+        faqs=(
+            FAQ(
+                q="Who is Iván Hernández Dala?",
+                a="General Iván Hernández Dala is the director of Venezuela's General Directorate of Military Counterintelligence (DGCIM). He has been on the OFAC SDN list since 2019 and is a sanctions target of multiple Western governments. The UN Fact-Finding Mission has documented DGCIM responsibility for human-rights violations under his command.",
+            ),
+        ),
+        sources=(
+            Source("UN Independent International Fact-Finding Mission on Venezuela", "https://www.ohchr.org/en/hr-bodies/hrc/ffmv/index"),
+        ),
+        related=("vladimir-padrino-lopez", "diosdado-cabello", "nicolas-maduro"),
+    ),
+
+    "domingo-hernandez-larez": Person(
+        slug="domingo-hernandez-larez",
+        name="Domingo Hernández Lárez",
+        aliases=("Domingo Antonio Hernández Lárez",),
+        role="Strategic Operational Commander of the FANB (CEOFANB)",
+        cohorts=("military",),
+        one_liner=(
+            "General-in-Chief Domingo Hernández Lárez is the Strategic "
+            "Operational Commander of the Bolivarian National Armed "
+            "Forces (CEOFANB) — the senior operational figure in the "
+            "FANB chain of command."
+        ),
+        bio=(
+            "Domingo Antonio Hernández Lárez holds the rank of "
+            "General-in-Chief, the highest active rank in the Venezuelan "
+            "armed forces. As Strategic Operational Commander he runs "
+            "the day-to-day operational integration of the army, navy, "
+            "air force, GNB, and militia. He is a sanctions target of "
+            "the U.S., EU, UK, and Canada.",
+        ),
+        affiliations=("FANB", "CEOFANB"),
+        faqs=(
+            FAQ(
+                q="Who is Domingo Hernández Lárez?",
+                a="General-in-Chief Domingo Hernández Lárez is the Strategic Operational Commander of Venezuela's Bolivarian National Armed Forces — the senior operational figure in the FANB chain of command, immediately below the Minister of Defense.",
+            ),
+        ),
+        sources=(
+            Source("Wikipedia: Domingo Hernández Lárez", "https://en.wikipedia.org/wiki/Domingo_Hern%C3%A1ndez_L%C3%A1rez"),
+        ),
+        related=("vladimir-padrino-lopez",),
+    ),
+
+    "henry-rangel-silva": Person(
+        slug="henry-rangel-silva",
+        name="Henry Rangel Silva",
+        aliases=("Henry de Jesús Rangel Silva",),
+        role="Former Defense Minister of Venezuela",
+        cohorts=("military", "executive"),
+        one_liner=(
+            "General-in-Chief Henry Rangel Silva is a former Defense "
+            "Minister and former governor of Trujillo state, one of the "
+            "longest-serving senior military figures in the Bolivarian "
+            "government."
+        ),
+        bio=(
+            "Henry de Jesús Rangel Silva is a retired General-in-Chief "
+            "of the Venezuelan armed forces who served as Minister of "
+            "Defense (2012–2013) and as governor of Trujillo state "
+            "(2012, 2017–2021). He has been on the U.S. Treasury OFAC "
+            "kingpin list since 2008 — a designation that predates the "
+            "Venezuela-program SDN architecture.",
+        ),
+        affiliations=("FANB",),
+        faqs=(
+            FAQ(
+                q="Who is Henry Rangel Silva?",
+                a="General-in-Chief Henry Rangel Silva is a former Defense Minister of Venezuela (2012–2013) and former governor of Trujillo state. He has been a U.S. Treasury OFAC sanctions target since 2008, predating the Venezuela-specific sanctions programs.",
+            ),
+        ),
+        sources=(
+            Source("Wikipedia: Henry Rangel Silva", "https://en.wikipedia.org/wiki/Henry_Rangel_Silva"),
+        ),
+        wikidata_id="Q5719498",
+        related=("vladimir-padrino-lopez",),
+    ),
+
+    # ── Judiciary & electoral ────────────────────────────────────────
+
+    "tarek-william-saab": Person(
+        slug="tarek-william-saab",
+        name="Tarek William Saab",
+        aliases=("Tarek William Saab Halabi",),
+        role="Former Attorney General of Venezuela",
+        cohorts=("judiciary", "executive"),
+        one_liner=(
+            "Tarek William Saab is a Venezuelan lawyer who served as "
+            "Attorney General (Fiscal General de la República) following "
+            "his appointment by the 2017 National Constituent Assembly — "
+            "a tenure that lasted nearly a decade."
+        ),
+        bio=(
+            "Tarek William Saab Halabi is a Venezuelan lawyer, poet, and "
+            "longtime Bolivarian-government official who served as "
+            "Ombudsman of Venezuela (2014–2017) before being appointed "
+            "Attorney General by the National Constituent Assembly in "
+            "August 2017. He is on the OFAC SDN list under Venezuela-"
+            "related programs.",
+            "Saab's tenure as Attorney General overlapped with the most "
+            "significant period of foreign-investor litigation against "
+            "Venezuela — the PDVSA 2020 bond default, the Crystallex "
+            "writ-of-execution proceedings against CITGO, and a string "
+            "of high-profile criminal cases against opposition leaders "
+            "and dissident former officials.",
+        ),
+        born="1962-09-10",
+        affiliations=("PSUV",),
+        timeline=(
+            TimelineEntry("2014–2017", "Ombudsman of Venezuela"),
+            TimelineEntry("2017", "Appointed Attorney General by the National Constituent Assembly"),
+        ),
+        faqs=(
+            FAQ(
+                q="Who is Tarek William Saab?",
+                a="Tarek William Saab is a Venezuelan lawyer who served as Attorney General of Venezuela starting in 2017, having previously served as Ombudsman (2014–2017). He has been on the OFAC SDN list under Venezuela-related programs.",
+            ),
+            FAQ(
+                q="Is Tarek William Saab the same person as Alex Saab?",
+                a="No. Tarek William Saab Halabi (the Attorney General) and Alex Nain Saab Moran (a businessman accused of being a frontman for the Maduro government and the subject of a high-profile U.S. extradition case) share a surname but are not closely related. They are two of the most-confused names in Venezuela-related sanctions research.",
+            ),
+        ),
+        sources=(
+            Source("Wikipedia: Tarek William Saab", "https://en.wikipedia.org/wiki/Tarek_William_Saab"),
+        ),
+        wikidata_id="Q3503497",
+        sector_path="/sectors/legal",
+        related=("arianny-seijo-noguera", "nicolas-maduro", "diosdado-cabello"),
+    ),
+
+    "maikel-moreno": Person(
+        slug="maikel-moreno",
+        name="Maikel Moreno",
+        aliases=("Maikel José Moreno Pérez",),
+        role="Former President of the Supreme Tribunal of Justice (TSJ)",
+        cohorts=("judiciary",),
+        one_liner=(
+            "Maikel Moreno served as President of Venezuela's Supreme "
+            "Tribunal of Justice (TSJ) from 2017 to 2022 — one of the "
+            "most heavily sanctioned figures in the Bolivarian government "
+            "and the subject of U.S. federal corruption charges."
+        ),
+        bio=(
+            "Maikel José Moreno Pérez is a former Venezuelan judge who "
+            "served as President of the TSJ from 2017 to 2022. The TSJ is "
+            "Venezuela's supreme court and, under his presidency, ruled "
+            "in favour of nearly every Maduro-government position in "
+            "constitutional and electoral disputes — including the "
+            "decisions disqualifying opposition candidates from running "
+            "for president.",
+            "Moreno was indicted in U.S. federal court in 2020 on money-"
+            "laundering and corruption charges and is on the OFAC SDN "
+            "list. His tenure is the central case study cited by foreign-"
+            "investor litigation teams when assessing the independence "
+            "(or absence) of the Venezuelan judicial system.",
+        ),
+        affiliations=("PSUV",),
+        timeline=(
+            TimelineEntry("2017–2022", "President of the Supreme Tribunal of Justice (TSJ)"),
+            TimelineEntry("2020", "Indicted in U.S. federal court on money-laundering and corruption charges"),
+        ),
+        faqs=(
+            FAQ(
+                q="Who is Maikel Moreno?",
+                a="Maikel Moreno is a former President of Venezuela's Supreme Tribunal of Justice (TSJ), serving from 2017 to 2022. He was indicted in U.S. federal court in 2020 on money-laundering and corruption charges and remains on the OFAC SDN list.",
+            ),
+        ),
+        sources=(
+            Source("Wikipedia: Maikel Moreno", "https://en.wikipedia.org/wiki/Maikel_Moreno"),
+        ),
+        wikidata_id="Q42306474",
+        sector_path="/sectors/legal",
+        related=("tarek-william-saab", "nicolas-maduro"),
+    ),
+
+    "caryslia-rodriguez": Person(
+        slug="caryslia-rodriguez",
+        name="Caryslia Rodríguez",
+        aliases=("Caryslia Beatriz Rodríguez Rodríguez",),
+        role="President of the Supreme Tribunal of Justice (TSJ)",
+        cohorts=("judiciary",),
+        one_liner=(
+            "Caryslia Rodríguez is the President of Venezuela's Supreme "
+            "Tribunal of Justice (TSJ) — the senior judicial figure who "
+            "ruled to certify the contested 2024 presidential election "
+            "result."
+        ),
+        bio=(
+            "Caryslia Beatriz Rodríguez Rodríguez was elected President "
+            "of the Supreme Tribunal of Justice in 2024. The TSJ has "
+            "been the body issuing the most consequential post-election "
+            "rulings of the Maduro era — including the August 2024 "
+            "ruling certifying Nicolás Maduro as the winner of the July "
+            "2024 presidential election, which the U.S., EU, and most "
+            "Latin American governments rejected.",
+        ),
+        timeline=(
+            TimelineEntry("2024", "Elected President of the Supreme Tribunal of Justice (TSJ)"),
+            TimelineEntry("2024", "Issued the TSJ ruling certifying the contested July 2024 presidential election result"),
+        ),
+        faqs=(
+            FAQ(
+                q="Who is Caryslia Rodríguez?",
+                a="Caryslia Rodríguez is the President of Venezuela's Supreme Tribunal of Justice (TSJ), elected to the role in 2024. The TSJ under her presidency issued the August 2024 ruling certifying the contested July 2024 presidential election result.",
+            ),
+        ),
+        sources=(
+            Source("Tribunal Supremo de Justicia", "http://www.tsj.gob.ve/"),
+        ),
+        sector_path="/sectors/legal",
+        related=("nicolas-maduro", "elvis-hidrobo-amoroso", "arianny-seijo-noguera"),
+    ),
+
+    "elvis-hidrobo-amoroso": Person(
+        slug="elvis-hidrobo-amoroso",
+        name="Elvis Hidrobo Amoroso",
+        aliases=("Elvis Eduardo Hidrobo Amoroso",),
+        role="President of the National Electoral Council (CNE)",
+        cohorts=("judiciary",),
+        one_liner=(
+            "Elvis Hidrobo Amoroso is the President of Venezuela's "
+            "National Electoral Council (CNE) — the body that "
+            "administered the contested July 2024 presidential election "
+            "and certified Nicolás Maduro as winner."
+        ),
+        bio=(
+            "Elvis Eduardo Hidrobo Amoroso was elected President of the "
+            "CNE in 2023. The CNE is Venezuela's electoral authority, "
+            "responsible for organizing and certifying federal and state "
+            "elections. Hidrobo Amoroso previously served as Comptroller "
+            "General of Venezuela — the office that issued the "
+            "disqualification ruling barring María Corina Machado from "
+            "the 2024 presidential ballot.",
+            "He has been on the OFAC SDN list under Venezuela-related "
+            "programs since the period of his Comptroller tenure. His "
+            "control of the CNE during the 2024 election cycle is the "
+            "central electoral-integrity dispute foreign-policy "
+            "observers cite when assessing the legitimacy of the "
+            "Maduro government's continued rule.",
+        ),
+        affiliations=("PSUV",),
+        faqs=(
+            FAQ(
+                q="Who is Elvis Hidrobo Amoroso?",
+                a="Elvis Hidrobo Amoroso is the President of Venezuela's National Electoral Council (CNE), elected to the role in 2023. He previously served as Comptroller General — the office that issued the disqualification ruling barring María Corina Machado from the 2024 presidential ballot. He is on the OFAC SDN list.",
+            ),
+        ),
+        sources=(
+            Source("Consejo Nacional Electoral (CNE)", "https://www.cne.gob.ve/"),
+        ),
+        sector_path="/sectors/governance",
+        related=("caryslia-rodriguez", "nicolas-maduro", "maria-corina-machado"),
+    ),
+
+    # ── Opposition & exile ───────────────────────────────────────────
+
+    "leopoldo-lopez": Person(
+        slug="leopoldo-lopez",
+        name="Leopoldo López",
+        aliases=("Leopoldo Eduardo López Mendoza",),
+        role="Founder of the Voluntad Popular opposition party",
+        cohorts=("opposition",),
+        one_liner=(
+            "Leopoldo López is the founder of the Voluntad Popular "
+            "opposition party and one of the longest-prominent figures "
+            "of the Venezuelan democratic opposition — currently in "
+            "exile in Spain."
+        ),
+        bio=(
+            "Leopoldo Eduardo López Mendoza is a Venezuelan economist "
+            "and politician who founded the Voluntad Popular party in "
+            "2009. He served as mayor of Chacao municipality (Caracas) "
+            "before being arrested in 2014 on charges of incitement, "
+            "and was held by Venezuelan authorities until 2019 when he "
+            "left the country to seek refuge in the Spanish embassy in "
+            "Caracas. He has been in exile in Spain since 2020.",
+            "López is the political mentor of former interim president "
+            "Juan Guaidó and remains an active organiser of the "
+            "Venezuelan opposition from abroad. His detention and "
+            "subsequent exile is one of the most-cited cases in U.S. "
+            "and EU human-rights designations against the Maduro "
+            "government.",
+        ),
+        born="1971-04-29",
+        birthplace="Caracas, Venezuela",
+        affiliations=("Voluntad Popular", "Plataforma Unitaria"),
+        timeline=(
+            TimelineEntry("2008–2014", "Mayor of Chacao municipality, Caracas"),
+            TimelineEntry("2009", "Co-founded Voluntad Popular"),
+            TimelineEntry("2014–2019", "Held in detention by Venezuelan authorities"),
+            TimelineEntry("2019", "Left house arrest and took refuge in the Spanish embassy in Caracas"),
+            TimelineEntry("2020", "Went into exile in Spain"),
+        ),
+        faqs=(
+            FAQ(
+                q="Who is Leopoldo López?",
+                a="Leopoldo López is the founder of the Voluntad Popular opposition party and one of the longest-prominent figures of the Venezuelan democratic opposition. He has lived in exile in Spain since 2020.",
+            ),
+        ),
+        sources=(
+            Source("Wikipedia: Leopoldo López", "https://en.wikipedia.org/wiki/Leopoldo_L%C3%B3pez"),
+        ),
+        wikidata_id="Q443499",
+        related=("juan-guaido", "maria-corina-machado", "edmundo-gonzalez"),
+    ),
+
+    "juan-guaido": Person(
+        slug="juan-guaido",
+        name="Juan Guaidó",
+        aliases=("Juan Gerardo Guaidó Márquez",),
+        role="Former President of the National Assembly and Interim President of Venezuela (2019–2023)",
+        cohorts=("opposition",),
+        one_liner=(
+            "Juan Guaidó is a former President of the Venezuelan "
+            "National Assembly who declared himself Interim President "
+            "of Venezuela in 2019 — a claim recognized at the time by "
+            "the U.S. and over 50 other governments."
+        ),
+        bio=(
+            "Juan Gerardo Guaidó Márquez is a Venezuelan industrial "
+            "engineer and politician who served as President of the "
+            "opposition-controlled National Assembly elected in 2015. "
+            "Citing constitutional provisions on a vacant presidency, "
+            "Guaidó assumed the role of Interim President of Venezuela "
+            "in January 2019 — a claim recognized by the United States, "
+            "the United Kingdom, the European Parliament, the Lima "
+            "Group, and over 50 other governments at its peak.",
+            "International recognition of the Guaidó interim presidency "
+            "eroded over 2020–2022, and the opposition-led National "
+            "Assembly voted to dissolve the interim-government structure "
+            "in December 2022. Guaidó left Venezuela for the United "
+            "States in 2023 and has remained based there since.",
+        ),
+        born="1983-07-28",
+        affiliations=("Voluntad Popular", "Plataforma Unitaria"),
+        timeline=(
+            TimelineEntry("2019", "Declared Interim President of Venezuela; recognized by the U.S. and 50+ governments"),
+            TimelineEntry("2022", "Opposition-led National Assembly voted to dissolve the interim-government structure"),
+            TimelineEntry("2023", "Left Venezuela for the United States"),
+        ),
+        faqs=(
+            FAQ(
+                q="Who is Juan Guaidó?",
+                a="Juan Guaidó is a former President of the Venezuelan National Assembly who served as the U.S.-recognized Interim President of Venezuela from January 2019 until the National Assembly voted to dissolve the interim-government structure in December 2022. He has been based in the United States since 2023.",
+            ),
+        ),
+        sources=(
+            Source("Wikipedia: Juan Guaidó", "https://en.wikipedia.org/wiki/Juan_Guaid%C3%B3"),
+        ),
+        wikidata_id="Q56304019",
+        related=("leopoldo-lopez", "maria-corina-machado", "edmundo-gonzalez"),
+    ),
+
+    "henrique-capriles": Person(
+        slug="henrique-capriles",
+        name="Henrique Capriles",
+        aliases=("Henrique Capriles Radonski",),
+        role="Opposition leader and two-time presidential candidate",
+        cohorts=("opposition",),
+        one_liner=(
+            "Henrique Capriles is a longtime Venezuelan opposition "
+            "leader, former governor of Miranda state, and two-time "
+            "presidential candidate against Hugo Chávez and Nicolás "
+            "Maduro."
+        ),
+        bio=(
+            "Henrique Capriles Radonski is a Venezuelan lawyer who "
+            "served as governor of Miranda state (2008–2017) and as "
+            "the unified opposition candidate against Hugo Chávez in "
+            "2012 and against Nicolás Maduro in the April 2013 "
+            "post-Chávez special election. He lost both elections by "
+            "narrow margins amid disputed conditions.",
+            "Capriles was barred from holding public office by the "
+            "Comptroller of Venezuela for 15 years in 2017, a "
+            "disqualification that has since been lifted. He remains "
+            "active in opposition politics and has been an alternative "
+            "voice within the broader Plataforma Unitaria coalition "
+            "during the María Corina Machado / Edmundo González cycle.",
+        ),
+        born="1972-07-11",
+        birthplace="Caracas, Venezuela",
+        affiliations=("Primero Justicia", "Plataforma Unitaria"),
+        faqs=(
+            FAQ(
+                q="Who is Henrique Capriles?",
+                a="Henrique Capriles is a Venezuelan lawyer and opposition leader who served as governor of Miranda state (2008–2017) and was the unified opposition candidate against Hugo Chávez in 2012 and against Nicolás Maduro in 2013. He remains a senior figure in the opposition coalition.",
+            ),
+        ),
+        sources=(
+            Source("Wikipedia: Henrique Capriles Radonski", "https://en.wikipedia.org/wiki/Henrique_Capriles_Radonski"),
+        ),
+        wikidata_id="Q1062303",
+        related=("maria-corina-machado", "leopoldo-lopez", "edmundo-gonzalez"),
+    ),
 }
 
 
