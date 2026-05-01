@@ -56,6 +56,25 @@
     {{ page.body_html | safe }}
   </div>
 
+  {% if page.canonical_path == '/sectors/real-estate' %}
+  <section class="takeaways" style="border-left-color:#cc0000;">
+    <h3>Investor listing vertical</h3>
+    <p style="margin:0;">
+      For English-language sample listings, city price context, and buyer guidance, see
+      <a href="/real-estate/">Venezuela real estate listings and buyer guidance</a>.
+    </p>
+  </section>
+  {% elif page.canonical_path == '/invest-in-venezuela' %}
+  <section class="takeaways" style="border-left-color:#cc0000;">
+    <h3>Real estate investment</h3>
+    <p style="margin:0;">
+      Investors comparing hard assets can review
+      <a href="/real-estate/">Venezuela real estate investment opportunities</a>
+      alongside the broader sector and sanctions analysis on this page.
+    </p>
+  </section>
+  {% endif %}
+
   {# FAQ block — only emitted when src/page_renderer.py supplies a
      faq_block list via _LANDING_PAGE_SEO_OVERRIDES. Visible HTML
      mirrors the FAQPage JSON-LD so Google honors the rich result. #}

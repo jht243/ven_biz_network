@@ -71,6 +71,13 @@ def collect_urls() -> list[tuple[str, str, int | None]]:
     for path in STATIC_PATHS:
         out.append((f"{base}{path}", "static", None))
 
+    try:
+        from src.data.real_estate import real_estate_paths
+        for path in real_estate_paths():
+            out.append((f"{base}{path.rstrip('/')}", "real_estate", None))
+    except Exception as exc:
+        print(f"WARN: could not enumerate real estate paths for IndexNow: {exc}")
+
     init_db()
     db = SessionLocal()
     try:

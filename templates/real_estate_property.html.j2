@@ -1,0 +1,128 @@
+{% extends "_base.html.j2" %}
+{% from "_card_grid.html.j2" import card_grid_section %}
+
+{% block head_extra %}
+<style>
+  .re-detail { display:grid; grid-template-columns: minmax(0, 1.25fr) minmax(280px, .75fr); gap:28px; margin: 20px 0 44px; }
+  .re-detail img { width:100%; aspect-ratio: 16 / 10; object-fit:cover; border-radius:4px; border:1px solid #d8e0eb; }
+  .re-kicker { font-size:12px; text-transform:uppercase; letter-spacing:1.4px; color:var(--sr-red); font-weight:700; }
+  .re-detail h1 { font-family:var(--font-serif); color:var(--sr-blue-dark); font-size:38px; line-height:1.15; margin:8px 0 12px; }
+  .re-price { font-family:var(--font-serif); color:var(--sr-blue-dark); font-size:30px; font-weight:700; }
+  .re-status-wrap { position: relative; display: inline-block; }
+  .re-status-pill { display:inline-flex; align-items:center; gap:6px; border-radius:999px; padding:6px 10px; font-size:11px; text-transform:uppercase; letter-spacing:.7px; font-weight:800; margin:12px 0 0; cursor: help; }
+  .re-status-pill::before { content:""; width:8px; height:8px; border-radius:50%; background:currentColor; }
+  .re-status-unverified { color:#991b1b; background:#fee2e2; border:1px solid #fecaca; }
+  .re-status-verified { color:#166534; background:#dcfce7; border:1px solid #bbf7d0; }
+  .re-status-tooltip { position:absolute; left:0; top:calc(100% + 8px); width:min(320px, 80vw); background:var(--sr-blue-dark); color:#fff; border-radius:4px; padding:10px 12px; font-size:12px; line-height:1.45; opacity:0; pointer-events:none; transform:translateY(-4px); transition:opacity .15s ease, transform .15s ease; z-index:5; box-shadow:0 8px 20px rgba(0,0,0,.16); }
+  .re-status-wrap:hover .re-status-tooltip,
+  .re-status-wrap:focus-within .re-status-tooltip { opacity:1; transform:translateY(0); }
+  .re-facts { display:grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap:10px; margin:18px 0; }
+  .re-fact { background:var(--sr-gray-bg); border-left:3px solid var(--sr-blue); padding:10px 12px; }
+  .re-fact span { display:block; font-size:11px; color:var(--sr-gray-text); text-transform:uppercase; letter-spacing:.6px; }
+  .re-fact strong { color:var(--sr-blue-dark); }
+  .re-box { border:1px solid #d8e0eb; border-left:4px solid var(--sr-blue); border-radius:3px; padding:16px 18px; margin:18px 0; background:#fff; }
+  .re-warning { border-left-color:var(--sr-red); background:#fff8f8; }
+  .re-btn { display:inline-block; background:var(--sr-red); color:#fff; text-decoration:none; border-radius:3px; padding:11px 14px; font-size:13px; font-weight:700; text-transform:uppercase; letter-spacing:.4px; }
+  .re-source-link { display:inline-block; margin-top:10px; font-weight:700; }
+  @media (max-width: 820px) { .re-detail { grid-template-columns:1fr; } .re-detail h1 { font-size:32px; } }
+</style>
+{% endblock %}
+
+{% block content %}
+<article class="container-wide">
+  <nav class="breadcrumbs" aria-label="Breadcrumb">
+    <a href="/">Home</a><span>/</span>
+    <a href="/real-estate/">Real Estate</a><span>/</span>
+    <a href="/real-estate/properties/">Properties</a><span>/</span>
+    <span>{{ listing.title }}</span>
+  </nav>
+
+  <div class="re-detail">
+    <main>
+      <img src="{{ listing.main_image }}" alt="{{ listing.title }}">
+      <section class="re-box">
+        <h2 style="font-family:var(--font-serif); color:var(--sr-blue-dark); margin-bottom:8px;">Property overview</h2>
+        <p>{{ listing.english_summary }}</p>
+        <a class="re-source-link" href="{{ listing.source_url }}" rel="nofollow noopener" target="_blank">View original listing</a>
+      </section>
+    </main>
+
+    <aside>
+      <div class="re-kicker">{{ listing.city }} · {{ listing.neighborhood }}</div>
+      <h1>{{ listing.title }}</h1>
+      <div class="re-price">${{ "{:,.0f}".format(listing.price_usd) }}</div>
+      <span class="re-status-wrap">
+        <button type="button" class="re-status-pill re-status-unverified" aria-describedby="verification-status-help">Not verified</button>
+        <span class="re-status-tooltip" id="verification-status-help" role="tooltip">
+          Caracas Research has not independently confirmed ownership, title, seller identity, property condition, or legal documents for this listing.
+        </span>
+      </span>
+      <div class="re-facts">
+        <div class="re-fact"><span>City</span><strong>{{ listing.city }}</strong></div>
+        <div class="re-fact"><span>Type</span><strong>{{ listing.property_type }}</strong></div>
+        <div class="re-fact"><span>Size</span><strong>{{ listing.square_meters }} m²</strong></div>
+        <div class="re-fact"><span>Price/m²</span><strong>${{ "{:,.0f}".format(listing.price_per_m2) }}</strong></div>
+        <div class="re-fact"><span>Bedrooms</span><strong>{{ listing.bedrooms }}</strong></div>
+        <div class="re-fact"><span>Bathrooms</span><strong>{{ listing.bathrooms }}</strong></div>
+        <div class="re-fact"><span>Parking</span><strong>{{ listing.parking if listing.parking is not none else 'N/A' }}</strong></div>
+        <div class="re-fact"><span>Last seen</span><strong>{{ listing.last_seen }}</strong></div>
+      </div>
+      <p><a class="re-btn" href="/real-estate/buyers-guide/">Get the Free Buyer Brief</a></p>
+    </aside>
+  </div>
+
+  {% if related %}
+  {% set related_cards = [] %}
+  {% for p in related %}
+    {% set _ = related_cards.append({
+      'href': '/real-estate/property/' ~ p.slug ~ '/',
+      'eyebrow': p.city ~ ' · ' ~ p.property_type,
+      'title': p.title,
+      'tagline': p.english_summary,
+      'meta_rows': ['$' ~ "{:,.0f}".format(p.price_usd), p.square_meters ~ ' m²', '$' ~ "{:,.0f}".format(p.price_per_m2) ~ '/m²'],
+      'cta': 'View property'
+    }) %}
+  {% endfor %}
+  {{ card_grid_section(
+       heading='Related listings',
+       cards=related_cards,
+       aria_label='Related property listings',
+       footer_link={'href': '/real-estate/properties/', 'label': 'See more listings'},
+       footer_mode='always',
+       max_cards=3
+  ) }}
+  {% endif %}
+
+  {% set research_cards = [
+    {
+      'href': '/real-estate/' ~ listing.city_slug ~ '/',
+      'eyebrow': 'City guide',
+      'title': listing.city ~ ' real estate guide',
+      'tagline': 'Price context, neighborhoods, buyer considerations, and sample listings for this market.',
+      'cta': 'Open guide'
+    },
+    {
+      'href': '/real-estate/buy-property-in-venezuela/',
+      'eyebrow': 'Buyer guide',
+      'title': 'Buy property in Venezuela',
+      'tagline': 'Step-by-step buying workflow, document requests, seller verification, and closing diligence.',
+      'cta': 'Read guide'
+    },
+    {
+      'href': '/real-estate/buyers-guide/',
+      'eyebrow': 'Free brief',
+      'title': 'Venezuela property buyer brief',
+      'tagline': 'A concise checklist for Americans, Canadians, diaspora buyers, and foreign investors.',
+      'cta': 'Get brief'
+    }
+  ] %}
+  {{ card_grid_section(
+       heading='Buyer research',
+       cards=research_cards,
+       aria_label='Buyer research resources',
+       footer_link={'href': '/real-estate/', 'label': 'See the real estate hub'},
+       footer_mode='always',
+       max_cards=3
+  ) }}
+</article>
+{% endblock %}

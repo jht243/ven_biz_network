@@ -601,6 +601,398 @@ def _tool_seo_jsonld(*, slug: str, title: str, description: str, keywords: str, 
     return seo, _json.dumps({"@context": "https://schema.org", "@graph": graph}, ensure_ascii=False)
 
 
+def _real_estate_seo_jsonld(*, path: str, title: str, description: str,
+                            keywords: str, h1: str, faq: list[tuple[str, str]] | None = None,
+                            listing=None, item_list: list | None = None) -> tuple[dict, str]:
+    """SEO + JSON-LD payload for the real-estate vertical."""
+    from datetime import datetime as _dt
+    from src.page_renderer import _base_url, _iso, settings as _s
+    import json as _json
+
+    base = _base_url()
+    canonical = f"{base}{path.rstrip('/')}" if path != "/" else f"{base}/"
+    seo = {
+        "title": title,
+        "description": description,
+        "keywords": keywords,
+        "canonical": canonical,
+        "site_name": _s.site_name,
+        "site_url": base,
+        "locale": _s.site_locale,
+        "og_image": f"{base}/static/og-image.png?v=3",
+        "og_type": "article" if path != "/real-estate/" else "website",
+        "section": "Real Estate",
+        "published_iso": _iso(_dt.utcnow()),
+        "modified_iso": _iso(_dt.utcnow()),
+    }
+
+    crumbs = [
+        {"@type": "ListItem", "position": 1, "name": "Home", "item": f"{base}/"},
+        {"@type": "ListItem", "position": 2, "name": "Real Estate", "item": f"{base}/real-estate"},
+    ]
+    if path.rstrip("/") != "/real-estate":
+        crumbs.append({"@type": "ListItem", "position": 3, "name": h1, "item": canonical})
+
+    graph: list[dict] = [
+        {"@type": "BreadcrumbList", "itemListElement": crumbs},
+        {
+            "@type": "Article" if path.rstrip("/") != "/real-estate" else "CollectionPage",
+            "@id": f"{canonical}#main",
+            "url": canonical,
+            "headline": h1,
+            "name": h1,
+            "description": description,
+            "inLanguage": "en-US",
+            "isAccessibleForFree": True,
+            "author": {"@type": "Organization", "name": _s.site_name, "url": f"{base}/"},
+            "publisher": {"@type": "Organization", "name": _s.site_name, "url": f"{base}/"},
+            "datePublished": _iso(_dt.utcnow()),
+            "dateModified": _iso(_dt.utcnow()),
+        },
+        {
+            "@type": "Organization",
+            "@id": f"{base}/#organization",
+            "name": "Caracas Research",
+            "url": f"{base}/",
+        },
+    ]
+
+    if faq:
+        graph.append({
+            "@type": "FAQPage",
+            "@id": f"{canonical}#faq",
+            "mainEntity": [
+                {"@type": "Question", "name": q, "acceptedAnswer": {"@type": "Answer", "text": a}}
+                for q, a in faq
+            ],
+        })
+    if item_list:
+        graph.append({
+            "@type": "ItemList",
+            "@id": f"{canonical}#listings",
+            "name": h1,
+            "itemListElement": [
+                {
+                    "@type": "ListItem",
+                    "position": i + 1,
+                    "url": f"{base}/real-estate/property/{p.slug}",
+                    "name": p.title,
+                }
+                for i, p in enumerate(item_list)
+            ],
+        })
+    if listing is not None:
+        graph.append({
+            "@type": "Product",
+            "@id": f"{canonical}#listing",
+            "name": listing.title,
+            "description": listing.english_summary,
+            "image": listing.main_image,
+            "url": canonical,
+            "category": f"Real estate {listing.property_type}",
+            "offers": {
+                "@type": "Offer",
+                "price": str(listing.price_usd),
+                "priceCurrency": "USD",
+                "availability": "https://schema.org/InStock",
+                "url": canonical,
+            },
+            "additionalProperty": [
+                {"@type": "PropertyValue", "name": "City", "value": listing.city},
+                {"@type": "PropertyValue", "name": "Neighborhood", "value": listing.neighborhood},
+                {"@type": "PropertyValue", "name": "Square meters", "value": listing.square_meters},
+                {"@type": "PropertyValue", "name": "Price per square meter", "value": listing.price_per_m2},
+                {"@type": "PropertyValue", "name": "Verification status", "value": "Not yet independently verified"},
+            ],
+        })
+
+    return seo, _json.dumps({"@context": "https://schema.org", "@graph": graph}, ensure_ascii=False)
+
+
+def _real_estate_city_rows():
+    from src.data.real_estate import CITY_PAGES, listings_for_city, market_stats
+
+    rows = []
+    for slug, page in CITY_PAGES.items():
+        rows.append({
+            "slug": slug,
+            "city": page["h1"].replace(" Real Estate for Foreign Investors", "").replace(" Venezuela", ""),
+            "stats": market_stats(listings_for_city(slug)),
+        })
+    return rows
+
+
+def _real_estate_guide_cards():
+    from src.data.real_estate import CITY_PAGES, GUIDES
+
+    cards = []
+    for page in GUIDES.values():
+        cards.append({
+            "href": page["path"],
+            "eyebrow": "Guide",
+            "title": page["h1"],
+            "tagline": page["answer"],
+            "cta": "Read guide",
+        })
+    for page in CITY_PAGES.values():
+        cards.append({
+            "href": page["path"],
+            "eyebrow": "City",
+            "title": page["h1"],
+            "tagline": page["overview"],
+            "cta": "Open city guide",
+        })
+    return cards
+
+
+def _render_real_estate_page(*, page_kind: str, path: str, title: str, h1: str,
+                             subtitle: str, description: str, keywords: str,
+                             direct_answer: str = "", content_sections: list | None = None,
+                             faq: list[tuple[str, str]] | None = None, city_page: dict | None = None,
+                             listings_override: list | None = None, source_notes: list | None = None,
+                             answer_heading: str | None = None):
+    from datetime import date as _date
+    from src.data.real_estate import METHODOLOGY, all_listings, market_stats
+    from src.page_renderer import _env
+
+    listings = listings_override if listings_override is not None else all_listings()
+    seo, jsonld = _real_estate_seo_jsonld(
+        path=path,
+        title=title,
+        description=description,
+        keywords=keywords,
+        h1=h1,
+        faq=faq,
+        item_list=listings if page_kind in {"landing", "hub", "city"} else None,
+    )
+    show_market_snapshot = page_kind in {"landing", "hub", "prices", "city"} or path.rstrip("/") == "/real-estate/buy-property-in-venezuela"
+    template = _env.get_template("real_estate_page.html.j2")
+    html = template.render(
+        page_kind=page_kind,
+        h1=h1,
+        subtitle=subtitle,
+        answer_heading=answer_heading or ("Direct answer" if h1.endswith("?") else "Overview"),
+        direct_answer=direct_answer,
+        content_sections=content_sections or [],
+        source_notes=source_notes or [],
+        faq=faq or [],
+        stats=market_stats(listings) if show_market_snapshot else None,
+        city_price_rows=_real_estate_city_rows() if page_kind in {"landing", "hub", "prices"} else [],
+        methodology=METHODOLOGY,
+        featured_listings=listings[:5],
+        guide_cards=_real_estate_guide_cards() if page_kind == "landing" else [],
+        city_page=city_page,
+        seo=seo,
+        jsonld=jsonld,
+        current_year=_date.today().year,
+    )
+    return Response(html, mimetype="text/html")
+
+
+@app.route("/real-estate")
+@app.route("/real-estate/")
+def real_estate_landing():
+    return _render_real_estate_page(
+        page_kind="landing",
+        path="/real-estate/",
+        title="Venezuela Real Estate for Foreign Investors | Caracas Research",
+        h1="Venezuela Real Estate for Foreign Investors",
+        subtitle="English-language property listings, price context, and buyer guidance for Americans and Canadians evaluating Venezuelan real estate.",
+        description="Caracas Research Real Estate: Venezuela real estate intelligence for foreign investors, with English-language listings, prices, buyer guidance, risk notes, and diligence resources.",
+        keywords="Venezuela real estate, Caracas real estate, buying property in Venezuela, Venezuela homes for sale, foreign ownership Venezuela property",
+        direct_answer="Caracas Research Real Estate helps English-speaking investors evaluate Venezuelan property opportunities before committing time or capital. The vertical combines sampled listings, city-level price context, buyer guidance, and diligence checklists for Americans, Canadians, diaspora buyers, and other foreign investors.",
+        content_sections=[
+            ("Venezuela real estate overview", "The market is fragmented and information quality varies widely. Foreign investors should use listings as lead generation, then move quickly into title, seller, sanctions, payment, and property-condition diligence."),
+            ("Browse by city", "Start with Caracas for business and premium apartments, Margarita Island for vacation and beachfront angles, Valencia for central-market value, and Lecheria for coastal lifestyle assets."),
+        ],
+        faq=[
+            ("Can foreigners own real estate in Venezuela?", "Foreigners can generally evaluate ownership, but every transaction requires local legal review, documentation checks, and counterparty diligence."),
+            ("Can Caracas Research help me choose a broker or property?", "Caracas Research provides English-language research, listing context, and diligence guidance. Buyers should still verify any broker, seller, title document, and closing process independently before making a payment."),
+        ],
+    )
+
+
+@app.route("/real-estate/venezuela-homes-for-sale")
+@app.route("/real-estate/venezuela-homes-for-sale/")
+def real_estate_homes_for_sale():
+    from src.data.real_estate import GUIDES
+
+    page = GUIDES["venezuela-homes-for-sale"]
+    return _render_real_estate_page(
+        page_kind="hub",
+        path=page["path"],
+        title=page["title"],
+        h1=page["h1"],
+        subtitle="Sampled Venezuela homes and apartments for sale, translated into English for foreign-buyer research.",
+        description=page["description"],
+        keywords=page["keywords"],
+        direct_answer=page["answer"],
+        content_sections=page["sections"],
+        source_notes=page.get("source_notes", []),
+        faq=page["faqs"],
+    )
+
+
+@app.route("/real-estate/buyers-guide")
+@app.route("/real-estate/buyers-guide/")
+def real_estate_buyers_guide():
+    from src.data.real_estate import GENERAL_SOURCE_NOTES, LEGAL_SOURCE_NOTES
+
+    return _render_real_estate_page(
+        page_kind="buyers-guide",
+        path="/real-estate/buyers-guide/",
+        title="Venezuela Property Buyer Brief for Americans & Canadians",
+        h1="Venezuela Property Buyer Brief for Americans & Canadians",
+        subtitle="A free buyer brief covering ownership questions, cities to evaluate, red flags, pricing context, and diligence steps.",
+        description="Get the free Venezuela Property Buyer Brief for Americans and Canadians: foreign ownership, best cities, red flags, seller questions, pricing table, and diligence checklist.",
+        keywords="Venezuela property buyer brief, Venezuela real estate due diligence, can foreigners buy property in Venezuela, Venezuela buyer checklist",
+        direct_answer="The buyer brief is designed for U.S. and Canadian investors who need a concise first screen before contacting brokers, sellers, or local counsel.",
+        content_sections=[
+            ("Can foreigners buy property in Venezuela?", "Foreigners can generally evaluate property ownership, but execution depends on documentation, title status, seller authority, tax/registry requirements, and payment path."),
+            ("Best cities to evaluate", "Caracas, Margarita Island, Valencia, and Lecheria provide a useful initial spread across business, vacation, value, and coastal lifestyle demand."),
+            ("Common red flags", "Urgent deposits, unclear seller authority, missing registry documents, unverifiable brokers, stale listing photos, unpaid condo fees, and pressure to transact outside a documented closing process."),
+            ("Questions to ask sellers and brokers", "Ask who legally owns the property, what documents prove authority, whether there are liens or family claims, how payment will be documented, and what building debts or service issues exist."),
+        ],
+        source_notes=GENERAL_SOURCE_NOTES + LEGAL_SOURCE_NOTES,
+        faq=[
+            ("What does the buyer brief include?", "Ownership basics, city comparison, red flags, seller questions, pricing context, risk overview, and a diligence checklist."),
+            ("Is the buyer brief legal advice?", "No. It is an educational starting point and not a substitute for Venezuelan counsel."),
+        ],
+    )
+
+
+@app.route("/real-estate/thanks", methods=["GET", "POST"])
+@app.route("/real-estate/thanks/", methods=["GET", "POST"])
+def real_estate_thanks():
+    return _render_real_estate_page(
+        page_kind="thanks",
+        path="/real-estate/thanks/",
+        title="Real Estate Request Received | Caracas Research",
+        h1="Request received",
+        subtitle="Thanks. Your Caracas Research Real Estate request was received.",
+        description="Confirmation page for Caracas Research Real Estate buyer brief requests.",
+        keywords="Venezuela real estate request",
+        direct_answer="Your request has been received. Continue browsing the buyer guide and sample listings while the Caracas Research team reviews real estate inquiries.",
+        content_sections=[
+            ("Next step", "Continue browsing the buyer guide and sample listings, and keep a copy of any listing or seller details you want reviewed."),
+        ],
+    )
+
+
+@app.route("/real-estate/properties")
+@app.route("/real-estate/properties/")
+def real_estate_properties():
+    from datetime import date as _date, datetime as _dt
+    from src.data.real_estate import all_listings
+    from src.page_renderer import _env
+
+    listings = all_listings()
+    seo, jsonld = _real_estate_seo_jsonld(
+        path="/real-estate/properties/",
+        title="Venezuela Property Listings in English | Caracas Research Real Estate",
+        description="Browse sampled Venezuela property listings translated into English and organized for foreign buyers. Filter by city, type, price range, and bedrooms.",
+        keywords="Venezuela property listings, Venezuela homes for sale, Caracas apartments for sale, Margarita Island real estate listings",
+        h1="Venezuela Property Listings in English",
+        item_list=listings,
+    )
+    template = _env.get_template("real_estate_properties.html.j2")
+    html = template.render(
+        listings=listings,
+        cities=sorted({p.city for p in listings}),
+        types=sorted({p.property_type for p in listings}),
+        seo=seo,
+        jsonld=jsonld,
+        current_year=_date.today().year,
+    )
+    return Response(html, mimetype="text/html")
+
+
+@app.route("/real-estate/property/<slug>")
+@app.route("/real-estate/property/<slug>/")
+def real_estate_property(slug: str):
+    from datetime import date as _date
+    from src.data.real_estate import all_listings, get_listing
+    from src.page_renderer import _env
+
+    listing = get_listing(slug)
+    if listing is None:
+        abort(404)
+    related = [p for p in all_listings() if p.slug != slug and p.city_slug == listing.city_slug][:3]
+    if len(related) < 3:
+        related.extend([p for p in all_listings() if p.slug != slug and p not in related][: 3 - len(related)])
+
+    seo, jsonld = _real_estate_seo_jsonld(
+        path=f"/real-estate/property/{listing.slug}/",
+        title=f"{listing.title} | {listing.city} Property Listing",
+        description=f"{listing.title}: ${listing.price_usd:,.0f}, {listing.square_meters} m², {listing.bedrooms} bedrooms in {listing.neighborhood}, {listing.city}. Not independently verified.",
+        keywords=f"{listing.city} real estate, {listing.neighborhood} property, Venezuela property listing, {listing.property_type} Venezuela",
+        h1=listing.title,
+        listing=listing,
+    )
+    template = _env.get_template("real_estate_property.html.j2")
+    html = template.render(
+        listing=listing,
+        related=related,
+        seo=seo,
+        jsonld=jsonld,
+        current_year=_date.today().year,
+    )
+    return Response(html, mimetype="text/html")
+
+
+@app.route("/real-estate/<slug>")
+@app.route("/real-estate/<slug>/")
+def real_estate_guide_or_city(slug: str):
+    from src.data.real_estate import CITY_PAGES, GUIDES, listings_for_city
+
+    if slug in GUIDES:
+        page = GUIDES[slug]
+        return _render_real_estate_page(
+            page_kind="prices" if slug == "venezuela-real-estate-prices" else "guide",
+            path=page["path"],
+            title=page["title"],
+            h1=page["h1"],
+            subtitle="Plain-English real estate guidance for foreign investors evaluating Venezuela.",
+            description=page["description"],
+            keywords=page["keywords"],
+        direct_answer=page["answer"],
+        content_sections=page["sections"],
+        source_notes=page.get("source_notes", []),
+        faq=page["faqs"],
+        )
+
+    if slug in CITY_PAGES:
+        from src.data.real_estate import GENERAL_SOURCE_NOTES, LEGAL_SOURCE_NOTES
+
+        page = CITY_PAGES[slug]
+        city_listings = listings_for_city(slug)
+        return _render_real_estate_page(
+            page_kind="city",
+            path=page["path"],
+            title=page["title"],
+            h1=page["h1"],
+            subtitle=page["overview"],
+            description=f"{page['h1']}: sampled listings, directional price ranges, popular neighborhoods, risks, and buyer guidance.",
+            keywords=page["keywords"],
+            direct_answer=page["overview"],
+            content_sections=[
+                ("Market overview", page["overview"]),
+                ("Foreign-buyer considerations", "Foreign buyers should focus on title verification, seller authority, building services, payment logistics, and whether the neighborhood has enough liquidity to support a future exit."),
+                ("Risks", "Listings remain unverified until ownership, title, seller identity, property condition, and legal documentation are checked by qualified local counsel."),
+            ],
+            faq=[
+                (f"Is {page['h1'].split(' Real Estate')[0]} good for foreign buyers?", "It can be worth evaluating, but only with careful title, seller, payment, building-services, and exit-liquidity diligence."),
+                (f"What should buyers check in {page['h1'].split(' Real Estate')[0]} listings?", "Compare neighborhood, building condition, water and power reliability, parking, condominium fees, price per square meter, seller authority, and document quality."),
+                ("Are these city price figures definitive?", "No. They are directional sampled listing figures, not appraisals or verified transaction prices."),
+            ],
+            city_page=page,
+            listings_override=city_listings,
+            source_notes=GENERAL_SOURCE_NOTES + LEGAL_SOURCE_NOTES,
+        )
+
+    abort(404)
+
+
 @app.route("/tools/caracas-safety-by-neighborhood")
 @app.route("/tools/caracas-safety-by-neighborhood/")
 def tool_caracas_safety():
@@ -2180,6 +2572,12 @@ def tools_index():
         import json as _json
 
         tools = [
+            {
+                "url": "/real-estate/buyers-guide/",
+                "name": "Venezuela Property Buyer Brief",
+                "category": "Real estate",
+                "summary": "Free buyer brief for Americans and Canadians evaluating Venezuelan property: ownership questions, city screens, red flags, pricing context, seller questions, and diligence checklist.",
+            },
             {
                 "url": "/get-venezuela-visa",
                 "name": "Venezuela Visa Application Service",
@@ -5648,6 +6046,20 @@ def sitemap_xml():
             })
     except Exception as _exc:
         logger.warning("sitemap: people cluster walk failed: %s", _exc)
+
+    try:
+        from src.data.real_estate import real_estate_paths as _real_estate_paths
+        for path in _real_estate_paths():
+            normalized = path.rstrip("/") or "/"
+            priority = "0.85" if normalized in ("/real-estate", "/real-estate/venezuela-homes-for-sale") else "0.68"
+            static_urls.append({
+                "loc": f"{base}{normalized}",
+                "lastmod": today_iso,
+                "changefreq": "weekly",
+                "priority": priority,
+            })
+    except Exception as exc:
+        logger.warning("sitemap real estate paths unavailable: %s", exc)
 
     dynamic_urls: list[dict] = []
     sector_set: set[str] = set()

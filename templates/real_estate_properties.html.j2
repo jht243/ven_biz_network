@@ -1,0 +1,97 @@
+{% extends "_base.html.j2" %}
+
+{% block head_extra %}
+<style>
+  .re-listing-grid { display:grid; grid-template-columns: repeat(auto-fit, minmax(260px, 1fr)); gap:16px; margin: 24px 0 36px; }
+  .re-listing-card { border:1px solid #d8e0eb; border-radius:4px; overflow:hidden; background:#fff; display:flex; flex-direction:column; }
+  .re-listing-card img { width:100%; aspect-ratio: 4 / 3; object-fit:cover; display:block; }
+  .re-listing-body { padding:14px 16px; display:flex; flex-direction:column; gap:8px; flex:1; }
+  .re-listing-body h2 { font-family:var(--font-serif); color:var(--sr-blue-dark); font-size:18px; line-height:1.25; margin:0; }
+  .re-meta { font-size:12px; text-transform:uppercase; letter-spacing:.6px; color:var(--sr-gray-text); }
+  .re-facts { display:flex; flex-wrap:wrap; gap:8px 12px; font-size:13px; border-top:1px solid #eef2f7; padding-top:10px; }
+  .re-price { font-family:var(--font-serif); color:var(--sr-blue-dark); font-weight:700; font-size:22px; }
+  .re-view { margin-top:auto; display:inline-block; background:var(--sr-blue); color:#fff; text-decoration:none; border-radius:3px; padding:9px 12px; font-size:13px; font-weight:700; text-align:center; }
+  .re-filter { background:#f4f8fc; border:1px solid #cfddee; border-left:4px solid var(--sr-blue); padding:16px 18px; margin:20px 0; }
+  .re-filter-row { display:grid; grid-template-columns: repeat(auto-fit, minmax(160px, 1fr)); gap:10px; }
+  .re-filter label { display:block; font-size:11px; text-transform:uppercase; letter-spacing:.7px; font-weight:700; color:var(--sr-blue-dark); margin-bottom:4px; }
+  .re-filter select { width:100%; padding:10px; border:1px solid #b9c7d8; border-radius:3px; background:#fff; }
+</style>
+{% endblock %}
+
+{% block content %}
+<section class="container-wide">
+  <nav class="breadcrumbs" aria-label="Breadcrumb">
+    <a href="/">Home</a><span>/</span>
+    <a href="/real-estate/">Real Estate</a><span>/</span>
+    <span>Properties</span>
+  </nav>
+
+  <header style="margin: 16px 0 24px;">
+    <div style="font-size:12px; text-transform:uppercase; letter-spacing:1.4px; color:#cc0000; font-weight:700;">Caracas Research Real Estate</div>
+    <h1 style="font-family:var(--font-serif); font-size:38px; color:var(--sr-blue-dark); margin:8px 0 12px;">Venezuela Property Listings in English</h1>
+    <p style="font-family:var(--font-serif); font-style:italic; color:var(--sr-gray-text); font-size:18px; max-width:820px;">
+      Browse sampled Venezuela property listings translated into English and organized for foreign buyers. Listings are based on publicly available information and should be independently verified before any transaction.
+    </p>
+  </header>
+
+  <div class="re-filter" aria-label="Basic property filters">
+    <div class="re-filter-row">
+      <div><label for="city-filter">City</label><select id="city-filter"><option value="">All cities</option>{% for c in cities %}<option value="{{ c }}">{{ c }}</option>{% endfor %}</select></div>
+      <div><label for="type-filter">Property type</label><select id="type-filter"><option value="">All types</option>{% for t in types %}<option value="{{ t }}">{{ t }}</option>{% endfor %}</select></div>
+      <div><label for="price-filter">Price range</label><select id="price-filter"><option value="">All prices</option><option value="0-100000">Under $100k</option><option value="100000-200000">$100k-$200k</option><option value="200000-999999">$200k+</option></select></div>
+      <div><label for="beds-filter">Bedrooms</label><select id="beds-filter"><option value="">Any</option><option value="1">1+</option><option value="2">2+</option><option value="3">3+</option></select></div>
+    </div>
+  </div>
+
+  <div class="re-listing-grid" id="listing-grid">
+    {% for p in listings %}
+    <article class="re-listing-card" data-city="{{ p.city }}" data-type="{{ p.property_type }}" data-price="{{ p.price_usd }}" data-beds="{{ p.bedrooms }}">
+      <img src="{{ p.main_image }}" alt="{{ p.title }}" loading="lazy">
+      <div class="re-listing-body">
+        <div class="re-meta">{{ p.city }} · {{ p.neighborhood }} · {{ p.source_label }}</div>
+        <h2>{{ p.title }}</h2>
+        <div class="re-price">${{ "{:,.0f}".format(p.price_usd) }}</div>
+        <div class="re-facts">
+          <span>{{ p.square_meters }} m²</span>
+          <span>{{ p.bedrooms }} bed</span>
+          <span>{{ p.bathrooms }} bath</span>
+          <span>${{ "{:,.0f}".format(p.price_per_m2) }}/m²</span>
+        </div>
+        <a class="re-view" href="/real-estate/property/{{ p.slug }}/">View property</a>
+      </div>
+    </article>
+    {% endfor %}
+  </div>
+
+  <p id="no-listings" style="display:none; color:var(--sr-gray-text);">No sampled listings match those filters.</p>
+</section>
+
+<script>
+(function() {
+  var cards = Array.prototype.slice.call(document.querySelectorAll('.re-listing-card'));
+  var city = document.getElementById('city-filter');
+  var type = document.getElementById('type-filter');
+  var price = document.getElementById('price-filter');
+  var beds = document.getElementById('beds-filter');
+  var empty = document.getElementById('no-listings');
+  function apply() {
+    var shown = 0;
+    cards.forEach(function(card) {
+      var ok = true;
+      if (city.value && card.dataset.city !== city.value) ok = false;
+      if (type.value && card.dataset.type !== type.value) ok = false;
+      if (beds.value && Number(card.dataset.beds) < Number(beds.value)) ok = false;
+      if (price.value) {
+        var parts = price.value.split('-').map(Number);
+        var p = Number(card.dataset.price);
+        if (p < parts[0] || p > parts[1]) ok = false;
+      }
+      card.style.display = ok ? '' : 'none';
+      if (ok) shown += 1;
+    });
+    empty.style.display = shown ? 'none' : 'block';
+  }
+  [city, type, price, beds].forEach(function(el) { el.addEventListener('change', apply); });
+})();
+</script>
+{% endblock %}
