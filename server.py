@@ -714,10 +714,13 @@ def _real_estate_city_rows():
 
     rows = []
     for slug, page in CITY_PAGES.items():
+        city_listings = listings_for_city(slug)
+        if not city_listings:
+            continue
         rows.append({
             "slug": slug,
             "city": page["h1"].replace(" Real Estate for Foreign Investors", "").replace(" Venezuela", ""),
-            "stats": market_stats(listings_for_city(slug)),
+            "stats": market_stats(city_listings),
         })
     return rows
 
@@ -765,7 +768,10 @@ def _render_real_estate_page(*, page_kind: str, path: str, title: str, h1: str,
         faq=faq,
         item_list=listings if page_kind in {"landing", "hub", "city"} else None,
     )
-    show_market_snapshot = page_kind in {"landing", "hub", "prices", "city"} or path.rstrip("/") == "/real-estate/buy-property-in-venezuela"
+    show_market_snapshot = (
+        bool(listings)
+        and (page_kind in {"landing", "hub", "prices", "city"} or path.rstrip("/") == "/real-estate/buy-property-in-venezuela")
+    )
     template = _env.get_template("real_estate_page.html.j2")
     html = template.render(
         page_kind=page_kind,
