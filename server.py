@@ -828,6 +828,7 @@ def _render_core_real_estate_seo_page(slug: str):
         GENERAL_SOURCE_NOTES,
         GUIDES,
         LEGAL_SOURCE_NOTES,
+        MARKET_SOURCE_NOTES,
         listings_for_city,
     )
 
@@ -863,7 +864,7 @@ def _render_core_real_estate_seo_page(slug: str):
                 ("Where buyers usually compare first", "Caracas, Margarita Island, Valencia, and Lecheria provide a practical first screen across business, vacation, value, and coastal lifestyle markets."),
                 ("How to use this research", "Use the listings and city pages to compare neighborhoods and price per square meter, then move into seller verification, registry review, building-service checks, and payment documentation before making any commitment."),
             ],
-            source_notes=GENERAL_SOURCE_NOTES + CANADA_SOURCE_NOTES + LEGAL_SOURCE_NOTES,
+            source_notes=MARKET_SOURCE_NOTES + GENERAL_SOURCE_NOTES + CANADA_SOURCE_NOTES + LEGAL_SOURCE_NOTES,
             faq=[
                 ("Can foreigners buy real estate in Venezuela?", "Foreigners can generally evaluate ownership, but every transaction should be reviewed by independent Venezuelan counsel and checked for title, seller authority, payment, and sanctions issues."),
                 ("Are Venezuela property listings reliable?", "Listings are useful leads, but buyers should verify ownership, title, seller identity, property condition, building debts, and closing documents before sending funds."),
@@ -896,7 +897,7 @@ def _render_core_real_estate_seo_page(slug: str):
             ],
             city_page=page,
             listings_override=city_listings,
-            source_notes=GENERAL_SOURCE_NOTES + LEGAL_SOURCE_NOTES,
+            source_notes=MARKET_SOURCE_NOTES + GENERAL_SOURCE_NOTES + LEGAL_SOURCE_NOTES,
         )
 
     if slug in guide_map:
@@ -1099,7 +1100,7 @@ def real_estate_guide_or_city(slug: str):
         )
 
     if slug in CITY_PAGES:
-        from src.data.real_estate import GENERAL_SOURCE_NOTES, LEGAL_SOURCE_NOTES
+        from src.data.real_estate import GENERAL_SOURCE_NOTES, LEGAL_SOURCE_NOTES, MARKET_SOURCE_NOTES
 
         page = CITY_PAGES[slug]
         city_listings = listings_for_city(slug)
@@ -1124,7 +1125,7 @@ def real_estate_guide_or_city(slug: str):
             ],
             city_page=page,
             listings_override=city_listings,
-            source_notes=GENERAL_SOURCE_NOTES + LEGAL_SOURCE_NOTES,
+            source_notes=MARKET_SOURCE_NOTES + GENERAL_SOURCE_NOTES + LEGAL_SOURCE_NOTES,
         )
 
     abort(404)
