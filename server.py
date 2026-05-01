@@ -770,7 +770,10 @@ def _render_real_estate_page(*, page_kind: str, path: str, title: str, h1: str,
     )
     show_market_snapshot = (
         bool(listings)
-        and (page_kind in {"landing", "hub", "prices", "city"} or path.rstrip("/") == "/real-estate/buy-property-in-venezuela")
+        and (
+            page_kind in {"landing", "hub", "prices", "city"}
+            or path.rstrip("/") in {"/real-estate/buy-property-in-venezuela", "/buy-property-in-venezuela"}
+        )
     )
     template = _env.get_template("real_estate_page.html.j2")
     html = template.render(
@@ -816,6 +819,134 @@ def real_estate_landing():
             ("Can Caracas Research help me choose a broker or property?", "Caracas Research provides English-language research, listing context, and diligence guidance. Buyers should still verify any broker, seller, title document, and closing process independently before making a payment."),
         ],
     )
+
+
+def _render_core_real_estate_seo_page(slug: str):
+    from src.data.real_estate import (
+        CANADA_SOURCE_NOTES,
+        CITY_PAGES,
+        GENERAL_SOURCE_NOTES,
+        GUIDES,
+        LEGAL_SOURCE_NOTES,
+        listings_for_city,
+    )
+
+    top_level_path = f"/{slug}/"
+    guide_map = {
+        "venezuela-homes-for-sale": ("venezuela-homes-for-sale", "hub"),
+        "buy-property-in-venezuela": ("buy-property-in-venezuela", "guide"),
+        "can-americans-buy-property-in-venezuela": ("can-americans-buy-property-in-venezuela", "guide"),
+        "can-canadians-buy-property-in-venezuela": ("can-canadians-buy-property-in-venezuela", "guide"),
+        "venezuela-real-estate-prices": ("venezuela-real-estate-prices", "prices"),
+        "venezuela-property-investment-guide": ("venezuela-property-investment-guide", "guide"),
+        "venezuela-real-estate-risks": ("venezuela-real-estate-risks", "guide"),
+        "venezuela-real-estate-lawyer": ("venezuela-real-estate-lawyer", "guide"),
+        "caracas-apartments-for-sale": ("caracas-apartments-for-sale", "city"),
+    }
+    city_map = {
+        "caracas-real-estate": "caracas",
+        "margarita-island-real-estate": "margarita-island",
+    }
+
+    if slug == "venezuela-real-estate":
+        return _render_real_estate_page(
+            page_kind="landing",
+            path=top_level_path,
+            title="Venezuela Real Estate for Foreign Investors | Caracas Research",
+            h1="Venezuela Real Estate for Foreign Investors",
+            subtitle="English-language property listings, price context, and buyer guidance for Americans and Canadians evaluating Venezuelan real estate.",
+            description="Venezuela real estate intelligence for foreign investors: English-language listings, price context, buyer guidance, risk notes, and diligence resources.",
+            keywords="Venezuela real estate, Venezuela homes for sale, buying property in Venezuela, Caracas real estate, Venezuela property investment",
+            direct_answer="Foreign buyers can research Venezuelan real estate, but listings should be treated as starting points until title, seller authority, building condition, payment route, and sanctions exposure are checked.",
+            content_sections=[
+                ("Venezuela real estate overview", "The market is fragmented across brokers, portals, private networks, and direct seller channels. Asking prices can be useful for comparison, but they are not a substitute for title review, property inspection, and local counsel."),
+                ("Where buyers usually compare first", "Caracas, Margarita Island, Valencia, and Lecheria provide a practical first screen across business, vacation, value, and coastal lifestyle markets."),
+                ("How to use this research", "Use the listings and city pages to compare neighborhoods and price per square meter, then move into seller verification, registry review, building-service checks, and payment documentation before making any commitment."),
+            ],
+            source_notes=GENERAL_SOURCE_NOTES + CANADA_SOURCE_NOTES + LEGAL_SOURCE_NOTES,
+            faq=[
+                ("Can foreigners buy real estate in Venezuela?", "Foreigners can generally evaluate ownership, but every transaction should be reviewed by independent Venezuelan counsel and checked for title, seller authority, payment, and sanctions issues."),
+                ("Are Venezuela property listings reliable?", "Listings are useful leads, but buyers should verify ownership, title, seller identity, property condition, building debts, and closing documents before sending funds."),
+                ("Which Venezuela markets should foreign buyers compare first?", "Caracas, Margarita Island, Valencia, and Lecheria are useful starting points because they represent different demand profiles and risk questions."),
+            ],
+        )
+
+    if slug in city_map:
+        city_slug = city_map[slug]
+        page = CITY_PAGES[city_slug]
+        city_listings = listings_for_city(city_slug)
+        return _render_real_estate_page(
+            page_kind="city",
+            path=top_level_path,
+            title=page["title"],
+            h1=page["h1"],
+            subtitle=page["overview"],
+            description=f"{page['h1']}: sampled listings, directional price ranges, popular neighborhoods, risks, and buyer guidance.",
+            keywords=page["keywords"],
+            direct_answer=page["overview"],
+            content_sections=[
+                ("Market overview", page["overview"]),
+                ("Foreign-buyer considerations", "Foreign buyers should focus on title verification, seller authority, building services, payment logistics, and whether the neighborhood has enough liquidity to support a future exit."),
+                ("Risks", "Listings remain unverified until ownership, title, seller identity, property condition, and legal documentation are checked by qualified local counsel."),
+            ],
+            faq=[
+                (f"Is {page['h1'].split(' Real Estate')[0]} good for foreign buyers?", "It can be worth evaluating, but only with careful title, seller, payment, building-services, and exit-liquidity diligence."),
+                (f"What should buyers check in {page['h1'].split(' Real Estate')[0]} listings?", "Compare neighborhood, building condition, water and power reliability, parking, condominium fees, price per square meter, seller authority, and document quality."),
+                ("Are these city price figures definitive?", "No. They are directional sampled listing figures, not appraisals or verified transaction prices."),
+            ],
+            city_page=page,
+            listings_override=city_listings,
+            source_notes=GENERAL_SOURCE_NOTES + LEGAL_SOURCE_NOTES,
+        )
+
+    if slug in guide_map:
+        guide_key, page_kind = guide_map[slug]
+        page = GUIDES[guide_key]
+        listings_override = listings_for_city("caracas") if slug == "caracas-apartments-for-sale" else None
+        return _render_real_estate_page(
+            page_kind=page_kind,
+            path=top_level_path,
+            title=page["title"],
+            h1=page["h1"],
+            subtitle="Plain-English real estate guidance for foreign investors evaluating Venezuela.",
+            description=page["description"],
+            keywords=page["keywords"],
+            direct_answer=page["answer"],
+            content_sections=page["sections"],
+            source_notes=page.get("source_notes", []),
+            faq=page["faqs"],
+            listings_override=listings_override,
+        )
+
+    abort(404)
+
+
+@app.route("/venezuela-real-estate", defaults={"slug": "venezuela-real-estate"})
+@app.route("/venezuela-real-estate/", defaults={"slug": "venezuela-real-estate"})
+@app.route("/venezuela-homes-for-sale", defaults={"slug": "venezuela-homes-for-sale"})
+@app.route("/venezuela-homes-for-sale/", defaults={"slug": "venezuela-homes-for-sale"})
+@app.route("/caracas-real-estate", defaults={"slug": "caracas-real-estate"})
+@app.route("/caracas-real-estate/", defaults={"slug": "caracas-real-estate"})
+@app.route("/caracas-apartments-for-sale", defaults={"slug": "caracas-apartments-for-sale"})
+@app.route("/caracas-apartments-for-sale/", defaults={"slug": "caracas-apartments-for-sale"})
+@app.route("/margarita-island-real-estate", defaults={"slug": "margarita-island-real-estate"})
+@app.route("/margarita-island-real-estate/", defaults={"slug": "margarita-island-real-estate"})
+@app.route("/buy-property-in-venezuela", defaults={"slug": "buy-property-in-venezuela"})
+@app.route("/buy-property-in-venezuela/", defaults={"slug": "buy-property-in-venezuela"})
+@app.route("/can-americans-buy-property-in-venezuela", defaults={"slug": "can-americans-buy-property-in-venezuela"})
+@app.route("/can-americans-buy-property-in-venezuela/", defaults={"slug": "can-americans-buy-property-in-venezuela"})
+@app.route("/can-canadians-buy-property-in-venezuela", defaults={"slug": "can-canadians-buy-property-in-venezuela"})
+@app.route("/can-canadians-buy-property-in-venezuela/", defaults={"slug": "can-canadians-buy-property-in-venezuela"})
+@app.route("/venezuela-real-estate-prices", defaults={"slug": "venezuela-real-estate-prices"})
+@app.route("/venezuela-real-estate-prices/", defaults={"slug": "venezuela-real-estate-prices"})
+@app.route("/venezuela-property-investment-guide", defaults={"slug": "venezuela-property-investment-guide"})
+@app.route("/venezuela-property-investment-guide/", defaults={"slug": "venezuela-property-investment-guide"})
+@app.route("/venezuela-real-estate-risks", defaults={"slug": "venezuela-real-estate-risks"})
+@app.route("/venezuela-real-estate-risks/", defaults={"slug": "venezuela-real-estate-risks"})
+@app.route("/venezuela-real-estate-lawyer", defaults={"slug": "venezuela-real-estate-lawyer"})
+@app.route("/venezuela-real-estate-lawyer/", defaults={"slug": "venezuela-real-estate-lawyer"})
+def real_estate_core_seo_page(slug: str):
+    return _render_core_real_estate_seo_page(slug)
 
 
 @app.route("/real-estate/venezuela-homes-for-sale")

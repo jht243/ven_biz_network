@@ -342,6 +342,65 @@ GUIDES: dict[str, dict] = {
             ("Who is Venezuela real estate best suited for?", "It is most suitable for diaspora buyers, long-horizon investors, and buyers with trusted local counsel, local verification capacity, and no need for a quick resale."),
         ],
     },
+    "caracas-apartments-for-sale": {
+        "path": "/caracas-apartments-for-sale/",
+        "title": "Caracas Apartments for Sale: Prices, Listings & Buyer Checks",
+        "description": "Caracas apartments for sale in English: sampled listings, price-per-m2 context, neighborhoods, building-service checks, title diligence, and foreign-buyer risks.",
+        "keywords": "Caracas apartments for sale, Caracas real estate, apartments for sale in Caracas Venezuela, Caracas property listings",
+        "h1": "Caracas Apartments for Sale",
+        "answer": "Caracas apartment listings can be useful starting points, but buyers should compare price per square meter, building services, parking rights, water reliability, seller authority, and title documentation before treating a listing as actionable.",
+        "sections": [
+            ("Where foreign buyers usually start", "Premium and practical apartment searches often begin in eastern and central neighborhoods where services, security, parking, and access to offices or retail can materially affect value."),
+            ("How to compare Caracas apartment prices", "Normalize asking prices by square meter, then compare only against similar building class, neighborhood, parking, water service, elevator condition, security, and maintenance quality."),
+            ("Apartment diligence checklist", "Before discussing a deposit, ask for the registered title, seller identity and authority, condominium-fee status, utility-debt status, parking documentation, and evidence that the broker is authorized to represent the seller."),
+        ],
+        "source_notes": GENERAL_SOURCE_NOTES + LEGAL_SOURCE_NOTES,
+        "faqs": [
+            ("Are Caracas apartment listings reliable?", "They are useful leads, but buyers should verify title, seller identity, building debts, parking rights, and property condition before making an offer or sending funds."),
+            ("What matters most in a Caracas apartment?", "Neighborhood, water reliability, elevator maintenance, parking, security, building reserves, documentation quality, and realistic price per square meter usually matter as much as headline price."),
+            ("Should foreign buyers focus only on premium neighborhoods?", "Not always. Premium neighborhoods may offer better liquidity and services, while value areas can be cheaper but require careful checks on services, building finances, and resale demand."),
+        ],
+    },
+    "venezuela-property-investment-guide": {
+        "path": "/venezuela-property-investment-guide/",
+        "title": "Venezuela Property Investment Guide: Upside, Risks & Buyer Fit",
+        "description": "Venezuela property investment guide for foreign buyers: pricing upside, diaspora and tourism demand, title risk, sanctions, liquidity, and diligence workflow.",
+        "keywords": "Venezuela property investment guide, Venezuela real estate investment, Venezuela investment property, Venezuela property risk",
+        "h1": "Venezuela Property Investment Guide",
+        "answer": "Venezuela property can screen as discounted, but the investment case depends on title quality, local execution, services, liquidity, sanctions screening, and whether the buyer can tolerate a long holding period.",
+        "sections": [
+            ("Why investors evaluate Venezuela property", "Investors usually look at Venezuela because asking prices can appear low compared with North American markets, while diaspora demand, tourism recovery, and premium urban scarcity create possible long-term upside."),
+            ("Where the investment case can break", "The apparent discount can disappear if the property has weak title, unclear seller authority, poor building services, unpaid condominium debts, payment friction, or limited resale liquidity."),
+            ("Who this fits", "The market is better suited to diaspora buyers, local operators, and long-horizon investors with trusted Venezuelan counsel and on-the-ground verification capacity."),
+            ("Who should avoid it", "Avoid Venezuelan property if you need predictable financing, remote-only execution, quick resale liquidity, or a low-friction purchase process."),
+        ],
+        "source_notes": GENERAL_SOURCE_NOTES + CANADA_SOURCE_NOTES + LEGAL_SOURCE_NOTES,
+        "faqs": [
+            ("Is Venezuela property a passive investment?", "Usually no. Buyers should expect active diligence, local verification, document review, and ongoing attention to building services and liquidity."),
+            ("What is the main investment risk?", "The largest risk is often not price; it is whether the title, seller authority, payment path, and property condition support a clean, enforceable transaction."),
+            ("Which cities should investors compare first?", "Caracas, Margarita Island, Valencia, and Lecheria give a practical first screen across business, vacation, value, and coastal lifestyle markets."),
+        ],
+    },
+    "venezuela-real-estate-lawyer": {
+        "path": "/venezuela-real-estate-lawyer/",
+        "title": "Venezuela Real Estate Lawyer: What Foreign Buyers Should Ask",
+        "description": "How foreign buyers should work with a Venezuela real estate lawyer: title review, seller authority, registry checks, powers of attorney, sanctions screening, and closing documents.",
+        "keywords": "Venezuela real estate lawyer, Venezuela property lawyer, Venezuela title review, Venezuela real estate attorney, property due diligence Venezuela",
+        "h1": "Venezuela Real Estate Lawyer",
+        "answer": "A Venezuela real estate lawyer should help verify title, seller authority, registry status, encumbrances, condominium debts, powers of attorney, and closing documentation before a buyer sends funds or signs binding documents.",
+        "sections": [
+            ("When to involve counsel", "Bring in independent Venezuelan counsel before paying a deposit, signing a reservation agreement, granting a power of attorney, or relying on seller-provided documents."),
+            ("What a lawyer should review", "Core review items include the registered title instrument, chain of title, seller identity and authority, liens or encumbrances, inheritance or marital claims, condominium-fee status, utility debt, parking rights, and closing route."),
+            ("Questions to ask before hiring", "Ask whether the lawyer is independent from the seller and broker, which registry checks they will perform, how they document findings, what closing documents are required, and how they handle powers of attorney for foreign buyers."),
+            ("What counsel cannot solve alone", "A lawyer cannot turn a weak listing into a good asset. Buyers still need property inspection, price comparison, sanctions screening, payment controls, and local judgment about building services and neighborhood liquidity."),
+        ],
+        "source_notes": GENERAL_SOURCE_NOTES + LEGAL_SOURCE_NOTES,
+        "faqs": [
+            ("Do foreign buyers need a Venezuela real estate lawyer?", "For any serious purchase, independent Venezuelan counsel is strongly recommended because title, registry, seller authority, and closing requirements need local review."),
+            ("Should I use the seller's lawyer?", "Buyers should avoid relying only on seller-side counsel. Independent buyer counsel helps reduce conflicts of interest and verifies documents from the buyer's perspective."),
+            ("Can a lawyer verify whether a listing is safe?", "A lawyer can review legal documents and seller authority, but buyers should also inspect condition, building services, price comparables, sanctions exposure, and payment logistics."),
+        ],
+    },
 }
 
 
@@ -418,7 +477,24 @@ def market_stats(listings: list[Listing] | None = None) -> dict:
 
 def real_estate_paths() -> list[str]:
     paths = ["/real-estate/", "/real-estate/properties/", "/real-estate/buyers-guide/"]
+    paths.extend(CORE_SEO_PATHS)
     paths.extend(page["path"] for page in GUIDES.values())
     paths.extend(page["path"] for page in CITY_PAGES.values())
     paths.extend(f"/real-estate/property/{listing.slug}/" for listing in LISTINGS)
-    return paths
+    return list(dict.fromkeys(paths))
+
+
+CORE_SEO_PATHS = (
+    "/venezuela-real-estate/",
+    "/venezuela-homes-for-sale/",
+    "/caracas-real-estate/",
+    "/caracas-apartments-for-sale/",
+    "/margarita-island-real-estate/",
+    "/buy-property-in-venezuela/",
+    "/can-americans-buy-property-in-venezuela/",
+    "/can-canadians-buy-property-in-venezuela/",
+    "/venezuela-real-estate-prices/",
+    "/venezuela-property-investment-guide/",
+    "/venezuela-real-estate-risks/",
+    "/venezuela-real-estate-lawyer/",
+)
