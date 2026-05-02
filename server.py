@@ -1925,14 +1925,19 @@ def tool_bolivar_usd():
                 "Venezuelan Bolívar to USD Exchange Rate — Live BCV Rate"
             ),
             description=(
-                f"Today's official Banco Central de Venezuela USD/VES rate is "
-                f"Bs. {rate_usd:.4f} per US$1. Free Bolivar/Dollar converter, "
-                f"Euro cross-rate, and analysis of why the parallel rate diverges."
+                f"Today's BCV rate: Bs. {rate_usd:.4f}/US$1. Free bolívar "
+                f"converter, Euro cross-rate, and parallel-market analysis."
                 if rate_usd else
-                "Live Banco Central de Venezuela USD/VES exchange rate, free "
-                "Bolivar/Dollar converter, Euro cross-rate, and parallel-market context."
+                "Live BCV bolívar-to-USD rate, free converter, Euro "
+                "cross-rate, and parallel-market context."
             ),
-            keywords="bolivar to dollar, BCV exchange rate, VES USD, Venezuelan bolivar exchange rate, dolar BCV, bolivar converter",
+            keywords=(
+                "bolivar to dollar, bolivar to usd, venezuela currency, "
+                "venezuelan bolivar, BCV exchange rate, VES USD, "
+                "Venezuelan bolivar exchange rate, dolar BCV, "
+                "bolivar converter, venezuelan bolivar to usd, "
+                "venezuela money, venezuela exchange rate"
+            ),
             faq=[
                 {
                     "q": "What is the current official Venezuelan Bolívar to US Dollar rate?",
@@ -1950,6 +1955,34 @@ def tool_bolivar_usd():
                 {
                     "q": "Can foreign investors freely convert bolívars to USD?",
                     "a": "Capital repatriation in foreign currency requires registration with the BCV and approval against the prevailing exchange-control regulations. FX availability remains the single largest operational risk for foreign investors.",
+                },
+                {
+                    "q": "What is the currency of Venezuela?",
+                    "a": (
+                        "Venezuela's official currency is the bolívar digital "
+                        "(VES), managed by the Banco Central de Venezuela (BCV). "
+                        "The currency has been redenominated three times: the "
+                        "bolívar fuerte replaced the original bolívar in 2008 "
+                        "(removing 3 zeros), the bolívar soberano replaced the "
+                        "fuerte in 2018 (removing 5 zeros), and the bolívar "
+                        "digital replaced the soberano in 2021 (removing 6 zeros). "
+                        "In practice, approximately 65% of transactions in "
+                        "Venezuela now occur in US dollars."
+                    ),
+                },
+                {
+                    "q": "How many Venezuelan bolívars equal one US dollar?",
+                    "a": (
+                        f"As of {rate_date}, the official BCV rate is Bs. "
+                        f"{rate_usd:.4f} per US$1. "
+                        if rate_usd else
+                        "The official BCV rate changes daily. "
+                    ) + (
+                        "The parallel (informal) rate typically trades at a "
+                        "premium of 2–8% above the official rate. Use the "
+                        "converter at the top of this page for the latest "
+                        "official rate."
+                    ),
                 },
             ],
         )
@@ -5647,14 +5680,11 @@ def venezuela_oil_page():
 
         base = _base_url()
         canonical = f"{base}/venezuela-oil"
-        title = (
-            "Venezuela Oil: 303B Barrel Reserves, PDVSA & Production Guide (2026)"
-        )
+        title = "Venezuela Oil: 303B Barrels, PDVSA & Production (2026)"
         description = (
-            "Venezuela holds 303 billion barrels of proven oil reserves — the "
-            "largest in the world. Current production ~1.1M bpd, PDVSA operations, "
-            "Chevron expansion, US sanctions status (GL 46B–57), Orinoco Belt, "
-            "refinery infrastructure, and investment outlook."
+            "Venezuela holds 303B barrels of oil reserves — world's largest. "
+            "Production ~1.1M bpd, PDVSA, Chevron, sanctions status, and "
+            "investment outlook."
         )
         seo = {
             "title": title,
@@ -5665,7 +5695,9 @@ def venezuela_oil_page():
                 "Citgo Venezuela, Chevron Venezuela, Venezuela oil sanctions, "
                 "Venezuela oil industry, Venezuela petroleum, "
                 "PDVSA sanctions, Venezuela crude oil, Venezuela energy, "
-                "Venezuela oil investment"
+                "Venezuela oil investment, PDVSA bonds, Venezuela bonds, "
+                "Venezuela sovereign debt, Venezuela default, PDVSA stock, "
+                "Venezuela debt restructuring"
             ),
             "canonical": canonical,
             "site_name": _s.site_name,
@@ -5678,6 +5710,35 @@ def venezuela_oil_page():
         }
 
         faq = [
+            {
+                "q": "Can you buy PDVSA bonds in 2026?",
+                "a": (
+                    "PDVSA bonds trade on secondary markets but are subject to "
+                    "OFAC restrictions. US persons cannot purchase PDVSA debt "
+                    "instruments that were originally issued after August 2017 "
+                    "(per EO 13808). Pre-2017 bonds (e.g., PDVSA 2020, 2022, "
+                    "2024 series) trade in distressed-debt markets at 5–15 cents "
+                    "on the dollar. The January 2026 transition government has "
+                    "signaled interest in a comprehensive debt restructuring, "
+                    "but no formal process has been announced. Investors should "
+                    "consult OFAC guidance and qualified legal counsel before "
+                    "any transaction."
+                ),
+            },
+            {
+                "q": "Has Venezuela defaulted on its debt?",
+                "a": (
+                    "Yes. Venezuela and PDVSA defaulted on approximately $60 billion "
+                    "in sovereign and quasi-sovereign bonds in late 2017. The country "
+                    "stopped making coupon payments on most obligations, and ISDA "
+                    "declared a credit event in 2018. As of 2026, Venezuela remains "
+                    "in default on virtually all its international debt obligations. "
+                    "The Rodriguez transition government has acknowledged the debt "
+                    "and engaged preliminary talks with bondholders through ad hoc "
+                    "creditor committees, but a formal restructuring framework "
+                    "awaits full OFAC sanctions normalization."
+                ),
+            },
             {
                 "q": "How much oil does Venezuela have?",
                 "a": (
@@ -5897,12 +5958,11 @@ def travel_page():
         # Round 3 (Apr 2026): 28d GSC — "travel" intent + Level-3 in title for
         # the dominant "travel to Venezuela" / "Caracas safety" queries; desc
         # keeps OFAC/embassy/printable card signals without repeating the title.
-        title = "Venezuela Travel Advisory 2026: Is Venezuela Safe? Level-3 Guide"
+        title = "Venezuela Travel Guide 2026: Safety, Hotels & Flights"
         description = (
-            "Is Venezuela safe to visit in 2026? US State Dept Level-3 "
-            "(Reconsider Travel) advisory, Caracas safety zones, vetted hotels, "
-            "airport transfers, embassies, visa requirements, OFAC compliance — "
-            "complete travel guide with printable emergency card."
+            "Venezuela travel guide 2026 — Level-3 advisory, Caracas safety "
+            "zones, vetted hotels, airport transfers, embassies, visas, and "
+            "OFAC compliance."
         )
         seo = {
             "title": title,
@@ -5913,7 +5973,10 @@ def travel_page():
                 "Caracas business travel, Caracas hotels, Venezuela travel guide, "
                 "embassies in Caracas, Venezuela security, "
                 "Caracas airport transfer, Venezuela travel checklist, "
-                "is it safe to travel to Venezuela"
+                "is it safe to travel to Venezuela, "
+                "American Airlines Venezuela, flights to Venezuela, "
+                "Venezuela airlines, Maiquetia airport, caracas hotels, "
+                "how to get to Venezuela, Venezuela flights from US"
             ),
             "canonical": canonical,
             "site_name": _s.site_name,
@@ -6023,6 +6086,33 @@ def travel_page():
                     "drivers, and journey management. OSAC (US State Department) "
                     "is also a free public-private intelligence-sharing service "
                     "for US-incorporated companies."
+                ),
+            },
+            {
+                "q": "Does American Airlines fly to Venezuela in 2026?",
+                "a": (
+                    "Yes. American Airlines resumed service to Venezuela in "
+                    "March 2026 following the political transition. The current "
+                    "route is Miami (MIA) to Caracas Maiquetía (CCS), operating "
+                    "daily. United Airlines also resumed Houston (IAH) to CCS "
+                    "service. Copa Airlines (via Panama City), Avianca (via "
+                    "Bogotá), and LATAM (via Lima/Bogotá) offer connecting "
+                    "options. Turkish Airlines operates Istanbul–Caracas. "
+                    "Direct flights from the US take approximately 4–4.5 hours. "
+                    "Book through the airline directly and confirm OFAC "
+                    "compliance requirements for your travel purpose."
+                ),
+            },
+            {
+                "q": "What is Maiquetía airport and how far is it from Caracas?",
+                "a": (
+                    "Simón Bolívar International Airport (IATA: CCS, ICAO: SVMI), "
+                    "commonly called Maiquetía, is Venezuela's main international "
+                    "gateway. It is located in Maiquetía on the Caribbean coast, "
+                    "approximately 21 km (13 miles) from central Caracas. The "
+                    "drive takes 30–60 minutes via the autopista depending on "
+                    "traffic and time of day. Always pre-arrange airport transfers "
+                    "through your hotel — never take unlicensed taxis."
                 ),
             },
         ]
@@ -6214,14 +6304,11 @@ def is_venezuela_safe_page():
 
         base = _base_url()
         canonical = f"{base}/is-venezuela-safe"
-        title = (
-            "Is Venezuela Safe? 2026 Safety Assessment, Crime Data & Travel Risks"
-        )
+        title = "Is Venezuela Safe? 2026 Crime Data & Safety Guide"
         description = (
-            "Is Venezuela safe to visit in 2026? Honest safety assessment — "
-            "US State Dept Level-3 advisory, crime statistics, Caracas neighborhood "
-            "safety zones, kidnapping risk, regional breakdown, and practical "
-            "security tips for tourists and business travelers."
+            "Is Venezuela safe in 2026? Level-3 advisory, crime stats, "
+            "Caracas neighborhood safety zones, kidnapping risk, and "
+            "security tips for travelers."
         )
         seo = {
             "title": title,
@@ -6426,10 +6513,9 @@ def ofac_sanctions_list_page():
             "OFAC Sanctions List & SDN List: Complete Guide (2026)"
         )
         description = (
-            "What is the OFAC sanctions list? Complete guide to the SDN List, "
-            "Venezuela sanctions program, Executive Orders, General Licenses, "
-            "how to search the OFAC list, compliance best practices, and 2026 "
-            "updates after the Venezuela political transition."
+            "OFAC sanctions list guide — SDN List, Venezuela sanctions "
+            "program, Executive Orders, General Licenses, how to search, "
+            "and 2026 compliance updates."
         )
         seo = {
             "title": title,
@@ -6633,10 +6719,9 @@ def why_is_venezuela_sanctioned_page():
             "Why Is Venezuela Sanctioned? Complete History & 2026 Status"
         )
         description = (
-            "Why did the US sanction Venezuela? Complete history from Obama's "
-            "first targeted sanctions (2015) through Trump's oil embargo, Biden's "
-            "conditional relief, and the 2026 post-transition recalibration. "
-            "Covers PDVSA, Executive Orders, and current status."
+            "Why did the US sanction Venezuela? History from Obama (2015) "
+            "through Trump's oil embargo, Biden's relief, and the 2026 "
+            "transition. PDVSA & EOs."
         )
         seo = {
             "title": title,
@@ -6903,6 +6988,440 @@ def visa_declaracion_jurada_landing():
         raise
     except Exception as exc:
         logger.exception("declaración jurada landing render failed: %s", exc)
+        abort(500)
+
+
+@app.route("/venezuela-economy")
+@app.route("/venezuela-economy/")
+def venezuela_economy_page():
+    """
+    Venezuela economy overview — GDP, inflation, currency, sanctions impact,
+    labor market, and investment climate. Targets "venezuela economy"
+    (1,900/mo), "venezuela gdp" (2,400/mo), "venezuela inflation" (1,300/mo).
+    """
+    try:
+        from src.page_renderer import _env, _base_url, _iso, settings as _s
+        from datetime import date as _date, datetime as _dt
+        import json as _json
+
+        base = _base_url()
+        canonical = f"{base}/venezuela-economy"
+        title = "Venezuela Economy 2026: GDP, Inflation & Outlook"
+        description = (
+            "Venezuela economy in 2026 — $100B GDP, inflation down from "
+            "130,000% to ~190%, dollarization, oil recovery, and foreign "
+            "investment climate."
+        )
+        seo = {
+            "title": title,
+            "description": description,
+            "keywords": (
+                "Venezuela economy, Venezuela GDP, Venezuela inflation, "
+                "Venezuela economic crisis, Venezuela economy 2026, "
+                "Venezuela GDP per capita, Venezuela dollarization, "
+                "Venezuela hyperinflation, Venezuela economic recovery, "
+                "Venezuela economic outlook, Venezuela currency crisis, "
+                "Venezuela economic collapse, Venezuela FDI, "
+                "Venezuela unemployment, Venezuela poverty rate"
+            ),
+            "canonical": canonical,
+            "site_name": _s.site_name,
+            "site_url": base,
+            "locale": _s.site_locale,
+            "og_image": f"{base}/static/og-image.png?v=3",
+            "og_type": "article",
+            "published_iso": _iso(_dt.utcnow()),
+            "modified_iso": _iso(_dt.utcnow()),
+        }
+
+        faq = [
+            {
+                "q": "What is Venezuela's GDP in 2026?",
+                "a": (
+                    "Venezuela's GDP is estimated at approximately $100 billion "
+                    "(nominal) in 2025–2026, recovering from a low of roughly "
+                    "$47 billion in 2020. This represents a significant rebound "
+                    "but remains far below the pre-crisis peak of $482 billion "
+                    "in 2014. Real GDP growth was approximately 5.0% in 2024, "
+                    "and IMF projections estimate 4–6% growth in 2026 driven by "
+                    "oil production recovery, FDI inflows, and the January 2026 "
+                    "hydrocarbon reform law."
+                ),
+            },
+            {
+                "q": "Is Venezuela's economy recovering?",
+                "a": (
+                    "Yes, but from an extraordinarily low base. Venezuela's economy "
+                    "contracted by approximately 75% between 2014 and 2021 — the "
+                    "worst peacetime economic collapse in modern history. Since 2022, "
+                    "growth has resumed at 4–8% annually, driven by de facto "
+                    "dollarization, partial sanctions relief (Chevron license), "
+                    "stabilizing oil production, and the January 2026 political "
+                    "transition which unlocked new FDI and General Licenses."
+                ),
+            },
+            {
+                "q": "What caused Venezuela's economic crisis?",
+                "a": (
+                    "Venezuela's economic crisis resulted from multiple reinforcing "
+                    "factors: extreme oil dependency (95%+ of export revenue), "
+                    "massive government spending and money printing under Chávez "
+                    "and Maduro, price controls that destroyed private enterprise, "
+                    "expropriation of ~1,200+ businesses, PDVSA mismanagement that "
+                    "collapsed oil production from 3.2M to 0.4M bpd, US economic "
+                    "sanctions (2017–present), and resulting hyperinflation that "
+                    "peaked at 130,060% in 2018."
+                ),
+            },
+            {
+                "q": "What is the inflation rate in Venezuela?",
+                "a": (
+                    "Venezuela's annual inflation rate fell to approximately 190% "
+                    "in 2024, down dramatically from its hyperinflationary peak "
+                    "of 130,060% in 2018 (per IMF). The decline reflects de facto "
+                    "dollarization (65%+ of transactions in USD), tighter BCV "
+                    "monetary policy, and reduced government money printing. "
+                    "While still very high by global standards, inflation is now "
+                    "within a range that permits basic commercial activity."
+                ),
+            },
+            {
+                "q": "Is Venezuela still dollarized?",
+                "a": (
+                    "Venezuela operates under de facto dollarization — an "
+                    "estimated 65% of all transactions are conducted in US "
+                    "dollars as of 2025–2026. The bolívar remains legal tender "
+                    "and is used for government payments, taxes, and some retail "
+                    "transactions, but the USD is the dominant medium of exchange "
+                    "in Caracas and major cities. The BCV publishes an official "
+                    "exchange rate daily."
+                ),
+            },
+            {
+                "q": "How do US sanctions affect Venezuela's economy?",
+                "a": (
+                    "US sanctions have significantly restricted Venezuela's "
+                    "ability to trade oil, access international financial markets, "
+                    "and attract foreign investment. The 2019 full Government of "
+                    "Venezuela block (EO 13884) was the most severe, cutting off "
+                    "most commercial transactions with US persons. Since the "
+                    "January 2026 transition, OFAC has issued new General Licenses "
+                    "permitting expanded oil operations, FDI, and financial "
+                    "services — but core SDN designations remain in place."
+                ),
+            },
+            {
+                "q": "What is Venezuela's main export?",
+                "a": (
+                    "Petroleum and petroleum products account for over 95% of "
+                    "Venezuela's export revenue. Venezuela holds the world's "
+                    "largest proven oil reserves (303 billion barrels) but "
+                    "production has fallen from 3.2 million bpd (1997 peak) to "
+                    "approximately 1.1 million bpd in 2026. Other exports include "
+                    "gold, iron ore, aluminum, and agricultural products, but "
+                    "these are marginal relative to oil."
+                ),
+            },
+            {
+                "q": "Can foreign companies invest in Venezuela in 2026?",
+                "a": (
+                    "Yes. The January 2026 Foreign Investment Promotion Law "
+                    "streamlined registration for foreign investors, and OFAC "
+                    "General Licenses now authorize expanded commercial activity "
+                    "including oil and gas operations (GL 49A–52), financial "
+                    "services, and new business establishment. However, OFAC "
+                    "sanctions compliance remains mandatory for all US persons, "
+                    "and FX repatriation risk, legal uncertainty, and political "
+                    "transition dynamics are significant operational risks."
+                ),
+            },
+        ]
+
+        graph = [
+            {
+                "@type": "BreadcrumbList",
+                "itemListElement": [
+                    {"@type": "ListItem", "position": 1, "name": "Home", "item": f"{base}/"},
+                    {"@type": "ListItem", "position": 2, "name": "Invest in Venezuela", "item": f"{base}/invest-in-venezuela"},
+                    {"@type": "ListItem", "position": 3, "name": "Venezuela Economy", "item": canonical},
+                ],
+            },
+            {
+                "@type": "Article",
+                "@id": f"{canonical}#article",
+                "url": canonical,
+                "headline": title,
+                "description": description,
+                "datePublished": seo["published_iso"],
+                "dateModified": seo["modified_iso"],
+                "author": {"@type": "Organization", "name": _s.site_name, "url": base + "/"},
+                "publisher": {
+                    "@type": "Organization",
+                    "name": _s.site_name,
+                    "url": base + "/",
+                    "logo": {
+                        "@type": "ImageObject",
+                        "url": f"{base}/static/og-image.png?v=3",
+                    },
+                },
+                "mainEntityOfPage": {"@type": "WebPage", "@id": canonical, "name": title},
+            },
+            {
+                "@type": "FAQPage",
+                "mainEntity": [
+                    {
+                        "@type": "Question",
+                        "name": q["q"],
+                        "acceptedAnswer": {"@type": "Answer", "text": q["a"]},
+                    }
+                    for q in faq
+                ],
+            },
+        ]
+        jsonld = _json.dumps(
+            {"@context": "https://schema.org", "@graph": graph},
+            ensure_ascii=False,
+        )
+
+        template = _env.get_template("venezuela_economy.html.j2")
+        html = template.render(
+            seo=seo,
+            jsonld=jsonld,
+            faq=faq,
+            updated_label=_date.today().strftime("%B %-d, %Y"),
+            current_year=_date.today().year,
+            recent_briefings=_fetch_recent_briefings(),
+        )
+        return Response(html, mimetype="text/html")
+    except HTTPException:
+        raise
+    except Exception as exc:
+        logger.exception("Venezuela economy page render failed: %s", exc)
+        abort(500)
+
+
+@app.route("/citgo")
+@app.route("/citgo/")
+def citgo_page():
+    """
+    Citgo Petroleum company profile — ownership, PDVSA connection,
+    refineries, sanctions, creditor battle, and 2026 outlook.
+    Targets "citgo" (40,500/mo), "citgo venezuela" (590/mo).
+    """
+    try:
+        from src.page_renderer import _env, _base_url, _iso, settings as _s
+        from datetime import date as _date, datetime as _dt
+        import json as _json
+
+        base = _base_url()
+        canonical = f"{base}/citgo"
+        title = "Citgo Petroleum: PDVSA Ownership & Sanctions (2026)"
+        description = (
+            "Citgo Petroleum — PDVSA's US refining arm, 769K bpd across "
+            "3 refineries. Ownership battle, $21B+ creditor claims, OFAC "
+            "sanctions, and 2026 outlook."
+        )
+        seo = {
+            "title": title,
+            "description": description,
+            "keywords": (
+                "Citgo, Citgo Petroleum, Citgo Venezuela, PDVSA Citgo, "
+                "Citgo stock, Citgo gas, Citgo ownership, "
+                "is Citgo owned by Venezuela, Citgo refineries, "
+                "Citgo sanctions, Citgo OFAC, PDV Holding, "
+                "Citgo gas station, Citgo acquisition, "
+                "Elliott Citgo, Citgo creditors"
+            ),
+            "canonical": canonical,
+            "site_name": _s.site_name,
+            "site_url": base,
+            "locale": _s.site_locale,
+            "og_image": f"{base}/static/og-image.png?v=3",
+            "og_type": "article",
+            "published_iso": _iso(_dt.utcnow()),
+            "modified_iso": _iso(_dt.utcnow()),
+        }
+
+        faq = [
+            {
+                "q": "Is Citgo owned by Venezuela?",
+                "a": (
+                    "Yes. Citgo Petroleum is owned by PDV Holding, Inc., a "
+                    "Delaware-incorporated subsidiary of PDVSA — Venezuela's "
+                    "state oil company. PDVSA acquired full ownership in 1990 "
+                    "for $1.3 billion. However, operational control has been "
+                    "separated from the Venezuelan government since 2019, when "
+                    "the US recognized Juan Guaidó and allowed an opposition-"
+                    "appointed board to manage Citgo under OFAC protection."
+                ),
+            },
+            {
+                "q": "What happened to Citgo?",
+                "a": (
+                    "Citgo became the center of a complex legal and geopolitical "
+                    "battle. After PDVSA defaulted on bonds in 2017 and the US "
+                    "imposed sanctions, control shifted to an opposition-appointed "
+                    "board. Over $21 billion in creditor claims were filed against "
+                    "PDV Holding (Citgo's parent). A US court ordered an auction "
+                    "of PDV Holding shares, and Elliott Investment Management won "
+                    "with a $7.3 billion bid in 2024. As of 2026, the Rodriguez "
+                    "transition government contests the sale, and Treasury review "
+                    "is paused."
+                ),
+            },
+            {
+                "q": "Can you buy Citgo stock?",
+                "a": (
+                    "No. Citgo Petroleum Corporation is a privately held company "
+                    "— its shares are not publicly traded on any stock exchange. "
+                    "Citgo is wholly owned by PDV Holding, which is in turn owned "
+                    "by PDVSA. The shares of PDV Holding are the subject of "
+                    "court-ordered creditor proceedings, not a public equity offering."
+                ),
+            },
+            {
+                "q": "How many gas stations does Citgo have?",
+                "a": (
+                    "Citgo supplies approximately 4,600 independently owned and "
+                    "operated gas stations across 30 US states. Citgo does not "
+                    "own or operate the retail stations directly — it is a "
+                    "branded fuel supplier and refiner. The Citgo brand is most "
+                    "concentrated in the Eastern US and Gulf Coast states."
+                ),
+            },
+            {
+                "q": "Where are Citgo refineries located?",
+                "a": (
+                    "Citgo operates three refineries in the United States: "
+                    "Lake Charles, Louisiana (432,000 bpd capacity — the "
+                    "6th-largest refinery in the US); Corpus Christi, Texas "
+                    "(165,000 bpd); and Lemont, Illinois (172,000 bpd, serving "
+                    "the Chicago metro area). Combined refining capacity is "
+                    "approximately 769,000 barrels per day."
+                ),
+            },
+            {
+                "q": "Why was Citgo sanctioned?",
+                "a": (
+                    "Citgo itself was not directly sanctioned, but its parent "
+                    "company PDVSA was designated under Executive Orders 13850 "
+                    "(2018) and 13884 (2019). OFAC issued General License 3K "
+                    "specifically to authorize continued Citgo operations in the "
+                    "US, ensuring fuel supply continuity. The sanctions block "
+                    "dividend repatriation to PDVSA and prohibit unauthorized "
+                    "transactions with the Government of Venezuela."
+                ),
+            },
+            {
+                "q": "Who controls Citgo now?",
+                "a": (
+                    "As of 2026, Citgo is managed by a board of directors that "
+                    "was originally appointed under the Guaidó-era opposition "
+                    "framework, operating under OFAC protective licensing. The "
+                    "Rodriguez transition government in Venezuela is seeking "
+                    "to restore Venezuelan state control over the board, while "
+                    "creditor proceedings and the pending Elliott acquisition "
+                    "create competing claims to PDV Holding shares."
+                ),
+            },
+            {
+                "q": "Is Citgo being sold?",
+                "a": (
+                    "A US District Court in Delaware ordered an auction of PDV "
+                    "Holding shares (Citgo's parent) to satisfy over $21 billion "
+                    "in creditor claims. Elliott Investment Management won the "
+                    "auction with a $7.3 billion bid in 2024. However, the sale "
+                    "requires Treasury/OFAC approval, and the January 2026 "
+                    "Rodriguez transition government has formally contested the "
+                    "sale, arguing it constitutes disposal of sovereign assets. "
+                    "The outcome remains pending."
+                ),
+            },
+            {
+                "q": "Does Citgo still get Venezuelan oil?",
+                "a": (
+                    "Citgo historically processed Venezuelan heavy crude but "
+                    "stopped receiving PDVSA shipments after US sanctions in "
+                    "2019. The refineries pivoted to Canadian heavy crude and "
+                    "other sources. Under the 2026 post-transition General "
+                    "Licenses, limited Venezuelan crude imports have resumed, "
+                    "but Citgo's crude slate remains diversified."
+                ),
+            },
+            {
+                "q": "What is PDVSA's connection to Citgo?",
+                "a": (
+                    "PDVSA (Petróleos de Venezuela, S.A.) is Venezuela's state "
+                    "oil company and the ultimate parent of Citgo through an "
+                    "ownership chain: PDVSA → PDV Holding, Inc. → Citgo Holding, "
+                    "Inc. → Citgo Petroleum Corporation. PDVSA acquired Citgo in "
+                    "stages: 50% in 1986, full ownership in 1990. Citgo is "
+                    "PDVSA's most valuable overseas asset and has been central "
+                    "to Venezuela's US energy presence for over three decades."
+                ),
+            },
+        ]
+
+        graph = [
+            {
+                "@type": "BreadcrumbList",
+                "itemListElement": [
+                    {"@type": "ListItem", "position": 1, "name": "Home", "item": f"{base}/"},
+                    {"@type": "ListItem", "position": 2, "name": "Venezuela Oil", "item": f"{base}/venezuela-oil"},
+                    {"@type": "ListItem", "position": 3, "name": "Citgo Petroleum", "item": canonical},
+                ],
+            },
+            {
+                "@type": "Article",
+                "@id": f"{canonical}#article",
+                "url": canonical,
+                "headline": title,
+                "description": description,
+                "datePublished": seo["published_iso"],
+                "dateModified": seo["modified_iso"],
+                "author": {"@type": "Organization", "name": _s.site_name, "url": base + "/"},
+                "publisher": {
+                    "@type": "Organization",
+                    "name": _s.site_name,
+                    "url": base + "/",
+                    "logo": {
+                        "@type": "ImageObject",
+                        "url": f"{base}/static/og-image.png?v=3",
+                    },
+                },
+                "mainEntityOfPage": {"@type": "WebPage", "@id": canonical, "name": title},
+            },
+            {
+                "@type": "FAQPage",
+                "mainEntity": [
+                    {
+                        "@type": "Question",
+                        "name": q["q"],
+                        "acceptedAnswer": {"@type": "Answer", "text": q["a"]},
+                    }
+                    for q in faq
+                ],
+            },
+        ]
+        jsonld = _json.dumps(
+            {"@context": "https://schema.org", "@graph": graph},
+            ensure_ascii=False,
+        )
+
+        template = _env.get_template("citgo.html.j2")
+        html = template.render(
+            seo=seo,
+            jsonld=jsonld,
+            faq=faq,
+            updated_label=_date.today().strftime("%B %-d, %Y"),
+            current_year=_date.today().year,
+            recent_briefings=_fetch_recent_briefings(),
+        )
+        return Response(html, mimetype="text/html")
+    except HTTPException:
+        raise
+    except Exception as exc:
+        logger.exception("Citgo page render failed: %s", exc)
         abort(500)
 
 
@@ -7177,6 +7696,8 @@ def sitemap_xml():
         {"loc": f"{base}/is-venezuela-safe", "lastmod": today_iso, "changefreq": "weekly", "priority": "0.85"},
         {"loc": f"{base}/ofac-sanctions-list", "lastmod": today_iso, "changefreq": "weekly", "priority": "0.85"},
         {"loc": f"{base}/why-is-venezuela-sanctioned", "lastmod": today_iso, "changefreq": "weekly", "priority": "0.8"},
+        {"loc": f"{base}/venezuela-economy", "lastmod": today_iso, "changefreq": "weekly", "priority": "0.85"},
+        {"loc": f"{base}/citgo", "lastmod": today_iso, "changefreq": "weekly", "priority": "0.85"},
         {"loc": f"{base}/get-venezuela-visa", "lastmod": today_iso, "changefreq": "weekly", "priority": "0.85"},
         {"loc": f"{base}/sources", "lastmod": today_iso, "changefreq": "weekly", "priority": "0.6"},
         {"loc": f"{base}/briefing", "lastmod": today_iso, "changefreq": "daily", "priority": "0.9"},

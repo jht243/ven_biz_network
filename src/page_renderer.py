@@ -312,12 +312,18 @@ def render_blog_index(posts: Iterable) -> str:
     posts_list = list(posts)
 
     seo = {
-        "title": "Venezuelan investment & sanctions analysis — long-form briefings",
+        "title": "Venezuela News Today: Sanctions & Economy (2026)",
         "description": (
-            "Long-form analysis of OFAC sanctions, Asamblea Nacional legislation, "
-            "Gaceta Oficial decrees, and sector capital flows. Published twice daily."
+            "Venezuela news — OFAC sanctions, Asamblea Nacional, Gaceta "
+            "Oficial decrees, economic data, and capital flows. Published "
+            "twice daily."
         ),
-        "keywords": "invest in Venezuela, OFAC Venezuela analysis, Caracas investment briefing, Venezuelan sectors",
+        "keywords": (
+            "Venezuela news, Venezuela news today, Venezuela latest news, "
+            "Venezuela sanctions news, Venezuela economy news, "
+            "invest in Venezuela, OFAC Venezuela analysis, "
+            "Caracas investment briefing, Venezuelan sectors"
+        ),
         "canonical": canonical,
         "site_name": settings.site_name,
         "site_url": base,
@@ -596,11 +602,11 @@ _LANDING_PAGE_SEO_OVERRIDES: dict[str, dict] = {
         ),
     },
     "/sectors/economic": {
-        "title": "Venezuela Economy 2026: Inflation, FX & Sanctions Risk",
+        "title": "Venezuela Economic Sector: Investor Risk & OFAC (2026)",
         "description": (
-            "Venezuela's economic outlook for 2026: inflation, FX policy, "
-            "OFAC sanctions, and the deal flow signals foreign investors "
-            "are tracking month-by-month."
+            "Economic sector analysis for Venezuela investors — FX policy, "
+            "inflation risk, OFAC sanctions exposure, and deal flow "
+            "signals to track monthly."
         ),
     },
     "/sectors/governance": {
@@ -671,6 +677,56 @@ _LANDING_PAGE_SEO_OVERRIDES: dict[str, dict] = {
             "(BCV): what it does, how it sets FX rates, and why it "
             "matters for foreign investors."
         ),
+    },
+    "/invest-in-venezuela": {
+        "title": "Invest in Venezuela 2026: Stock Market, Bonds & OFAC",
+        "description": (
+            "How to invest in Venezuela in 2026 — Caracas stock exchange "
+            "(BVC), PDVSA bonds, oil & gas, real estate, mining. OFAC "
+            "compliance guide."
+        ),
+        "faq": [
+            (
+                "Does Venezuela have a stock market?",
+                "Yes. The Bolsa de Valores de Caracas (BVC) is Venezuela's "
+                "stock exchange, operating since 1947. It lists approximately "
+                "30 companies, mainly in banking, telecoms, and manufacturing. "
+                "Trading volumes are very thin by international standards, and "
+                "foreign participation requires a local brokerage account and "
+                "BCV registration. Most institutional foreign investment in "
+                "Venezuela occurs through direct deals, JVs, or bond markets "
+                "rather than the equity exchange."
+            ),
+            (
+                "How can foreigners invest in Venezuela in 2026?",
+                "Foreign investment is possible through several channels: "
+                "OFAC-licensed oil and gas joint ventures (GL 49A–52), "
+                "distressed sovereign and PDVSA debt on secondary markets, "
+                "direct real estate purchases in bolívars or USD, and minority "
+                "stakes in local companies. All US persons must verify OFAC "
+                "compliance before any transaction. The January 2026 Foreign "
+                "Investment Promotion Law streamlines registration for new "
+                "entrants."
+            ),
+            (
+                "What are the biggest risks of investing in Venezuela?",
+                "Key risks include OFAC sanctions compliance (fines up to "
+                "$20M per violation), foreign exchange controls and repatriation "
+                "restrictions, legal uncertainty and weak rule of law, political "
+                "instability during the transition period, and operational "
+                "challenges including infrastructure gaps and skilled labor "
+                "shortages."
+            ),
+            (
+                "Can you buy Venezuelan bonds?",
+                "Venezuelan sovereign bonds and PDVSA bonds trade on secondary "
+                "distressed-debt markets at 5–15 cents on the dollar. US persons "
+                "face OFAC restrictions on bonds issued after August 2017. "
+                "Pre-2017 bonds are tradeable subject to standard compliance "
+                "screening. A comprehensive debt restructuring is expected but "
+                "has not yet been formally announced."
+            ),
+        ],
     },
 }
 

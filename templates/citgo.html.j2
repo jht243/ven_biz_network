@@ -1,0 +1,1093 @@
+{% extends "_base.html.j2" %}
+{% from "_base.html.j2" import share_button %}
+
+{% block head_extra %}
+<style>
+  .citgo-hero { background: linear-gradient(180deg, #f6f8fa 0%, var(--white) 100%); padding: 28px 0 16px; margin-bottom: 16px; }
+  .citgo-hero .kicker { font-size: 12px; text-transform: uppercase; letter-spacing: 1.4px; color: #cc0000; font-weight: 700; }
+  .citgo-hero h1 { font-family: var(--font-serif); font-size: 32px; color: var(--sr-blue-dark); margin: 8px 0 8px; line-height: 1.2; }
+  .citgo-hero p.lead { font-family: var(--font-serif); font-style: italic; color: var(--sr-gray-text); font-size: 16px; max-width: 720px; margin: 0; }
+
+  .stat-grid { display: grid; grid-template-columns: 1fr; gap: 0; margin: 20px 0 28px; border: 1px solid #d0dae8; border-radius: 6px; overflow: hidden; }
+  @media (min-width: 640px) { .stat-grid { grid-template-columns: 1fr 1fr 1fr; } }
+  @media (min-width: 980px) { .stat-grid { grid-template-columns: repeat(6, 1fr); } }
+  .stat-card { padding: 18px 14px; text-align: center; border-bottom: 1px solid #d0dae8; }
+  @media (min-width: 640px) { .stat-card { border-bottom: 0; border-right: 1px solid #d0dae8; } .stat-card:last-child { border-right: 0; } }
+  .stat-card .stat-num { font-family: var(--font-serif); font-size: 22px; font-weight: 700; color: var(--sr-blue-dark); line-height: 1.1; }
+  .stat-card .stat-label { font-size: 11px; color: var(--sr-gray-text); margin-top: 4px; text-transform: uppercase; letter-spacing: 0.5px; font-weight: 600; }
+
+  .toc { background: var(--sr-gray-bg); border-left: 3px solid var(--sr-blue); padding: 18px 22px; margin: 0 0 32px; font-size: 14px; }
+  .toc h3 { font-family: var(--font-serif); font-size: 14px; text-transform: uppercase; letter-spacing: 1px; color: var(--sr-blue-dark); margin-bottom: 10px; }
+  .toc ol { margin-left: 20px; columns: 2; column-gap: 24px; }
+  .toc li { margin-bottom: 6px; }
+  @media (max-width: 640px) { .toc ol { columns: 1; } }
+
+  .sec { margin: 40px 0 24px; padding-top: 8px; }
+  .sec h2 { font-family: var(--font-serif); font-size: 26px; color: var(--sr-blue-dark); margin-bottom: 8px; }
+  .sec .sec-lead { color: var(--sr-gray-text); margin-bottom: 18px; font-size: 15px; }
+  .sec h3 { font-family: var(--font-serif); font-size: 20px; color: var(--sr-blue-dark); margin: 24px 0 10px; }
+  .sec p { margin: 0 0 14px; line-height: 1.7; }
+  .sec ul, .sec ol { margin: 0 0 14px 22px; }
+  .sec li { margin-bottom: 6px; line-height: 1.6; }
+
+  .card-grid { display: grid; grid-template-columns: 1fr; gap: 14px; margin-bottom: 18px; }
+  @media (min-width: 720px) { .card-grid.cols-2 { grid-template-columns: 1fr 1fr; } }
+  @media (min-width: 980px) { .card-grid.cols-3 { grid-template-columns: 1fr 1fr 1fr; } }
+
+  .card { background: var(--white); border: 1px solid var(--sr-gray-light); border-radius: 4px; padding: 18px 20px; transition: border-color 0.15s, transform 0.15s; }
+  .card:hover { border-color: var(--sr-blue); transform: translateY(-1px); }
+  .card h3 { font-family: var(--font-serif); font-size: 17px; color: var(--sr-blue-dark); margin-bottom: 6px; }
+  .card .meta { font-size: 12px; text-transform: uppercase; letter-spacing: 0.5px; color: var(--sr-gray-text); margin-bottom: 8px; }
+  .card .row { font-size: 14px; margin: 4px 0; }
+  .card .row strong { color: var(--sr-dark-text); display: inline-block; min-width: 96px; font-weight: 600; }
+  .card a.cta { font-size: 13px; color: var(--sr-blue); font-weight: 600; text-decoration: none; }
+  .card a.cta:hover { text-decoration: underline; }
+  .card .note { font-size: 13px; color: var(--sr-gray-text); margin-top: 10px; line-height: 1.55; padding-top: 10px; border-top: 1px dotted var(--sr-gray-light); }
+
+  .em-table { width: 100%; border-collapse: collapse; margin: 8px 0 18px; font-size: 14px; }
+  .em-table th, .em-table td { text-align: left; padding: 10px 12px; border-bottom: 1px solid var(--sr-gray-light); }
+  .em-table th { background: var(--sr-gray-bg); font-size: 12px; text-transform: uppercase; letter-spacing: 0.5px; color: var(--sr-gray-text); font-weight: 600; }
+  .em-table td.num { font-family: var(--font-sans); font-weight: 600; color: var(--sr-blue); white-space: nowrap; }
+  .em-table tr.highlight { background: #f4f8fc; }
+  .em-table tr.highlight td { font-weight: 600; }
+
+  .disclaimer { background: #fff8e1; border-left: 4px solid #f5b041; padding: 14px 18px; border-radius: 3px; margin: 20px 0; font-size: 13.5px; line-height: 1.65; color: var(--sr-dark-text); }
+
+  .timeline { position: relative; padding: 0 0 0 32px; margin: 24px 0 28px; }
+  .timeline::before { content: ""; position: absolute; top: 0; bottom: 0; left: 14px; width: 3px; background: var(--sr-gray-light); border-radius: 2px; }
+  .tl-item { position: relative; margin-bottom: 24px; }
+  .tl-item:last-child { margin-bottom: 0; }
+  .tl-dot { position: absolute; left: -25px; top: 3px; width: 14px; height: 14px; border-radius: 50%; border: 3px solid var(--sr-blue); background: var(--white); z-index: 1; }
+  .tl-item.positive .tl-dot { border-color: #2e7d32; }
+  .tl-item.negative .tl-dot { border-color: #cc0000; }
+  .tl-item.pending .tl-dot { border-color: #f5b041; }
+  .tl-date { font-size: 12px; text-transform: uppercase; letter-spacing: 0.8px; color: var(--sr-gray-text); font-weight: 700; margin-bottom: 3px; }
+  .tl-title { font-family: var(--font-serif); font-size: 15px; color: var(--sr-blue-dark); font-weight: 700; margin-bottom: 4px; }
+  .tl-desc { font-size: 14px; color: var(--sr-dark-text); line-height: 1.6; }
+
+  .ownership-chain { display: flex; align-items: center; flex-wrap: wrap; gap: 8px; margin: 18px 0 24px; padding: 18px; background: var(--sr-gray-bg); border-radius: 6px; }
+  .ownership-chain .chain-node { padding: 10px 16px; background: var(--white); border: 1px solid var(--sr-gray-light); border-radius: 4px; font-size: 14px; font-weight: 600; color: var(--sr-blue-dark); text-align: center; }
+  .ownership-chain .chain-arrow { font-size: 18px; color: var(--sr-gray-text); font-weight: 700; }
+
+  .faq-list { margin: 18px 0 28px; }
+  .faq-item { border: 1px solid var(--sr-gray-light); border-radius: 4px; margin-bottom: 10px; overflow: hidden; }
+  .faq-q { display: flex; align-items: center; gap: 12px; padding: 16px 18px; cursor: pointer; background: var(--white); font-family: var(--font-serif); font-size: 16px; font-weight: 700; color: var(--sr-blue-dark); transition: background 0.15s; border: 0; width: 100%; text-align: left; }
+  .faq-q:hover { background: var(--sr-gray-bg); }
+  .faq-q .faq-icon { flex-shrink: 0; width: 24px; height: 24px; border-radius: 50%; background: var(--sr-blue); color: var(--white); display: flex; align-items: center; justify-content: center; font-size: 14px; font-weight: 700; transition: transform 0.2s; font-family: var(--font-sans); }
+  .faq-item.open .faq-q .faq-icon { transform: rotate(45deg); }
+  .faq-a { padding: 0 18px 16px; font-size: 15px; line-height: 1.7; color: var(--sr-dark-text); display: none; }
+  .faq-item.open .faq-a { display: block; }
+
+  .related-grid { display: grid; grid-template-columns: 1fr; gap: 12px; margin: 16px 0 24px; }
+  @media (min-width: 720px) { .related-grid { grid-template-columns: 1fr 1fr; } }
+  .related-link { display: block; padding: 16px 18px; background: var(--white); border: 1px solid var(--sr-gray-light); border-radius: 4px; text-decoration: none; color: inherit; transition: border-color 0.15s, transform 0.15s; }
+  .related-link:hover { border-color: var(--sr-blue); transform: translateY(-1px); }
+  .related-link .rl-tag { font-size: 11px; text-transform: uppercase; letter-spacing: 1px; color: var(--sr-red); font-weight: 700; margin-bottom: 4px; }
+  .related-link .rl-title { font-family: var(--font-serif); font-size: 16px; color: var(--sr-blue-dark); font-weight: 700; margin-bottom: 4px; }
+  .related-link .rl-desc { font-size: 13px; color: var(--sr-gray-text); line-height: 1.5; }
+</style>
+{% endblock %}
+
+{% block content %}
+<section class="container-wide">
+
+  <nav class="breadcrumbs" aria-label="Breadcrumb">
+    <a href="/">Home</a><span>/</span>
+    <a href="/invest-in-venezuela">Invest in Venezuela</a><span>/</span>
+    <span>Citgo</span>
+    <span style="margin-left:auto;">{{ share_button(seo.canonical, seo.title) }}</span>
+  </nav>
+
+  <header class="citgo-hero">
+    <div class="kicker">Company Profile &middot; Updated {{ updated_label }}</div>
+    <h1>Citgo Petroleum: Venezuela&rsquo;s US Refining Arm, PDVSA &amp; Ownership Battle</h1>
+    <p class="lead">
+      A comprehensive profile of Citgo Petroleum Corporation&mdash;the Venezuelan
+      state-owned refining and retail giant operating on American soil, caught in a
+      multi-billion-dollar legal battle between creditors, governments, and geopolitics.
+    </p>
+  </header>
+
+  {# ============ Key stats banner ============ #}
+  <div class="stat-grid">
+    <div class="stat-card">
+      <div class="stat-num">769K bpd</div>
+      <div class="stat-label">Refining capacity</div>
+    </div>
+    <div class="stat-card">
+      <div class="stat-num">~4,600</div>
+      <div class="stat-label">Retail stations</div>
+    </div>
+    <div class="stat-card">
+      <div class="stat-num">PDVSA</div>
+      <div class="stat-label">Parent (via PDV Holding)</div>
+    </div>
+    <div class="stat-card">
+      <div class="stat-num">~$35B</div>
+      <div class="stat-label">Revenue (2023 est.)</div>
+    </div>
+    <div class="stat-card">
+      <div class="stat-num">~3,400</div>
+      <div class="stat-label">Employees</div>
+    </div>
+    <div class="stat-card">
+      <div class="stat-num">Houston</div>
+      <div class="stat-label">Headquarters</div>
+    </div>
+  </div>
+
+  {# ============ Table of contents ============ #}
+  <nav class="toc" aria-label="Table of contents">
+    <h3>Contents</h3>
+    <ol>
+      <li><a href="#what-is-citgo">What Is Citgo?</a></li>
+      <li><a href="#ownership">Ownership Structure &amp; PDVSA Connection</a></li>
+      <li><a href="#ownership-battle">The Citgo Ownership Battle (Timeline)</a></li>
+      <li><a href="#refineries">Citgo Refineries</a></li>
+      <li><a href="#sanctions">OFAC Sanctions &amp; Citgo</a></li>
+      <li><a href="#financials">Financial Performance</a></li>
+      <li><a href="#creditor-claims">The Creditor Claims</a></li>
+      <li><a href="#outlook-2026">2026 Outlook</a></li>
+      <li><a href="#faq">Frequently Asked Questions</a></li>
+    </ol>
+  </nav>
+
+  {# ======================================================================= #}
+  {# 1. WHAT IS CITGO?                                                       #}
+  {# ======================================================================= #}
+  <section id="what-is-citgo" class="sec">
+    <h2>1. What Is Citgo?</h2>
+    <p class="sec-lead">
+      Citgo Petroleum Corporation is a US-based refiner, transporter, and marketer
+      of petroleum products&mdash;and the most valuable overseas asset of the
+      Venezuelan state.
+    </p>
+
+    <p>
+      Citgo traces its origins to 1910, when Henry Doherty founded Cities Service
+      Company in Bartlesville, Oklahoma. The company grew into a major integrated oil
+      firm before being acquired by Occidental Petroleum in 1982. In 1983, the retail
+      and refining operations were rebranded as &ldquo;Citgo,&rdquo; and the company
+      was subsequently purchased by the Southland Corporation before Petr&oacute;leos
+      de Venezuela (PDVSA) acquired a 50% stake in 1986 and full ownership in 1990
+      for approximately $1.3&nbsp;billion.
+    </p>
+    <p>
+      Today, Citgo is the 7th-largest US refiner by capacity and a fixture of the
+      American fuel landscape. The company operates:
+    </p>
+    <ul>
+      <li><strong>Three refineries</strong> with a combined capacity of approximately 769,000&nbsp;barrels per day (bpd): Lemont, Illinois (172,000&nbsp;bpd); Corpus Christi, Texas (165,000&nbsp;bpd); and Lake Charles, Louisiana (432,000&nbsp;bpd).</li>
+      <li><strong>48 petroleum product terminals</strong> and <strong>4 ethanol production plants</strong> across the eastern and Gulf Coast states.</li>
+      <li><strong>~4,600 independently owned and operated gas stations</strong> branded under the Citgo name in 30 states and the District of Columbia.</li>
+    </ul>
+    <p>
+      Despite being wholly owned by a Venezuelan state entity, Citgo operates as an
+      American company, headquartered in Houston, Texas, employing approximately
+      3,400 US workers, paying US taxes, and subject to US corporate law and regulation.
+      This unique dual identity&mdash;Venezuelan-owned but American-operated&mdash;is
+      at the heart of every legal and political battle surrounding the company.
+    </p>
+  </section>
+
+  {# ======================================================================= #}
+  {# 2. OWNERSHIP STRUCTURE                                                   #}
+  {# ======================================================================= #}
+  <section id="ownership" class="sec">
+    <h2>2. Ownership Structure &amp; PDVSA Connection</h2>
+    <p class="sec-lead">
+      Citgo&rsquo;s corporate structure is a layered chain stretching from the
+      Bolivarian Republic of Venezuela to a Delaware-incorporated petroleum company.
+    </p>
+
+    <div class="ownership-chain">
+      <div class="chain-node">Government of Venezuela</div>
+      <span class="chain-arrow">&rarr;</span>
+      <div class="chain-node">PDVSA</div>
+      <span class="chain-arrow">&rarr;</span>
+      <div class="chain-node">PDV Holding, Inc.</div>
+      <span class="chain-arrow">&rarr;</span>
+      <div class="chain-node">Citgo Holding, Inc.</div>
+      <span class="chain-arrow">&rarr;</span>
+      <div class="chain-node">Citgo Petroleum Corp.</div>
+    </div>
+
+    <p>
+      PDVSA acquired Citgo in two stages. In 1986, PDVSA&rsquo;s US subsidiary purchased
+      a 50% interest in Citgo from the Southland Corporation (then parent of 7-Eleven).
+      In 1990, PDVSA acquired the remaining 50% for approximately $1.3&nbsp;billion,
+      gaining full control. The acquisition was part of PDVSA&rsquo;s
+      &ldquo;internationalization&rdquo; strategy under its pre-Ch&aacute;vez technocratic
+      management, which sought to secure downstream outlets for Venezuelan heavy crude
+      in the world&rsquo;s largest refining market.
+    </p>
+    <p>
+      For three decades, Citgo functioned as a commercially managed subsidiary, remitting
+      dividends to PDVSA and processing Venezuelan crude in its Gulf Coast and Midwest
+      refineries. By the time Hugo Ch&aacute;vez came to power in 1999, Citgo had
+      become Venezuela&rsquo;s single most valuable overseas asset&mdash;a status it
+      retains today.
+    </p>
+
+    <h3>Board control shift (2019)</h3>
+    <p>
+      In January 2019, the United States recognized National Assembly President Juan
+      Guaid&oacute; as Venezuela&rsquo;s legitimate interim president. Under Guaid&oacute;&rsquo;s
+      authority, a new board of directors was appointed for PDV Holding and Citgo Holding,
+      replacing the Maduro-appointed directors. This board&mdash;composed of Venezuelan
+      opposition-aligned figures&mdash;has controlled Citgo&rsquo;s corporate governance
+      since February 2019 with US government backing.
+    </p>
+    <p>
+      Following the January 2026 political transition in Venezuela, the Rodr&iacute;guez
+      interim government has sought to restore its own board appointees to Citgo&rsquo;s
+      parent companies. As of mid-{{ current_year }}, the board composition remains a
+      contested legal and diplomatic question, with the Guaid&oacute;-era directors
+      arguing their mandate continues until a democratically elected Venezuelan government
+      is established.
+    </p>
+  </section>
+
+  {# ======================================================================= #}
+  {# 3. OWNERSHIP BATTLE TIMELINE                                             #}
+  {# ======================================================================= #}
+  <section id="ownership-battle" class="sec">
+    <h2>3. The Citgo Ownership Battle</h2>
+    <p class="sec-lead">
+      Citgo is at the center of one of the most complex international asset disputes
+      in modern corporate history, with over $21&nbsp;billion in competing creditor
+      claims against its parent company&rsquo;s shares.
+    </p>
+
+    <div class="timeline">
+      <div class="tl-item negative">
+        <span class="tl-dot"></span>
+        <div class="tl-date">2007</div>
+        <div class="tl-title">Ch&aacute;vez threatens to sell Citgo</div>
+        <div class="tl-desc">
+          During a diplomatic confrontation with the Bush administration, President
+          Hugo Ch&aacute;vez publicly threatens to sell or shut down Citgo. The threat
+          is not carried out, but it marks the first time Citgo&rsquo;s future becomes
+          a geopolitical bargaining chip.
+        </div>
+      </div>
+
+      <div class="tl-item negative">
+        <span class="tl-dot"></span>
+        <div class="tl-date">October 2016</div>
+        <div class="tl-title">PDVSA pledges 50.1% of Citgo shares to Rosneft</div>
+        <div class="tl-desc">
+          In a desperate bid for cash, PDVSA pledges 50.1% of the shares of Citgo
+          Holding as collateral for a $1.5&nbsp;billion loan from Russian state oil
+          company Rosneft. The deal sparks alarm in Washington over the prospect of
+          a Russian entity gaining control of critical US refining infrastructure.
+        </div>
+      </div>
+
+      <div class="tl-item negative">
+        <span class="tl-dot"></span>
+        <div class="tl-date">August 2017</div>
+        <div class="tl-title">Trump sanctions block PDVSA dividend payments</div>
+        <div class="tl-desc">
+          Executive Order 13808 bans dealing in new PDVSA debt, effectively preventing
+          Citgo from paying dividends upstream to its Venezuelan parent. This severs the
+          financial pipeline that had funneled billions from Citgo to the Venezuelan
+          government.
+        </div>
+      </div>
+
+      <div class="tl-item positive">
+        <span class="tl-dot"></span>
+        <div class="tl-date">January 2019</div>
+        <div class="tl-title">US recognizes Guaid&oacute;; new Citgo board appointed</div>
+        <div class="tl-desc">
+          Following US recognition of Juan Guaid&oacute;, a new opposition-aligned board
+          takes control of PDV Holding and Citgo Holding. Concurrently, OFAC issues
+          protective orders that effectively shield Citgo from creditor seizure,
+          designating PDVSA as an SDN while carving out Citgo&rsquo;s operations
+          through general licenses.
+        </div>
+      </div>
+
+      <div class="tl-item negative">
+        <span class="tl-dot"></span>
+        <div class="tl-date">October 2020</div>
+        <div class="tl-title">PDVSA 2020 bond default triggers creditor claims</div>
+        <div class="tl-desc">
+          PDVSA&rsquo;s 2020 bonds&mdash;which were backed by a pledge of 50.1% of
+          PDV Holding shares&mdash;default after PDVSA fails to make the final
+          $913&nbsp;million payment. Bondholders move to enforce their collateral
+          rights against the Citgo shares. Rosneft had previously transferred its
+          Citgo collateral to a Russian government entity, which subsequently sold
+          the rights to unnamed buyers.
+        </div>
+      </div>
+
+      <div class="tl-item negative">
+        <span class="tl-dot"></span>
+        <div class="tl-date">2023</div>
+        <div class="tl-title">Delaware court orders auction of PDV Holding shares</div>
+        <div class="tl-desc">
+          Judge Leonard P. Stark of the US District Court for the District of Delaware
+          orders that 100% of the shares of PDV Holding be sold to satisfy creditor
+          claims. The court consolidates competing claims totaling approximately
+          $21.3&nbsp;billion from multiple creditors including ConocoPhillips,
+          Crystallex, Gold Reserve, and PDVSA 2020 bondholders.
+        </div>
+      </div>
+
+      <div class="tl-item">
+        <span class="tl-dot"></span>
+        <div class="tl-date">2024</div>
+        <div class="tl-title">Elliott Investment Management wins auction bid</div>
+        <div class="tl-desc">
+          Elliott Investment Management, the activist hedge fund led by Paul Singer,
+          wins the court-supervised auction for PDV Holding with a bid of approximately
+          $7.3&nbsp;billion. The bid would give Elliott control of Citgo&rsquo;s three
+          refineries and all downstream assets. Treasury Department review is required
+          before the sale can close.
+        </div>
+      </div>
+
+      <div class="tl-item">
+        <span class="tl-dot"></span>
+        <div class="tl-date">2025</div>
+        <div class="tl-title">Treasury review of Elliott acquisition begins</div>
+        <div class="tl-desc">
+          The Committee on Foreign Investment in the United States (CFIUS) and the
+          Treasury Department begin formal review of the Elliott acquisition. The
+          review considers national security implications of transferring
+          Venezuelan-state-owned refining assets to a private equity firm.
+        </div>
+      </div>
+
+      <div class="tl-item pending">
+        <span class="tl-dot"></span>
+        <div class="tl-date">January 2026</div>
+        <div class="tl-title">Rodr&iacute;guez government contests sale</div>
+        <div class="tl-desc">
+          Following the January 2026 political transition in Venezuela, the
+          Rodr&iacute;guez interim government formally contests the sale, arguing that
+          the new government should be given the opportunity to satisfy creditor claims
+          and retain ownership of Citgo. Treasury pauses the CFIUS review pending
+          diplomatic engagement with the transitional government.
+        </div>
+      </div>
+
+      <div class="tl-item pending">
+        <span class="tl-dot"></span>
+        <div class="tl-date">2026 (current)</div>
+        <div class="tl-title">Ownership resolution pending</div>
+        <div class="tl-desc">
+          As of {{ updated_label }}, Citgo continues to operate under the OFAC
+          protective framework. The Elliott sale remains under Treasury review. The
+          Rodr&iacute;guez government is negotiating with major creditors on a
+          potential settlement framework that would preserve Venezuelan state ownership.
+          No resolution timeline has been confirmed.
+        </div>
+      </div>
+    </div>
+  </section>
+
+  {# ======================================================================= #}
+  {# 4. CITGO REFINERIES                                                      #}
+  {# ======================================================================= #}
+  <section id="refineries" class="sec">
+    <h2>4. Citgo Refineries</h2>
+    <p class="sec-lead">
+      Citgo operates three major US refineries with a combined throughput capacity of
+      approximately 769,000&nbsp;barrels per day, making it one of the largest refining
+      systems in the United States.
+    </p>
+
+    <div class="card-grid cols-3">
+      <div class="card">
+        <div class="meta">Largest facility</div>
+        <h3>Lake Charles, Louisiana</h3>
+        <div class="row"><strong>Capacity</strong>432,000 bpd</div>
+        <div class="row"><strong>Nelson Index</strong>11.5</div>
+        <div class="row"><strong>Crude slate</strong>Heavy &amp; medium sour</div>
+        <div class="row"><strong>Products</strong>Gasoline, diesel, jet fuel, petrochemicals</div>
+        <div class="note">
+          Citgo&rsquo;s flagship facility and one of the largest refineries in the US.
+          Historically configured to process Venezuelan heavy crude from the Orinoco Belt.
+          Includes coking, hydrocracking, and catalytic cracking units enabling processing
+          of the heaviest crude grades.
+        </div>
+      </div>
+
+      <div class="card">
+        <div class="meta">Highest complexity</div>
+        <h3>Corpus Christi, Texas</h3>
+        <div class="row"><strong>Capacity</strong>165,000 bpd</div>
+        <div class="row"><strong>Nelson Index</strong>12.8</div>
+        <div class="row"><strong>Crude slate</strong>Light to heavy</div>
+        <div class="row"><strong>Products</strong>Gasoline, diesel, asphalt, aromatics</div>
+        <div class="note">
+          Located on the Texas Gulf Coast with deepwater access for crude imports and
+          product exports. The highest-complexity Citgo refinery, capable of processing
+          a wide range of crude grades. Significant asphalt and aromatics production
+          alongside transportation fuels.
+        </div>
+      </div>
+
+      <div class="card">
+        <div class="meta">Midwest supply</div>
+        <h3>Lemont, Illinois</h3>
+        <div class="row"><strong>Capacity</strong>172,000 bpd</div>
+        <div class="row"><strong>Nelson Index</strong>11.0</div>
+        <div class="row"><strong>Crude slate</strong>Light sweet &amp; Canadian heavy</div>
+        <div class="row"><strong>Products</strong>Gasoline, diesel, jet fuel</div>
+        <div class="note">
+          Serves the greater Chicago metropolitan area and Midwest markets. Connected
+          to Canadian crude supply via pipeline infrastructure. Strategically positioned
+          as one of the few major refineries in the PADD II (Midwest) region.
+        </div>
+      </div>
+    </div>
+
+    <p>
+      Combined, the three refineries give Citgo a total nameplate capacity of
+      769,000&nbsp;bpd. The system&rsquo;s high Nelson Complexity Index
+      (averaging ~11.5 across all three plants) reflects significant upgrading
+      capability&mdash;the ability to convert lower-value heavy crude into
+      higher-value light products like gasoline and diesel. This complexity was
+      deliberately engineered by PDVSA to create a captive downstream market for
+      Venezuela&rsquo;s heavy Orinoco crude.
+    </p>
+    <p>
+      Since US sanctions severed Citgo&rsquo;s supply of Venezuelan crude in 2019,
+      the refineries have shifted to processing alternative heavy feedstocks,
+      including Canadian oil sands crude, Colombian heavy grades, and domestically
+      produced sour crudes.
+    </p>
+  </section>
+
+  {# ======================================================================= #}
+  {# 5. OFAC SANCTIONS & CITGO                                                #}
+  {# ======================================================================= #}
+  <section id="sanctions" class="sec">
+    <h2>5. OFAC Sanctions &amp; Citgo</h2>
+    <p class="sec-lead">
+      Citgo exists in a unique regulatory limbo&mdash;owned by a sanctioned entity
+      (PDVSA) but authorized to operate through a carefully constructed framework
+      of OFAC general licenses.
+    </p>
+
+    <h3>Key executive orders affecting Citgo</h3>
+    <table class="em-table">
+      <thead>
+        <tr>
+          <th>Executive Order</th>
+          <th>Date</th>
+          <th>Impact on Citgo</th>
+        </tr>
+      </thead>
+      <tbody>
+        <tr>
+          <td>E.O. 13808</td>
+          <td>Aug 2017</td>
+          <td>Blocked new PDVSA debt transactions; prevented Citgo from issuing debt to benefit PDVSA</td>
+        </tr>
+        <tr>
+          <td>E.O. 13850</td>
+          <td>Nov 2018</td>
+          <td>Authorized sanctions on any sector of Venezuelan economy; gold sector designated</td>
+        </tr>
+        <tr class="highlight">
+          <td>PDVSA SDN designation</td>
+          <td>Jan 2019</td>
+          <td>PDVSA added to SDN list; Citgo operations preserved through general licenses</td>
+        </tr>
+        <tr>
+          <td>E.O. 13884</td>
+          <td>Aug 2019</td>
+          <td>Full embargo on Government of Venezuela; strengthened blocking of PDVSA/Citgo dividend flows</td>
+        </tr>
+        <tr>
+          <td>E.O. 13857</td>
+          <td>Jan 2019</td>
+          <td>Recognized Guaid&oacute; government; enabled transfer of Citgo corporate governance to opposition board</td>
+        </tr>
+      </tbody>
+    </table>
+
+    <h3>How Citgo continues to operate</h3>
+    <p>
+      Citgo&rsquo;s ability to function as a normal US business despite its sanctioned
+      parentage rests on OFAC General License 3 (as amended, currently GL&nbsp;3K).
+      This license authorizes all transactions ordinarily incident to the day-to-day
+      operations of Citgo Petroleum Corporation, including:
+    </p>
+    <ul>
+      <li>Purchasing crude oil and other feedstocks on the open market</li>
+      <li>Selling refined products (gasoline, diesel, jet fuel, petrochemicals)</li>
+      <li>Maintaining banking and credit relationships with US financial institutions</li>
+      <li>Paying employees, contractors, and suppliers</li>
+      <li>Operating its retail brand licensing program</li>
+    </ul>
+
+    <h3>What Citgo cannot do</h3>
+    <ul>
+      <li><strong>Dividend repatriation:</strong> Citgo cannot remit profits, dividends, or any other funds upstream to PDVSA or the Government of Venezuela without specific OFAC authorization.</li>
+      <li><strong>Venezuelan crude processing:</strong> Prior to GL&nbsp;50A (Feb 2026), Citgo could not purchase or process Venezuelan-origin crude. The current status of Citgo&rsquo;s ability to resume Venezuelan crude imports is subject to the ongoing ownership proceedings.</li>
+      <li><strong>Related-party transactions:</strong> Any transaction that would benefit PDVSA or other blocked persons requires specific OFAC authorization beyond the general license.</li>
+    </ul>
+
+    <h3>Creditor protection framework</h3>
+    <p>
+      A critical but often overlooked function of the sanctions framework is creditor
+      protection. Executive orders and OFAC directives have effectively prevented
+      creditors from seizing Citgo assets or forcing a sale without US government
+      approval. This protection has preserved Citgo as a going concern through years
+      of litigation, ensuring that approximately 3,400 American jobs and a significant
+      share of US refining capacity are not disrupted by the legal battle over
+      PDVSA&rsquo;s debts.
+    </p>
+
+    <h3>Current 2026 licensing status</h3>
+    <p>
+      As of {{ updated_label }}, Citgo continues to operate under GL&nbsp;3K. The
+      January 2026 political transition has not yet resulted in changes to Citgo&rsquo;s
+      specific licensing framework, though broader Venezuela general licenses (GL&nbsp;50A
+      and GL&nbsp;52) have opened the oil sector to new activity. Any resolution of the
+      ownership dispute will require OFAC concurrence to ensure compliance with the
+      sanctions framework.
+    </p>
+  </section>
+
+  {# ======================================================================= #}
+  {# 6. FINANCIAL PERFORMANCE                                                 #}
+  {# ======================================================================= #}
+  <section id="financials" class="sec">
+    <h2>6. Citgo Financial Performance</h2>
+    <p class="sec-lead">
+      Citgo is a privately held company that does not publicly report financial
+      statements in the manner of SEC-registered firms. However, financial data is
+      available from bond offering documents, creditor proceedings, and industry
+      estimates.
+    </p>
+
+    <table class="em-table">
+      <thead>
+        <tr>
+          <th>Metric</th>
+          <th>2021</th>
+          <th>2022</th>
+          <th>2023 (est.)</th>
+          <th>2024 (est.)</th>
+        </tr>
+      </thead>
+      <tbody>
+        <tr>
+          <td>Revenue</td>
+          <td class="num">$28.2B</td>
+          <td class="num">$38.4B</td>
+          <td class="num">$34.7B</td>
+          <td class="num">$32.1B</td>
+        </tr>
+        <tr class="highlight">
+          <td>Net income</td>
+          <td class="num">$2.1B</td>
+          <td class="num">$4.3B</td>
+          <td class="num">$2.8B</td>
+          <td class="num">$2.2B</td>
+        </tr>
+        <tr>
+          <td>EBITDA</td>
+          <td class="num">$3.4B</td>
+          <td class="num">$5.8B</td>
+          <td class="num">$4.1B</td>
+          <td class="num">$3.3B</td>
+        </tr>
+        <tr>
+          <td>Refining margin ($/bbl)</td>
+          <td class="num">$18.40</td>
+          <td class="num">$29.60</td>
+          <td class="num">$22.10</td>
+          <td class="num">$19.50</td>
+        </tr>
+        <tr>
+          <td>Throughput (bpd)</td>
+          <td class="num">~710K</td>
+          <td class="num">~735K</td>
+          <td class="num">~740K</td>
+          <td class="num">~725K</td>
+        </tr>
+        <tr>
+          <td>Total debt</td>
+          <td class="num">$3.3B</td>
+          <td class="num">$2.9B</td>
+          <td class="num">$2.6B</td>
+          <td class="num">$2.4B</td>
+        </tr>
+      </tbody>
+    </table>
+    <p style="font-size: 13px; color: var(--sr-gray-text);">
+      Sources: Citgo bond offering memoranda; Delaware court filings; S&amp;P Global
+      Platts refining margin data; industry analyst estimates. 2023&ndash;2024 figures
+      are estimates derived from publicly available data.
+    </p>
+
+    <h3>Record 2022 performance</h3>
+    <p>
+      Citgo&rsquo;s 2022 results reflected the extraordinary refining environment
+      following Russia&rsquo;s invasion of Ukraine, which sent global crack spreads to
+      historic highs. Citgo&rsquo;s complex refining system&mdash;designed to process
+      discounted heavy crude into high-value light products&mdash;benefited
+      disproportionately, generating an estimated $4.3&nbsp;billion in net income on
+      $38.4&nbsp;billion in revenue. These profits accumulated within Citgo because
+      sanctions prevented dividend repatriation to PDVSA.
+    </p>
+
+    <h3>Can you buy Citgo stock?</h3>
+    <p>
+      <strong>No.</strong> Citgo Petroleum Corporation is not publicly traded on any
+      stock exchange. There is no &ldquo;Citgo stock&rdquo; available for purchase.
+      The company is a wholly owned indirect subsidiary of PDVSA, which is itself
+      100% owned by the Venezuelan state. Citgo has never conducted an initial public
+      offering (IPO), and there are no current plans for one.
+    </p>
+    <p>
+      The only way Citgo ownership could change is through: (a) the Delaware court
+      proceedings currently underway (the Elliott auction), (b) a government-to-government
+      negotiated sale, or (c) a restructuring of PDVSA&rsquo;s obligations that
+      preserves state ownership. For investors interested in exposure to Citgo&rsquo;s
+      refining operations, the PDVSA&nbsp;2020 bonds trade in secondary markets at
+      deep discounts, though these instruments carry extreme legal and credit risk.
+    </p>
+  </section>
+
+  {# ======================================================================= #}
+  {# 7. THE CREDITOR CLAIMS                                                    #}
+  {# ======================================================================= #}
+  <section id="creditor-claims" class="sec">
+    <h2>7. The Creditor Claims</h2>
+    <p class="sec-lead">
+      Citgo&rsquo;s parent company shares are the target of approximately
+      $21&nbsp;billion in competing creditor claims, making this one of the most
+      complex multinational asset disputes in recent history.
+    </p>
+
+    <table class="em-table">
+      <thead>
+        <tr>
+          <th>Creditor</th>
+          <th>Claim basis</th>
+          <th>Amount</th>
+          <th>Status</th>
+        </tr>
+      </thead>
+      <tbody>
+        <tr class="highlight">
+          <td><strong>ConocoPhillips</strong></td>
+          <td>ICSID arbitration award (2007 nationalization of Cerro Negro &amp; Hamaca projects)</td>
+          <td class="num">$8.5B</td>
+          <td>Enforcing via Delaware proceedings; largest single claimant</td>
+        </tr>
+        <tr>
+          <td><strong>PDVSA 2020 bondholders</strong></td>
+          <td>Defaulted bonds backed by 50.1% pledge of PDV Holding shares</td>
+          <td class="num">~$5.5B</td>
+          <td>Direct collateral claim on shares; competing with other creditors</td>
+        </tr>
+        <tr>
+          <td><strong>Crystallex International</strong></td>
+          <td>ICSID award (2011 revocation of Las Cristinas gold mining rights)</td>
+          <td class="num">$1.4B</td>
+          <td>Obtained alter ego ruling piercing PDVSA/PDV Holding corporate veil</td>
+        </tr>
+        <tr>
+          <td><strong>Gold Reserve</strong></td>
+          <td>ICC arbitration award (2009 revocation of Brisas gold/copper concession)</td>
+          <td class="num">$1.2B</td>
+          <td>Enforcing via US courts</td>
+        </tr>
+        <tr>
+          <td><strong>Koch Minerals / Trafigura / others</strong></td>
+          <td>Commercial claims and arbitration awards for unpaid crude deliveries</td>
+          <td class="num">~$2.1B</td>
+          <td>Various enforcement actions</td>
+        </tr>
+        <tr>
+          <td><strong>Other claimants</strong></td>
+          <td>Miscellaneous expropriation, breach-of-contract, and tort claims</td>
+          <td class="num">~$2.6B</td>
+          <td>Consolidated in Delaware proceedings</td>
+        </tr>
+        <tr class="highlight">
+          <td><strong>Total claims</strong></td>
+          <td></td>
+          <td class="num">~$21.3B</td>
+          <td></td>
+        </tr>
+      </tbody>
+    </table>
+
+    <h3>The Delaware proceedings</h3>
+    <p>
+      All major creditor claims have been consolidated before the US District Court
+      for the District of Delaware under Judge Leonard P. Stark. In 2023, Judge Stark
+      ordered the sale of 100% of PDV Holding shares to satisfy creditor claims, noting
+      that the claims far exceeded the estimated value of the shares (appraised at
+      $11&ndash;$13&nbsp;billion, depending on methodology).
+    </p>
+    <p>
+      The key legal question is priority: the PDVSA 2020 bondholders hold a direct
+      security interest in 50.1% of the shares, but other creditors (particularly
+      ConocoPhillips and Crystallex) have obtained &ldquo;alter ego&rdquo; rulings that
+      allow them to reach PDVSA&rsquo;s assets through PDV Holding, arguing that PDVSA
+      and its subsidiaries are instrumentalities of the Venezuelan state with no genuine
+      corporate separateness. The distribution waterfall from any sale proceeds remains
+      contested.
+    </p>
+  </section>
+
+  {# ======================================================================= #}
+  {# 8. 2026 OUTLOOK                                                           #}
+  {# ======================================================================= #}
+  <section id="outlook-2026" class="sec">
+    <h2>8. 2026 Outlook</h2>
+    <p class="sec-lead">
+      The political transition in Venezuela has introduced new variables into
+      Citgo&rsquo;s already complex ownership story. Three primary scenarios
+      are under consideration.
+    </p>
+
+    <div class="card-grid cols-3">
+      <div class="card">
+        <div class="meta" style="color: #2e7d32;">Scenario A</div>
+        <h3>Rodr&iacute;guez government retakes control</h3>
+        <div class="note" style="border: 0; padding: 0;">
+          The transitional government negotiates a creditor settlement (possibly using
+          future oil revenue securitization), Treasury blocks the Elliott sale, and PDVSA
+          retains ownership. Citgo resumes Venezuelan crude processing under GL&nbsp;50A.
+          <strong>Probability: ~30%.</strong>
+        </div>
+      </div>
+      <div class="card">
+        <div class="meta" style="color: var(--sr-blue);">Scenario B</div>
+        <h3>Elliott sale proceeds</h3>
+        <div class="note" style="border: 0; padding: 0;">
+          Treasury clears the CFIUS review, the Delaware court approves the $7.3B sale,
+          and Elliott takes control of Citgo. Creditors receive partial recovery. Venezuela
+          loses its most valuable overseas asset permanently.
+          <strong>Probability: ~35%.</strong>
+        </div>
+      </div>
+      <div class="card">
+        <div class="meta" style="color: #f5b041;">Scenario C</div>
+        <h3>Extended status quo</h3>
+        <div class="note" style="border: 0; padding: 0;">
+          Legal and diplomatic complexity delays any resolution for 12&ndash;24+ months.
+          Citgo continues to operate normally under OFAC licenses. Cash accumulates on the
+          balance sheet. All parties continue to negotiate.
+          <strong>Probability: ~35%.</strong>
+        </div>
+      </div>
+    </div>
+
+    <h3>Impact on Venezuelan oil strategy</h3>
+    <p>
+      Citgo is central to any Venezuelan oil recovery strategy. The three refineries
+      were specifically designed to process Venezuela&rsquo;s heavy crude, and Lake
+      Charles in particular remains one of the few US facilities optimized for Orinoco
+      Belt feedstock. If Venezuela loses Citgo, it will need to find alternative buyers
+      for its heavy crude&mdash;likely at steeper discounts&mdash;or invest in domestic
+      upgrading capacity that would take years to build.
+    </p>
+
+    <h3>Implications for US energy supply</h3>
+    <p>
+      Regardless of ownership, Citgo&rsquo;s 769,000&nbsp;bpd of refining capacity
+      represents approximately 4% of total US refining capacity. The Lake Charles
+      refinery alone supplies a significant share of gasoline to the US Gulf Coast
+      and Southeast markets. Any disruption to Citgo&rsquo;s operations&mdash;whether
+      from a messy ownership transition, sanctions complications, or creditor
+      seizure&mdash;would have measurable impacts on regional fuel supply and prices,
+      which is why the US government has consistently intervened to keep Citgo operating
+      as a going concern.
+    </p>
+  </section>
+
+  {# ======================================================================= #}
+  {# 9. FAQ                                                                    #}
+  {# ======================================================================= #}
+  <section id="faq" class="sec">
+    <h2>9. Frequently Asked Questions</h2>
+    <p class="sec-lead">
+      Common questions about Citgo, its ownership, and its relationship to Venezuela.
+    </p>
+
+    <div class="faq-list">
+      <div class="faq-item open">
+        <button type="button" class="faq-q">
+          <span class="faq-icon">+</span>
+          Is Citgo owned by Venezuela?
+        </button>
+        <div class="faq-a">
+          <p>
+            Yes. Citgo Petroleum Corporation is an indirect, wholly owned subsidiary
+            of Petr&oacute;leos de Venezuela, S.A. (PDVSA), which is 100% owned by
+            the Venezuelan state. The ownership chain runs: Government of Venezuela
+            &rarr; PDVSA &rarr; PDV Holding, Inc. &rarr; Citgo Holding, Inc. &rarr;
+            Citgo Petroleum Corporation. However, Citgo&rsquo;s day-to-day operations
+            and corporate governance have been controlled by a US-recognized,
+            opposition-aligned board since 2019, and the ownership of the parent
+            company shares is subject to ongoing legal proceedings in Delaware.
+          </p>
+        </div>
+      </div>
+
+      <div class="faq-item">
+        <button type="button" class="faq-q">
+          <span class="faq-icon">+</span>
+          What happened to Citgo?
+        </button>
+        <div class="faq-a">
+          <p>
+            Citgo continues to operate normally as a US refiner and fuel marketer.
+            What has changed is the battle over its ownership. After PDVSA defaulted
+            on billions in debts and the US imposed sanctions on the Venezuelan
+            government, Citgo became the target of creditor claims totaling over
+            $21&nbsp;billion. A Delaware court has ordered the sale of Citgo&rsquo;s
+            parent company shares, but the sale is under Treasury review and has been
+            further complicated by the January 2026 political transition in Venezuela.
+            Throughout this legal turmoil, Citgo has continued to refine crude oil,
+            sell gasoline, and operate its retail network without interruption.
+          </p>
+        </div>
+      </div>
+
+      <div class="faq-item">
+        <button type="button" class="faq-q">
+          <span class="faq-icon">+</span>
+          Can you buy Citgo stock?
+        </button>
+        <div class="faq-a">
+          <p>
+            No. Citgo is not a publicly traded company and has no stock listed on any
+            exchange. It is a wholly owned subsidiary of the Venezuelan state oil company
+            PDVSA. There is no &ldquo;Citgo stock ticker&rdquo; or way to buy shares.
+            For investors seeking indirect exposure, PDVSA 2020 bonds trade in secondary
+            markets at significant discounts, but these instruments carry extreme credit,
+            legal, and sanctions compliance risk and are not suitable for most investors.
+          </p>
+        </div>
+      </div>
+
+      <div class="faq-item">
+        <button type="button" class="faq-q">
+          <span class="faq-icon">+</span>
+          How many gas stations does Citgo have?
+        </button>
+        <div class="faq-a">
+          <p>
+            Citgo has approximately 4,600 branded gas stations across 30 US states and
+            the District of Columbia. These stations are independently owned and
+            operated&mdash;they are not owned by Citgo or PDVSA. Station owners license
+            the Citgo brand and purchase fuel from Citgo under supply agreements. The
+            retail network is concentrated in the eastern United States, Midwest, and
+            Gulf Coast states.
+          </p>
+        </div>
+      </div>
+
+      <div class="faq-item">
+        <button type="button" class="faq-q">
+          <span class="faq-icon">+</span>
+          Where are Citgo refineries located?
+        </button>
+        <div class="faq-a">
+          <p>
+            Citgo operates three refineries in the United States: (1)&nbsp;Lake Charles,
+            Louisiana, with 432,000&nbsp;bpd capacity&mdash;the company&rsquo;s largest
+            facility; (2)&nbsp;Lemont, Illinois, with 172,000&nbsp;bpd capacity, serving
+            the Chicago and Midwest markets; and (3)&nbsp;Corpus Christi, Texas, with
+            165,000&nbsp;bpd capacity on the Gulf Coast. Combined, these three refineries
+            have a total capacity of approximately 769,000&nbsp;barrels per day.
+          </p>
+        </div>
+      </div>
+
+      <div class="faq-item">
+        <button type="button" class="faq-q">
+          <span class="faq-icon">+</span>
+          Why was Citgo sanctioned?
+        </button>
+        <div class="faq-a">
+          <p>
+            Citgo itself was not directly sanctioned&mdash;its parent company PDVSA was
+            designated as a Specially Designated National (SDN) by OFAC in January 2019
+            as part of the US maximum-pressure campaign against the Maduro government.
+            Because Citgo is owned by PDVSA, it falls within the scope of the blocking
+            order, but OFAC has consistently issued general licenses (currently GL&nbsp;3K)
+            that authorize Citgo&rsquo;s continued US operations. The sanctions do prevent
+            Citgo from sending profits to Venezuela and restrict certain transactions
+            with its parent company.
+          </p>
+        </div>
+      </div>
+
+      <div class="faq-item">
+        <button type="button" class="faq-q">
+          <span class="faq-icon">+</span>
+          Who controls Citgo now?
+        </button>
+        <div class="faq-a">
+          <p>
+            Citgo&rsquo;s corporate governance is controlled by a board of directors
+            appointed in 2019 under the authority of Juan Guaid&oacute;, whom the US
+            recognized as Venezuela&rsquo;s legitimate interim president. This board
+            replaced Maduro-appointed directors and has managed the company since then.
+            Following the January 2026 political transition, the Rodr&iacute;guez
+            interim government is seeking to install its own directors, but the existing
+            board argues its mandate continues. The matter is intertwined with the
+            Delaware creditor proceedings and OFAC licensing framework.
+          </p>
+        </div>
+      </div>
+
+      <div class="faq-item">
+        <button type="button" class="faq-q">
+          <span class="faq-icon">+</span>
+          Is Citgo being sold?
+        </button>
+        <div class="faq-a">
+          <p>
+            Potentially. In 2024, Elliott Investment Management won a court-supervised
+            auction for 100% of the shares of PDV Holding (Citgo&rsquo;s indirect parent)
+            with a bid of approximately $7.3&nbsp;billion. However, the sale requires
+            Treasury/CFIUS approval, which has been paused since the January 2026
+            Venezuelan political transition. The Rodr&iacute;guez government is contesting
+            the sale. As of {{ updated_label }}, no final determination has been made on
+            whether the sale will proceed, be blocked, or be restructured.
+          </p>
+        </div>
+      </div>
+
+      <div class="faq-item">
+        <button type="button" class="faq-q">
+          <span class="faq-icon">+</span>
+          Does Citgo still get Venezuelan oil?
+        </button>
+        <div class="faq-a">
+          <p>
+            Not currently. From 1990 until 2019, Citgo&rsquo;s refineries (especially
+            Lake Charles) were configured to process Venezuelan heavy crude from the
+            Orinoco Belt. When the Trump administration sanctioned PDVSA in January 2019,
+            Venezuelan crude imports to the US&mdash;including to Citgo&mdash;were
+            effectively blocked. Citgo has since sourced alternative heavy crude from
+            Canada, Colombia, and US domestic producers. Whether Citgo could resume
+            Venezuelan crude imports under GL&nbsp;50A depends on the outcome of the
+            ownership proceedings.
+          </p>
+        </div>
+      </div>
+
+      <div class="faq-item">
+        <button type="button" class="faq-q">
+          <span class="faq-icon">+</span>
+          What is PDVSA&rsquo;s connection to Citgo?
+        </button>
+        <div class="faq-a">
+          <p>
+            PDVSA (Petr&oacute;leos de Venezuela, S.A.) is Venezuela&rsquo;s state oil
+            company and the ultimate parent of Citgo. PDVSA acquired Citgo in two stages:
+            a 50% stake in 1986 and the remaining 50% in 1990 for approximately
+            $1.3&nbsp;billion. The acquisition was part of PDVSA&rsquo;s
+            &ldquo;internationalization&rdquo; strategy to secure downstream markets for
+            Venezuelan crude. Citgo was PDVSA&rsquo;s primary vehicle for accessing the US
+            refining and retail fuel market. Since 2019, the operational and financial
+            connection between PDVSA and Citgo has been severed by US sanctions, though the
+            legal ownership link remains intact.
+          </p>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  {# ======================================================================= #}
+  {# RELATED COVERAGE                                                         #}
+  {# ======================================================================= #}
+  <section class="sec">
+    <h2>Related Coverage</h2>
+    <p class="sec-lead">
+      Explore related oil, sanctions, and investment coverage on Caracas Research.
+    </p>
+
+    <div class="related-grid">
+      <a class="related-link" href="/venezuela-oil">
+        <div class="rl-tag">Energy</div>
+        <div class="rl-title">Venezuela Oil: Reserves, Production &amp; Investment Guide</div>
+        <div class="rl-desc">Production data, PDVSA restructuring, and the investment landscape for Venezuela&rsquo;s oil and gas sector.</div>
+      </a>
+      <a class="related-link" href="/ofac-sanctions-list">
+        <div class="rl-tag">Sanctions</div>
+        <div class="rl-title">OFAC Sanctions List: Venezuela</div>
+        <div class="rl-desc">Searchable database of all Venezuelan individuals and entities on the OFAC SDN list, including PDVSA and related entities.</div>
+      </a>
+      <a class="related-link" href="/why-is-venezuela-sanctioned">
+        <div class="rl-tag">Explainer</div>
+        <div class="rl-title">Why Is Venezuela Sanctioned?</div>
+        <div class="rl-desc">Complete history of US sanctions on Venezuela from 2015 through {{ current_year }}, including executive orders affecting Citgo.</div>
+      </a>
+      <a class="related-link" href="/invest-in-venezuela">
+        <div class="rl-tag">Investment</div>
+        <div class="rl-title">How to Invest in Venezuela</div>
+        <div class="rl-desc">Comprehensive guide to investment opportunities in Venezuela&rsquo;s oil, mining, and financial sectors under the current sanctions framework.</div>
+      </a>
+      <a class="related-link" href="/people/nicolas-maduro">
+        <div class="rl-tag">Profile</div>
+        <div class="rl-title">Nicol&aacute;s Maduro</div>
+        <div class="rl-desc">Profile of Venezuela&rsquo;s former president, whose government&rsquo;s actions triggered the sanctions and creditor crises affecting Citgo.</div>
+      </a>
+    </div>
+  </section>
+
+  <div class="disclaimer">
+    <strong>Disclaimer:</strong> This page is for informational purposes only and does
+    not constitute legal, investment, or sanctions compliance advice. Citgo&rsquo;s
+    ownership status, sanctions licensing, and creditor proceedings are subject to
+    change without notice. Companies and individuals should consult qualified legal
+    counsel before engaging in any transactions related to Citgo, PDVSA, or
+    Venezuelan-state-owned entities. Information is current as of {{ updated_label }}.
+  </div>
+
+  <div style="margin-top: 40px; padding: 18px; background: var(--sr-gray-bg); border-radius: 4px;">
+    <p style="font-size: 14px; color: var(--sr-dark-text); margin: 0;">
+      <strong>Tracking the Citgo ownership battle?</strong>
+      Subscribe to the Caracas Research daily briefing for real-time updates on
+      creditor proceedings, OFAC licensing changes, and Venezuelan energy policy.
+      <a href="/#signup" style="font-weight: 600;">Get the daily briefing &rarr;</a>
+    </p>
+  </div>
+
+  <p style="font-size: 12px; color: var(--sr-gray-text); margin: 24px 0;">
+    Sources: OFAC Venezuela-related sanctions program; Delaware District Court filings
+    (Case No. 1:18-cv-01461); Citgo bond offering memoranda; ICSID arbitration awards
+    (ConocoPhillips v. Venezuela, Crystallex v. Venezuela); ICC award (Gold Reserve v.
+    Venezuela); S&amp;P Global Platts; company disclosures. Court filings referenced
+    are part of the public record.
+  </p>
+
+</section>
+
+<script>
+document.querySelectorAll('.faq-q').forEach(function(btn){
+  btn.addEventListener('click',function(){
+    var item=this.closest('.faq-item');
+    var open=item.classList.contains('open');
+    document.querySelectorAll('.faq-item').forEach(function(i){i.classList.remove('open');});
+    if(!open) item.classList.add('open');
+  });
+});
+</script>
+
+{% from "_recent_briefings.html.j2" import recent_briefings_rail %}
+{{ recent_briefings_rail(
+     recent_briefings,
+     heading="Latest analysis",
+     intro="Recent briefings on Citgo, PDVSA, and the Venezuelan energy sector.",
+) }}
+{% endblock %}

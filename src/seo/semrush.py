@@ -164,6 +164,47 @@ class SemrushClient:
             "export_columns": "Ph,Nq,Cp,Co,Nr,Td,In,Kd",
         })
 
+    # ── SERP features analysis ───────────────────────────────────────
+
+    def domain_organic_with_serp_features(
+        self,
+        domain: str,
+        *,
+        limit: int = 200,
+        sort: str = "tr_desc",
+        positions_type: str = "all",
+    ) -> list[dict[str, str]]:
+        """Keywords a domain ranks for, including SERP feature data.
+
+        Returns standard organic columns plus:
+        - Fk: all SERP features triggered for this keyword (comma-separated codes)
+        - Fp: SERP features where this domain appears (comma-separated codes)
+
+        positions_type: 'organic' | 'all' | 'serp_features'
+        """
+        return self._get({
+            "type": "domain_organic",
+            "domain": domain,
+            "database": self.database,
+            "display_limit": limit,
+            "display_sort": sort,
+            "export_columns": "Ph,Po,Nq,Cp,Ur,Tr,Tc,Co,Kd,In,Fk,Fp",
+            "display_positions_type": positions_type,
+        })
+
+    def keyword_serp_features(self, phrase: str) -> list[dict[str, str]]:
+        """Get SERP feature data for a single keyword.
+
+        Returns volume, KD, and the SERP features triggered by this keyword.
+        The Fk column contains comma-separated feature codes.
+        """
+        return self._get({
+            "type": "phrase_this",
+            "phrase": phrase,
+            "database": self.database,
+            "export_columns": "Ph,Nq,Cp,Co,Kd,In,Fk",
+        })
+
     # ── Gap analysis helpers ────────────────────────────────────────
 
     def competitor_keywords_we_miss(

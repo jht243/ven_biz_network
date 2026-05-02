@@ -1,0 +1,1091 @@
+{% extends "_base.html.j2" %}
+{% from "_base.html.j2" import share_button %}
+
+{% block head_extra %}
+<style>
+  .sanc-hero { background: linear-gradient(180deg, #f6f8fa 0%, var(--white) 100%); padding: 28px 0 16px; margin-bottom: 16px; }
+  .sanc-hero .kicker { font-size: 12px; text-transform: uppercase; letter-spacing: 1.4px; color: #cc0000; font-weight: 700; }
+  .sanc-hero h1 { font-family: var(--font-serif); font-size: 32px; color: var(--sr-blue-dark); margin: 8px 0 8px; line-height: 1.2; }
+  .sanc-hero p.lead { font-family: var(--font-serif); font-style: italic; color: var(--sr-gray-text); font-size: 16px; max-width: 720px; margin: 0; }
+
+  .stat-grid { display: grid; grid-template-columns: 1fr; gap: 0; margin: 20px 0 28px; border: 1px solid #d0dae8; border-radius: 6px; overflow: hidden; }
+  @media (min-width: 640px) { .stat-grid { grid-template-columns: 1fr 1fr 1fr; } }
+  @media (min-width: 960px) { .stat-grid { grid-template-columns: repeat(6, 1fr); } }
+  .stat-card { padding: 18px 14px; text-align: center; border-bottom: 1px solid #d0dae8; }
+  @media (min-width: 640px) { .stat-card { border-bottom: 0; border-right: 1px solid #d0dae8; } .stat-card:last-child { border-right: 0; } }
+  .stat-card .stat-num { font-family: var(--font-serif); font-size: 26px; font-weight: 700; color: var(--sr-blue-dark); line-height: 1.1; }
+  .stat-card .stat-label { font-size: 12px; color: var(--sr-gray-text); margin-top: 4px; text-transform: uppercase; letter-spacing: 0.5px; font-weight: 600; }
+  .stat-card .stat-sub { font-size: 11px; color: var(--sr-blue); margin-top: 2px; font-weight: 600; }
+
+  .toc { background: var(--sr-gray-bg); border-left: 3px solid var(--sr-blue); padding: 18px 22px; margin: 0 0 32px; font-size: 14px; }
+  .toc h3 { font-family: var(--font-serif); font-size: 14px; text-transform: uppercase; letter-spacing: 1px; color: var(--sr-blue-dark); margin-bottom: 10px; }
+  .toc ol { margin-left: 20px; columns: 2; column-gap: 24px; }
+  .toc li { margin-bottom: 6px; }
+  @media (max-width: 640px) { .toc ol { columns: 1; } }
+
+  .sec { margin: 40px 0 24px; padding-top: 8px; }
+  .sec h2 { font-family: var(--font-serif); font-size: 26px; color: var(--sr-blue-dark); margin-bottom: 8px; }
+  .sec .sec-lead { color: var(--sr-gray-text); margin-bottom: 18px; font-size: 15px; }
+  .sec h3 { font-family: var(--font-serif); font-size: 20px; color: var(--sr-blue-dark); margin: 24px 0 10px; }
+  .sec p { margin: 0 0 14px; line-height: 1.7; }
+  .sec ul, .sec ol { margin: 0 0 14px 22px; }
+  .sec li { margin-bottom: 6px; line-height: 1.6; }
+
+  .card-grid { display: grid; grid-template-columns: 1fr; gap: 14px; margin-bottom: 18px; }
+  @media (min-width: 720px) { .card-grid.cols-2 { grid-template-columns: 1fr 1fr; } }
+  @media (min-width: 980px) { .card-grid.cols-3 { grid-template-columns: 1fr 1fr 1fr; } }
+
+  .card { background: var(--white); border: 1px solid var(--sr-gray-light); border-radius: 4px; padding: 18px 20px; transition: border-color 0.15s, transform 0.15s; }
+  .card:hover { border-color: var(--sr-blue); transform: translateY(-1px); }
+  .card h3 { font-family: var(--font-serif); font-size: 17px; color: var(--sr-blue-dark); margin-bottom: 6px; }
+  .card .meta { font-size: 12px; text-transform: uppercase; letter-spacing: 0.5px; color: var(--sr-gray-text); margin-bottom: 8px; }
+  .card .row { font-size: 14px; margin: 4px 0; }
+  .card .row strong { color: var(--sr-dark-text); display: inline-block; min-width: 96px; font-weight: 600; }
+  .card a.cta { font-size: 13px; color: var(--sr-blue); font-weight: 600; text-decoration: none; }
+  .card a.cta:hover { text-decoration: underline; }
+  .card .note { font-size: 13px; color: var(--sr-gray-text); margin-top: 10px; line-height: 1.55; padding-top: 10px; border-top: 1px dotted var(--sr-gray-light); }
+
+  .em-table { width: 100%; border-collapse: collapse; margin: 8px 0 18px; font-size: 14px; }
+  .em-table th, .em-table td { text-align: left; padding: 10px 12px; border-bottom: 1px solid var(--sr-gray-light); }
+  .em-table th { background: var(--sr-gray-bg); font-size: 12px; text-transform: uppercase; letter-spacing: 0.5px; color: var(--sr-gray-text); font-weight: 600; }
+  .em-table td.num { font-family: var(--font-sans); font-weight: 600; color: var(--sr-blue); white-space: nowrap; }
+  .em-table tr.highlight { background: #f4f8fc; }
+  .em-table tr.highlight td { font-weight: 600; }
+
+  .disclaimer { background: #fff8e1; border-left: 4px solid #f5b041; padding: 14px 18px; border-radius: 3px; margin: 20px 0; font-size: 13.5px; line-height: 1.65; color: var(--sr-dark-text); }
+
+  .timeline { position: relative; padding: 0 0 0 32px; margin: 24px 0 28px; }
+  .timeline::before { content: ""; position: absolute; top: 0; bottom: 0; left: 14px; width: 3px; background: var(--sr-gray-light); border-radius: 2px; }
+  .tl-item { position: relative; margin-bottom: 24px; }
+  .tl-item:last-child { margin-bottom: 0; }
+  .tl-dot { position: absolute; left: -25px; top: 3px; width: 14px; height: 14px; border-radius: 50%; border: 3px solid var(--sr-blue); background: var(--white); z-index: 1; }
+  .tl-item.positive .tl-dot { border-color: #2e7d32; }
+  .tl-item.negative .tl-dot { border-color: #cc0000; }
+  .tl-item.pending .tl-dot { border-color: #f5b041; }
+  .tl-date { font-size: 12px; text-transform: uppercase; letter-spacing: 0.8px; color: var(--sr-gray-text); font-weight: 700; margin-bottom: 3px; }
+  .tl-title { font-family: var(--font-serif); font-size: 15px; color: var(--sr-blue-dark); font-weight: 700; margin-bottom: 4px; }
+  .tl-desc { font-size: 14px; color: var(--sr-dark-text); line-height: 1.6; }
+
+  .faq-list { margin: 18px 0 28px; }
+  .faq-item { border: 1px solid var(--sr-gray-light); border-radius: 4px; margin-bottom: 10px; overflow: hidden; }
+  .faq-q { display: flex; align-items: center; gap: 12px; padding: 16px 18px; cursor: pointer; background: var(--white); font-family: var(--font-serif); font-size: 16px; font-weight: 700; color: var(--sr-blue-dark); transition: background 0.15s; border: 0; width: 100%; text-align: left; }
+  .faq-q:hover { background: var(--sr-gray-bg); }
+  .faq-q .faq-icon { flex-shrink: 0; width: 24px; height: 24px; border-radius: 50%; background: var(--sr-blue); color: var(--white); display: flex; align-items: center; justify-content: center; font-size: 14px; font-weight: 700; transition: transform 0.2s; font-family: var(--font-sans); }
+  .faq-item.open .faq-q .faq-icon { transform: rotate(45deg); }
+  .faq-a { padding: 0 18px 16px; font-size: 15px; line-height: 1.7; color: var(--sr-dark-text); display: none; }
+  .faq-item.open .faq-a { display: block; }
+
+  .related-grid { display: grid; grid-template-columns: 1fr; gap: 12px; margin: 16px 0 24px; }
+  @media (min-width: 720px) { .related-grid { grid-template-columns: 1fr 1fr; } }
+  .related-link { display: block; padding: 16px 18px; background: var(--white); border: 1px solid var(--sr-gray-light); border-radius: 4px; text-decoration: none; color: inherit; transition: border-color 0.15s, transform 0.15s; }
+  .related-link:hover { border-color: var(--sr-blue); transform: translateY(-1px); }
+  .related-link .rl-tag { font-size: 11px; text-transform: uppercase; letter-spacing: 1px; color: var(--sr-red); font-weight: 700; margin-bottom: 4px; }
+  .related-link .rl-title { font-family: var(--font-serif); font-size: 16px; color: var(--sr-blue-dark); font-weight: 700; margin-bottom: 4px; }
+  .related-link .rl-desc { font-size: 13px; color: var(--sr-gray-text); line-height: 1.5; }
+</style>
+{% endblock %}
+
+{% block content %}
+<section class="container-wide">
+
+  <nav class="breadcrumbs" aria-label="Breadcrumb">
+    <a href="/">Home</a><span>/</span>
+    <a href="/invest-in-venezuela">Invest in Venezuela</a><span>/</span>
+    <span>Venezuela Economy</span>
+    <span style="margin-left:auto;">{{ share_button(seo.canonical, seo.title) }}</span>
+  </nav>
+
+  <header class="sanc-hero">
+    <div class="kicker">Macroeconomic Analysis &middot; Updated {{ updated_label }}</div>
+    <h1>Venezuela Economy in {{ current_year }}: GDP, Inflation &amp; Post-Sanctions Outlook</h1>
+    <p class="lead">
+      After the worst peacetime economic collapse in modern history&mdash;a 75%
+      contraction in GDP between 2014 and 2021&mdash;Venezuela&rsquo;s economy
+      is staging a fragile recovery, driven by de facto dollarization, partial
+      sanctions relief, and a political transition that has reopened the door to
+      foreign investment.
+    </p>
+  </header>
+
+  {# ============ Key Economic Indicators ============ #}
+  <div class="stat-grid">
+    <div class="stat-card">
+      <div class="stat-num">~$100B</div>
+      <div class="stat-label">GDP (2025 est.)</div>
+      <div class="stat-sub">IMF estimate</div>
+    </div>
+    <div class="stat-card">
+      <div class="stat-num">+5.0%</div>
+      <div class="stat-label">GDP Growth (2024)</div>
+      <div class="stat-sub">+4&ndash;6% projected 2026</div>
+    </div>
+    <div class="stat-card">
+      <div class="stat-num">~190%</div>
+      <div class="stat-label">Inflation (2024)</div>
+      <div class="stat-sub">Down from 130,060% (2018)</div>
+    </div>
+    <div class="stat-card">
+      <div class="stat-num">28.4M</div>
+      <div class="stat-label">Population</div>
+      <div class="stat-sub">7.7M emigrated</div>
+    </div>
+    <div class="stat-card">
+      <div class="stat-num">~1.1M</div>
+      <div class="stat-label">Oil Production (bpd)</div>
+      <div class="stat-sub">March 2026</div>
+    </div>
+    <div class="stat-card">
+      <div class="stat-num">BCV Rate</div>
+      <div class="stat-label">FX Reference</div>
+      <div class="stat-sub"><a href="/tools/bolivar-usd-exchange-rate" style="color:var(--sr-blue);font-weight:600;text-decoration:none;">Live rate &rarr;</a></div>
+    </div>
+  </div>
+
+  {# ============ Table of contents ============ #}
+  <nav class="toc" aria-label="Table of contents">
+    <h3>Contents</h3>
+    <ol>
+      <li><a href="#overview">Economic Overview</a></li>
+      <li><a href="#gdp">GDP &amp; Growth</a></li>
+      <li><a href="#inflation">Inflation &amp; Currency</a></li>
+      <li><a href="#oil-economy">Oil &amp; the Economy</a></li>
+      <li><a href="#sanctions-impact">Sanctions &amp; Economic Impact</a></li>
+      <li><a href="#labor">Labor Market &amp; Migration</a></li>
+      <li><a href="#investment">Investment Climate</a></li>
+      <li><a href="#outlook">2026 Economic Outlook</a></li>
+      <li><a href="#faq">Frequently Asked Questions</a></li>
+    </ol>
+  </nav>
+
+  {# ======================================================================= #}
+  <section id="overview" class="sec">
+    <h2>1. Economic Overview</h2>
+    <p class="sec-lead">
+      Venezuela was once Latin America&rsquo;s wealthiest nation. Its collapse and
+      incipient recovery represent one of the most dramatic economic narratives of
+      the 21st century.
+    </p>
+
+    <p>
+      In the 1950s through 1970s, Venezuela boasted the highest GDP per capita in
+      Latin America, powered by vast petroleum reserves and a relatively stable
+      democratic system (the Punto Fijo pact of 1958). The country attracted
+      immigrants from Europe and the Americas, built world-class infrastructure,
+      and maintained a currency&mdash;the bol&iacute;var&mdash;that was among the
+      strongest in the hemisphere.
+    </p>
+
+    <p>
+      That prosperity was always precarious, however, resting on a single
+      commodity. Petroleum accounts for over 95% of Venezuela&rsquo;s export
+      revenue and historically financed 40&ndash;50% of the federal budget.
+      When oil prices collapsed in 2014 and the structural distortions of
+      Ch&aacute;vez-era economic policy (price controls, expropriations,
+      exchange-rate manipulation) compounded, Venezuela entered the worst
+      peacetime economic contraction in modern history: GDP fell by approximately
+      75% between 2014 and 2021, surpassing even the Great Depression in the
+      United States.
+    </p>
+
+    <h3>The recovery narrative (2022&ndash;present)</h3>
+    <p>
+      Since 2022, Venezuela has experienced a tentative recovery driven by three
+      forces:
+    </p>
+    <ul>
+      <li><strong>De facto dollarization:</strong> The Maduro government&rsquo;s
+        tacit acceptance of US dollar transactions beginning in 2019 stabilized
+        commerce and provided a functional store of value, even as the
+        bol&iacute;var continued depreciating.</li>
+      <li><strong>Partial sanctions relief:</strong> The October 2023 General
+        License 44 (later revoked) and the post-transition GL 50A and GL 52
+        licenses reopened oil exports and foreign investment channels.</li>
+      <li><strong>Chevron&rsquo;s return:</strong> Chevron&rsquo;s expanded
+        operations under GL 41 (and later GL 50A) brought capital, technology,
+        and managerial capacity back to the oil sector, boosting production from
+        its 2020 nadir of 392,000 bpd to over 1.1 million bpd by early 2026.</li>
+    </ul>
+
+    <div class="card">
+      <h3>Key Fact: Scale of the Crisis</h3>
+      <div class="note">
+        Venezuela&rsquo;s GDP contracted from approximately $482 billion in 2014
+        to just $47 billion in 2020&mdash;a decline of roughly 90% in nominal
+        terms and 75% in real terms. No country outside of a war zone has
+        experienced a comparable contraction in the post&ndash;World War II era.
+        The collapse triggered the displacement of 7.7 million Venezuelans,
+        making it the largest refugee crisis in the Western Hemisphere.
+      </div>
+    </div>
+  </section>
+
+  {# ======================================================================= #}
+  <section id="gdp" class="sec">
+    <h2>2. GDP &amp; Growth</h2>
+    <p class="sec-lead">
+      Venezuela&rsquo;s GDP has recovered from its 2020 trough but remains far
+      below its pre-crisis peak. The economy is growing, but from a devastated
+      base.
+    </p>
+
+    <h3>GDP trajectory (2014&ndash;2026)</h3>
+    <table class="em-table">
+      <thead>
+        <tr>
+          <th>Year</th>
+          <th>Nominal GDP (USD)</th>
+          <th>Real Growth</th>
+          <th>Context</th>
+        </tr>
+      </thead>
+      <tbody>
+        <tr>
+          <td>2014</td>
+          <td class="num">$482B</td>
+          <td class="num">&minus;3.9%</td>
+          <td>Oil price collapse begins; peak GDP</td>
+        </tr>
+        <tr>
+          <td>2017</td>
+          <td class="num">$155B</td>
+          <td class="num">&minus;15.7%</td>
+          <td>Hyperinflation onset; sanctions escalation</td>
+        </tr>
+        <tr>
+          <td>2020</td>
+          <td class="num">$47B</td>
+          <td class="num">&minus;30.0%</td>
+          <td>COVID + maximum sanctions; production nadir</td>
+        </tr>
+        <tr>
+          <td>2022</td>
+          <td class="num">$72B</td>
+          <td class="num">+8.0%</td>
+          <td>Dollarization stabilizes; private sector rebounds</td>
+        </tr>
+        <tr>
+          <td>2024</td>
+          <td class="num">$92B</td>
+          <td class="num">+5.0%</td>
+          <td>Oil production recovery; Chevron expansion</td>
+        </tr>
+        <tr class="highlight">
+          <td>2026 (est.)</td>
+          <td class="num">~$105&ndash;110B</td>
+          <td class="num">+4&ndash;6%</td>
+          <td>Post-transition reforms; GL 50A/52 investment</td>
+        </tr>
+      </tbody>
+    </table>
+    <p style="font-size: 13px; color: var(--sr-gray-text);">Sources: IMF World Economic Outlook (Oct 2025); World Bank; BCV (bol&iacute;var-denominated data converted at market rates). Nominal GDP figures at current exchange rates; 2026 is a projection range.</p>
+
+    <h3>Sector composition</h3>
+    <p>
+      Venezuela&rsquo;s economic structure has shifted considerably since the
+      crisis, as the private sector&mdash;particularly retail, services, and
+      import-dependent commerce&mdash;has grown relative to the state-dominated
+      oil sector:
+    </p>
+    <ul>
+      <li><strong>Services:</strong> ~45% of GDP (retail, telecommunications, finance, transport)</li>
+      <li><strong>Oil &amp; gas:</strong> ~25% of GDP (down from ~33% pre-crisis, reflecting production declines)</li>
+      <li><strong>Manufacturing:</strong> ~12% (food processing, beverages, construction materials)</li>
+      <li><strong>Agriculture:</strong> ~5% (historically neglected; potential for recovery)</li>
+      <li><strong>Mining:</strong> ~3% (gold, iron ore, bauxite, coltan; largely informal)</li>
+      <li><strong>Other:</strong> ~10% (construction, government, informal economy)</li>
+    </ul>
+
+    <h3>2026 growth drivers</h3>
+    <p>
+      The IMF&rsquo;s April 2026 <em>World Economic Outlook</em> projects
+      Venezuelan growth of 4&ndash;6% for 2026, citing several catalysts:
+    </p>
+    <ul>
+      <li><strong>Hydrocarbon reform law (Jan 2026):</strong> Reduced royalties
+        (33.3% &rarr; 20%) and IOC operatorship provisions are expected to
+        unlock $8&ndash;12B in upstream investment over three years.</li>
+      <li><strong>Chevron expansion:</strong> Chevron&rsquo;s increased stake in
+        Petroindependencia and its 300K+ bpd production target for 2027
+        represent the largest single source of near-term growth.</li>
+      <li><strong>FDI inflows:</strong> GL 52 has opened the door for US-person
+        investment in non-oil sectors for the first time since 2019.</li>
+      <li><strong>Consumer demand:</strong> Remittance flows from the diaspora
+        (estimated $4&ndash;5B annually) and dollarized commerce continue to
+        support domestic consumption.</li>
+    </ul>
+  </section>
+
+  {# ======================================================================= #}
+  <section id="inflation" class="sec">
+    <h2>3. Inflation &amp; Currency</h2>
+    <p class="sec-lead">
+      Venezuela experienced one of the most severe hyperinflation episodes in
+      world history. While annual inflation has dropped dramatically from its
+      2018 peak, prices remain deeply unstable by international standards.
+    </p>
+
+    <h3>Inflation trajectory</h3>
+    <table class="em-table">
+      <thead>
+        <tr>
+          <th>Year</th>
+          <th>Annual Inflation</th>
+          <th>Context</th>
+        </tr>
+      </thead>
+      <tbody>
+        <tr>
+          <td>2013</td>
+          <td class="num">56%</td>
+          <td>Pre-crisis; already elevated by regional standards</td>
+        </tr>
+        <tr>
+          <td>2015</td>
+          <td class="num">180%</td>
+          <td>Oil collapse; FX controls distort pricing</td>
+        </tr>
+        <tr>
+          <td>2017</td>
+          <td class="num">862%</td>
+          <td>Money printing accelerates to cover fiscal deficit</td>
+        </tr>
+        <tr>
+          <td>2018</td>
+          <td class="num">130,060%</td>
+          <td>Peak hyperinflation; IMF estimate</td>
+        </tr>
+        <tr>
+          <td>2019</td>
+          <td class="num">9,586%</td>
+          <td>Partial dollarization dampens bol&iacute;var demand</td>
+        </tr>
+        <tr>
+          <td>2021</td>
+          <td class="num">686%</td>
+          <td>BCV tightens reserve requirements</td>
+        </tr>
+        <tr>
+          <td>2023</td>
+          <td class="num">337%</td>
+          <td>Dollar transactions expand; monetary base stabilizes</td>
+        </tr>
+        <tr class="highlight">
+          <td>2024</td>
+          <td class="num">~190%</td>
+          <td>Lowest since 2014; still far above single-digit targets</td>
+        </tr>
+      </tbody>
+    </table>
+    <p style="font-size: 13px; color: var(--sr-gray-text);">Sources: IMF World Economic Outlook; BCV; Asamblea Nacional Finance Commission; Johns Hopkins &ndash; Cato Institute Troubled Currencies Project (Steve Hanke).</p>
+
+    <h3>De facto dollarization</h3>
+    <p>
+      Beginning in 2019, the Maduro government tacitly allowed US dollar
+      transactions&mdash;a remarkable reversal for a government that had
+      previously criminalized dollar holdings. By 2024, an estimated 65% of
+      all retail transactions in Venezuela were denominated in US dollars,
+      according to Ecoan&aacute;litica, a Caracas-based consultancy.
+    </p>
+    <p>
+      Dollarization has acted as a de facto stabilizer: businesses can price in
+      a hard currency, workers in the formal economy increasingly receive at
+      least partial dollar wages, and the dollar serves as a store of value in a
+      country where the bol&iacute;var has lost 99.99% of its value since 2013.
+      However, dollarization is uneven&mdash;rural areas and the informal economy
+      remain largely bol&iacute;var-dependent, creating a two-tier economy.
+    </p>
+
+    <h3>Bol&iacute;var redenominations</h3>
+    <p>
+      Venezuela has redenominated its currency three times in under 15 years,
+      each time removing zeros to simplify transactions as hyperinflation
+      eroded purchasing power:
+    </p>
+    <ul>
+      <li><strong>Bol&iacute;var fuerte (BsF) &mdash; January 2008:</strong>
+        Removed 3 zeros from the original bol&iacute;var. Introduced under
+        Ch&aacute;vez as a symbol of economic &ldquo;strength.&rdquo;</li>
+      <li><strong>Bol&iacute;var soberano (BsS) &mdash; August 2018:</strong>
+        Removed 5 zeros. Launched at the peak of hyperinflation; lost over 95%
+        of its value within months.</li>
+      <li><strong>Bol&iacute;var digital (BsD) &mdash; October 2021:</strong>
+        Removed 6 zeros. Currently in circulation. In total, 14 zeros have been
+        removed from the original bol&iacute;var since 2008.</li>
+    </ul>
+
+    <h3>BCV monetary policy</h3>
+    <p>
+      The Banco Central de Venezuela (BCV) has employed several tools to slow
+      inflation since 2021: raising bank reserve requirements to 73% (effectively
+      constraining credit creation), conducting weekly FX intervention auctions
+      to manage the bol&iacute;var&rsquo;s depreciation rate, and reducing fiscal
+      monetization (printing money to cover government deficits). These measures
+      have contributed to the deceleration of inflation from five-digit levels,
+      but the BCV remains institutionally weakened after years of political
+      interference.
+    </p>
+
+    <div class="card">
+      <h3>Live Exchange Rate</h3>
+      <div class="note">
+        Track the bol&iacute;var&ndash;USD exchange rate in real time on our
+        dedicated tool, updated daily with the official BCV reference rate and
+        parallel market indicators.
+        <br><a class="cta" href="/tools/bolivar-usd-exchange-rate">View live rate &rarr;</a>
+      </div>
+    </div>
+  </section>
+
+  {# ======================================================================= #}
+  <section id="oil-economy" class="sec">
+    <h2>4. Oil &amp; the Economy</h2>
+    <p class="sec-lead">
+      Oil is the foundation of Venezuela&rsquo;s economy. Despite decades of
+      rhetoric about economic diversification, petroleum remains the dominant
+      source of export revenue, government income, and foreign exchange.
+    </p>
+
+    <div class="card-grid cols-3">
+      <div class="card">
+        <div class="meta">Exports</div>
+        <h3>95%+</h3>
+        <div class="note" style="border:0;padding:0;">Share of petroleum in total export revenue. Venezuela is among the most oil-dependent economies in the world.</div>
+      </div>
+      <div class="card">
+        <div class="meta">GDP</div>
+        <h3>~25%</h3>
+        <div class="note" style="border:0;padding:0;">Oil and gas as a share of GDP. Down from ~33% pre-crisis due to production declines, but recovering.</div>
+      </div>
+      <div class="card">
+        <div class="meta">Government Revenue</div>
+        <h3>~40%</h3>
+        <div class="note" style="border:0;padding:0;">Share of fiscal revenue derived from the petroleum sector (royalties, income tax, dividends).</div>
+      </div>
+    </div>
+
+    <h3>PDVSA&rsquo;s role and decline</h3>
+    <p>
+      Petr&oacute;leos de Venezuela, S.A. (PDVSA) was once among the world&rsquo;s
+      five largest oil companies by reserves. Under Ch&aacute;vez, PDVSA was
+      transformed from a technocratic enterprise into a vehicle for social
+      spending and political patronage. The 2002&ndash;03 PDVSA strike and
+      subsequent mass firing of 18,000 employees (including most senior
+      engineers and managers) marked the beginning of a long operational decline.
+      Production fell from 3.45 million bpd in 1997 to 392,000 bpd at its nadir
+      in July 2020.
+    </p>
+
+    <h3>January 2026 hydrocarbon reform</h3>
+    <p>
+      The Rodriguez interim government enacted sweeping reforms to the 2001
+      Organic Hydrocarbons Law on January 28, 2026, fundamentally changing the
+      terms for foreign participation in the oil sector:
+    </p>
+    <ul>
+      <li>Foreign JV partners can now serve as <strong>operators of record</strong> (previously reserved for PDVSA)</li>
+      <li>Royalty rates reduced from <strong>33.3% to 20%</strong> for new Orinoco Belt projects</li>
+      <li>Contract duration extended from <strong>25 to 40 years</strong> for greenfield developments</li>
+      <li>International arbitration clauses now explicitly permitted</li>
+    </ul>
+
+    <h3>Production recovery</h3>
+    <p>
+      Venezuelan oil production has recovered to approximately 1.1 million bpd
+      as of March 2026, the highest level since November 2019. Investment bank
+      projections range from 1.3M bpd (Goldman Sachs, by Q4 2027) to 1.8M bpd
+      (Wood Mackenzie upside case, by 2028), all contingent on sustained
+      sanctions relief and continued capital deployment.
+    </p>
+
+    <p>
+      <a href="/venezuela-oil" style="font-weight: 600; color: var(--sr-blue);">
+        Read our full Venezuela Oil sector analysis &rarr;
+      </a>
+    </p>
+  </section>
+
+  {# ======================================================================= #}
+  <section id="sanctions-impact" class="sec">
+    <h2>5. Sanctions &amp; Economic Impact</h2>
+    <p class="sec-lead">
+      US sanctions have been one of the defining forces shaping Venezuela&rsquo;s
+      economy since 2017, constricting trade, investment, and access to the
+      international financial system.
+    </p>
+
+    <h3>The sanctions regime</h3>
+    <p>
+      The US imposed progressively broader sanctions on Venezuela between 2015
+      and 2019, culminating in Executive Order 13884 (August 2019), which imposed
+      a comprehensive block on the Government of Venezuela&mdash;one of the most
+      sweeping sanctions programs in US history, comparable in scope to the
+      programs on Cuba, Iran, and North Korea.
+    </p>
+
+    <h3>Economic impact</h3>
+    <p>
+      The economic effects of sanctions are intertwined with (and often difficult
+      to separate from) the effects of economic mismanagement. Key impacts
+      include:
+    </p>
+    <ul>
+      <li><strong>Trade constriction:</strong> Venezuelan oil exports to the US
+        dropped from ~500,000 bpd (2018) to effectively zero (2020&ndash;22),
+        forcing crude into discounted sales to China, India, and intermediaries.</li>
+      <li><strong>FDI collapse:</strong> Foreign direct investment fell to near
+        zero. International companies wrote off Venezuelan assets or maintained
+        minimal presence pending sanctions relief.</li>
+      <li><strong>Financial isolation:</strong> Venezuelan entities lost access
+        to the US banking system, correspondent banking relationships, and
+        dollar-clearing infrastructure. Even non-US banks de-risked Venezuelan
+        exposure.</li>
+      <li><strong>Humanitarian concerns:</strong> UN agencies and humanitarian
+        organizations documented the compounding effects of sanctions on an
+        already-devastated economy, including reduced imports of food, medicine,
+        and spare parts for essential services.</li>
+    </ul>
+
+    <h3>Post-transition recalibration (2026)</h3>
+    <p>
+      Following the January 2026 political transition, the US has significantly
+      recalibrated its sanctions posture. General Licenses 50A (oil operations)
+      and 52 (new investment) have reopened most commercial activity with the
+      transitional government. However, individual sanctions remain on former
+      regime officials, and the underlying executive orders have not been
+      revoked. Full normalization depends on sustained democratic progress.
+    </p>
+
+    <p>
+      <a href="/why-is-venezuela-sanctioned" style="font-weight: 600; color: var(--sr-blue);">
+        Read our complete explainer: Why Is Venezuela Sanctioned? &rarr;
+      </a>
+    </p>
+  </section>
+
+  {# ======================================================================= #}
+  <section id="labor" class="sec">
+    <h2>6. Labor Market &amp; Migration</h2>
+    <p class="sec-lead">
+      Venezuela&rsquo;s labor market has been reshaped by the largest refugee
+      crisis in the Western Hemisphere. The emigration of 7.7 million
+      Venezuelans has created severe skills shortages across every sector.
+    </p>
+
+    <h3>Migration by the numbers</h3>
+    <div class="card-grid cols-2">
+      <div class="card">
+        <div class="meta">Displacement</div>
+        <h3>7.7 million</h3>
+        <div class="row"><strong>Period</strong>2015&ndash;2024</div>
+        <div class="row"><strong>Share</strong>~21% of pre-crisis population</div>
+        <div class="row"><strong>Top destinations</strong>Colombia (2.9M), Peru (1.5M), US (545K+), Chile (444K)</div>
+        <div class="note">Source: UNHCR/IOM R4V Response for Venezuelans platform (Dec 2024).</div>
+      </div>
+      <div class="card">
+        <div class="meta">Brain drain</div>
+        <h3>Skilled labor exodus</h3>
+        <div class="row"><strong>Physicians</strong>~40,000 left (est. 55% of total)</div>
+        <div class="row"><strong>Engineers</strong>Petroleum engineers particularly affected</div>
+        <div class="row"><strong>Educators</strong>~150,000 teachers emigrated</div>
+        <div class="note">The loss of skilled professionals is one of the most significant long-term constraints on economic recovery.</div>
+      </div>
+    </div>
+
+    <h3>Domestic labor market</h3>
+    <p>
+      Formal unemployment statistics in Venezuela are unreliable (the last
+      official BCV labor survey was published in 2016). Independent estimates
+      from Encovi (Encuesta Nacional de Condiciones de Vida) suggest:
+    </p>
+    <ul>
+      <li><strong>Informal economy:</strong> Approximately 60% of the workforce
+        operates in the informal sector, up from ~40% pre-crisis</li>
+      <li><strong>Public sector wages:</strong> The minimum wage remains the
+        equivalent of $3&ndash;5/month, rendering public-sector employment
+        essentially untenable without supplementary income</li>
+      <li><strong>Dollar economy:</strong> Workers in the dollarized formal
+        sector (oil, telecoms, multinational operations) earn $200&ndash;800/month,
+        creating stark inequality with bol&iacute;var-paid workers</li>
+    </ul>
+
+    <h3>TPS and the US connection</h3>
+    <p>
+      Approximately 600,000+ Venezuelans in the United States held Temporary
+      Protected Status (TPS), which provided work authorization and protection
+      from deportation. The program&rsquo;s evolution under the current US
+      administration has significant implications for remittance flows to
+      Venezuela, estimated at $4&ndash;5 billion annually.
+    </p>
+
+    <p>
+      <a href="/tps-venezuela" style="font-weight: 600; color: var(--sr-blue);">
+        Read our TPS Venezuela guide &rarr;
+      </a>
+    </p>
+  </section>
+
+  {# ======================================================================= #}
+  <section id="investment" class="sec">
+    <h2>7. Investment Climate</h2>
+    <p class="sec-lead">
+      Venezuela&rsquo;s investment environment is undergoing its most significant
+      transformation since the Ch&aacute;vez-era nationalizations. The 2026
+      political transition has created an opening&mdash;but risks remain
+      substantial.
+    </p>
+
+    <h3>Foreign Direct Investment trends</h3>
+    <p>
+      FDI into Venezuela collapsed from $2.2 billion in 2014 to effectively
+      zero during the peak sanctions period (2019&ndash;2022). Since the issuance
+      of GL 50A and GL 52, preliminary data suggests a recovery to an estimated
+      $1.5&ndash;2.5 billion in 2026, primarily concentrated in the oil and gas
+      sector (Chevron, Repsol, Eni).
+    </p>
+
+    <h3>Key reforms under the Rodriguez administration</h3>
+    <p>
+      The transitional government has moved quickly to signal an
+      investment-friendly posture:
+    </p>
+    <ul>
+      <li><strong>Hydrocarbon law reform:</strong> IOC operatorship, reduced
+        royalties, 40-year contracts, international arbitration</li>
+      <li><strong>FX liberalization:</strong> The BCV has moved toward a
+        managed-float exchange rate, reducing the multiple exchange-rate
+        distortions that plagued the economy</li>
+      <li><strong>Property rights signals:</strong> The government has expressed
+        willingness to negotiate settlements for assets expropriated under
+        Ch&aacute;vez and Maduro, though no formal framework has been established</li>
+      <li><strong>Anti-corruption measures:</strong> An anti-corruption commission
+        has been established, though its independence and effectiveness remain
+        untested</li>
+    </ul>
+
+    <h3>Sector opportunities</h3>
+    <div class="card-grid cols-2">
+      <div class="card">
+        <div class="meta">Energy</div>
+        <h3>Oil &amp; Gas</h3>
+        <div class="note" style="border:0;padding:0;">
+          The most immediate opportunity. Existing JV structures, GL 50A/52
+          authorization, reformed fiscal terms. Chevron&rsquo;s expansion
+          demonstrates viability. Requires OFAC compliance infrastructure.
+        </div>
+      </div>
+      <div class="card">
+        <div class="meta">Resources</div>
+        <h3>Mining</h3>
+        <div class="note" style="border:0;padding:0;">
+          Venezuela has significant gold, iron ore, bauxite, coltan, and diamond
+          deposits. The Arco Minero del Orinoco concession zone covers 112,000
+          km&sup2;. Environmental and governance risks are extreme.
+        </div>
+      </div>
+      <div class="card">
+        <div class="meta">Property</div>
+        <h3>Real Estate</h3>
+        <div class="note" style="border:0;padding:0;">
+          Caracas commercial real estate trades at deep discounts to comparable
+          Latin American markets. Residential demand is rising with dollarization.
+          Title certainty and expropriation risk are key concerns.
+        </div>
+      </div>
+      <div class="card">
+        <div class="meta">Agriculture</div>
+        <h3>Agriculture</h3>
+        <div class="note" style="border:0;padding:0;">
+          Venezuela has 30+ million hectares of arable land, much of it
+          underutilized. Domestic food production collapsed during the crisis,
+          creating import-substitution opportunities in grains, livestock, and
+          processed foods.
+        </div>
+      </div>
+    </div>
+
+    <h3>Major risks</h3>
+    <ul>
+      <li><strong>FX controls:</strong> While liberalized, the BCV retains
+        authority to reimpose capital controls. Profit repatriation mechanisms
+        remain untested for new entrants.</li>
+      <li><strong>Legal uncertainty:</strong> Venezuela&rsquo;s judiciary remains
+        unreformed. Contract enforcement, property rights, and dispute resolution
+        are unreliable outside of ICSID/ICC arbitration frameworks.</li>
+      <li><strong>Sanctions compliance:</strong> US persons must maintain robust
+        OFAC compliance programs. All general licenses are revocable. Counterparty
+        screening against the SDN list is mandatory.</li>
+      <li><strong>Political risk:</strong> The transitional government lacks
+        electoral legitimacy. Maduro loyalists retain influence. A political
+        reversal could undo reforms.</li>
+    </ul>
+
+    <p>
+      <a href="/invest-in-venezuela" style="font-weight: 600; color: var(--sr-blue);">
+        Read our full Investment Guide &rarr;
+      </a>
+    </p>
+  </section>
+
+  {# ======================================================================= #}
+  <section id="outlook" class="sec">
+    <h2>8. {{ current_year }} Economic Outlook</h2>
+    <p class="sec-lead">
+      The first months of 2026 have brought more change to Venezuela&rsquo;s
+      economic trajectory than the preceding five years combined. Here are the
+      key developments shaping the outlook.
+    </p>
+
+    <div class="timeline">
+      <div class="tl-item positive">
+        <span class="tl-dot"></span>
+        <div class="tl-date">January 10, 2026</div>
+        <div class="tl-title">Political Transition</div>
+        <div class="tl-desc">
+          Nicol&aacute;s Maduro is removed from power. Executive Vice President
+          Delcy Rodr&iacute;guez assumes interim control under a transitional
+          framework recognized by the US and key international partners.
+        </div>
+      </div>
+
+      <div class="tl-item positive">
+        <span class="tl-dot"></span>
+        <div class="tl-date">January 28, 2026</div>
+        <div class="tl-title">Hydrocarbon Law Reform</div>
+        <div class="tl-desc">
+          The interim government enacts sweeping changes to the 2001 Organic
+          Hydrocarbons Law: reduced royalties, IOC operatorship, 40-year
+          contracts, and international arbitration provisions.
+        </div>
+      </div>
+
+      <div class="tl-item positive">
+        <span class="tl-dot"></span>
+        <div class="tl-date">February 2026</div>
+        <div class="tl-title">OFAC General Licenses 50A &amp; 52</div>
+        <div class="tl-desc">
+          OFAC issues GL 50A (authorizing oil and gas operations) and GL 52
+          (authorizing new investment), reopening Venezuela to US-person
+          commercial activity on the broadest basis since 2019.
+        </div>
+      </div>
+
+      <div class="tl-item positive">
+        <span class="tl-dot"></span>
+        <div class="tl-date">March 2026</div>
+        <div class="tl-title">Oil Production Crosses 1M bpd</div>
+        <div class="tl-desc">
+          Venezuelan production reaches 1.095M bpd according to OPEC secondary
+          sources, the highest level since November 2019.
+        </div>
+      </div>
+
+      <div class="tl-item">
+        <span class="tl-dot"></span>
+        <div class="tl-date">April 2026</div>
+        <div class="tl-title">Chevron Petroindependencia Expansion</div>
+        <div class="tl-desc">
+          Chevron completes asset-swap agreement to increase its
+          Petroindependencia stake to 49%, becoming the largest foreign producer
+          in Venezuela at ~260,000 bpd combined JV output.
+        </div>
+      </div>
+
+      <div class="tl-item pending">
+        <span class="tl-dot"></span>
+        <div class="tl-date">H2 2026 (Pending)</div>
+        <div class="tl-title">Elections &amp; Normalization</div>
+        <div class="tl-desc">
+          The transitional government has committed to internationally supervised
+          elections. Full sanctions normalization&mdash;including revocation of
+          underlying executive orders&mdash;is contingent on credible electoral
+          progress.
+        </div>
+      </div>
+    </div>
+
+    <h3>IMF &amp; World Bank projections</h3>
+    <p>
+      The IMF&rsquo;s April 2026 <em>World Economic Outlook</em> projects
+      Venezuelan real GDP growth of 4&ndash;6% for 2026 and 3&ndash;5% for 2027.
+      The World Bank&rsquo;s <em>Global Economic Prospects</em> (June 2025
+      update) is slightly more conservative, projecting 3.5&ndash;4.5% growth,
+      citing political uncertainty as the primary downside risk.
+    </p>
+    <p>
+      Both institutions note that the outlook is heavily contingent on: (1) the
+      sustainability of the political transition; (2) continued sanctions relief;
+      and (3) the pace of oil-sector capital deployment. A return to maximum
+      sanctions pressure would likely push growth negative within 12&ndash;18
+      months.
+    </p>
+
+    <h3>Key indicators to watch</h3>
+    <ul>
+      <li><strong>Oil production:</strong> Monthly OPEC data; target is 1.3M+ bpd by year-end</li>
+      <li><strong>Inflation:</strong> BCV monthly CPI releases; breaking below 100% would be a milestone</li>
+      <li><strong>OFAC actions:</strong> Any modification, expansion, or revocation of GL 50A/52</li>
+      <li><strong>Election timeline:</strong> Credible commitment to internationally supervised elections</li>
+      <li><strong>BCV reserves:</strong> Foreign-exchange reserves (currently ~$10B); reserve accumulation signals stability</li>
+      <li><strong>Chevron production:</strong> Quarterly earnings for JV production data</li>
+    </ul>
+  </section>
+
+  {# ======================================================================= #}
+  <section id="faq" class="sec">
+    <h2>9. Frequently Asked Questions</h2>
+    <p class="sec-lead">
+      Common questions about Venezuela&rsquo;s economy, answered with current data.
+    </p>
+
+    <div class="faq-list">
+      <div class="faq-item open">
+        <button type="button" class="faq-q">
+          <span class="faq-icon">+</span>
+          What is Venezuela&rsquo;s GDP in {{ current_year }}?
+        </button>
+        <div class="faq-a">
+          <p>
+            Venezuela&rsquo;s GDP is projected at approximately $105&ndash;110
+            billion in 2026, according to IMF estimates. This represents a
+            significant recovery from the 2020 trough of ~$47 billion but
+            remains far below the 2014 peak of $482 billion. Real GDP growth is
+            projected at 4&ndash;6% for 2026, driven by oil-sector recovery,
+            post-transition reforms, and continued dollarized commerce.
+          </p>
+        </div>
+      </div>
+
+      <div class="faq-item">
+        <button type="button" class="faq-q">
+          <span class="faq-icon">+</span>
+          Is Venezuela&rsquo;s economy recovering?
+        </button>
+        <div class="faq-a">
+          <p>
+            Yes, but from a devastated base. Venezuela&rsquo;s economy has grown
+            in each year since 2022, averaging approximately 5&ndash;8% real GDP
+            growth. The recovery has been driven by de facto dollarization,
+            partial sanctions relief, Chevron&rsquo;s return to the oil sector,
+            and remittance flows from the diaspora. However, the economy remains
+            roughly 75% smaller in real terms than its 2014 peak, and structural
+            challenges&mdash;including infrastructure decay, brain drain,
+            institutional weakness, and political uncertainty&mdash;constrain the
+            pace of recovery.
+          </p>
+        </div>
+      </div>
+
+      <div class="faq-item">
+        <button type="button" class="faq-q">
+          <span class="faq-icon">+</span>
+          What caused Venezuela&rsquo;s economic crisis?
+        </button>
+        <div class="faq-a">
+          <p>
+            Venezuela&rsquo;s economic crisis resulted from a combination of
+            factors: (1) extreme dependence on oil (95%+ of export revenue) left
+            the economy vulnerable to the 2014 oil price collapse; (2) years of
+            economic mismanagement under Ch&aacute;vez and Maduro, including
+            price controls, expropriations, currency manipulation, and fiscal
+            profligacy; (3) the politicization and operational collapse of PDVSA;
+            (4) pervasive corruption and capital flight; and (5) US sanctions
+            beginning in 2017, which compounded existing problems by restricting
+            trade, investment, and financial access. The crisis produced
+            hyperinflation exceeding 130,000%, a ~75% GDP contraction, and the
+            displacement of 7.7 million people.
+          </p>
+        </div>
+      </div>
+
+      <div class="faq-item">
+        <button type="button" class="faq-q">
+          <span class="faq-icon">+</span>
+          What is the inflation rate in Venezuela?
+        </button>
+        <div class="faq-a">
+          <p>
+            Venezuela&rsquo;s annual inflation rate was approximately 190% in
+            2024, the lowest level since 2014. While this represents a dramatic
+            decline from the 130,060% hyperinflation peak in 2018, it remains
+            among the highest rates in the world. The deceleration has been
+            driven by de facto dollarization (reducing demand for bol&iacute;vares),
+            BCV reserve requirement increases, and reduced fiscal monetization.
+            For 2026, independent forecasters project inflation in the
+            120&ndash;180% range, with the possibility of breaking below 100%
+            if current monetary policies hold.
+          </p>
+        </div>
+      </div>
+
+      <div class="faq-item">
+        <button type="button" class="faq-q">
+          <span class="faq-icon">+</span>
+          Is Venezuela still dollarized?
+        </button>
+        <div class="faq-a">
+          <p>
+            Yes. Venezuela operates a de facto dual-currency system. An
+            estimated 65% of retail transactions are conducted in US dollars,
+            and many formal-sector wages are paid partially or fully in dollars.
+            The bol&iacute;var digital (BsD) remains the official legal tender,
+            but its primary function has been reduced to paying taxes, utilities,
+            and government fees. This informal dollarization is not codified in
+            law&mdash;the BCV has neither officially adopted the dollar nor
+            abandoned the bol&iacute;var. The dual system creates significant
+            inequality between dollar-earning workers and those paid in
+            bol&iacute;vares.
+          </p>
+        </div>
+      </div>
+
+      <div class="faq-item">
+        <button type="button" class="faq-q">
+          <span class="faq-icon">+</span>
+          How do US sanctions affect Venezuela&rsquo;s economy?
+        </button>
+        <div class="faq-a">
+          <p>
+            US sanctions have had profound effects on Venezuela&rsquo;s economy:
+            they cut off access to the US financial system, blocked oil exports
+            to the US (historically Venezuela&rsquo;s largest customer), deterred
+            foreign investment, and isolated Venezuelan entities from
+            international banking networks. The full Government of Venezuela
+            block under E.O. 13884 (2019) was among the most comprehensive
+            sanctions programs ever imposed. Since the January 2026 political
+            transition, sanctions have been significantly relaxed through General
+            Licenses 50A and 52, reopening oil operations and new investment.
+            However, individual sanctions on former regime officials remain, and
+            all general licenses are revocable.
+          </p>
+        </div>
+      </div>
+
+      <div class="faq-item">
+        <button type="button" class="faq-q">
+          <span class="faq-icon">+</span>
+          What is Venezuela&rsquo;s main export?
+        </button>
+        <div class="faq-a">
+          <p>
+            Petroleum is Venezuela&rsquo;s dominant export, accounting for over
+            95% of export revenue. Venezuela holds the world&rsquo;s largest
+            proven oil reserves (303.8 billion barrels) and currently produces
+            approximately 1.1 million barrels per day. Other exports include
+            gold, iron ore, steel, aluminum, and petrochemicals, but these
+            represent a small fraction of total export earnings. The extreme
+            concentration of exports in a single commodity is widely recognized
+            as the structural vulnerability at the root of Venezuela&rsquo;s
+            economic fragility.
+          </p>
+        </div>
+      </div>
+
+      <div class="faq-item">
+        <button type="button" class="faq-q">
+          <span class="faq-icon">+</span>
+          Can foreign companies invest in Venezuela in {{ current_year }}?
+        </button>
+        <div class="faq-a">
+          <p>
+            Yes, with significant caveats. OFAC General License 52 (issued
+            February 2026) authorizes new US-person investment in Venezuela for
+            the first time since 2019. GL 50A authorizes oil and gas operations
+            for six named companies (Chevron, Repsol, Eni, BP, Shell, Maurel
+            &amp; Prom). The January 2026 hydrocarbon law reform offers improved
+            fiscal and operational terms. However, investors must maintain
+            rigorous OFAC compliance programs, screen counterparties against the
+            SDN list, and account for the risk that general licenses could be
+            revoked. Non-US companies face fewer sanctions constraints but must
+            evaluate secondary sanctions risk. All investors face political,
+            legal, and operational risks in a country still in political
+            transition.
+          </p>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  {# ======================================================================= #}
+  <section class="sec">
+    <h2>Related Coverage</h2>
+    <p class="sec-lead">
+      Explore related analysis on Venezuela&rsquo;s economy, sanctions, oil
+      sector, and investment landscape.
+    </p>
+
+    <div class="related-grid">
+      <a class="related-link" href="/invest-in-venezuela">
+        <div class="rl-tag">Investment</div>
+        <div class="rl-title">Invest in Venezuela: Complete Guide</div>
+        <div class="rl-desc">Comprehensive investor guide covering sectors, risks, legal framework, and entry strategies for the Venezuelan market.</div>
+      </a>
+      <a class="related-link" href="/venezuela-oil">
+        <div class="rl-tag">Energy</div>
+        <div class="rl-title">Venezuela Oil: Reserves, Production &amp; Investment</div>
+        <div class="rl-desc">Deep dive into Venezuela&rsquo;s oil sector&mdash;303B barrels of reserves, PDVSA restructuring, Chevron expansion, and the new hydrocarbon law.</div>
+      </a>
+      <a class="related-link" href="/tools/bolivar-usd-exchange-rate">
+        <div class="rl-tag">Tool</div>
+        <div class="rl-title">Bol&iacute;var&ndash;USD Exchange Rate</div>
+        <div class="rl-desc">Live BCV official exchange rate and parallel market indicators, updated daily with historical charts and analysis.</div>
+      </a>
+      <a class="related-link" href="/why-is-venezuela-sanctioned">
+        <div class="rl-tag">Sanctions</div>
+        <div class="rl-title">Why Is Venezuela Sanctioned?</div>
+        <div class="rl-desc">Complete history of US sanctions on Venezuela from Obama through the 2026 post-transition recalibration.</div>
+      </a>
+      <a class="related-link" href="/tps-venezuela">
+        <div class="rl-tag">Immigration</div>
+        <div class="rl-title">TPS Venezuela: Status &amp; Timeline</div>
+        <div class="rl-desc">Guide to Temporary Protected Status for Venezuelans&mdash;current status, legal challenges, and impact on diaspora remittances.</div>
+      </a>
+    </div>
+  </section>
+
+  <div class="disclaimer">
+    <strong>Disclaimer:</strong> This page is for informational purposes only and does
+    not constitute investment, legal, or financial advice. Economic data is drawn from
+    IMF, World Bank, BCV, and other publicly available sources. Figures are estimates
+    and subject to revision. Information is current as of {{ updated_label }} and
+    subject to change. Consult qualified professionals before making investment
+    decisions involving Venezuela.
+  </div>
+
+  <div style="margin-top: 40px; padding: 18px; background: var(--sr-gray-bg); border-radius: 4px;">
+    <p style="font-size: 14px; color: var(--sr-dark-text); margin: 0;">
+      <strong>Stay current on Venezuela&rsquo;s economy.</strong>
+      Subscribe to the Caracas Research daily briefing for macroeconomic updates,
+      sanctions changes, oil-sector developments, and investment analysis.
+      <a href="/#signup" style="font-weight: 600;">Get the daily briefing &rarr;</a>
+    </p>
+  </div>
+
+  <p style="font-size: 12px; color: var(--sr-gray-text); margin: 24px 0;">
+    Sources: IMF World Economic Outlook; World Bank Global Economic Prospects;
+    Banco Central de Venezuela; OPEC Monthly Oil Market Report; UNHCR/IOM R4V
+    Response for Venezuelans; Encovi (UCAB); Ecoan&aacute;litica; OFAC
+    Venezuela-related sanctions program; Steve Hanke / Johns Hopkins &ndash; Cato
+    Troubled Currencies Project. Court filings and legislative texts referenced
+    are part of the public record.
+  </p>
+
+</section>
+
+<script>
+document.querySelectorAll('.faq-q').forEach(function(btn){
+  btn.addEventListener('click',function(){
+    var item=this.closest('.faq-item');
+    var open=item.classList.contains('open');
+    document.querySelectorAll('.faq-item').forEach(function(i){i.classList.remove('open');});
+    if(!open) item.classList.add('open');
+  });
+});
+</script>
+
+{% from "_recent_briefings.html.j2" import recent_briefings_rail %}
+{{ recent_briefings_rail(
+     recent_briefings,
+     heading="Latest analysis",
+     intro="Recent briefings on Venezuela's macroeconomic developments, sanctions policy, and investment outlook.",
+) }}
+{% endblock %}
