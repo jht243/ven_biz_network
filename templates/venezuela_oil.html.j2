@@ -1,0 +1,793 @@
+{% extends "_base.html.j2" %}
+{% from "_base.html.j2" import share_button %}
+
+{% block head_extra %}
+<style>
+  .oil-hero { background: linear-gradient(180deg, #f4f8fc 0%, var(--white) 100%); padding: 28px 0 16px; margin-bottom: 16px; }
+  .oil-hero .kicker { font-size: 12px; text-transform: uppercase; letter-spacing: 1.4px; color: var(--sr-blue); font-weight: 700; }
+  .oil-hero h1 { font-family: var(--font-serif); font-size: 32px; color: var(--sr-blue-dark); margin: 8px 0 8px; line-height: 1.2; }
+  .oil-hero p.lead { font-family: var(--font-serif); font-style: italic; color: var(--sr-gray-text); font-size: 16px; max-width: 720px; margin: 0; }
+
+  .stat-banner { display: grid; grid-template-columns: 1fr; gap: 0; margin: 20px 0 28px; border: 1px solid #d0dae8; border-radius: 6px; overflow: hidden; }
+  @media (min-width: 640px) { .stat-banner { grid-template-columns: 1fr 1fr 1fr; } }
+  .stat-banner .stat { padding: 18px 22px; text-align: center; border-bottom: 1px solid #d0dae8; }
+  @media (min-width: 640px) { .stat-banner .stat { border-bottom: 0; border-right: 1px solid #d0dae8; } .stat-banner .stat:last-child { border-right: 0; } }
+  .stat-banner .stat-num { font-family: var(--font-serif); font-size: 28px; font-weight: 700; color: var(--sr-blue-dark); line-height: 1.1; }
+  .stat-banner .stat-label { font-size: 12px; text-transform: uppercase; letter-spacing: 1px; color: var(--sr-gray-text); margin-top: 4px; font-weight: 600; }
+  .stat-banner .stat-sub { font-size: 12px; color: var(--sr-blue); margin-top: 2px; font-weight: 600; }
+
+  .toc { background: var(--sr-gray-bg); border-left: 3px solid var(--sr-blue); padding: 18px 22px; margin: 0 0 32px; font-size: 14px; }
+  .toc h3 { font-family: var(--font-serif); font-size: 14px; text-transform: uppercase; letter-spacing: 1px; color: var(--sr-blue-dark); margin-bottom: 10px; }
+  .toc ol { margin-left: 20px; columns: 2; column-gap: 24px; }
+  .toc li { margin-bottom: 6px; }
+  @media (max-width: 640px) { .toc ol { columns: 1; } }
+
+  .sec { margin: 40px 0 24px; padding-top: 8px; }
+  .sec h2 { font-family: var(--font-serif); font-size: 26px; color: var(--sr-blue-dark); margin-bottom: 8px; }
+  .sec .sec-lead { color: var(--sr-gray-text); margin-bottom: 18px; font-size: 15px; }
+  .sec h3 { font-family: var(--font-serif); font-size: 20px; color: var(--sr-blue-dark); margin: 24px 0 10px; }
+  .sec p { margin: 0 0 14px; line-height: 1.7; }
+  .sec ul, .sec ol { margin: 0 0 14px 22px; }
+  .sec li { margin-bottom: 6px; line-height: 1.6; }
+
+  .card-grid { display: grid; grid-template-columns: 1fr; gap: 14px; margin-bottom: 18px; }
+  @media (min-width: 720px) { .card-grid.cols-2 { grid-template-columns: 1fr 1fr; } }
+  @media (min-width: 980px) { .card-grid.cols-3 { grid-template-columns: 1fr 1fr 1fr; } }
+
+  .card { background: var(--white); border: 1px solid var(--sr-gray-light); border-radius: 4px; padding: 18px 20px; transition: border-color 0.15s, transform 0.15s; }
+  .card:hover { border-color: var(--sr-blue); transform: translateY(-1px); }
+  .card h3 { font-family: var(--font-serif); font-size: 17px; color: var(--sr-blue-dark); margin-bottom: 6px; }
+  .card .meta { font-size: 12px; text-transform: uppercase; letter-spacing: 0.5px; color: var(--sr-gray-text); margin-bottom: 8px; }
+  .card .row { font-size: 14px; margin: 4px 0; }
+  .card .row strong { color: var(--sr-dark-text); display: inline-block; min-width: 96px; font-weight: 600; }
+  .card .note { font-size: 13px; color: var(--sr-gray-text); margin-top: 10px; line-height: 1.55; padding-top: 10px; border-top: 1px dotted var(--sr-gray-light); }
+  .card a.cta { font-size: 13px; color: var(--sr-blue); font-weight: 600; text-decoration: none; }
+  .card a.cta:hover { text-decoration: underline; }
+
+  .em-table { width: 100%; border-collapse: collapse; margin: 8px 0 18px; font-size: 14px; }
+  .em-table th, .em-table td { text-align: left; padding: 10px 12px; border-bottom: 1px solid var(--sr-gray-light); }
+  .em-table th { background: var(--sr-gray-bg); font-size: 12px; text-transform: uppercase; letter-spacing: 0.5px; color: var(--sr-gray-text); font-weight: 600; }
+  .em-table td.num { font-family: var(--font-sans); font-weight: 600; color: var(--sr-blue); white-space: nowrap; }
+  .em-table tr.highlight { background: #f4f8fc; }
+  .em-table tr.highlight td { font-weight: 600; }
+
+  .disclaimer { background: #fff8e1; border-left: 4px solid #f5b041; padding: 14px 18px; border-radius: 3px; margin: 20px 0; font-size: 13.5px; line-height: 1.65; color: var(--sr-dark-text); }
+
+  .callout { background: #f4f8fb; border: 1px solid #cfdce8; border-left: 5px solid var(--sr-blue); padding: 18px 22px; border-radius: 4px; margin: 20px 0 24px; }
+  .callout h4 { font-family: var(--font-serif); font-size: 16px; color: var(--sr-blue-dark); margin: 0 0 8px; }
+  .callout p { font-size: 14px; color: var(--sr-dark-text); margin: 0; line-height: 1.6; }
+
+  .timeline { border-left: 3px solid var(--sr-blue); padding-left: 22px; margin: 18px 0 24px; }
+  .timeline .event { position: relative; margin-bottom: 18px; }
+  .timeline .event::before { content: ""; position: absolute; left: -28px; top: 6px; width: 10px; height: 10px; background: var(--sr-blue); border-radius: 50%; }
+  .timeline .event .date { font-size: 12px; text-transform: uppercase; letter-spacing: 0.5px; color: var(--sr-blue); font-weight: 700; }
+  .timeline .event p { font-size: 14px; margin: 4px 0 0; color: var(--sr-dark-text); line-height: 1.55; }
+
+  .faq-grid { display: grid; grid-template-columns: 1fr; gap: 14px; margin: 18px 0 24px; }
+  @media (min-width: 720px) { .faq-grid { grid-template-columns: 1fr 1fr; } }
+  .faq-card { background: var(--white); border: 1px solid var(--sr-gray-light); border-radius: 4px; padding: 20px 22px; }
+  .faq-card h4 { font-family: var(--font-serif); font-size: 16px; color: var(--sr-blue-dark); margin: 0 0 10px; line-height: 1.3; }
+  .faq-card p { font-size: 14px; color: var(--sr-dark-text); margin: 0; line-height: 1.65; }
+
+  .pillbar { display: flex; flex-wrap: wrap; gap: 8px; margin: 8px 0 24px; }
+  .pillbar a { display: inline-block; padding: 6px 14px; background: var(--white); border: 1px solid var(--sr-gray-light); border-radius: 999px; font-size: 13px; font-weight: 600; color: var(--sr-blue-dark); text-decoration: none; }
+  .pillbar a:hover { border-color: var(--sr-blue); color: var(--sr-blue); }
+</style>
+{% endblock %}
+
+{% block content %}
+<section class="container-wide">
+
+  <nav class="breadcrumbs" aria-label="Breadcrumb">
+    <a href="/">Home</a><span>/</span>
+    <a href="/invest-in-venezuela">Invest in Venezuela</a><span>/</span>
+    <span>Venezuela Oil</span>
+    <span style="margin-left:auto;">{{ share_button(seo.canonical, seo.title) }}</span>
+  </nav>
+
+  <header class="oil-hero">
+    <div class="kicker">Energy &amp; Commodities &middot; Updated {{ updated_label }}</div>
+    <h1>Venezuela Oil: Reserves, Production &amp; Investment Guide</h1>
+    <p class="lead">
+      The definitive investor briefing on Venezuela&rsquo;s oil sector &mdash; 303&nbsp;billion barrels
+      of proven reserves, PDVSA restructuring, US sanctions framework, and the opening
+      to international operators. Data current as of {{ updated_label }}.
+    </p>
+  </header>
+
+  {# ============ Key stats banner ============ #}
+  <div class="stat-banner">
+    <div class="stat">
+      <div class="stat-num">303B bbl</div>
+      <div class="stat-label">Proven reserves</div>
+      <div class="stat-sub">World #1</div>
+    </div>
+    <div class="stat">
+      <div class="stat-num">~1.1M bpd</div>
+      <div class="stat-label">Current production</div>
+      <div class="stat-sub">March 2026</div>
+    </div>
+    <div class="stat">
+      <div class="stat-num">Orinoco Belt</div>
+      <div class="stat-label">Largest accumulation</div>
+      <div class="stat-sub">Extra-heavy crude</div>
+    </div>
+  </div>
+
+  {# ============ Table of contents ============ #}
+  <nav class="toc" aria-label="Table of contents">
+    <h3>In this guide</h3>
+    <ol>
+      <li><a href="#reserves">Oil Reserves Overview</a></li>
+      <li><a href="#production">Current Production</a></li>
+      <li><a href="#pdvsa">PDVSA &mdash; State Oil Company</a></li>
+      <li><a href="#iocs">International Oil Companies</a></li>
+      <li><a href="#sanctions">US Sanctions on Venezuela&rsquo;s Oil Sector</a></li>
+      <li><a href="#infrastructure">Key Infrastructure</a></li>
+      <li><a href="#outlook">Investment Outlook</a></li>
+      <li><a href="#developments">Recent Developments (2026)</a></li>
+      <li><a href="#faq">Frequently Asked Questions</a></li>
+    </ol>
+  </nav>
+
+  {# ======================================================================= #}
+  {# 1. OIL RESERVES OVERVIEW                                                #}
+  {# ======================================================================= #}
+  <section id="reserves" class="sec">
+    <h2>1. Oil Reserves Overview</h2>
+    <p class="sec-lead">
+      Venezuela holds the world&rsquo;s largest proven oil reserves at 303.8&nbsp;billion
+      barrels, surpassing Saudi Arabia by roughly 6%. The bulk of these reserves sit in the
+      Orinoco Belt, a 55,000&nbsp;km&sup2; region in the country&rsquo;s southeast.
+    </p>
+
+    <p>
+      According to OPEC&rsquo;s <em>Annual Statistical Bulletin</em> and BP&rsquo;s
+      <em>Statistical Review of World Energy</em>, Venezuela&rsquo;s proven reserves have
+      been certified at 303.8&nbsp;billion barrels since 2013, when the Orinoco Belt
+      re-assessment was finalized. At current extraction rates (~1.1M&nbsp;bpd), the
+      reserves-to-production ratio exceeds 750&nbsp;years &mdash; by far the longest
+      of any major producer.
+    </p>
+
+    <h3>Top 5 countries by proven oil reserves</h3>
+    <table class="em-table">
+      <thead>
+        <tr>
+          <th>Rank</th>
+          <th>Country</th>
+          <th>Proven reserves (billion bbl)</th>
+          <th>Share of world total</th>
+        </tr>
+      </thead>
+      <tbody>
+        <tr class="highlight">
+          <td class="num">1</td>
+          <td>Venezuela</td>
+          <td class="num">303.8</td>
+          <td class="num">17.5%</td>
+        </tr>
+        <tr>
+          <td class="num">2</td>
+          <td>Saudi Arabia</td>
+          <td class="num">258.6</td>
+          <td class="num">14.9%</td>
+        </tr>
+        <tr>
+          <td class="num">3</td>
+          <td>Iran</td>
+          <td class="num">208.6</td>
+          <td class="num">12.1%</td>
+        </tr>
+        <tr>
+          <td class="num">4</td>
+          <td>Canada</td>
+          <td class="num">170.3</td>
+          <td class="num">9.8%</td>
+        </tr>
+        <tr>
+          <td class="num">5</td>
+          <td>Iraq</td>
+          <td class="num">145.0</td>
+          <td class="num">8.4%</td>
+        </tr>
+      </tbody>
+    </table>
+    <p style="font-size: 13px; color: var(--sr-gray-text);">Source: OPEC Annual Statistical Bulletin 2025; BP Statistical Review of World Energy 2025.</p>
+
+    <h3>The Orinoco Oil Belt</h3>
+    <p>
+      The Faja Petrol&iacute;fera del Orinoco (Orinoco Oil Belt) is the world&rsquo;s single
+      largest petroleum accumulation. Stretching roughly 600&nbsp;km along the northern
+      bank of the Orinoco River, it contains an estimated 1.4&nbsp;trillion barrels of
+      oil-in-place, of which 220+&nbsp;billion barrels are classified as recoverable
+      under current technology.
+    </p>
+    <p>
+      The crude is predominantly extra-heavy (8&ndash;12&deg;&nbsp;API gravity), requiring
+      either upgrading to synthetic crude or blending with naphtha/lighter diluents for
+      pipeline transport. Four upgraders were constructed in the early 2000s
+      (Petropiar, Petromonagas, Petrocedeño, Petroindependencia) to process
+      this crude into exportable grades, though only two operated at meaningful
+      capacity as of early 2026.
+    </p>
+
+    <div class="callout">
+      <h4>Why extra-heavy crude matters for investors</h4>
+      <p>
+        Orinoco extra-heavy crude trades at a significant discount to Brent
+        (typically $15&ndash;25/bbl) due to processing costs. However, the sheer
+        volume and the 30+ year asset life of Orinoco projects make them attractive
+        for operators with long time horizons and refinery configurations suited to
+        heavy feedstocks &mdash; notably US Gulf Coast refineries and Asian complex
+        refiners.
+      </p>
+    </div>
+  </section>
+
+  {# ======================================================================= #}
+  {# 2. CURRENT PRODUCTION                                                   #}
+  {# ======================================================================= #}
+  <section id="production" class="sec">
+    <h2>2. Current Production</h2>
+    <p class="sec-lead">
+      Venezuela produced approximately 1.095&nbsp;million barrels per day in March 2026,
+      according to OPEC secondary sources. This marks a significant recovery from
+      the July 2020 nadir but remains far below historical peaks.
+    </p>
+
+    <h3>Production milestones</h3>
+    <table class="em-table">
+      <thead>
+        <tr>
+          <th>Period</th>
+          <th>Production (bpd)</th>
+          <th>Context</th>
+        </tr>
+      </thead>
+      <tbody>
+        <tr>
+          <td>1997 (peak)</td>
+          <td class="num">3.45M</td>
+          <td>Pre-Chávez; Apertura Petrolera era</td>
+        </tr>
+        <tr>
+          <td>2002–03 (strike)</td>
+          <td class="num">~600K</td>
+          <td>PDVSA general strike; mass firings</td>
+        </tr>
+        <tr>
+          <td>2015</td>
+          <td class="num">2.37M</td>
+          <td>Pre-sanctions; already declining</td>
+        </tr>
+        <tr>
+          <td>Jan 2019</td>
+          <td class="num">1.15M</td>
+          <td>First round of US oil sanctions</td>
+        </tr>
+        <tr>
+          <td>Jul 2020 (nadir)</td>
+          <td class="num">392K</td>
+          <td>COVID + maximum sanctions pressure</td>
+        </tr>
+        <tr>
+          <td>Oct 2023</td>
+          <td class="num">780K</td>
+          <td>GL 44 temporary sanctions relief</td>
+        </tr>
+        <tr class="highlight">
+          <td>Mar 2026 (current)</td>
+          <td class="num">1.095M</td>
+          <td>Post-transition recovery; Chevron expansion</td>
+        </tr>
+      </tbody>
+    </table>
+    <p style="font-size: 13px; color: var(--sr-gray-text);">Sources: OPEC Monthly Oil Market Report; S&amp;P Global Platts; Argus Media.</p>
+
+    <h3>Production projections</h3>
+    <p>
+      Investment bank forecasts diverge on Venezuela&rsquo;s medium-term production trajectory:
+    </p>
+    <ul>
+      <li><strong>Goldman Sachs (Feb 2026):</strong> 1.3M&nbsp;bpd by Q4 2027, contingent on sustained sanctions relief and $8&ndash;12B in upstream capex.</li>
+      <li><strong>JPMorgan (Mar 2026):</strong> 1.5M&nbsp;bpd achievable by 2028 if GL&nbsp;50A is maintained and infrastructure investments proceed on schedule.</li>
+      <li><strong>Wood Mackenzie (Apr 2026):</strong> Base case of 1.2M&nbsp;bpd through 2028; upside to 1.8M&nbsp;bpd requires the hydrocarbon law reforms to hold.</li>
+    </ul>
+
+    <div class="disclaimer">
+      <strong>Analyst note:</strong> All production forecasts are conditional on the sanctions
+      regime remaining at current levels. A reversion to pre-2023 enforcement would likely
+      push output below 600K&nbsp;bpd within 12&ndash;18&nbsp;months, according to
+      Rystad Energy&rsquo;s stress-test scenarios.
+    </div>
+  </section>
+
+  {# ======================================================================= #}
+  {# 3. PDVSA                                                                #}
+  {# ======================================================================= #}
+  <section id="pdvsa" class="sec">
+    <h2>3. PDVSA &mdash; State Oil Company</h2>
+    <p class="sec-lead">
+      Petr&oacute;leos de Venezuela, S.A. (PDVSA) is the state-owned oil and natural gas
+      company and the backbone of Venezuela&rsquo;s economy. Once ranked among the
+      world&rsquo;s top five oil companies by reserves, PDVSA&rsquo;s operational capacity
+      has declined dramatically since the mid-2010s.
+    </p>
+
+    <h3>Key facts</h3>
+    <div class="card-grid cols-2">
+      <div class="card">
+        <div class="meta">Corporate</div>
+        <h3>Company profile</h3>
+        <div class="row"><strong>Founded</strong>1976 (nationalization)</div>
+        <div class="row"><strong>HQ</strong>Caracas, Venezuela</div>
+        <div class="row"><strong>Employees</strong>~70,000 (est. 2026)</div>
+        <div class="row"><strong>Revenue</strong>~$22B (2025 est.)</div>
+        <div class="note">PDVSA has not published audited financial statements since 2016. Revenue estimates derived from export volume &times; realized price data.</div>
+      </div>
+      <div class="card">
+        <div class="meta">Operations</div>
+        <h3>Current scope</h3>
+        <div class="row"><strong>Upstream</strong>~830K bpd (equity production)</div>
+        <div class="row"><strong>Refining</strong>1.3M bpd nameplate capacity</div>
+        <div class="row"><strong>JVs</strong>Chevron, Repsol, Eni, others</div>
+        <div class="row"><strong>Subsidiary</strong>Citgo (US refining &amp; retail)</div>
+      </div>
+    </div>
+
+    <h3>Citgo Petroleum</h3>
+    <p>
+      Citgo Petroleum Corporation, headquartered in Houston, Texas, is a wholly owned
+      indirect subsidiary of PDVSA. It operates three refineries (Lake Charles, LA;
+      Lemont, IL; Corpus Christi, TX) with a combined capacity of ~769,000&nbsp;bpd
+      and a network of approximately 4,200 locally owned and operated branded outlets
+      across the United States.
+    </p>
+    <p>
+      Citgo&rsquo;s assets are currently subject to multiple competing claims &mdash;
+      including from ConocoPhillips ($8.5B ICC arbitration award) and crystallized
+      PDVSA 2020 bond holders &mdash; making its ownership status one of the most
+      complex corporate-litigation situations in the energy sector. OFAC License
+      No.&nbsp;5H (as amended) continues to authorize Citgo&rsquo;s US operations.
+    </p>
+
+    <h3>January 2026 hydrocarbon law reform</h3>
+    <p>
+      On January 28, 2026, the interim government of Delcy Rodr&iacute;guez enacted
+      a reform to the 2001 Organic Hydrocarbons Law. Key provisions:
+    </p>
+    <ul>
+      <li><strong>Private operator autonomy:</strong> JV partners can now serve as operators of record (previously reserved for PDVSA).</li>
+      <li><strong>Fiscal terms:</strong> Royalty rates reduced from 33.3% to 20% for new Orinoco Belt projects; income tax capped at 34%.</li>
+      <li><strong>Contract duration:</strong> Extended from 25 to 40 years for greenfield developments.</li>
+      <li><strong>Dispute resolution:</strong> International arbitration clauses now explicitly permitted in JV agreements.</li>
+    </ul>
+
+    <div class="callout">
+      <h4>Why the law reform matters</h4>
+      <p>
+        The reform addresses the three objections IOCs have consistently raised since
+        the 2007 forced migrations: operational control, fiscal stability, and enforceability
+        of contracts. Whether the Rodriguez government can hold power long enough for these
+        terms to become entrenched is the central political risk.
+      </p>
+    </div>
+  </section>
+
+  {# ======================================================================= #}
+  {# 4. INTERNATIONAL OIL COMPANIES                                          #}
+  {# ======================================================================= #}
+  <section id="iocs" class="sec">
+    <h2>4. International Oil Companies in Venezuela</h2>
+    <p class="sec-lead">
+      Six international companies are explicitly authorized to operate in Venezuela
+      under OFAC General License 50A. Chevron leads by volume, but European operators
+      are expanding their positions.
+    </p>
+
+    <table class="em-table">
+      <thead>
+        <tr>
+          <th>Company</th>
+          <th>Country</th>
+          <th>JV / Asset</th>
+          <th>Production (bpd)</th>
+          <th>Status</th>
+        </tr>
+      </thead>
+      <tbody>
+        <tr class="highlight">
+          <td><strong>Chevron</strong></td>
+          <td>US</td>
+          <td>Petroboscán, Petroindependencia, Petrocedeño (minority)</td>
+          <td class="num">~260K</td>
+          <td>Expanding to 49% Petroindependencia</td>
+        </tr>
+        <tr>
+          <td><strong>Repsol</strong></td>
+          <td>Spain</td>
+          <td>Petroquiriquire, Petrocarabobo</td>
+          <td class="num">~80K</td>
+          <td>Re-activating Carabobo block</td>
+        </tr>
+        <tr>
+          <td><strong>Eni</strong></td>
+          <td>Italy</td>
+          <td>PetroJunín, Cardón IV (gas)</td>
+          <td class="num">~45K</td>
+          <td>Gas-focused expansion</td>
+        </tr>
+        <tr>
+          <td><strong>BP</strong></td>
+          <td>UK</td>
+          <td>Petromonagas (via minority interest)</td>
+          <td class="num">~25K</td>
+          <td>Evaluating re-entry</td>
+        </tr>
+        <tr>
+          <td><strong>Shell</strong></td>
+          <td>Netherlands</td>
+          <td>Petroregional del Lago (minority)</td>
+          <td class="num">~15K</td>
+          <td>Maintenance mode</td>
+        </tr>
+        <tr>
+          <td><strong>Maurel &amp; Prom</strong></td>
+          <td>France</td>
+          <td>PetroMacareo</td>
+          <td class="num">~10K</td>
+          <td>Ramp-up phase</td>
+        </tr>
+      </tbody>
+    </table>
+    <p style="font-size: 13px; color: var(--sr-gray-text);">Sources: Company filings; OFAC GL 50A; S&amp;P Global Platts estimates. Production figures are equity shares, approximate.</p>
+
+    <h3>Chevron&rsquo;s expansion</h3>
+    <p>
+      In April 2026, Chevron completed an asset-swap agreement with PDVSA to increase
+      its stake in Petroindependencia from 30% to 49% &mdash; the maximum permitted
+      for a foreign partner under the reformed hydrocarbons law. The deal was structured
+      as a carry-forward of $1.2B in PDVSA receivables against the incremental equity,
+      avoiding a cash payment that would have required separate OFAC authorization.
+    </p>
+    <p>
+      Chevron&rsquo;s combined Venezuela JVs now produce approximately 260,000&nbsp;bpd,
+      making it the largest single foreign producer in the country and accounting for
+      roughly 24% of total national output. Management has guided for 300K+&nbsp;bpd
+      by mid-2027 on its Q1 2026 earnings call.
+    </p>
+
+    <h3>Investment pipeline</h3>
+    <p>
+      Beyond the six GL&nbsp;50A licensees, several companies are in various stages of
+      due diligence or preliminary negotiations, pending either an expansion of the
+      general license framework or bilateral investment treaties:
+    </p>
+    <ul>
+      <li><strong>TotalEnergies:</strong> Engaged in technical evaluation of its legacy Petrocedeño stake; no OFAC authorization yet.</li>
+      <li><strong>CNPC / Sinopec:</strong> Maintaining minimal presence via Sinovensa JV; limited by secondary sanctions risk.</li>
+      <li><strong>Indian Oil Corporation:</strong> Signed non-binding MoU for Orinoco heavy-crude supply (Feb 2026).</li>
+    </ul>
+  </section>
+
+  {# ======================================================================= #}
+  {# 5. US SANCTIONS                                                         #}
+  {# ======================================================================= #}
+  <section id="sanctions" class="sec">
+    <h2>5. US Sanctions on Venezuela&rsquo;s Oil Sector</h2>
+    <p class="sec-lead">
+      The US sanctions framework on Venezuela&rsquo;s oil sector is administered by
+      OFAC under Executive Orders 13850 and 13884. The current regime operates
+      through a system of General Licenses that authorize specific activities
+      while maintaining the underlying sanctions architecture.
+    </p>
+
+    <h3>Active General Licenses (as of {{ updated_label }})</h3>
+    <table class="em-table">
+      <thead>
+        <tr>
+          <th>License</th>
+          <th>Scope</th>
+          <th>What&rsquo;s authorized</th>
+          <th>Expiration</th>
+        </tr>
+      </thead>
+      <tbody>
+        <tr>
+          <td class="num">GL 46B</td>
+          <td>Debt &amp; equity transactions</td>
+          <td>Limited dealings in certain PDVSA debt instruments for restructuring purposes</td>
+          <td>No expiration (revocable)</td>
+        </tr>
+        <tr class="highlight">
+          <td class="num">GL 50A</td>
+          <td>Oil sector operations</td>
+          <td>Authorizes BP, Chevron, Eni, Maurel &amp; Prom, Repsol, and Shell to operate JVs with PDVSA; produce, lift, sell, and export Venezuelan crude</td>
+          <td>No expiration (revocable)</td>
+        </tr>
+        <tr>
+          <td class="num">GL 52</td>
+          <td>New investment</td>
+          <td>Authorizes new investment in Venezuela&rsquo;s oil sector by US persons, subject to reporting requirements</td>
+          <td>No expiration (revocable)</td>
+        </tr>
+      </tbody>
+    </table>
+    <p style="font-size: 13px; color: var(--sr-gray-text);">Source: US Department of the Treasury, OFAC Venezuela-related sanctions page.</p>
+
+    <h3>What remains prohibited</h3>
+    <ul>
+      <li>Direct dealings with specifically designated nationals (SDNs) beyond the scope of applicable general licenses</li>
+      <li>Transactions involving entities on the SDN List without specific OFAC authorization</li>
+      <li>Payments to the Government of Venezuela outside the scope of general licenses (including direct royalty payments to sanctioned persons)</li>
+      <li>Trading in Venezuelan government bonds issued after August 2017 (with limited exceptions)</li>
+      <li>Operations by companies not named in GL&nbsp;50A (unless separately licensed)</li>
+    </ul>
+
+    <div class="disclaimer">
+      <strong>Sanctions compliance notice:</strong> This summary is for informational
+      purposes only and does not constitute legal advice. The sanctions landscape is
+      subject to change without advance notice. Consult qualified legal counsel and
+      review the full text of applicable OFAC general licenses before engaging in
+      any Venezuela-related transactions.
+      <a href="/sanctions-tracker" style="font-weight: 600;">Track changes on our sanctions tracker &rarr;</a>
+    </div>
+  </section>
+
+  {# ======================================================================= #}
+  {# 6. KEY INFRASTRUCTURE                                                   #}
+  {# ======================================================================= #}
+  <section id="infrastructure" class="sec">
+    <h2>6. Key Infrastructure</h2>
+    <p class="sec-lead">
+      Venezuela&rsquo;s oil infrastructure was designed for a 3M+&nbsp;bpd industry.
+      Years of underinvestment have left most facilities operating well below
+      nameplate capacity &mdash; an estimated ~35% utilization across the refining
+      complex.
+    </p>
+
+    <h3>Major refineries</h3>
+    <table class="em-table">
+      <thead>
+        <tr>
+          <th>Facility</th>
+          <th>Location</th>
+          <th>Nameplate capacity (bpd)</th>
+          <th>Est. utilization</th>
+        </tr>
+      </thead>
+      <tbody>
+        <tr class="highlight">
+          <td><strong>Paraguan&aacute; Refining Center</strong></td>
+          <td>Falc&oacute;n State</td>
+          <td class="num">955,000</td>
+          <td class="num">~30%</td>
+        </tr>
+        <tr>
+          <td>Puerto la Cruz</td>
+          <td>Anzo&aacute;tegui State</td>
+          <td class="num">200,000</td>
+          <td class="num">~40%</td>
+        </tr>
+        <tr>
+          <td>El Palito</td>
+          <td>Carabobo State</td>
+          <td class="num">130,000</td>
+          <td class="num">~35%</td>
+        </tr>
+        <tr>
+          <td>Bajo Grande / Ulé</td>
+          <td>Zulia State</td>
+          <td class="num">16,000</td>
+          <td class="num">~50%</td>
+        </tr>
+      </tbody>
+    </table>
+    <p style="font-size: 13px; color: var(--sr-gray-text);">Source: PDVSA operational reports (pre-2017); Argus Media estimates (2025&ndash;26).</p>
+
+    <h3>Paraguan&aacute; Refining Center (CRP)</h3>
+    <p>
+      The Centro de Refinaci&oacute;n Paraguan&aacute; &mdash; comprising the Amuay and
+      Cardón refineries on the Paraguaná Peninsula &mdash; is one of the largest
+      refining complexes in the world by nameplate capacity (955,000&nbsp;bpd). At
+      peak performance in the late 1990s, CRP processed a mix of Venezuelan crude
+      grades for export to the US Gulf Coast and Caribbean markets.
+    </p>
+    <p>
+      As of early 2026, CRP is estimated to be processing ~280,000&ndash;300,000&nbsp;bpd,
+      constrained by mechanical failures, a lack of spare parts, and periodic
+      unplanned shutdowns. The Rodriguez government has prioritized CRP rehabilitation
+      in its first 100-day economic plan.
+    </p>
+
+    <h3>Orinoco upgraders</h3>
+    <div class="card-grid cols-2">
+      <div class="card">
+        <div class="meta">Operational</div>
+        <h3>Petromonagas (ex-Cerro Negro)</h3>
+        <div class="row"><strong>Capacity</strong>120,000 bpd</div>
+        <div class="row"><strong>Partners</strong>PDVSA (83.3%), BP (16.7%)</div>
+        <div class="row"><strong>Status</strong>Operating at ~60% capacity</div>
+      </div>
+      <div class="card">
+        <div class="meta">Operational</div>
+        <h3>Petrocedeño (ex-Sincor)</h3>
+        <div class="row"><strong>Capacity</strong>200,000 bpd</div>
+        <div class="row"><strong>Partners</strong>PDVSA (60%), TotalEnergies (30%), Equinor (10%)</div>
+        <div class="row"><strong>Status</strong>Operating at ~45% capacity</div>
+      </div>
+      <div class="card">
+        <div class="meta">Partially operational</div>
+        <h3>Petropiar (ex-Hamaca)</h3>
+        <div class="row"><strong>Capacity</strong>190,000 bpd</div>
+        <div class="row"><strong>Partners</strong>PDVSA (70%), Chevron (30%)</div>
+        <div class="row"><strong>Status</strong>Intermittent; restart in progress</div>
+      </div>
+      <div class="card">
+        <div class="meta">Under expansion</div>
+        <h3>Petroindependencia (ex-Petroanzoátegui)</h3>
+        <div class="row"><strong>Capacity</strong>210,000 bpd</div>
+        <div class="row"><strong>Partners</strong>PDVSA (51%), Chevron (49%)</div>
+        <div class="row"><strong>Status</strong>Chevron equity raised to 49% (Apr 2026)</div>
+      </div>
+    </div>
+  </section>
+
+  {# ======================================================================= #}
+  {# 7. INVESTMENT OUTLOOK                                                   #}
+  {# ======================================================================= #}
+  <section id="outlook" class="sec">
+    <h2>7. Investment Outlook</h2>
+    <p class="sec-lead">
+      Venezuela&rsquo;s oil sector represents one of the highest risk / highest reward
+      upstream opportunities in the world. The combination of enormous reserves,
+      depressed production, and political transition creates a unique entry window
+      &mdash; but the risks are substantial and well-documented.
+    </p>
+
+    <h3>The opportunity</h3>
+    <ul>
+      <li><strong>Trump&rsquo;s $100B call:</strong> In March 2026, President Trump publicly estimated that $100&nbsp;billion in investment could flow into Venezuela&rsquo;s energy sector &ldquo;within five years&rdquo; if the sanctions framework remains stable. While likely aspirational, the figure signals ongoing US policy support for engagement.</li>
+      <li><strong>Brent at ~$119:</strong> Crude prices remain supportive. At $119/bbl Brent, even discounted Orinoco extra-heavy crude generates attractive netbacks for operators with existing JV structures.</li>
+      <li><strong>Brownfield advantage:</strong> Much of Venezuela&rsquo;s infrastructure already exists (wells, pipelines, upgraders, terminals). Rehabilitation capex is estimated at 40&ndash;60% of equivalent greenfield costs in other heavy-oil provinces.</li>
+      <li><strong>Fiscal reform:</strong> The January 2026 hydrocarbon law reform offers the most competitive fiscal terms Venezuela has offered since the pre-nationalization Apertura era of the 1990s.</li>
+    </ul>
+
+    <h3>Key risks</h3>
+    <div class="card-grid cols-3">
+      <div class="card">
+        <div class="meta" style="color: var(--sr-red);">Political</div>
+        <h3>Political instability</h3>
+        <p class="note" style="border: 0; padding: 0;">The Rodriguez interim government lacks electoral legitimacy. Maduro loyalists retain influence in the military and judiciary. A counter-transition could reverse all reform commitments.</p>
+      </div>
+      <div class="card">
+        <div class="meta" style="color: var(--sr-red);">Sanctions</div>
+        <h3>Sanctions revocability</h3>
+        <p class="note" style="border: 0; padding: 0;">All general licenses are revocable at any time by OFAC. A change in US administration or policy priorities could reimpose maximum pressure with 30&ndash;45 days wind-down notice.</p>
+      </div>
+      <div class="card">
+        <div class="meta" style="color: var(--sr-red);">Operational</div>
+        <h3>Infrastructure decay</h3>
+        <p class="note" style="border: 0; padding: 0;">Years of deferred maintenance have left facilities in poor condition. Environmental liabilities are unmapped. Skilled workforce has largely emigrated. Full rehabilitation timelines measured in years, not quarters.</p>
+      </div>
+    </div>
+
+    <div class="callout">
+      <h4>Investor takeaway</h4>
+      <p>
+        The most defensible strategy for international operators is to enter via
+        existing JV structures with phased capital commitments &mdash; the approach
+        Chevron has taken with its Petroindependencia expansion. Greenfield commitments
+        remain premature until the political transition stabilizes and the hydrocarbon
+        law reform survives at least one electoral cycle.
+      </p>
+    </div>
+  </section>
+
+  {# ======================================================================= #}
+  {# 8. RECENT DEVELOPMENTS                                                  #}
+  {# ======================================================================= #}
+  <section id="developments" class="sec">
+    <h2>8. Recent Developments (2026)</h2>
+    <p class="sec-lead">
+      The first months of 2026 have seen the most significant changes in Venezuela&rsquo;s
+      oil sector since the initial imposition of sectoral sanctions in 2019.
+    </p>
+
+    <div class="timeline">
+      <div class="event">
+        <div class="date">January 10, 2026</div>
+        <p><strong>Political transition.</strong> Nicolás Maduro was captured by a coalition of military and intelligence operatives. Executive Vice President Delcy Rodríguez assumed interim control under a transitional framework.</p>
+      </div>
+      <div class="event">
+        <div class="date">January 28, 2026</div>
+        <p><strong>Hydrocarbon law reform.</strong> The interim government enacted sweeping changes to the 2001 Organic Hydrocarbons Law, reducing royalties, extending contract terms, and permitting IOC operatorship of JVs.</p>
+      </div>
+      <div class="event">
+        <div class="date">February 14, 2026</div>
+        <p><strong>GL 52 issued.</strong> OFAC issued General License 52, authorizing new US-person investment in Venezuela&rsquo;s oil sector for the first time since 2019.</p>
+      </div>
+      <div class="event">
+        <div class="date">March 2026</div>
+        <p><strong>Production crosses 1M bpd.</strong> OPEC secondary sources confirmed Venezuelan production at 1.095M bpd, the highest level since November 2019.</p>
+      </div>
+      <div class="event">
+        <div class="date">April 2026</div>
+        <p><strong>Chevron asset swap.</strong> Chevron completed the Petroindependencia stake increase to 49%, becoming the largest foreign producer in Venezuela.</p>
+      </div>
+      <div class="event">
+        <div class="date">April 2026</div>
+        <p><strong>Brent at ~$119.</strong> Brent crude averaged approximately $119/bbl in April 2026, providing a highly supportive price environment for Venezuelan heavy crude economics.</p>
+      </div>
+    </div>
+  </section>
+
+  {# ======================================================================= #}
+  {# 9. FAQ                                                                  #}
+  {# ======================================================================= #}
+  <section id="faq" class="sec">
+    <h2>9. Frequently Asked Questions</h2>
+    <p class="sec-lead">
+      Common questions about Venezuela&rsquo;s oil sector, answered with current data.
+    </p>
+
+    <div class="faq-grid">
+      {% for item in faq %}
+      <div class="faq-card" itemscope itemprop="mainEntity" itemtype="https://schema.org/Question">
+        <h4 itemprop="name">{{ item.q }}</h4>
+        <div itemscope itemprop="acceptedAnswer" itemtype="https://schema.org/Answer">
+          <p itemprop="text">{{ item.a }}</p>
+        </div>
+      </div>
+      {% endfor %}
+    </div>
+  </section>
+
+  {# ======================================================================= #}
+  {# RELATED CONTENT                                                         #}
+  {# ======================================================================= #}
+  <section class="sec" style="margin-top: 48px; padding-top: 24px; border-top: 1px solid var(--sr-gray-light);">
+    <h2>Related Tools &amp; Analysis</h2>
+    <p class="sec-lead">
+      Explore the research and compliance tools that complement this guide.
+    </p>
+    <div class="pillbar">
+      <a href="/sanctions-tracker">Sanctions tracker</a>
+      <a href="/ofac-sanctions-list">OFAC sanctions list guide</a>
+      <a href="/why-is-venezuela-sanctioned">Why is Venezuela sanctioned?</a>
+      <a href="/tools/ofac-general-licenses">OFAC general licenses tool</a>
+      <a href="/tools/venezuela-roi-calculator">ROI calculator</a>
+      <a href="/invest-in-venezuela">Investment overview</a>
+      <a href="/tools/bolivar-usd-exchange-rate">Live FX rate</a>
+      <a href="/research/sdn/">SDN research database</a>
+      <a href="/briefing">Daily briefing archive</a>
+    </div>
+  </section>
+
+  <div style="margin-top: 40px; padding: 18px; background: var(--sr-gray-bg); border-radius: 4px;">
+    <p style="font-size: 14px; color: var(--sr-dark-text); margin: 0;">
+      <strong>Tracking Venezuela&rsquo;s oil sector?</strong>
+      Subscribe to the Caracas Research daily briefing for sanctions, production,
+      PDVSA, and investment updates delivered to your inbox.
+      <a href="/#signup" style="font-weight: 600;">Get the daily briefing &rarr;</a>
+    </p>
+  </div>
+
+  <p style="font-size: 12px; color: var(--sr-gray-text); margin: 24px 0;">
+    Sources: OPEC Annual Statistical Bulletin; BP Statistical Review of World Energy;
+    OFAC Venezuela-related sanctions program; S&amp;P Global Platts; Argus Media;
+    company filings (Chevron, Repsol, Eni); Goldman Sachs, JPMorgan, Wood Mackenzie
+    research notes. Information is for research purposes only and does not constitute
+    investment, legal, or sanctions compliance advice.
+  </p>
+
+</section>
+
+{% from "_recent_briefings.html.j2" import recent_briefings_rail %}
+{{ recent_briefings_rail(
+     recent_briefings,
+     heading="Latest analysis",
+     intro="Recent investor briefings on Venezuela's oil sector, PDVSA operations, and sanctions developments.",
+) }}
+{% endblock %}

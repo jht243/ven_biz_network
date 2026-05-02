@@ -1,0 +1,1096 @@
+{% extends "_base.html.j2" %}
+{% from "_base.html.j2" import share_button %}
+
+{% block head_extra %}
+<style>
+  .safety-hero { background: linear-gradient(180deg, #f6f8fa 0%, var(--white) 100%); padding: 28px 0 16px; margin-bottom: 16px; }
+  .safety-hero .kicker { font-size: 12px; text-transform: uppercase; letter-spacing: 1.4px; color: #cc0000; font-weight: 700; }
+  .safety-hero h1 { font-family: var(--font-serif); font-size: 32px; color: var(--sr-blue-dark); margin: 8px 0 8px; line-height: 1.2; }
+  .safety-hero p.lead { font-family: var(--font-serif); font-style: italic; color: var(--sr-gray-text); font-size: 16px; max-width: 720px; margin: 0; }
+
+  .advisory { padding: 14px 18px; border-radius: 4px; margin: 16px 0 28px; }
+  .advisory.l4 { background: #fdecea; border-left: 4px solid var(--sr-red); }
+  .advisory.l3 { background: #fff3e0; border-left: 4px solid #f5b041; }
+  .advisory.l2 { background: #fff8e1; border-left: 4px solid #fbc02d; }
+  .advisory.l1 { background: #e8f5e9; border-left: 4px solid #2e7d32; }
+  .advisory .lvl { font-weight: 700; }
+
+  .toc { background: var(--sr-gray-bg); border-left: 3px solid var(--sr-blue); padding: 18px 22px; margin: 0 0 32px; font-size: 14px; }
+  .toc h3 { font-family: var(--font-serif); font-size: 14px; text-transform: uppercase; letter-spacing: 1px; color: var(--sr-blue-dark); margin-bottom: 10px; }
+  .toc ol { margin-left: 20px; columns: 2; column-gap: 24px; }
+  .toc li { margin-bottom: 6px; }
+  @media (max-width: 640px) { .toc ol { columns: 1; } }
+
+  .sec { margin: 40px 0 24px; padding-top: 8px; }
+  .sec h2 { font-family: var(--font-serif); font-size: 26px; color: var(--sr-blue-dark); margin-bottom: 8px; }
+  .sec .sec-lead { color: var(--sr-gray-text); margin-bottom: 18px; font-size: 15px; }
+
+  .card-grid { display: grid; grid-template-columns: 1fr; gap: 14px; margin-bottom: 18px; }
+  @media (min-width: 720px) { .card-grid.cols-2 { grid-template-columns: 1fr 1fr; } }
+  @media (min-width: 980px) { .card-grid.cols-3 { grid-template-columns: 1fr 1fr 1fr; } }
+
+  .card { background: var(--white); border: 1px solid var(--sr-gray-light); border-radius: 4px; padding: 18px 20px; transition: border-color 0.15s, transform 0.15s; }
+  .card:hover { border-color: var(--sr-blue); transform: translateY(-1px); }
+  .card h3 { font-family: var(--font-serif); font-size: 17px; color: var(--sr-blue-dark); margin-bottom: 6px; }
+  .card .meta { font-size: 12px; text-transform: uppercase; letter-spacing: 0.5px; color: var(--sr-gray-text); margin-bottom: 8px; }
+  .card .row { font-size: 14px; margin: 4px 0; }
+  .card .row strong { color: var(--sr-dark-text); display: inline-block; min-width: 96px; font-weight: 600; }
+  .card a.cta { font-size: 13px; color: var(--sr-blue); font-weight: 600; text-decoration: none; }
+  .card a.cta:hover { text-decoration: underline; }
+  .card .note { font-size: 13px; color: var(--sr-gray-text); margin-top: 10px; line-height: 1.55; padding-top: 10px; border-top: 1px dotted var(--sr-gray-light); }
+
+  .em-table { width: 100%; border-collapse: collapse; margin: 8px 0 18px; font-size: 14px; }
+  .em-table th, .em-table td { text-align: left; padding: 10px 12px; border-bottom: 1px solid var(--sr-gray-light); }
+  .em-table th { background: var(--sr-gray-bg); font-size: 12px; text-transform: uppercase; letter-spacing: 0.5px; color: var(--sr-gray-text); font-weight: 600; }
+  .em-table td.num { font-family: var(--font-sans); font-weight: 600; color: var(--sr-blue); white-space: nowrap; }
+
+  .disclaimer { background: #fff8e1; border-left: 4px solid #f5b041; padding: 14px 18px; border-radius: 3px; margin: 20px 0; font-size: 13.5px; line-height: 1.65; color: var(--sr-dark-text); }
+
+  .checklist { list-style: none; margin: 0 0 8px; padding: 0; }
+  .checklist li { display: flex; gap: 14px; padding: 14px 0; border-bottom: 1px dotted var(--sr-gray-light); align-items: flex-start; }
+  .checklist li:last-child { border-bottom: 0; }
+  .checklist .marker { flex-shrink: 0; width: 22px; height: 22px; border: 2px solid var(--sr-blue); border-radius: 4px; margin-top: 2px; display: inline-block; }
+  .checklist .marker.warn { border-color: #cc0000; }
+  .checklist .body h4 { font-family: var(--font-sans); font-size: 15px; color: var(--sr-dark-text); margin-bottom: 4px; font-weight: 700; }
+  .checklist .body p { font-size: 14px; color: var(--sr-gray-text); margin: 0; line-height: 1.6; }
+  .checklist .body a { color: var(--sr-blue); }
+
+  .zone-grid { display: grid; grid-template-columns: 1fr; gap: 14px; margin: 18px 0 24px; }
+  @media (min-width: 720px) { .zone-grid { grid-template-columns: 1fr 1fr 1fr; } }
+  .zone-card { background: var(--white); border: 1px solid var(--sr-gray-light); border-radius: 4px; padding: 18px 20px; position: relative; overflow: hidden; }
+  .zone-card::before { content: ""; position: absolute; top: 0; left: 0; right: 0; height: 4px; }
+  .zone-card.green::before { background: #2e7d32; }
+  .zone-card.yellow::before { background: #f5b041; }
+  .zone-card.red::before { background: #cc0000; }
+  .zone-card h4 { font-family: var(--font-serif); font-size: 16px; margin-bottom: 4px; }
+  .zone-card.green h4 { color: #2e7d32; }
+  .zone-card.yellow h4 { color: #b45309; }
+  .zone-card.red h4 { color: #cc0000; }
+  .zone-card p { font-size: 13.5px; color: var(--sr-gray-text); line-height: 1.55; margin: 6px 0 0; }
+  .zone-card ul { font-size: 13.5px; color: var(--sr-dark-text); margin: 8px 0 0 18px; line-height: 1.6; }
+
+  .stat-grid { display: grid; grid-template-columns: 1fr; gap: 14px; margin: 18px 0 24px; }
+  @media (min-width: 640px) { .stat-grid { grid-template-columns: 1fr 1fr 1fr; } }
+  .stat-card { background: var(--sr-gray-bg); border: 1px solid var(--sr-gray-light); border-radius: 6px; padding: 18px 20px; text-align: center; }
+  .stat-card .stat-num { font-family: var(--font-serif); font-size: 32px; font-weight: 700; color: var(--sr-blue-dark); line-height: 1.1; }
+  .stat-card .stat-label { font-size: 13px; color: var(--sr-gray-text); margin-top: 6px; text-transform: uppercase; letter-spacing: 0.5px; }
+
+  .faq-list { margin: 18px 0 28px; }
+  .faq-item { border: 1px solid var(--sr-gray-light); border-radius: 4px; margin-bottom: 10px; overflow: hidden; }
+  .faq-q { display: flex; align-items: center; gap: 12px; padding: 16px 18px; cursor: pointer; background: var(--white); font-family: var(--font-serif); font-size: 16px; font-weight: 700; color: var(--sr-blue-dark); transition: background 0.15s; border: 0; width: 100%; text-align: left; }
+  .faq-q:hover { background: var(--sr-gray-bg); }
+  .faq-q .faq-icon { flex-shrink: 0; width: 24px; height: 24px; border-radius: 50%; background: var(--sr-blue); color: var(--white); display: flex; align-items: center; justify-content: center; font-size: 14px; font-weight: 700; transition: transform 0.2s; font-family: var(--font-sans); }
+  .faq-item.open .faq-q .faq-icon { transform: rotate(45deg); }
+  .faq-a { padding: 0 18px 16px; font-size: 15px; line-height: 1.7; color: var(--sr-dark-text); display: none; }
+  .faq-item.open .faq-a { display: block; }
+
+  .related-grid { display: grid; grid-template-columns: 1fr; gap: 12px; margin: 16px 0 24px; }
+  @media (min-width: 720px) { .related-grid { grid-template-columns: 1fr 1fr; } }
+  .related-link { display: block; padding: 16px 18px; background: var(--white); border: 1px solid var(--sr-gray-light); border-radius: 4px; text-decoration: none; color: inherit; transition: border-color 0.15s, transform 0.15s; }
+  .related-link:hover { border-color: var(--sr-blue); transform: translateY(-1px); }
+  .related-link .rl-tag { font-size: 11px; text-transform: uppercase; letter-spacing: 1px; color: var(--sr-red); font-weight: 700; margin-bottom: 4px; }
+  .related-link .rl-title { font-family: var(--font-serif); font-size: 16px; color: var(--sr-blue-dark); font-weight: 700; margin-bottom: 4px; }
+  .related-link .rl-desc { font-size: 13px; color: var(--sr-gray-text); line-height: 1.5; }
+
+  .tip-number { display: inline-flex; align-items: center; justify-content: center; width: 24px; height: 24px; border-radius: 50%; background: var(--sr-blue); color: var(--white); font-size: 12px; font-weight: 700; font-family: var(--font-sans); flex-shrink: 0; margin-top: 2px; }
+</style>
+{% endblock %}
+
+{% block content %}
+<section class="container-wide">
+
+  <nav class="breadcrumbs" aria-label="Breadcrumb">
+    <a href="/">Home</a><span>/</span>
+    <a href="/travel">Travel</a><span>/</span>
+    <span>Is Venezuela Safe?</span>
+    <span style="margin-left:auto;">{{ share_button(seo.canonical, seo.title) }}</span>
+  </nav>
+
+  <header class="safety-hero">
+    <div class="kicker">Safety &amp; Travel · Updated {{ updated_label }}</div>
+    <h1>Is Venezuela Safe? {{ current_year }} Safety Assessment &amp; Risk Guide</h1>
+    <p class="lead">
+      A data-driven safety assessment for anyone considering travel to
+      Venezuela in {{ current_year }}&mdash;covering crime, regional risks, the
+      latest travel advisories, and practical security protocols based on
+      on-the-ground intelligence from Caracas Research.
+    </p>
+  </header>
+
+  {# ============ Travel advisory banner ============ #}
+  <div class="advisory l3">
+    <div>
+      <span class="lvl">US State Department: Level 3 &mdash; Reconsider Travel</span>
+      (revised March 2026, downgraded from Level 4 after Venezuela&rsquo;s January 2026 political transition)
+    </div>
+    <div style="font-size: 13.5px; margin-top: 8px; line-height: 1.6;">
+      The State Department lowered the overall advisory from Level 4
+      (&ldquo;Do Not Travel&rdquo;) to Level 3 (&ldquo;Reconsider Travel&rdquo;)
+      in March 2026, citing reduced political volatility following the
+      January 10, 2026 transfer of power. However, <strong>several border
+      states remain at Level 4</strong>: Apure, T&aacute;chira, Amazonas,
+      Zulia, and rural Bol&iacute;var, due to ongoing armed-group activity
+      and cross-border crime.
+    </div>
+    <div style="font-size: 13px; margin-top: 8px;">
+      <a href="https://travel.state.gov/content/travel/en/traveladvisories/traveladvisories/venezuela-travel-advisory.html" rel="nofollow noopener" target="_blank" style="color: inherit;">Read the full advisory &rarr;</a>
+    </div>
+  </div>
+
+  {# ============ Table of contents ============ #}
+  <nav class="toc" aria-label="Table of contents">
+    <h3>Contents</h3>
+    <ol>
+      <li><a href="#overview">Safety Overview</a></li>
+      <li><a href="#crime">Crime &amp; Security Risks</a></li>
+      <li><a href="#regional">Regional Safety Breakdown</a></li>
+      <li><a href="#caracas-map">Caracas Neighborhood Safety Map</a></li>
+      <li><a href="#tips">Safety Tips for Travelers</a></li>
+      <li><a href="#tourists">Is Venezuela Safe for Tourists?</a></li>
+      <li><a href="#business">Is Venezuela Safe for Business Travel?</a></li>
+      <li><a href="#faq">Frequently Asked Questions</a></li>
+      <li><a href="#related">Related Coverage</a></li>
+    </ol>
+  </nav>
+
+  {# ======================================================================= #}
+  {# SECTION 1: Safety Overview                                              #}
+  {# ======================================================================= #}
+  <section id="overview" class="sec">
+    <h2>1. Safety Overview: Venezuela in {{ current_year }}</h2>
+    <p class="sec-lead">
+      Venezuela has experienced meaningful improvements in day-to-day security
+      since the January 2026 political transition, but it remains a
+      high-risk destination by global standards.
+    </p>
+
+    <div class="stat-grid">
+      <div class="stat-card">
+        <div class="stat-num">Level 3</div>
+        <div class="stat-label">US Advisory Level</div>
+      </div>
+      <div class="stat-card">
+        <div class="stat-num">26.8</div>
+        <div class="stat-label">Homicides per 100k (2025)</div>
+      </div>
+      <div class="stat-card">
+        <div class="stat-num">&darr; 38%</div>
+        <div class="stat-label">Decline Since 2019 Peak</div>
+      </div>
+    </div>
+
+    <p>
+      For years, Venezuela ranked among the most dangerous countries in the
+      Western Hemisphere. The homicide rate peaked at approximately 43 per
+      100,000 in 2019 before declining steadily. The Venezuelan Violence
+      Observatory (OVV) reported approximately 26.8 homicides per 100,000
+      people in 2025&mdash;still well above the global average of 6.1 but a
+      significant improvement. Preliminary Q1 2026 data suggests the trend
+      is continuing downward, though reliable national statistics remain
+      limited outside of Caracas.
+    </p>
+
+    <p>
+      The January 2026 political transition removed a significant source
+      of political volatility. The US downgraded Venezuela from Level 4
+      to Level 3 in March 2026, and the UK FCDO softened its advisory
+      language to &ldquo;advise against all but essential travel&rdquo;
+      for most of the country, while maintaining &ldquo;advise against all
+      travel&rdquo; for border states.
+    </p>
+
+    <h3 style="font-family: var(--font-serif); font-size: 19px; color: var(--sr-blue-dark); margin: 24px 0 10px;">Key risk factors</h3>
+    <ul style="margin: 0 0 16px 24px;">
+      <li><strong>Violent crime:</strong> Armed robbery, carjacking, and assault remain common, particularly in Caracas and other cities after dark.</li>
+      <li><strong>Kidnapping:</strong> Express kidnappings (short-duration abductions for ATM withdrawals) and longer-term kidnappings for ransom still occur, though at reduced rates.</li>
+      <li><strong>Political instability:</strong> While significantly improved, protests and demonstrations can occur with little notice and escalate quickly.</li>
+      <li><strong>Infrastructure:</strong> Unreliable electricity, water, fuel shortages (especially outside Caracas), and limited medical facilities.</li>
+      <li><strong>Border zones:</strong> Armed groups (ELN, FARC dissidents, <em>mega-bandas</em>) operate near the Colombian border with near-impunity.</li>
+    </ul>
+
+    <h3 style="font-family: var(--font-serif); font-size: 19px; color: var(--sr-blue-dark); margin: 24px 0 10px;">What has improved since January 2026</h3>
+    <ul style="margin: 0 0 16px 24px;">
+      <li>Reduced political protest activity and fewer security-force confrontations in Caracas.</li>
+      <li>Gradual reopening of diplomatic channels&mdash;the US has expanded consular staff at the Bogot&aacute;-based Venezuela Affairs Unit.</li>
+      <li>Nascent tourism infrastructure recovery: airlines have resumed some direct flights, and several international hotels have restarted operations.</li>
+      <li>Currency stabilization: the bol&iacute;var has been more stable against the dollar since late 2025, reducing the cash-economy chaos that contributed to street crime.</li>
+    </ul>
+  </section>
+
+  {# ======================================================================= #}
+  {# SECTION 2: Crime & Security Risks                                       #}
+  {# ======================================================================= #}
+  <section id="crime" class="sec">
+    <h2>2. Crime &amp; Security Risks</h2>
+    <p class="sec-lead">
+      Understanding the specific criminal threats is essential for anyone
+      traveling to or living in Venezuela.
+    </p>
+
+    <h3 style="font-family: var(--font-serif); font-size: 19px; color: var(--sr-blue-dark); margin: 24px 0 10px;">Violent crime</h3>
+    <p>
+      Armed robbery is the most common violent crime affecting foreigners in
+      Venezuela. It typically occurs at gunpoint, often by groups of two to four
+      assailants on motorcycles. Carjackings occur frequently on highways
+      connecting the Sim&oacute;n Bol&iacute;var International Airport (SVMI)
+      to Caracas, particularly at night. The universal advice from security
+      professionals: if confronted, comply immediately and do not resist.
+    </p>
+
+    <h3 style="font-family: var(--font-serif); font-size: 19px; color: var(--sr-blue-dark); margin: 24px 0 10px;">Kidnapping</h3>
+    <p>
+      Venezuela has two distinct kidnapping patterns. <strong>Express
+      kidnapping</strong> (<em>secuestro expr&eacute;s</em>) involves
+      abducting a victim for a few hours, typically forcing them to withdraw
+      cash from ATMs or transfer funds via Zelle. These are most common in
+      Caracas, particularly when victims hail informal taxis. <strong>Traditional
+      kidnapping for ransom</strong> targets wealthier Venezuelans and
+      foreign executives, with hostages held for days to weeks while
+      intermediaries negotiate payment. Rates have declined from the peak
+      years (2012&ndash;2016) but remain a real threat for visibly affluent
+      individuals.
+    </p>
+
+    <h3 style="font-family: var(--font-serif); font-size: 19px; color: var(--sr-blue-dark); margin: 24px 0 10px;">Robbery &amp; petty theft</h3>
+    <p>
+      Smartphone theft is endemic. Displaying a phone on the street in many
+      neighborhoods is an invitation for a motorcycle grab-and-ride. Petty
+      theft increases around bus terminals, outdoor markets, and popular
+      tourist areas like the telef&eacute;rico station in M&eacute;rida.
+      Wallets, watches, and jewelry should be concealed at all times.
+    </p>
+
+    <h3 style="font-family: var(--font-serif); font-size: 19px; color: var(--sr-blue-dark); margin: 24px 0 10px;">Fake police checkpoints</h3>
+    <p>
+      Criminals sometimes set up fake police or military checkpoints,
+      particularly on intercity highways and rural roads. Genuine
+      checkpoints are typically staffed by Guardia Nacional Bolivariana
+      (GNB) soldiers in full uniform at fixed positions. At any checkpoint,
+      motorists should keep windows mostly closed, have documents readily
+      accessible, remain calm, and avoid paying informal &ldquo;fines.&rdquo;
+      Travel between cities should be limited to daylight hours.
+    </p>
+
+    <h3 style="font-family: var(--font-serif); font-size: 19px; color: var(--sr-blue-dark); margin: 24px 0 10px;">Organized crime</h3>
+    <p>
+      Major criminal organizations operate across Venezuela. The
+      <em>mega-bandas</em> (large criminal gangs like the Tren de Aragua)
+      control territory in prisons and urban barrios, running extortion,
+      drug trafficking, and illegal mining operations. In border states
+      (Apure, T&aacute;chira, Amazonas), Colombian guerrilla groups
+      &mdash;principally the ELN and FARC dissident factions&mdash;control
+      significant territory. These groups engage in drug trafficking, illegal
+      gold mining, kidnapping, and forced recruitment. Travelers should
+      avoid border regions entirely unless operating with professional
+      security support.
+    </p>
+  </section>
+
+  {# ======================================================================= #}
+  {# SECTION 3: Regional Safety Breakdown                                    #}
+  {# ======================================================================= #}
+  <section id="regional" class="sec">
+    <h2>3. Regional Safety Breakdown</h2>
+    <p class="sec-lead">
+      Safety varies dramatically across Venezuela. This breakdown covers
+      the areas most relevant to travelers.
+    </p>
+
+    <table class="em-table">
+      <thead>
+        <tr>
+          <th style="width: 22%;">Region</th>
+          <th style="width: 18%;">Risk Level</th>
+          <th style="width: 18%;">US Advisory</th>
+          <th>Key Considerations</th>
+        </tr>
+      </thead>
+      <tbody>
+        <tr>
+          <td><strong>Caracas (east)</strong></td>
+          <td>Moderate&ndash;High</td>
+          <td>Level 3</td>
+          <td>Altamira, Las Mercedes, La Castellana, Chacao are the safest urban areas. Standard precautions required; avoid after-dark exposure.</td>
+        </tr>
+        <tr>
+          <td><strong>Caracas (west)</strong></td>
+          <td>Very High</td>
+          <td>Level 3</td>
+          <td>Petare, Catia, 23 de Enero, La Vega are extremely dangerous at all hours. No casual visitor should enter these zones.</td>
+        </tr>
+        <tr>
+          <td><strong>Margarita Island</strong></td>
+          <td>Moderate</td>
+          <td>Level 3</td>
+          <td>Historically the safest tourist destination. Beach resorts in Pampatar and Playa El Agua are relatively secure. Petty theft is the primary concern.</td>
+        </tr>
+        <tr>
+          <td><strong>M&eacute;rida</strong></td>
+          <td>Moderate</td>
+          <td>Level 3</td>
+          <td>University city in the Andes; lower crime rates than Caracas. The telef&eacute;rico and adventure-tourism infrastructure attract visitors. Be cautious on rural roads.</td>
+        </tr>
+        <tr>
+          <td><strong>Los Roques</strong></td>
+          <td>Low&ndash;Moderate</td>
+          <td>Level 3</td>
+          <td>Remote archipelago with limited crime. Access only by small plane from Caracas. Logistical isolation is both the security advantage and the risk (limited medical care).</td>
+        </tr>
+        <tr>
+          <td><strong>Canaima / Gran Sabana</strong></td>
+          <td>Moderate&ndash;High</td>
+          <td>Level 3&ndash;4</td>
+          <td>Angel Falls tourism is resuming, but the broader Bol&iacute;var state has illegal-mining activity and armed groups in rural areas. Travel only with licensed tour operators.</td>
+        </tr>
+        <tr style="background: #fdecea;">
+          <td><strong>Apure</strong></td>
+          <td style="color: #cc0000; font-weight: 700;">Extreme</td>
+          <td style="color: #cc0000; font-weight: 700;">Level 4</td>
+          <td>Active combat zone between Venezuelan military and Colombian guerrillas (ELN, FARC dissidents). Do not travel.</td>
+        </tr>
+        <tr style="background: #fdecea;">
+          <td><strong>T&aacute;chira</strong></td>
+          <td style="color: #cc0000; font-weight: 700;">Extreme</td>
+          <td style="color: #cc0000; font-weight: 700;">Level 4</td>
+          <td>Colombian border state with ELN presence, smuggling corridors, and extortion networks. San Crist&oacute;bal city is somewhat safer but border areas are off-limits.</td>
+        </tr>
+        <tr style="background: #fdecea;">
+          <td><strong>Amazonas</strong></td>
+          <td style="color: #cc0000; font-weight: 700;">Extreme</td>
+          <td style="color: #cc0000; font-weight: 700;">Level 4</td>
+          <td>Remote jungle state with illegal mining operations, armed groups, and effectively no government presence in many areas. Do not travel.</td>
+        </tr>
+        <tr style="background: #fdecea;">
+          <td><strong>Zulia (border)</strong></td>
+          <td style="color: #cc0000; font-weight: 700;">Very High</td>
+          <td style="color: #cc0000; font-weight: 700;">Level 4</td>
+          <td>Maracaibo city has high crime; border areas near Colombia are controlled by armed groups and smuggling networks.</td>
+        </tr>
+        <tr style="background: #fdecea;">
+          <td><strong>Rural Bol&iacute;var</strong></td>
+          <td style="color: #cc0000; font-weight: 700;">Extreme</td>
+          <td style="color: #cc0000; font-weight: 700;">Level 4</td>
+          <td>Illegal gold mining (<em>arco minero</em>) zone. Armed groups (including <em>sindicatos</em> and <em>pranes</em>) control mining operations with extreme violence.</td>
+        </tr>
+      </tbody>
+    </table>
+
+    <div class="disclaimer">
+      <strong>Colombian border:</strong> All land border crossings between
+      Venezuela and Colombia should be considered high-risk. Even the
+      formal San Antonio del T&aacute;chira&ndash;C&uacute;cuta crossing
+      is subject to extortion, robbery, and irregular armed-group control.
+      If you must cross, use a reputable security firm with local intelligence.
+    </div>
+  </section>
+
+  {# ======================================================================= #}
+  {# SECTION 4: Caracas Neighborhood Safety Map                              #}
+  {# ======================================================================= #}
+  <section id="caracas-map" class="sec">
+    <h2>4. Caracas Neighborhood Safety Map</h2>
+    <p class="sec-lead">
+      Caracas safety is highly localized. The eastern municipalities
+      (Chacao, Baruta, El Hatillo) are dramatically safer than western
+      and southern barrios. This text-based zone map reflects the on-the-ground
+      reality as assessed by security firms operating in Caracas.
+    </p>
+
+    <div class="zone-grid">
+      <div class="zone-card green">
+        <h4>&#9679; Green Zone &mdash; Relatively Safe</h4>
+        <p>Standard urban precautions. Suitable for business travelers
+        and tourists with reasonable awareness.</p>
+        <ul>
+          <li>Las Mercedes</li>
+          <li>Altamira</li>
+          <li>La Castellana</li>
+          <li>El Rosal</li>
+          <li>Chacao</li>
+          <li>Country Club</li>
+          <li>La Lagunita</li>
+          <li>Chuao</li>
+          <li>Santa Fe</li>
+        </ul>
+      </div>
+
+      <div class="zone-card yellow">
+        <h4>&#9679; Yellow Zone &mdash; Elevated Risk</h4>
+        <p>Daytime visits are possible with awareness. Avoid after dark.
+        Stay on main avenues, not side streets.</p>
+        <ul>
+          <li>Centro (Plaza Bol&iacute;var area)</li>
+          <li>Sabana Grande</li>
+          <li>Parts of El Para&iacute;so</li>
+          <li>Bello Monte (lower)</li>
+          <li>Los Caobos</li>
+          <li>San Bernardino</li>
+          <li>La Candelaria</li>
+        </ul>
+      </div>
+
+      <div class="zone-card red">
+        <h4>&#9679; Red Zone &mdash; Do Not Enter</h4>
+        <p>Extremely high crime. Armed gangs control territory. Even
+        Venezuelan residents avoid these areas. No tourist or business
+        reason justifies entry.</p>
+        <ul>
+          <li>Petare</li>
+          <li>Catia</li>
+          <li>La Vega</li>
+          <li>23 de Enero</li>
+          <li>Coche</li>
+          <li>El Valle</li>
+          <li>Caricuao</li>
+          <li>Ant&iacute;mano</li>
+        </ul>
+      </div>
+    </div>
+
+    <p style="font-size: 14px; color: var(--sr-gray-text); line-height: 1.6;">
+      <strong>Practical rule:</strong> If you are staying and working
+      exclusively in Green Zone neighborhoods, using pre-arranged transport
+      (hotel car or vetted driver), and returning to your hotel before dark,
+      your risk profile is comparable to many other Latin American capitals.
+      The moment you deviate from this pattern&mdash;walking after dark,
+      taking an unvetted taxi, displaying expensive items&mdash;risk
+      escalates dramatically.
+    </p>
+
+    <p style="font-size: 14px; margin-top: 8px;">
+      <a href="/tools/caracas-safety-by-neighborhood" style="color: var(--sr-blue); font-weight: 600;">Open the interactive Caracas safety map &rarr;</a>
+    </p>
+  </section>
+
+  {# ======================================================================= #}
+  {# SECTION 5: Safety Tips                                                  #}
+  {# ======================================================================= #}
+  <section id="tips" class="sec">
+    <h2>5. Safety Tips for Travelers</h2>
+    <p class="sec-lead">
+      These are the protocols followed by experienced travelers, diplomats,
+      journalists, and NGO staff operating in Venezuela.
+    </p>
+
+    <h3 style="font-family: var(--font-serif); font-size: 19px; color: var(--sr-blue-dark); margin: 24px 0 10px;">Before you go</h3>
+    <ul class="checklist">
+      <li>
+        <span class="tip-number">1</span>
+        <div class="body">
+          <h4>Enroll in STEP (or your country&rsquo;s equivalent)</h4>
+          <p>Register with the US Smart Traveler Enrollment Program (STEP) at
+          <a href="https://step.state.gov/" rel="nofollow noopener" target="_blank">step.state.gov</a>.
+          UK citizens: register with the FCDO. Canadians: register with ROCA.
+          This ensures your government can contact you in an emergency and
+          pushes real-time security alerts to your phone.</p>
+        </div>
+      </li>
+      <li>
+        <span class="tip-number">2</span>
+        <div class="body">
+          <h4>Buy travel-medical and evacuation insurance</h4>
+          <p>Venezuelan hospitals are severely under-resourced. International
+          SOS or Global Rescue membership provides air evacuation to Colombia
+          or the US. Make sure your policy explicitly covers Venezuela, as
+          many standard travel insurance policies exclude it.</p>
+        </div>
+      </li>
+      <li>
+        <span class="tip-number">3</span>
+        <div class="body">
+          <h4>Print the Caracas Emergency Card</h4>
+          <p>Carry a bilingual one-page card with hospital addresses, embassy
+          numbers, and your blood type in your passport.
+          <a href="/travel/emergency-card">Personalize and print yours &rarr;</a></p>
+        </div>
+      </li>
+      <li>
+        <span class="tip-number">4</span>
+        <div class="body">
+          <h4>Pre-arrange all airport transfers</h4>
+          <p>Book your airport pickup through your hotel&rsquo;s concierge
+          or a vetted security firm <em>before</em> you fly. Do not accept
+          transportation offers from anyone in the airport terminal.</p>
+        </div>
+      </li>
+      <li>
+        <span class="tip-number">5</span>
+        <div class="body">
+          <h4>Bring small-denomination US dollar cash</h4>
+          <p>Venezuela runs on USD cash and Zelle transfers. Bring $1, $5,
+          $10, and $20 bills. Bills must be post-2009, crisp, and
+          unmarked&mdash;damaged or older bills are frequently refused.
+          ATMs are unreliable and credit cards are rarely accepted outside
+          major hotels.</p>
+        </div>
+      </li>
+    </ul>
+
+    <h3 style="font-family: var(--font-serif); font-size: 19px; color: var(--sr-blue-dark); margin: 24px 0 10px;">Ground transport rules</h3>
+    <ul class="checklist">
+      <li>
+        <span class="marker warn"></span>
+        <div class="body">
+          <h4>Never take a street taxi</h4>
+          <p>This is the single most important rule. Street taxis
+          (&ldquo;piratas&rdquo;) are the primary vector for express
+          kidnapping. Always use your hotel&rsquo;s car service, a
+          pre-arranged driver from a known security company, or ride-hailing
+          apps (in Green Zone areas only). Even with apps, verify the
+          driver&rsquo;s identity and plate number before entering.</p>
+        </div>
+      </li>
+      <li>
+        <span class="marker warn"></span>
+        <div class="body">
+          <h4>Travel between cities only in daylight</h4>
+          <p>Intercity highways are subject to fake checkpoints, carjacking,
+          and armed robbery after dark. Plan departures so you arrive before
+          5:00 PM. The Caracas&ndash;airport highway is particularly
+          dangerous between 8:00 PM and 6:00 AM.</p>
+        </div>
+      </li>
+      <li>
+        <span class="marker warn"></span>
+        <div class="body">
+          <h4>Keep windows up and doors locked</h4>
+          <p>Motorcycle-borne assailants target vehicles stopped at red
+          lights. At red lights in less-secure areas, slow but do not stop
+          completely if no cross traffic is present (a common local
+          practice).</p>
+        </div>
+      </li>
+    </ul>
+
+    <h3 style="font-family: var(--font-serif); font-size: 19px; color: var(--sr-blue-dark); margin: 24px 0 10px;">Money &amp; valuables</h3>
+    <ul class="checklist">
+      <li>
+        <span class="marker"></span>
+        <div class="body">
+          <h4>Carry a &ldquo;sacrifice wallet&rdquo;</h4>
+          <p>Keep a small amount of cash ($20&ndash;$40) and an expired
+          credit card in a separate wallet to hand over in a robbery. Your
+          main cash should be distributed across multiple locations on your
+          person and in your luggage.</p>
+        </div>
+      </li>
+      <li>
+        <span class="marker"></span>
+        <div class="body">
+          <h4>Leave jewelry and luxury watches at home</h4>
+          <p>Visible wealth is the single biggest trigger for targeted
+          robbery. Wear a cheap digital watch or no watch at all.</p>
+        </div>
+      </li>
+      <li>
+        <span class="marker"></span>
+        <div class="body">
+          <h4>Do not display your phone in public</h4>
+          <p>Use your phone only inside vehicles, restaurants, or buildings.
+          A phone held on the street will be snatched by a passing
+          motorcyclist in seconds.</p>
+        </div>
+      </li>
+    </ul>
+
+    <h3 style="font-family: var(--font-serif); font-size: 19px; color: var(--sr-blue-dark); margin: 24px 0 10px;">Digital security</h3>
+    <ul class="checklist">
+      <li>
+        <span class="marker"></span>
+        <div class="body">
+          <h4>Use a VPN at all times</h4>
+          <p>Venezuelan ISPs monitor internet traffic and periodically block
+          certain websites. Install and configure your VPN <em>before</em>
+          arriving, as VPN provider websites may be blocked in-country.</p>
+        </div>
+      </li>
+      <li>
+        <span class="marker"></span>
+        <div class="body">
+          <h4>Get an eSIM before departure</h4>
+          <p>US carrier roaming is unreliable in Venezuela. Activate an
+          eSIM from Airalo or similar providers before boarding your flight.
+          Local SIM cards (Movistar, Digitel) can be purchased but require
+          a Venezuelan ID number.</p>
+        </div>
+      </li>
+      <li>
+        <span class="marker"></span>
+        <div class="body">
+          <h4>Enable remote wipe on all devices</h4>
+          <p>If your phone or laptop is stolen, you need the ability to
+          wipe it remotely. Enable Find My iPhone / Find My Device and test
+          the remote-wipe function before traveling.</p>
+        </div>
+      </li>
+    </ul>
+
+    <h3 style="font-family: var(--font-serif); font-size: 19px; color: var(--sr-blue-dark); margin: 24px 0 10px;">Emergency contacts</h3>
+    <table class="em-table">
+      <thead>
+        <tr><th style="width: 55%;">Service</th><th>Number</th></tr>
+      </thead>
+      <tbody>
+        <tr><td>Police (CICPC)</td><td class="num">0800-CICPC-00 (0800-24272-00)</td></tr>
+        <tr><td>Fire / Ambulance</td><td class="num">171</td></tr>
+        <tr><td>National Emergency</td><td class="num">911</td></tr>
+        <tr><td>US Embassy (Bogot&aacute; VAU)</td><td class="num">+57 1 275-2000</td></tr>
+        <tr><td>UK Embassy (Caracas)</td><td class="num">+58 212 319-5800</td></tr>
+        <tr><td>Canadian Embassy (Caracas)</td><td class="num">+58 212 600-3000</td></tr>
+      </tbody>
+    </table>
+    <p style="font-size: 13px; color: var(--sr-gray-text);">
+      Note: The US does not maintain an embassy in Caracas. The Venezuela
+      Affairs Unit operates from the US Embassy in Bogot&aacute;, Colombia.
+      In a genuine emergency, contact the Bogot&aacute; number or the
+      24/7 US citizen emergency line at +1 202-501-4444.
+    </p>
+  </section>
+
+  {# ======================================================================= #}
+  {# SECTION 6: Safe for Tourists?                                           #}
+  {# ======================================================================= #}
+  <section id="tourists" class="sec">
+    <h2>6. Is Venezuela Safe for Tourists? ({{ current_year }} Update)</h2>
+    <p class="sec-lead">
+      Tourism is slowly recovering after years of collapse, but Venezuela
+      is not yet a &ldquo;standard&rdquo; tourist destination. Informed,
+      prepared travelers can visit with acceptable risk; casual,
+      underprepared tourists face serious danger.
+    </p>
+
+    <h3 style="font-family: var(--font-serif); font-size: 19px; color: var(--sr-blue-dark); margin: 24px 0 10px;">Tourism recovery after the transition</h3>
+    <p>
+      The January 2026 political transition and the downgrade of the US
+      travel advisory from Level 4 to Level 3 have opened a narrow window
+      for tourism recovery. Several airlines have resumed or increased
+      service: Copa Airlines flies Panam&aacute;&ndash;Caracas daily,
+      Avianca offers Bogot&aacute;&ndash;Caracas service, and Conviasa
+      (Venezuela&rsquo;s state carrier) operates limited regional routes.
+      International hotel chains (JW Marriott, Eurobuilding) have
+      restarted full operations in Caracas.
+    </p>
+
+    <h3 style="font-family: var(--font-serif); font-size: 19px; color: var(--sr-blue-dark); margin: 24px 0 10px;">Areas attracting tourists</h3>
+    <div class="card-grid cols-2">
+      <div class="card">
+        <div class="meta">Beach &amp; Diving</div>
+        <h3>Margarita Island &amp; Los Roques</h3>
+        <p style="font-size: 14px; line-height: 1.6; margin-top: 8px;">
+          Margarita Island has historically been Venezuela&rsquo;s primary
+          tourist destination, with resort-style beaches and a duty-free
+          shopping zone. Los Roques, a stunning archipelago 150 km north
+          of Caracas, offers world-class diving and kitesurfing in a
+          low-crime environment. Both are accessible by short flights
+          from Caracas.
+        </p>
+      </div>
+      <div class="card">
+        <div class="meta">Adventure &amp; Nature</div>
+        <h3>M&eacute;rida &amp; Canaima</h3>
+        <p style="font-size: 14px; line-height: 1.6; margin-top: 8px;">
+          M&eacute;rida offers the Mukumbar&iacute; telef&eacute;rico
+          (world&rsquo;s highest and longest cable car), paragliding,
+          and Andean trekking. Canaima National Park, home of Angel Falls,
+          is resuming organized tours, though access is limited and
+          requires careful planning through licensed operators.
+        </p>
+      </div>
+    </div>
+
+    <h3 style="font-family: var(--font-serif); font-size: 19px; color: var(--sr-blue-dark); margin: 24px 0 10px;">Organized tour safety</h3>
+    <p>
+      The safest way to visit Venezuela as a tourist is through an
+      organized tour with a reputable operator that provides
+      ground logistics, vetted drivers, and local guides. Independent
+      backpacker-style travel is strongly discouraged due to the crime
+      environment and infrastructure challenges. Tour operators with
+      Venezuela expertise include Natoura, Akanan Travel, and Lost World
+      Adventures. Verify that any operator you consider has current
+      on-the-ground staff (not just a local &ldquo;partner&rdquo; they
+      haven&rsquo;t vetted recently).
+    </p>
+  </section>
+
+  {# ======================================================================= #}
+  {# SECTION 7: Business Travel                                              #}
+  {# ======================================================================= #}
+  <section id="business" class="sec">
+    <h2>7. Is Venezuela Safe for Business Travel?</h2>
+    <p class="sec-lead">
+      Business travel to Venezuela is feasible with proper protocols.
+      Most international companies require employees to follow strict
+      corporate travel security procedures.
+    </p>
+
+    <h3 style="font-family: var(--font-serif); font-size: 19px; color: var(--sr-blue-dark); margin: 24px 0 10px;">Corporate travel protocols</h3>
+    <ul style="margin: 0 0 16px 24px;">
+      <li><strong>Security briefing:</strong> Receive a country-specific security briefing before travel, ideally from an established security firm with Venezuela operations.</li>
+      <li><strong>Journey management:</strong> File a detailed itinerary with your company&rsquo;s security team. Check in at predetermined intervals.</li>
+      <li><strong>Comms check:</strong> Confirm your mobile phone works in-country, have a backup communication plan (satellite phone or local SIM), and ensure your VPN is configured.</li>
+      <li><strong>Low-profile movement:</strong> Use armored vehicles for executive travel. Avoid patterns (same route, same time every day). Vary your schedule.</li>
+      <li><strong>Duress protocol:</strong> Establish a duress code with your security team&mdash;a word or phrase that signals you are under coercion without alerting captors.</li>
+    </ul>
+
+    <h3 style="font-family: var(--font-serif); font-size: 19px; color: var(--sr-blue-dark); margin: 24px 0 10px;">Security firm recommendations</h3>
+    <p>
+      For protective services in Caracas&mdash;executive transport, close
+      protection, residential security, journey management, and emergency
+      evacuation&mdash;engage one of the established international firms
+      with permanent Venezuela operations:
+    </p>
+    <div class="card-grid cols-2">
+      <div class="card">
+        <div class="meta">Global Security</div>
+        <h3>Control Risks</h3>
+        <p style="font-size: 14px; line-height: 1.6; margin-top: 8px;">
+          World-leading specialist risk consultancy with a dedicated
+          Venezuela practice. Provides journey management, threat
+          assessments, executive protection, and crisis response.
+        </p>
+      </div>
+      <div class="card">
+        <div class="meta">Medical &amp; Security Assistance</div>
+        <h3>International SOS</h3>
+        <p style="font-size: 14px; line-height: 1.6; margin-top: 8px;">
+          Combined medical and security assistance. Particularly
+          valuable for the medical-evacuation capability&mdash;they
+          can arrange air evacuation to Bogot&aacute; or Miami.
+        </p>
+      </div>
+      <div class="card">
+        <div class="meta">Executive Protection</div>
+        <h3>Global Guardian</h3>
+        <p style="font-size: 14px; line-height: 1.6; margin-top: 8px;">
+          Full-spectrum protective services including armored vehicles,
+          close-protection officers, and intelligence-led travel
+          security for the Venezuela market.
+        </p>
+      </div>
+      <div class="card">
+        <div class="meta">Evacuation</div>
+        <h3>Global Rescue</h3>
+        <p style="font-size: 14px; line-height: 1.6; margin-top: 8px;">
+          Specialized in extraction and evacuation from hostile
+          environments. Membership includes emergency medical
+          evacuation and security advisory.
+        </p>
+      </div>
+    </div>
+
+    <h3 style="font-family: var(--font-serif); font-size: 19px; color: var(--sr-blue-dark); margin: 24px 0 10px;">Vetted hotels for business travelers</h3>
+    <p>
+      Business travelers should stay in internationally branded or
+      well-established Venezuelan hotels in Green Zone neighborhoods.
+      These properties offer airport transfers, in-house security, and
+      concierge services familiar with corporate-travel requirements:
+    </p>
+    <ul style="margin: 0 0 16px 24px;">
+      <li><strong>JW Marriott Caracas</strong> &mdash; La Castellana. International chain with airport shuttle and executive floors.</li>
+      <li><strong>Hotel Eurobuilding</strong> &mdash; Chuao. Long-established Venezuelan luxury hotel, frequently used by diplomats and executives.</li>
+      <li><strong>Renaissance Caracas La Castellana</strong> &mdash; La Castellana. Marriott-managed property with good security protocols.</li>
+      <li><strong>Pestana Caracas</strong> &mdash; Las Mercedes. Portuguese chain hotel in the restaurant district.</li>
+    </ul>
+    <p style="font-size: 14px;">
+      <a href="/travel#hotels" style="color: var(--sr-blue); font-weight: 600;">See the full Caracas hotel guide &rarr;</a>
+    </p>
+  </section>
+
+  {# ======================================================================= #}
+  {# SECTION 8: FAQ                                                          #}
+  {# ======================================================================= #}
+  <section id="faq" class="sec">
+    <h2>8. Frequently Asked Questions</h2>
+    <p class="sec-lead">
+      Common questions about Venezuela safety, answered with current
+      information as of {{ updated_label }}.
+    </p>
+
+    <div class="faq-list">
+      {% for item in faq %}
+      <div class="faq-item{% if loop.first %} open{% endif %}">
+        <button type="button" class="faq-q">
+          <span class="faq-icon">+</span>
+          {{ item.q }}
+        </button>
+        <div class="faq-a">{{ item.a | safe }}</div>
+      </div>
+      {% endfor %}
+
+      <div class="faq-item">
+        <button type="button" class="faq-q">
+          <span class="faq-icon">+</span>
+          Is Venezuela safe to visit in {{ current_year }}?
+        </button>
+        <div class="faq-a">
+          <p>
+            Venezuela is safer than it was five years ago, but it is still a
+            high-risk destination. The US State Department rates it Level 3
+            (&ldquo;Reconsider Travel&rdquo;) as of March 2026, downgraded
+            from Level 4 after the January 2026 political transition. If you
+            stay in safer neighborhoods, use pre-arranged transport, and follow
+            basic security protocols, travel to Caracas and a few tourist
+            areas is feasible. Several border states remain Level 4
+            (&ldquo;Do Not Travel&rdquo;).
+          </p>
+        </div>
+      </div>
+
+      <div class="faq-item">
+        <button type="button" class="faq-q">
+          <span class="faq-icon">+</span>
+          What is the crime rate in Venezuela?
+        </button>
+        <div class="faq-a">
+          <p>
+            The Venezuelan Violence Observatory (OVV) reported approximately
+            26.8 homicides per 100,000 people in 2025, down from a peak of
+            approximately 43 per 100,000 in 2019. For context, the US rate
+            is approximately 6.3, Colombia is approximately 24, and El
+            Salvador (post-<em>estado de excepci&oacute;n</em>) is approximately
+            7.8. Venezuela&rsquo;s rate is high by global standards but has
+            been declining. Armed robbery is the crime most likely to affect
+            visitors.
+          </p>
+        </div>
+      </div>
+
+      <div class="faq-item">
+        <button type="button" class="faq-q">
+          <span class="faq-icon">+</span>
+          Is Caracas safe for tourists?
+        </button>
+        <div class="faq-a">
+          <p>
+            Parts of Caracas are manageable with precautions. The eastern
+            neighborhoods (Altamira, Las Mercedes, La Castellana, Chacao)
+            host international hotels, restaurants, and businesses. With
+            pre-arranged transport and daytime-only movement, these areas
+            are comparable to other Latin American cities. Western barrios
+            (Petare, Catia, 23 de Enero) are extremely dangerous and should
+            not be visited under any circumstances.
+          </p>
+        </div>
+      </div>
+
+      <div class="faq-item">
+        <button type="button" class="faq-q">
+          <span class="faq-icon">+</span>
+          Is it safe to fly to Venezuela?
+        </button>
+        <div class="faq-a">
+          <p>
+            The flight itself is not the concern. Sim&oacute;n Bol&iacute;var
+            International Airport (SVMI/CCS) in Maiquet&iacute;a is
+            functional and served by international carriers including Copa,
+            Avianca, and several charter services. The primary risk is
+            the highway between the airport and Caracas, which passes through
+            unsafe areas and is dangerous after dark. Always pre-arrange your
+            airport transfer and time your flights so you travel the highway
+            in daylight.
+          </p>
+        </div>
+      </div>
+
+      <div class="faq-item">
+        <button type="button" class="faq-q">
+          <span class="faq-icon">+</span>
+          Do I need a visa to visit Venezuela?
+        </button>
+        <div class="faq-a">
+          <p>
+            It depends on your nationality. US citizens need a visa, which
+            is now obtained through the Canciller&iacute;a Digital e-visa
+            portal. Citizens of most EU countries, Canada, Australia, and
+            several Latin American countries can enter visa-free for tourism
+            stays of up to 90 days. Check our
+            <a href="/tools/venezuela-visa-requirements">visa requirements tool</a>
+            for your specific passport.
+          </p>
+        </div>
+      </div>
+
+      <div class="faq-item">
+        <button type="button" class="faq-q">
+          <span class="faq-icon">+</span>
+          What is the safest place in Venezuela?
+        </button>
+        <div class="faq-a">
+          <p>
+            Los Roques archipelago is generally considered the safest area
+            in Venezuela due to its small size, isolation, and limited
+            access (small planes only). Among mainland destinations,
+            M&eacute;rida has lower crime rates than Caracas and a more
+            established tourism infrastructure. Within Caracas, the eastern
+            neighborhoods of Chacao and Baruta (Altamira, La Castellana,
+            Las Mercedes) are the safest urban areas.
+          </p>
+        </div>
+      </div>
+
+      <div class="faq-item">
+        <button type="button" class="faq-q">
+          <span class="faq-icon">+</span>
+          Can I use US dollars in Venezuela?
+        </button>
+        <div class="faq-a">
+          <p>
+            Yes. The Venezuelan economy is heavily dollarized. US dollars
+            are widely accepted and often preferred, especially in Caracas
+            and tourist areas. Bring small denominations ($1&ndash;$20) in
+            post-2009, undamaged bills. Zelle transfers are also common
+            for larger transactions. Credit cards are accepted at major
+            hotels and some upscale restaurants but are not reliable for
+            day-to-day purchases. ATMs are unreliable and should not be
+            your primary cash source.
+          </p>
+        </div>
+      </div>
+
+      <div class="faq-item">
+        <button type="button" class="faq-q">
+          <span class="faq-icon">+</span>
+          Is kidnapping common in Venezuela?
+        </button>
+        <div class="faq-a">
+          <p>
+            Kidnapping remains a concern, though rates have declined from
+            the peak years of 2012&ndash;2016. Express kidnappings
+            (short-duration abductions for ATM withdrawals) are the most
+            common type and are overwhelmingly linked to hailing unvetted
+            taxis. Traditional kidnapping for ransom primarily targets
+            wealthy Venezuelans and is less likely to affect foreign
+            tourists who follow security protocols. The single best
+            preventive measure: never take an unvetted taxi.
+          </p>
+        </div>
+      </div>
+
+      <div class="faq-item">
+        <button type="button" class="faq-q">
+          <span class="faq-icon">+</span>
+          Is the Venezuela&ndash;Colombia border safe to cross?
+        </button>
+        <div class="faq-a">
+          <p>
+            No. All Venezuela&ndash;Colombia border crossings are considered
+            high-risk. Armed groups (ELN, FARC dissidents) and criminal
+            organizations operate in border zones. Even the formal
+            crossing at San Antonio del T&aacute;chira&ndash;C&uacute;cuta
+            is subject to extortion and robbery. If you must cross, use a
+            professional security firm. Flying between Caracas and
+            Bogot&aacute; is the safe alternative.
+          </p>
+        </div>
+      </div>
+
+      <div class="faq-item">
+        <button type="button" class="faq-q">
+          <span class="faq-icon">+</span>
+          What should I do if I&rsquo;m robbed in Venezuela?
+        </button>
+        <div class="faq-a">
+          <p>
+            Comply immediately and do not resist. Hand over your
+            belongings without hesitation. Do not make sudden movements
+            or attempt to negotiate. After the assailants leave, move to a
+            safe location and call your embassy, then the police (CICPC:
+            0800-24272-00). File a report with the CICPC for insurance
+            purposes, though recovery of stolen items is extremely unlikely.
+            Contact your travel insurance provider and your hotel&rsquo;s
+            security desk.
+          </p>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  {# ======================================================================= #}
+  {# SECTION 9: Related Coverage                                             #}
+  {# ======================================================================= #}
+  <section id="related" class="sec">
+    <h2>Related Coverage</h2>
+    <p class="sec-lead">
+      Explore related guides and tools on Caracas Research.
+    </p>
+
+    <div class="related-grid">
+      <a class="related-link" href="/travel">
+        <div class="rl-tag">Travel</div>
+        <div class="rl-title">Travel to Venezuela: Complete Guide</div>
+        <div class="rl-desc">Operational briefing for business travelers &mdash; visas, hotels, transport, security, medical, and emergency contacts for Caracas.</div>
+      </a>
+      <a class="related-link" href="/travel/emergency-card">
+        <div class="rl-tag">Tool</div>
+        <div class="rl-title">Caracas Emergency Card</div>
+        <div class="rl-desc">Printable bilingual one-page card with hospital addresses, embassy numbers, and your emergency contacts.</div>
+      </a>
+      <a class="related-link" href="/sanctions-tracker">
+        <div class="rl-tag">Sanctions</div>
+        <div class="rl-title">Venezuela Sanctions Tracker</div>
+        <div class="rl-desc">Real-time tracking of US, EU, and Canadian sanctions on Venezuela, including OFAC SDN designations and general licenses.</div>
+      </a>
+      <a class="related-link" href="/tps-venezuela">
+        <div class="rl-tag">Immigration</div>
+        <div class="rl-title">TPS Venezuela: Status &amp; Timeline</div>
+        <div class="rl-desc">Current status of Temporary Protected Status for Venezuelans, legal developments, and what comes next.</div>
+      </a>
+    </div>
+  </section>
+
+  {# ======================================================================= #}
+  {# Disclaimer                                                              #}
+  {# ======================================================================= #}
+  <div class="disclaimer">
+    <strong>Disclaimer:</strong> This page is for informational purposes only
+    and does not constitute travel, legal, or security advice. Safety
+    conditions in Venezuela change rapidly and vary by location. Information
+    is current as of {{ updated_label }} and may become outdated. Travelers
+    should consult official government travel advisories, engage professional
+    security services for high-risk travel, and make independent assessments
+    of their personal risk tolerance before visiting Venezuela.
+  </div>
+
+  {# ======================================================================= #}
+  {# Newsletter CTA                                                          #}
+  {# ======================================================================= #}
+  <div style="margin-top: 40px; padding: 18px; background: var(--sr-gray-bg); border-radius: 4px;">
+    <p style="font-size: 14px; color: var(--sr-dark-text); margin: 0;">
+      <strong>Planning travel to Venezuela?</strong>
+      Subscribe to the Caracas Research daily briefing for real-time security
+      alerts, sanctions updates, and on-the-ground intelligence that affects
+      your trip.
+      <a href="/#signup" style="font-weight: 600;">Get the daily briefing &rarr;</a>
+    </p>
+  </div>
+
+  <p style="font-size: 12px; color: var(--sr-gray-text); margin: 24px 0;">
+    Sources: US State Department Travel Advisory (March 2026); UK FCDO
+    Foreign Travel Advice; OSAC Caracas Crime &amp; Safety Report;
+    Venezuelan Violence Observatory (OVV) annual reports; InSight Crime;
+    International Crisis Group; security-firm assessments from Control Risks
+    and International SOS. Information is for planning purposes only and does
+    not constitute travel, legal, or security advice.
+  </p>
+
+</section>
+
+<script>
+(function initFaqToggle() {
+  document.querySelectorAll('.faq-q').forEach(function(btn) {
+    btn.addEventListener('click', function() {
+      var item = btn.closest('.faq-item');
+      if (!item) return;
+      item.classList.toggle('open');
+    });
+  });
+})();
+</script>
+
+{% from "_recent_briefings.html.j2" import recent_briefings_rail %}
+{{ recent_briefings_rail(
+     recent_briefings,
+     heading="Latest analysis",
+     intro="Recent briefings on Venezuela security conditions, travel advisories, and on-the-ground developments.",
+) }}
+{% endblock %}

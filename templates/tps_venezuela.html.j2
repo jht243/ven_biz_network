@@ -1,0 +1,895 @@
+{% extends "_base.html.j2" %}
+{% from "_base.html.j2" import share_button %}
+
+{% block head_extra %}
+<style>
+  .tps-hero { background: linear-gradient(180deg, #f6f8fa 0%, var(--white) 100%); padding: 28px 0 16px; margin-bottom: 16px; }
+  .tps-hero .kicker { font-size: 12px; text-transform: uppercase; letter-spacing: 1.4px; color: #cc0000; font-weight: 700; }
+  .tps-hero h1 { font-family: var(--font-serif); font-size: 32px; color: var(--sr-blue-dark); margin: 8px 0 8px; line-height: 1.2; }
+  .tps-hero p.lead { font-family: var(--font-serif); font-style: italic; color: var(--sr-gray-text); font-size: 16px; max-width: 720px; margin: 0; }
+
+  .advisory { padding: 14px 18px; border-radius: 4px; margin: 16px 0 28px; }
+  .advisory.l4 { background: #fdecea; border-left: 4px solid var(--sr-red); }
+  .advisory.l3 { background: #fff3e0; border-left: 4px solid #f5b041; }
+  .advisory.l2 { background: #fff8e1; border-left: 4px solid #fbc02d; }
+  .advisory.l1 { background: #e8f5e9; border-left: 4px solid #2e7d32; }
+  .advisory .lvl { font-weight: 700; }
+
+  .status-banner { padding: 18px 22px; border-radius: 6px; margin: 0 0 28px; }
+  .status-banner.terminated { background: #fdecea; border: 2px solid #cc0000; border-left: 6px solid #cc0000; }
+  .status-banner .status-label { display: inline-block; background: #cc0000; color: #fff; font-size: 11px; font-weight: 700; text-transform: uppercase; letter-spacing: 1.4px; padding: 3px 10px; border-radius: 3px; margin-bottom: 10px; }
+  .status-banner h2 { font-family: var(--font-serif); font-size: 20px; color: #7a1a1a; margin: 0 0 8px; }
+  .status-banner p { font-size: 14.5px; color: #4a1a1a; margin: 0 0 6px; line-height: 1.6; }
+  .status-banner .exception { background: #fff8e1; border: 1px solid #f5b041; border-radius: 4px; padding: 12px 14px; margin-top: 12px; font-size: 13.5px; line-height: 1.6; color: var(--sr-dark-text); }
+  .status-banner .exception strong { color: #b45309; }
+
+  .toc { background: var(--sr-gray-bg); border-left: 3px solid var(--sr-blue); padding: 18px 22px; margin: 0 0 32px; font-size: 14px; }
+  .toc h3 { font-family: var(--font-serif); font-size: 14px; text-transform: uppercase; letter-spacing: 1px; color: var(--sr-blue-dark); margin-bottom: 10px; }
+  .toc ol { margin-left: 20px; columns: 2; column-gap: 24px; }
+  .toc li { margin-bottom: 6px; }
+  @media (max-width: 640px) { .toc ol { columns: 1; } }
+
+  .sec { margin: 40px 0 24px; padding-top: 8px; }
+  .sec h2 { font-family: var(--font-serif); font-size: 26px; color: var(--sr-blue-dark); margin-bottom: 8px; }
+  .sec .sec-lead { color: var(--sr-gray-text); margin-bottom: 18px; font-size: 15px; }
+
+  .card-grid { display: grid; grid-template-columns: 1fr; gap: 14px; margin-bottom: 18px; }
+  @media (min-width: 720px) { .card-grid.cols-2 { grid-template-columns: 1fr 1fr; } }
+  @media (min-width: 980px) { .card-grid.cols-3 { grid-template-columns: 1fr 1fr 1fr; } }
+
+  .card { background: var(--white); border: 1px solid var(--sr-gray-light); border-radius: 4px; padding: 18px 20px; transition: border-color 0.15s, transform 0.15s; }
+  .card:hover { border-color: var(--sr-blue); transform: translateY(-1px); }
+  .card h3 { font-family: var(--font-serif); font-size: 17px; color: var(--sr-blue-dark); margin-bottom: 6px; }
+  .card .meta { font-size: 12px; text-transform: uppercase; letter-spacing: 0.5px; color: var(--sr-gray-text); margin-bottom: 8px; }
+  .card .row { font-size: 14px; margin: 4px 0; }
+  .card .row strong { color: var(--sr-dark-text); display: inline-block; min-width: 96px; font-weight: 600; }
+  .card a.cta { font-size: 13px; color: var(--sr-blue); font-weight: 600; text-decoration: none; }
+  .card a.cta:hover { text-decoration: underline; }
+  .card .note { font-size: 13px; color: var(--sr-gray-text); margin-top: 10px; line-height: 1.55; padding-top: 10px; border-top: 1px dotted var(--sr-gray-light); }
+
+  .em-table { width: 100%; border-collapse: collapse; margin: 8px 0 18px; font-size: 14px; }
+  .em-table th, .em-table td { text-align: left; padding: 10px 12px; border-bottom: 1px solid var(--sr-gray-light); }
+  .em-table th { background: var(--sr-gray-bg); font-size: 12px; text-transform: uppercase; letter-spacing: 0.5px; color: var(--sr-gray-text); font-weight: 600; }
+  .em-table td.num { font-family: var(--font-sans); font-weight: 600; color: var(--sr-blue); white-space: nowrap; }
+
+  .disclaimer { background: #fff8e1; border-left: 4px solid #f5b041; padding: 14px 18px; border-radius: 3px; margin: 20px 0; font-size: 13.5px; line-height: 1.65; color: var(--sr-dark-text); }
+
+  /* Timeline */
+  .timeline { position: relative; padding: 0 0 0 32px; margin: 24px 0 28px; }
+  .timeline::before { content: ""; position: absolute; top: 0; bottom: 0; left: 14px; width: 3px; background: var(--sr-gray-light); border-radius: 2px; }
+  .tl-item { position: relative; margin-bottom: 24px; }
+  .tl-item:last-child { margin-bottom: 0; }
+  .tl-dot { position: absolute; left: -25px; top: 3px; width: 14px; height: 14px; border-radius: 50%; border: 3px solid var(--sr-blue); background: var(--white); z-index: 1; }
+  .tl-item.positive .tl-dot { border-color: #2e7d32; }
+  .tl-item.negative .tl-dot { border-color: #cc0000; }
+  .tl-item.pending .tl-dot { border-color: #f5b041; }
+  .tl-date { font-size: 12px; text-transform: uppercase; letter-spacing: 0.8px; color: var(--sr-gray-text); font-weight: 700; margin-bottom: 3px; }
+  .tl-title { font-family: var(--font-serif); font-size: 15px; color: var(--sr-blue-dark); font-weight: 700; margin-bottom: 4px; }
+  .tl-desc { font-size: 14px; color: var(--sr-dark-text); line-height: 1.6; }
+
+  /* Stat cards */
+  .stat-grid { display: grid; grid-template-columns: 1fr; gap: 14px; margin: 18px 0 24px; }
+  @media (min-width: 640px) { .stat-grid { grid-template-columns: 1fr 1fr 1fr; } }
+  .stat-card { background: var(--sr-gray-bg); border: 1px solid var(--sr-gray-light); border-radius: 6px; padding: 18px 20px; text-align: center; }
+  .stat-card .stat-num { font-family: var(--font-serif); font-size: 32px; font-weight: 700; color: var(--sr-blue-dark); line-height: 1.1; }
+  .stat-card .stat-label { font-size: 13px; color: var(--sr-gray-text); margin-top: 6px; text-transform: uppercase; letter-spacing: 0.5px; }
+
+  /* FAQ cards */
+  .faq-list { margin: 18px 0 28px; }
+  .faq-item { border: 1px solid var(--sr-gray-light); border-radius: 4px; margin-bottom: 10px; overflow: hidden; }
+  .faq-q { display: flex; align-items: center; gap: 12px; padding: 16px 18px; cursor: pointer; background: var(--white); font-family: var(--font-serif); font-size: 16px; font-weight: 700; color: var(--sr-blue-dark); transition: background 0.15s; border: 0; width: 100%; text-align: left; }
+  .faq-q:hover { background: var(--sr-gray-bg); }
+  .faq-q .faq-icon { flex-shrink: 0; width: 24px; height: 24px; border-radius: 50%; background: var(--sr-blue); color: var(--white); display: flex; align-items: center; justify-content: center; font-size: 14px; font-weight: 700; transition: transform 0.2s; font-family: var(--font-sans); }
+  .faq-item.open .faq-q .faq-icon { transform: rotate(45deg); }
+  .faq-a { padding: 0 18px 16px; font-size: 15px; line-height: 1.7; color: var(--sr-dark-text); display: none; }
+  .faq-item.open .faq-a { display: block; }
+
+  /* Related links */
+  .related-grid { display: grid; grid-template-columns: 1fr; gap: 12px; margin: 16px 0 24px; }
+  @media (min-width: 720px) { .related-grid { grid-template-columns: 1fr 1fr; } }
+  .related-link { display: block; padding: 16px 18px; background: var(--white); border: 1px solid var(--sr-gray-light); border-radius: 4px; text-decoration: none; color: inherit; transition: border-color 0.15s, transform 0.15s; }
+  .related-link:hover { border-color: var(--sr-blue); transform: translateY(-1px); }
+  .related-link .rl-tag { font-size: 11px; text-transform: uppercase; letter-spacing: 1px; color: var(--sr-red); font-weight: 700; margin-bottom: 4px; }
+  .related-link .rl-title { font-family: var(--font-serif); font-size: 16px; color: var(--sr-blue-dark); font-weight: 700; margin-bottom: 4px; }
+  .related-link .rl-desc { font-size: 13px; color: var(--sr-gray-text); line-height: 1.5; }
+</style>
+{% endblock %}
+
+{% block content %}
+<section class="container-wide">
+
+  <nav class="breadcrumbs" aria-label="Breadcrumb">
+    <a href="/">Home</a><span>/</span>
+    <a href="/invest-in-venezuela">Invest in Venezuela</a><span>/</span>
+    <span>TPS Venezuela</span>
+    <span style="margin-left:auto;">{{ share_button(seo.canonical, seo.title) }}</span>
+  </nav>
+
+  <header class="tps-hero">
+    <div class="kicker">Immigration · Updated {{ updated_label }}</div>
+    <h1>TPS Venezuela: Current Status, Timeline &amp; Legal Developments ({{ current_year }})</h1>
+    <p class="lead">
+      Temporary Protected Status for Venezuelans has been terminated for most
+      beneficiaries. Here is what happened, who is affected, and what comes next.
+    </p>
+  </header>
+
+  {# ============ Status banner ============ #}
+  <div class="status-banner terminated">
+    <span class="status-label">Terminated</span>
+    <h2>TPS for Venezuela has been terminated</h2>
+    <p>
+      On February 3, 2025, Secretary of Homeland Security Kristi Noem issued a
+      vacatur terminating Temporary Protected Status for Venezuela. The Supreme
+      Court stayed district-court injunctions that had blocked the termination,
+      allowing the government to end protections for most beneficiaries.
+    </p>
+    <p>
+      Approximately <strong>605,015 Venezuelans</strong> who held TPS are affected
+      by the termination.
+    </p>
+    <div class="exception">
+      <strong>Narrow exception:</strong> A limited group of TPS holders whose
+      employment authorization documents (EADs) were issued before February 5, 2025,
+      retain protections through <strong>October 2, 2026</strong>, per the terms of
+      the Supreme Court&rsquo;s stay order. After that date, their status expires
+      unless further judicial or executive action intervenes.
+    </div>
+  </div>
+
+  {# ============ Table of contents ============ #}
+  <nav class="toc" aria-label="Table of contents">
+    <h3>Contents</h3>
+    <ol>
+      <li><a href="#status">Current TPS Status</a></li>
+      <li><a href="#timeline">Complete Timeline</a></li>
+      <li><a href="#affected">Who Is Affected</a></li>
+      <li><a href="#eligibility">Eligibility Requirements</a></li>
+      <li><a href="#legal">Legal Developments</a></li>
+      <li><a href="#vacatur">The Vacatur Explained</a></li>
+      <li><a href="#watch">What to Watch Next</a></li>
+      <li><a href="#ded">Relationship to DED</a></li>
+      <li><a href="#resources">Resources</a></li>
+      <li><a href="#faq">Frequently Asked Questions</a></li>
+    </ol>
+  </nav>
+
+  {# ======================================================================= #}
+  <section id="status" class="sec">
+    <h2>1. Current TPS Status for Venezuela</h2>
+    <p class="sec-lead">
+      As of {{ updated_label }}, Temporary Protected Status for Venezuela is
+      <strong>terminated</strong> for the vast majority of beneficiaries.
+    </p>
+    <p>
+      The Biden administration had designated and re-designated Venezuela for TPS
+      three times between 2021 and 2023, ultimately extending protections to
+      approximately 605,015 Venezuelan nationals in the United States. On
+      February 3, 2025, DHS Secretary Kristi Noem vacated all three
+      designations, effective immediately.
+    </p>
+    <p>
+      Federal courts initially blocked the termination. District Judge Edward Chen
+      (N.D. Cal.) issued a temporary restraining order, later converted to a
+      preliminary injunction, in <em>NTPSA v. Noem</em>. However, the Supreme
+      Court stayed that injunction on May 19, 2025, and again on October 3, 2025,
+      allowing the termination to take effect for most beneficiaries.
+    </p>
+    <p>
+      A narrow group retains protections: individuals whose employment
+      authorization documents were issued before February 5, 2025, continue to
+      hold TPS through <strong>October 2, 2026</strong>. After that date, no
+      Venezuelan nationals will hold active TPS unless there is further judicial
+      or executive action.
+    </p>
+  </section>
+
+  {# ======================================================================= #}
+  <section id="timeline" class="sec">
+    <h2>2. Complete Timeline</h2>
+    <p class="sec-lead">
+      Key dates in the history of TPS for Venezuela, from the initial
+      designation through the present.
+    </p>
+
+    <div class="timeline">
+      <div class="tl-item positive">
+        <span class="tl-dot"></span>
+        <div class="tl-date">January 2021</div>
+        <div class="tl-title">Initial TPS Designation</div>
+        <div class="tl-desc">
+          The Biden administration designates Venezuela for TPS for 18 months,
+          covering Venezuelan nationals continuously residing in the US since
+          March 8, 2021. Approximately 323,000 individuals are estimated eligible.
+        </div>
+      </div>
+
+      <div class="tl-item positive">
+        <span class="tl-dot"></span>
+        <div class="tl-date">September 2022</div>
+        <div class="tl-title">TPS Extended 18 Months</div>
+        <div class="tl-desc">
+          DHS extends and re-designates TPS for Venezuela through April 2, 2024,
+          with a new continuous-residence cutoff, expanding the eligible pool.
+        </div>
+      </div>
+
+      <div class="tl-item positive">
+        <span class="tl-dot"></span>
+        <div class="tl-date">September 2023</div>
+        <div class="tl-title">Third Designation (Largest Expansion)</div>
+        <div class="tl-desc">
+          DHS issues a fresh 18-month designation with a continuous-residence
+          date of July 31, 2023. An estimated 472,000 additional Venezuelans
+          become eligible, bringing total approved beneficiaries to approximately
+          605,015.
+        </div>
+      </div>
+
+      <div class="tl-item negative">
+        <span class="tl-dot"></span>
+        <div class="tl-date">February 3, 2025</div>
+        <div class="tl-title">Secretary Noem Vacates All Designations</div>
+        <div class="tl-desc">
+          Newly confirmed DHS Secretary Kristi Noem issues a vacatur rescinding
+          all three Venezuela TPS designations, effective immediately. The
+          administration argues the original designations were legally flawed.
+        </div>
+      </div>
+
+      <div class="tl-item positive">
+        <span class="tl-dot"></span>
+        <div class="tl-date">February 2025</div>
+        <div class="tl-title">District Court Blocks Termination</div>
+        <div class="tl-desc">
+          Judge Edward Chen of the Northern District of California issues a
+          temporary restraining order in <em>NTPSA v. Noem</em>, blocking the
+          vacatur nationwide. The TRO is later converted to a preliminary
+          injunction, finding plaintiffs likely to succeed on the merits.
+        </div>
+      </div>
+
+      <div class="tl-item negative">
+        <span class="tl-dot"></span>
+        <div class="tl-date">May 19, 2025</div>
+        <div class="tl-title">Supreme Court Stays Injunction</div>
+        <div class="tl-desc">
+          The Supreme Court grants the government&rsquo;s emergency application
+          and stays the district court&rsquo;s preliminary injunction, allowing
+          the TPS termination to proceed. TPS protections end for most
+          beneficiaries.
+        </div>
+      </div>
+
+      <div class="tl-item negative">
+        <span class="tl-dot"></span>
+        <div class="tl-date">October 3, 2025</div>
+        <div class="tl-title">SCOTUS Extends Stay</div>
+        <div class="tl-desc">
+          The Supreme Court extends its stay of the district court order. A
+          narrow carve-out preserves TPS for individuals with EADs issued
+          before February 5, 2025, through October 2, 2026.
+        </div>
+      </div>
+
+      <div class="tl-item positive">
+        <span class="tl-dot"></span>
+        <div class="tl-date">January 28, 2026</div>
+        <div class="tl-title">Ninth Circuit Affirms on Merits</div>
+        <div class="tl-desc">
+          The Ninth Circuit Court of Appeals affirms the district court&rsquo;s
+          ruling on the merits, finding that the Noem vacatur was likely
+          unlawful under the Administrative Procedure Act. However, the Supreme
+          Court&rsquo;s stay remains in effect.
+        </div>
+      </div>
+
+      <div class="tl-item pending">
+        <span class="tl-dot"></span>
+        <div class="tl-date">April 29, 2026</div>
+        <div class="tl-title">SCOTUS Hears Related Haiti/Syria TPS Cases</div>
+        <div class="tl-desc">
+          The Supreme Court hears oral arguments in consolidated TPS cases
+          involving Haiti and Syria. The outcome will likely determine the legal
+          framework for the Venezuela TPS dispute as well.
+        </div>
+      </div>
+
+      <div class="tl-item pending">
+        <span class="tl-dot"></span>
+        <div class="tl-date">October 2, 2026</div>
+        <div class="tl-title">Narrow Exception Expires</div>
+        <div class="tl-desc">
+          The remaining narrow group of TPS holders (those with EADs issued
+          before Feb. 5, 2025) lose protections unless the Supreme Court rules
+          favorably or new executive action is taken.
+        </div>
+      </div>
+    </div>
+  </section>
+
+  {# ======================================================================= #}
+  <section id="affected" class="sec">
+    <h2>3. Who Is Affected</h2>
+    <p class="sec-lead">
+      Approximately 605,015 Venezuelan nationals in the United States were
+      approved for TPS across the three designations. The termination affects
+      virtually all of them.
+    </p>
+
+    <div class="stat-grid">
+      <div class="stat-card">
+        <div class="stat-num">605,015</div>
+        <div class="stat-label">Total Approved</div>
+      </div>
+      <div class="stat-card">
+        <div class="stat-num">3</div>
+        <div class="stat-label">Designations Vacated</div>
+      </div>
+      <div class="stat-card">
+        <div class="stat-num">Oct 2, 2026</div>
+        <div class="stat-label">Exception Expiry</div>
+      </div>
+    </div>
+
+    <table class="em-table">
+      <thead>
+        <tr>
+          <th>Designation</th>
+          <th>Announced</th>
+          <th>Continuous Residence Since</th>
+          <th>Est. Beneficiaries</th>
+        </tr>
+      </thead>
+      <tbody>
+        <tr>
+          <td>Initial designation</td>
+          <td>January 2021</td>
+          <td>March 8, 2021</td>
+          <td class="num">~323,000</td>
+        </tr>
+        <tr>
+          <td>Re-designation / extension</td>
+          <td>September 2022</td>
+          <td>Updated cutoff date</td>
+          <td class="num">Included above</td>
+        </tr>
+        <tr>
+          <td>Third designation (expansion)</td>
+          <td>September 2023</td>
+          <td>July 31, 2023</td>
+          <td class="num">~472,000 new</td>
+        </tr>
+        <tr style="font-weight: 700; border-top: 2px solid var(--sr-blue);">
+          <td colspan="3">Total approved beneficiaries</td>
+          <td class="num">~605,015</td>
+        </tr>
+      </tbody>
+    </table>
+
+    <p>
+      The affected population includes families with US-citizen children,
+      workers in construction, hospitality, healthcare, and other industries,
+      and individuals who have resided in the United States for years under
+      lawful TPS status.
+    </p>
+  </section>
+
+  {# ======================================================================= #}
+  <section id="eligibility" class="sec">
+    <h2>4. Eligibility Requirements (When TPS Was Active)</h2>
+    <p class="sec-lead">
+      TPS for Venezuela is no longer accepting new applications. The following
+      requirements applied when the program was active.
+    </p>
+
+    <div class="card">
+      <h3>General TPS Eligibility Criteria</h3>
+      <div class="row"><strong>Nationality</strong>Venezuelan national (or stateless person who last habitually resided in Venezuela)</div>
+      <div class="row"><strong>Continuous residence</strong>Must have been continuously physically present in the US since the applicable cutoff date</div>
+      <div class="row"><strong>Filing</strong>Timely filed Form I-821 (Application for TPS) during the registration period</div>
+      <div class="row"><strong>Background check</strong>No felony or two+ misdemeanor convictions; no bars to asylum</div>
+      <div class="row"><strong>Employment</strong>Could apply for Employment Authorization Document (EAD) via Form I-765</div>
+      <div class="note">
+        <strong>Important:</strong> No new TPS applications for Venezuela are being
+        accepted. Individuals who previously held TPS should consult an immigration
+        attorney about alternative forms of relief.
+      </div>
+    </div>
+  </section>
+
+  {# ======================================================================= #}
+  <section id="legal" class="sec">
+    <h2>5. Legal Developments</h2>
+    <p class="sec-lead">
+      The legal battle over Venezuela TPS involves multiple courts and has
+      produced a complex procedural history.
+    </p>
+
+    <div class="card" style="margin-bottom: 14px;">
+      <h3>NTPSA v. Noem (N.D. Cal.)</h3>
+      <div class="meta">Lead case · Northern District of California</div>
+      <p style="font-size: 14px; line-height: 1.65; margin-top: 8px;">
+        The National TPS Alliance and individual TPS holders challenged the
+        Noem vacatur as unlawful under the Administrative Procedure Act (APA)
+        and the Immigration and Nationality Act (INA). Judge Edward Chen found
+        that the vacatur was likely &ldquo;arbitrary and capricious&rdquo; because
+        it failed to consider the country-conditions evidence required by the
+        INA and did not provide a reasoned explanation.
+      </p>
+      <p style="font-size: 14px; line-height: 1.65;">
+        The court issued a nationwide preliminary injunction blocking the
+        termination. The government appealed to the Ninth Circuit and
+        simultaneously sought emergency relief from the Supreme Court.
+      </p>
+    </div>
+
+    <div class="card" style="margin-bottom: 14px;">
+      <h3>Ninth Circuit Ruling (Jan. 28, 2026)</h3>
+      <div class="meta">Court of Appeals · Affirmed District Court</div>
+      <p style="font-size: 14px; line-height: 1.65; margin-top: 8px;">
+        A three-judge panel of the Ninth Circuit affirmed the district court on
+        the merits, agreeing that the Noem vacatur was likely unlawful. The
+        panel held that the INA requires the DHS Secretary to review
+        country-conditions evidence before terminating TPS and that the vacatur
+        bypassed this statutory requirement.
+      </p>
+      <p style="font-size: 14px; line-height: 1.65;">
+        Despite this favorable merits ruling, the Supreme Court&rsquo;s stay
+        of the injunction remained in effect, meaning the termination continued
+        to be enforced while appellate proceedings continued.
+      </p>
+    </div>
+
+    <div class="card">
+      <h3>Supreme Court Stays</h3>
+      <div class="meta">Emergency applications · May &amp; October 2025</div>
+      <p style="font-size: 14px; line-height: 1.65; margin-top: 8px;">
+        The Supreme Court granted the government&rsquo;s emergency stay
+        applications twice: first on May 19, 2025, and again (extending the
+        stay) on October 3, 2025. In granting the stays, the Court found that
+        the government was likely to prevail on the question of whether TPS
+        termination decisions are committed to agency discretion and
+        unreviewable under the APA.
+      </p>
+      <p style="font-size: 14px; line-height: 1.65;">
+        The October stay order carved out the narrow exception: TPS holders
+        whose EADs were issued before February 5, 2025, retain protections
+        through October 2, 2026.
+      </p>
+    </div>
+  </section>
+
+  {# ======================================================================= #}
+  <section id="vacatur" class="sec">
+    <h2>6. The Vacatur Explained</h2>
+    <p class="sec-lead">
+      A plain-English explanation of what happened and why courts found the
+      government&rsquo;s action problematic.
+    </p>
+
+    <p>
+      Under the Immigration and Nationality Act, the Secretary of Homeland
+      Security can designate a country for TPS when conditions in that
+      country&mdash;armed conflict, environmental disaster, or other
+      extraordinary conditions&mdash;make it unsafe for nationals to return. The
+      statute also provides a process for <em>terminating</em> TPS: the
+      Secretary must review current country conditions and determine that the
+      conditions supporting the designation no longer exist.
+    </p>
+    <p>
+      Secretary Noem&rsquo;s February 3, 2025 action did not follow this
+      process. Instead of reviewing Venezuela&rsquo;s country conditions and
+      issuing a termination through the standard statutory mechanism, the
+      Secretary issued a &ldquo;vacatur&rdquo;&mdash;effectively declaring that
+      the original designations were void from the beginning, as if they had
+      never been made.
+    </p>
+    <p>
+      Multiple courts found this approach problematic for several reasons:
+    </p>
+    <ul style="margin: 0 0 16px 24px;">
+      <li>
+        <strong>No country-conditions review:</strong> The INA requires the
+        Secretary to consider whether conditions in Venezuela have improved
+        before ending TPS. The vacatur bypassed this requirement entirely.
+      </li>
+      <li>
+        <strong>No notice-and-comment:</strong> Under the APA, significant
+        regulatory changes generally require public notice and an opportunity
+        for affected parties to comment. The vacatur was issued without either.
+      </li>
+      <li>
+        <strong>Retroactive effect:</strong> By declaring the designations void
+        <em>ab initio</em> (from the beginning), the vacatur purported to
+        retroactively strip status from hundreds of thousands of people who had
+        relied on TPS in good faith for years.
+      </li>
+      <li>
+        <strong>Arbitrary and capricious:</strong> Both the district court and
+        the Ninth Circuit found the action likely arbitrary and capricious under
+        the APA because it lacked a reasoned explanation tied to the statutory
+        factors.
+      </li>
+    </ul>
+    <p>
+      Despite these lower-court findings, the Supreme Court&rsquo;s stays
+      suggest a majority of justices may view TPS termination decisions as
+      unreviewable exercises of executive discretion&mdash;a question the Court
+      may resolve in the pending Haiti/Syria cases.
+    </p>
+  </section>
+
+  {# ======================================================================= #}
+  <section id="watch" class="sec">
+    <h2>7. What to Watch Next</h2>
+    <p class="sec-lead">
+      Several developments in 2026 will determine the future of TPS litigation
+      and policy for Venezuelans.
+    </p>
+
+    <div class="card-grid cols-2">
+      <div class="card">
+        <div class="meta">Supreme Court</div>
+        <h3>Haiti &amp; Syria TPS Cases</h3>
+        <p style="font-size: 14px; line-height: 1.6; margin-top: 8px;">
+          The Supreme Court heard oral arguments on April 29, 2026, in
+          consolidated cases challenging TPS terminations for Haiti and Syria. A
+          ruling is expected by late June 2026. If the Court holds that TPS
+          terminations are judicially reviewable, it strengthens the case for
+          Venezuelan TPS holders. If it rules they are unreviewable, the
+          Venezuela litigation is effectively over.
+        </p>
+      </div>
+
+      <div class="card">
+        <div class="meta">Deadline</div>
+        <h3>October 2, 2026 Expiry</h3>
+        <p style="font-size: 14px; line-height: 1.6; margin-top: 8px;">
+          The narrow exception preserving TPS for holders with pre-Feb. 5, 2025
+          EADs expires on this date. Unless the Supreme Court issues a
+          favorable ruling or the executive branch takes new action, all
+          remaining Venezuelan TPS protections end.
+        </p>
+      </div>
+
+      <div class="card">
+        <div class="meta">Cert Petition</div>
+        <h3>Venezuela-Specific SCOTUS Review</h3>
+        <p style="font-size: 14px; line-height: 1.6; margin-top: 8px;">
+          Plaintiffs in <em>NTPSA v. Noem</em> may petition for certiorari if
+          the Haiti/Syria ruling does not resolve the Venezuela-specific issues.
+          The unique &ldquo;vacatur&rdquo; mechanism used for Venezuela (as
+          opposed to standard termination) may warrant separate Supreme Court
+          review.
+        </p>
+      </div>
+
+      <div class="card">
+        <div class="meta">Policy</div>
+        <h3>Alternative Relief Options</h3>
+        <p style="font-size: 14px; line-height: 1.6; margin-top: 8px;">
+          Former TPS holders should consult immigration attorneys about
+          potential alternative forms of relief, including asylum, withholding
+          of removal, cancellation of removal, or other visa categories for
+          which they may qualify independently of TPS.
+        </p>
+      </div>
+    </div>
+  </section>
+
+  {# ======================================================================= #}
+  <section id="ded" class="sec">
+    <h2>8. Relationship to Deferred Enforced Departure (DED)</h2>
+    <p class="sec-lead">
+      DED is a separate executive protection that has sometimes been used
+      alongside or as an alternative to TPS.
+    </p>
+
+    <p>
+      Deferred Enforced Departure is an executive action&mdash;issued by the
+      President rather than the DHS Secretary&mdash;that temporarily protects
+      nationals of designated countries from deportation. Unlike TPS, DED is
+      not a statutory program under the INA; it derives from the
+      President&rsquo;s constitutional authority over foreign affairs.
+    </p>
+
+    <table class="em-table">
+      <thead>
+        <tr>
+          <th>Feature</th>
+          <th>TPS</th>
+          <th>DED</th>
+        </tr>
+      </thead>
+      <tbody>
+        <tr>
+          <td>Legal basis</td>
+          <td>INA &sect; 244</td>
+          <td>Presidential executive authority</td>
+        </tr>
+        <tr>
+          <td>Designated by</td>
+          <td>DHS Secretary</td>
+          <td>President</td>
+        </tr>
+        <tr>
+          <td>Employment authorization</td>
+          <td>Yes (EAD via I-765)</td>
+          <td>Yes (EAD via I-765)</td>
+        </tr>
+        <tr>
+          <td>Judicial reviewability</td>
+          <td>Disputed (pending SCOTUS)</td>
+          <td>Generally unreviewable</td>
+        </tr>
+        <tr>
+          <td>Venezuela coverage</td>
+          <td>Terminated (Feb. 2025)</td>
+          <td>Not currently designated</td>
+        </tr>
+      </tbody>
+    </table>
+
+    <p>
+      The Biden administration had considered but did not issue a DED
+      designation for Venezuela. The current administration has not indicated
+      any intention to grant DED to Venezuelan nationals. Former TPS holders
+      cannot rely on DED as an automatic fallback.
+    </p>
+  </section>
+
+  {# ======================================================================= #}
+  <section id="resources" class="sec">
+    <h2>9. Resources</h2>
+    <p class="sec-lead">
+      Official sources, court filings, and legal-aid organizations for
+      Venezuelan TPS holders.
+    </p>
+
+    <div class="card-grid cols-2">
+      <div class="card">
+        <h3>Government Sources</h3>
+        <div class="row"><a href="https://www.uscis.gov/humanitarian/tps/temporary-protected-status-designated-country-venezuela" rel="nofollow noopener" target="_blank">USCIS: TPS Venezuela page &rarr;</a></div>
+        <div class="row"><a href="https://www.federalregister.gov/documents/search?conditions%5Bterm%5D=tps+venezuela" rel="nofollow noopener" target="_blank">Federal Register: TPS Venezuela notices &rarr;</a></div>
+        <div class="row"><a href="https://www.dhs.gov/temporary-protected-status" rel="nofollow noopener" target="_blank">DHS: TPS overview &rarr;</a></div>
+      </div>
+
+      <div class="card">
+        <h3>Court Filings</h3>
+        <div class="row"><a href="https://www.supremecourt.gov/" rel="nofollow noopener" target="_blank">Supreme Court: Orders and opinions &rarr;</a></div>
+        <div class="row"><a href="https://www.ca9.uscourts.gov/" rel="nofollow noopener" target="_blank">Ninth Circuit Court of Appeals &rarr;</a></div>
+        <div class="row"><a href="https://www.courtlistener.com/" rel="nofollow noopener" target="_blank">CourtListener: Free case search &rarr;</a></div>
+      </div>
+
+      <div class="card">
+        <h3>Legal Aid &amp; Advocacy</h3>
+        <div class="row"><a href="https://www.aila.org/" rel="nofollow noopener" target="_blank">American Immigration Lawyers Association &rarr;</a></div>
+        <div class="row"><a href="https://www.nilc.org/" rel="nofollow noopener" target="_blank">National Immigration Law Center &rarr;</a></div>
+        <div class="row"><a href="https://cliniclegal.org/" rel="nofollow noopener" target="_blank">Catholic Legal Immigration Network &rarr;</a></div>
+      </div>
+
+      <div class="card">
+        <h3>Find an Immigration Attorney</h3>
+        <div class="row"><a href="https://www.immigrationadvocates.org/legaldirectory/" rel="nofollow noopener" target="_blank">Immigration Advocates Network &rarr;</a></div>
+        <div class="row"><a href="https://www.lawhelp.org/" rel="nofollow noopener" target="_blank">LawHelp.org: Free legal help &rarr;</a></div>
+        <div class="note">
+          This page is for informational purposes only and does not constitute
+          legal advice. Individuals affected by TPS termination should consult
+          a qualified immigration attorney.
+        </div>
+      </div>
+    </div>
+  </section>
+
+  {# ======================================================================= #}
+  <section id="faq" class="sec">
+    <h2>10. Frequently Asked Questions</h2>
+    <p class="sec-lead">
+      Common questions about TPS for Venezuela, answered in plain English.
+    </p>
+
+    <div class="faq-list">
+      {% for item in faq %}
+      <div class="faq-item{% if loop.first %} open{% endif %}">
+        <button type="button" class="faq-q">
+          <span class="faq-icon">+</span>
+          {{ item.question }}
+        </button>
+        <div class="faq-a">{{ item.answer | safe }}</div>
+      </div>
+      {% endfor %}
+
+      {# Hardcoded FAQ items rendered as visible Q&A cards #}
+      <div class="faq-item">
+        <button type="button" class="faq-q">
+          <span class="faq-icon">+</span>
+          What is TPS for Venezuela?
+        </button>
+        <div class="faq-a">
+          <p>
+            Temporary Protected Status (TPS) is a humanitarian program under
+            US immigration law that provides temporary protection from
+            deportation and work authorization to nationals of countries
+            experiencing armed conflict, environmental disasters, or other
+            extraordinary conditions. Venezuela was designated for TPS in
+            January 2021 due to the country&rsquo;s ongoing political,
+            economic, and humanitarian crisis under the Maduro government.
+          </p>
+        </div>
+      </div>
+
+      <div class="faq-item">
+        <button type="button" class="faq-q">
+          <span class="faq-icon">+</span>
+          Is TPS for Venezuelans still active in {{ current_year }}?
+        </button>
+        <div class="faq-a">
+          <p>
+            No. TPS for Venezuela was terminated by DHS Secretary Kristi Noem
+            on February 3, 2025. While federal courts found the termination
+            likely unlawful, the Supreme Court stayed those rulings, allowing
+            the termination to take effect. A narrow exception exists for
+            individuals whose EADs were issued before February 5, 2025&mdash;they
+            retain protections through October 2, 2026.
+          </p>
+        </div>
+      </div>
+
+      <div class="faq-item">
+        <button type="button" class="faq-q">
+          <span class="faq-icon">+</span>
+          How many Venezuelans have TPS?
+        </button>
+        <div class="faq-a">
+          <p>
+            At its peak, approximately 605,015 Venezuelan nationals were
+            approved for TPS across three designations (2021, 2022, 2023).
+            Following the termination, the vast majority no longer hold active
+            TPS. Only a narrow group with EADs issued before February 5, 2025,
+            retains temporary protections through October 2, 2026.
+          </p>
+        </div>
+      </div>
+
+      <div class="faq-item">
+        <button type="button" class="faq-q">
+          <span class="faq-icon">+</span>
+          What happened with the TPS vacatur?
+        </button>
+        <div class="faq-a">
+          <p>
+            On February 3, 2025, DHS Secretary Noem issued a &ldquo;vacatur&rdquo;
+            that purported to void all three Venezuela TPS designations from
+            the beginning. Federal courts (the N.D. Cal. district court and the
+            Ninth Circuit) found this action likely unlawful because it bypassed
+            the statutory requirement to review country conditions before
+            terminating TPS. However, the Supreme Court stayed the lower
+            courts&rsquo; injunctions, allowing the termination to proceed.
+          </p>
+        </div>
+      </div>
+
+      <div class="faq-item">
+        <button type="button" class="faq-q">
+          <span class="faq-icon">+</span>
+          Can I still apply for TPS from Venezuela?
+        </button>
+        <div class="faq-a">
+          <p>
+            No. TPS registration for Venezuela is closed and no new
+            applications are being accepted. Individuals who previously held
+            TPS and are concerned about their immigration status should consult
+            a qualified immigration attorney to explore alternative forms of
+            relief, such as asylum, withholding of removal, or other visa
+            categories.
+          </p>
+        </div>
+      </div>
+
+      <div class="faq-item">
+        <button type="button" class="faq-q">
+          <span class="faq-icon">+</span>
+          What is the difference between TPS and DED?
+        </button>
+        <div class="faq-a">
+          <p>
+            TPS (Temporary Protected Status) is a statutory program under the
+            Immigration and Nationality Act, designated by the DHS Secretary
+            based on country conditions. DED (Deferred Enforced Departure)
+            is a presidential executive action that provides similar protections
+            but derives from the President&rsquo;s foreign-affairs authority
+            rather than statute. Both provide deportation protection and work
+            authorization. Venezuela is not currently designated for either.
+          </p>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  {# ======================================================================= #}
+  <section class="sec">
+    <h2>Related Coverage</h2>
+    <p class="sec-lead">
+      Explore related topics on Caracas Research.
+    </p>
+
+    <div class="related-grid">
+      <a class="related-link" href="/sanctions-tracker">
+        <div class="rl-tag">Sanctions</div>
+        <div class="rl-title">Venezuela Sanctions Tracker</div>
+        <div class="rl-desc">Real-time tracking of US, EU, and Canadian sanctions on Venezuela, including OFAC SDN designations and general licenses.</div>
+      </a>
+      <a class="related-link" href="/travel">
+        <div class="rl-tag">Travel</div>
+        <div class="rl-title">Travel to Venezuela</div>
+        <div class="rl-desc">Operational briefing for business travellers, journalists, and NGO staff — visas, hotels, transport, security, and emergency contacts.</div>
+      </a>
+      <a class="related-link" href="/is-venezuela-safe">
+        <div class="rl-tag">Safety</div>
+        <div class="rl-title">Is Venezuela Safe?</div>
+        <div class="rl-desc">2026 safety assessment with crime data, Caracas neighborhood zones, regional risk breakdown, and security tips for travelers.</div>
+      </a>
+      <a class="related-link" href="/why-is-venezuela-sanctioned">
+        <div class="rl-tag">Explainer</div>
+        <div class="rl-title">Why Is Venezuela Sanctioned?</div>
+        <div class="rl-desc">Complete history of US sanctions on Venezuela from Obama through the 2026 transition — Executive Orders, PDVSA, and current status.</div>
+      </a>
+      <a class="related-link" href="/invest-in-venezuela">
+        <div class="rl-tag">Investment</div>
+        <div class="rl-title">Invest in Venezuela</div>
+        <div class="rl-desc">Sector analysis, regulatory landscape, and practical guidance for foreign direct investment in Venezuela.</div>
+      </a>
+      <a class="related-link" href="/briefing">
+        <div class="rl-tag">Analysis</div>
+        <div class="rl-title">Daily Briefing</div>
+        <div class="rl-desc">Twice-daily intelligence briefings covering sanctions updates, political developments, and market conditions.</div>
+      </a>
+    </div>
+  </section>
+
+  <div class="disclaimer">
+    <strong>Disclaimer:</strong> This page is for informational purposes only and does
+    not constitute legal advice. Immigration law is complex and fact-specific.
+    Individuals affected by the TPS termination should consult a qualified
+    immigration attorney. Information is current as of {{ updated_label }} and
+    may change as litigation proceeds.
+  </div>
+
+  <div style="margin-top: 40px; padding: 18px; background: var(--sr-gray-bg); border-radius: 4px;">
+    <p style="font-size: 14px; color: var(--sr-dark-text); margin: 0;">
+      <strong>Stay informed on Venezuela policy changes.</strong>
+      Subscribe to the Caracas Research daily briefing for sanctions, immigration,
+      legal and political updates.
+      <a href="/#signup" style="font-weight: 600;">Get the daily briefing &rarr;</a>
+    </p>
+  </div>
+
+  <p style="font-size: 12px; color: var(--sr-gray-text); margin: 24px 0;">
+    Sources: USCIS TPS designation notices; Federal Register; <em>NTPSA v.
+    Noem</em>, N.D. Cal.; Ninth Circuit Court of Appeals; Supreme Court of
+    the United States orders and stay applications. All court filings referenced
+    are part of the public record.
+  </p>
+
+</section>
+
+<script>
+(function initFaqToggle() {
+  document.querySelectorAll('.faq-q').forEach(function(btn) {
+    btn.addEventListener('click', function() {
+      var item = btn.closest('.faq-item');
+      if (!item) return;
+      item.classList.toggle('open');
+    });
+  });
+})();
+</script>
+
+{% from "_recent_briefings.html.j2" import recent_briefings_rail %}
+{{ recent_briefings_rail(
+     recent_briefings,
+     heading="Latest analysis",
+     intro="Recent briefings on Venezuela immigration policy, TPS litigation, and related legal developments.",
+) }}
+{% endblock %}

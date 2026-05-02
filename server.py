@@ -3215,22 +3215,22 @@ def sanctions_tracker():
             # for "ofac sdn venezuela" and compliance long-tail.
             seo = {
                 "title": (
-                    f"OFAC SDN: {stats['total']} Venezuela Sanctions on US List "
-                    f"({today_human})"
+                    f"OFAC Sanctions List: {stats['total']} Venezuela SDN "
+                    f"Designations ({today_human})"
                 ),
                 "description": (
-                    f"Search the full US Treasury OFAC SDN for Venezuela: "
-                    f"{stats['total']} active designations (individuals, "
-                    f"companies, vessels, aircraft). "
-                    f"Table updates twice daily; programs include "
-                    f"VENEZUELA, EO 13692, EO 13850, EO 13884."
+                    f"Search the full OFAC SDN list for Venezuela — "
+                    f"{stats['total']} active designations across individuals, "
+                    f"entities, vessels & aircraft. Includes EO 13884, EO 13850, "
+                    f"PDVSA sanctions, General Licenses GL 46B–57. Updated daily."
                 ),
                 "keywords": (
-                    "OFAC SDN list Venezuela, OFAC Venezuela sanctions, "
-                    "US Treasury Venezuela sanctions, Venezuela military "
-                    "sanctions, Venezuela economic sanctions, Venezuela "
-                    "diplomatic designations, PDVSA sanctions, Venezuela "
-                    "vessel sanctions, OFAC SDN search current"
+                    "OFAC sanctions list, SDN list, OFAC SDN list Venezuela, "
+                    "OFAC Venezuela sanctions, US Treasury Venezuela sanctions, "
+                    "Venezuela sanctions list, SDN list search, OFAC SDN search, "
+                    "Venezuela military sanctions, Venezuela economic sanctions, "
+                    "PDVSA sanctions, Venezuela vessel sanctions, "
+                    "OFAC sanctions checker, SDN list check"
                 ),
                 "canonical": canonical,
                 "site_name": _s.site_name,
@@ -5433,6 +5433,412 @@ def calendar_page():
         abort(500)
 
 
+@app.route("/tps-venezuela")
+@app.route("/tps-venezuela/")
+def tps_venezuela_page():
+    """
+    TPS (Temporary Protected Status) for Venezuela — comprehensive
+    status tracker, legal timeline, and FAQ. Targets the high-volume
+    "tps venezuela" keyword cluster (49,500+ monthly searches).
+    """
+    try:
+        from src.page_renderer import _env, _base_url, _iso, settings as _s
+        from datetime import date as _date, datetime as _dt
+        import json as _json
+
+        base = _base_url()
+        canonical = f"{base}/tps-venezuela"
+        title = (
+            "TPS Venezuela 2026: Current Status, Timeline & Legal Updates"
+        )
+        description = (
+            "Is TPS for Venezuelans still active? Comprehensive guide to "
+            "Venezuela Temporary Protected Status — current terminated "
+            "status, SCOTUS rulings, Noem vacatur, eligibility, key dates, "
+            "and what ~600,000 Venezuelans need to know (updated May 2026)."
+        )
+        seo = {
+            "title": title,
+            "description": description,
+            "keywords": (
+                "TPS Venezuela, tps venezuela news, venezuela tps, "
+                "tps for venezuelans, Venezuela Temporary Protected Status, "
+                "TPS Venezuela 2026, TPS vacatur, TPS Venezuela terminated, "
+                "NTPSA v Noem, Venezuelan TPS, tps venezolanos, "
+                "uscis tps venezuela, supreme court tps venezuela, "
+                "tps venezuela update, venezuelan tps vacatur"
+            ),
+            "canonical": canonical,
+            "site_name": _s.site_name,
+            "site_url": base,
+            "locale": _s.site_locale,
+            "og_image": f"{base}/static/og-image.png?v=3",
+            "og_type": "article",
+            "published_iso": _iso(_dt.utcnow()),
+            "modified_iso": _iso(_dt.utcnow()),
+        }
+
+        faq = [
+            {
+                "q": "What is TPS for Venezuela?",
+                "a": (
+                    "Temporary Protected Status (TPS) is a US immigration "
+                    "designation that allows nationals of designated countries "
+                    "to live and work in the United States when conditions in "
+                    "their home country prevent safe return. Venezuela was "
+                    "first designated for TPS in March 2021 under the Biden "
+                    "administration, with a redesignation in October 2023 "
+                    "expanding coverage to Venezuelans who arrived before "
+                    "July 31, 2023."
+                ),
+            },
+            {
+                "q": "Is TPS for Venezuelans still active in 2026?",
+                "a": (
+                    "No — TPS for Venezuela has been terminated for most "
+                    "beneficiaries. The 2023 designation was terminated "
+                    "effective October 3, 2025 after the Supreme Court stayed "
+                    "the district court's blocking order. The 2021 designation "
+                    "was terminated effective November 7, 2025. A narrow group "
+                    "of Venezuelans who received TPS-related documents on or "
+                    "before February 5, 2025 retain work authorization through "
+                    "October 2, 2026."
+                ),
+            },
+            {
+                "q": "How many Venezuelans have TPS?",
+                "a": (
+                    "Approximately 605,015 Venezuelans were approved for TPS "
+                    "as of March 31, 2025, making it the largest TPS-designated "
+                    "group. This included roughly 352,190 under the 2023 "
+                    "designation and 252,825 under the 2021 designation. "
+                    "Following the terminations, hundreds have reportedly been "
+                    "deported."
+                ),
+            },
+            {
+                "q": "What happened with the TPS Venezuela vacatur?",
+                "a": (
+                    "On February 3, 2025, DHS Secretary Noem issued a vacatur "
+                    "attempting to retroactively cancel the Biden-era TPS "
+                    "extension through October 2026. Every court that ruled on "
+                    "this — including the Ninth Circuit on January 28, 2026 — "
+                    "found the vacatur unlawful, holding that the TPS statute "
+                    "authorizes only designation, extension, or termination, "
+                    "not vacatur. However, the Supreme Court's stay (October 3, "
+                    "2025) keeps the vacatur and termination in effect pending "
+                    "further proceedings."
+                ),
+            },
+            {
+                "q": "Can I still apply for TPS from Venezuela?",
+                "a": (
+                    "No. There is currently no open registration or "
+                    "re-registration period for Venezuela TPS. Both "
+                    "designations have been terminated. USCIS advises affected "
+                    "individuals to explore other immigration options at "
+                    "uscis.gov/explore-my-options."
+                ),
+            },
+            {
+                "q": "What is the difference between TPS and DED for Venezuela?",
+                "a": (
+                    "TPS (Temporary Protected Status) is a statutory program "
+                    "administered by DHS under the Immigration and Nationality "
+                    "Act, requiring a formal designation process. DED (Deferred "
+                    "Enforced Departure) is a presidential executive power "
+                    "under foreign relations authority — it can be issued at "
+                    "any time without Congressional involvement. Trump issued "
+                    "DED for Venezuela in January 2021; it expired in July 2022 "
+                    "and was not renewed. No DED currently exists for Venezuela."
+                ),
+            },
+            {
+                "q": "What Supreme Court cases affect Venezuela TPS?",
+                "a": (
+                    "The Supreme Court issued emergency stays in Noem v. "
+                    "National TPS Alliance on May 19, 2025 and October 3, 2025, "
+                    "allowing the TPS terminations to take effect. On April 29, "
+                    "2026, SCOTUS heard oral arguments in related cases — "
+                    "Mullin v. Doe (Syria TPS) and Trump v. Miot (Haiti TPS) — "
+                    "which could set binding precedent on whether courts can "
+                    "review TPS terminations and whether the vacatur authority "
+                    "exists. A decision is expected by late June or early July "
+                    "2026."
+                ),
+            },
+        ]
+
+        graph = [
+            {
+                "@type": "BreadcrumbList",
+                "itemListElement": [
+                    {"@type": "ListItem", "position": 1, "name": "Home", "item": f"{base}/"},
+                    {"@type": "ListItem", "position": 2, "name": "Invest in Venezuela", "item": f"{base}/invest-in-venezuela"},
+                    {"@type": "ListItem", "position": 3, "name": "TPS Venezuela", "item": canonical},
+                ],
+            },
+            {
+                "@type": "Article",
+                "@id": f"{canonical}#article",
+                "url": canonical,
+                "headline": title,
+                "description": description,
+                "datePublished": seo["published_iso"],
+                "dateModified": seo["modified_iso"],
+                "author": {"@type": "Organization", "name": _s.site_name, "url": base + "/"},
+                "publisher": {
+                    "@type": "Organization",
+                    "name": _s.site_name,
+                    "url": base + "/",
+                    "logo": {
+                        "@type": "ImageObject",
+                        "url": f"{base}/static/og-image.png?v=3",
+                    },
+                },
+                "mainEntityOfPage": {"@type": "WebPage", "@id": canonical, "name": title},
+            },
+            {
+                "@type": "FAQPage",
+                "mainEntity": [
+                    {
+                        "@type": "Question",
+                        "name": q["q"],
+                        "acceptedAnswer": {"@type": "Answer", "text": q["a"]},
+                    }
+                    for q in faq
+                ],
+            },
+        ]
+        jsonld = _json.dumps(
+            {"@context": "https://schema.org", "@graph": graph},
+            ensure_ascii=False,
+        )
+
+        template = _env.get_template("tps_venezuela.html.j2")
+        html = template.render(
+            seo=seo,
+            jsonld=jsonld,
+            faq=faq,
+            updated_label=_date.today().strftime("%B %-d, %Y"),
+            current_year=_date.today().year,
+            recent_briefings=_fetch_recent_briefings(),
+        )
+        return Response(html, mimetype="text/html")
+    except HTTPException:
+        raise
+    except Exception as exc:
+        logger.exception("TPS Venezuela page render failed: %s", exc)
+        abort(500)
+
+
+@app.route("/venezuela-oil")
+@app.route("/venezuela-oil/")
+def venezuela_oil_page():
+    """
+    Venezuela oil sector overview — reserves, production, PDVSA,
+    sanctions, infrastructure, investment outlook. Targets the
+    "venezuela oil" keyword cluster (9,900+ monthly searches).
+    """
+    try:
+        from src.page_renderer import _env, _base_url, _iso, settings as _s
+        from datetime import date as _date, datetime as _dt
+        import json as _json
+
+        base = _base_url()
+        canonical = f"{base}/venezuela-oil"
+        title = (
+            "Venezuela Oil: 303B Barrel Reserves, PDVSA & Production Guide (2026)"
+        )
+        description = (
+            "Venezuela holds 303 billion barrels of proven oil reserves — the "
+            "largest in the world. Current production ~1.1M bpd, PDVSA operations, "
+            "Chevron expansion, US sanctions status (GL 46B–57), Orinoco Belt, "
+            "refinery infrastructure, and investment outlook."
+        )
+        seo = {
+            "title": title,
+            "description": description,
+            "keywords": (
+                "Venezuela oil, Venezuela oil reserves, oil of Venezuela, "
+                "PDVSA, Venezuela oil production, Orinoco Oil Belt, "
+                "Citgo Venezuela, Chevron Venezuela, Venezuela oil sanctions, "
+                "Venezuela oil industry, Venezuela petroleum, "
+                "PDVSA sanctions, Venezuela crude oil, Venezuela energy, "
+                "Venezuela oil investment"
+            ),
+            "canonical": canonical,
+            "site_name": _s.site_name,
+            "site_url": base,
+            "locale": _s.site_locale,
+            "og_image": f"{base}/static/og-image.png?v=3",
+            "og_type": "article",
+            "published_iso": _iso(_dt.utcnow()),
+            "modified_iso": _iso(_dt.utcnow()),
+        }
+
+        faq = [
+            {
+                "q": "How much oil does Venezuela have?",
+                "a": (
+                    "Venezuela holds 303 billion barrels of proven oil reserves, "
+                    "the largest in the world — roughly 17% of global proven "
+                    "reserves. This exceeds Saudi Arabia (267B), Iran (209B), "
+                    "Canada (163B), and Iraq (145B). Most reserves are in the "
+                    "Orinoco Oil Belt, which contains extra-heavy crude with an "
+                    "estimated 1.3 trillion barrels of oil in place."
+                ),
+            },
+            {
+                "q": "Why doesn't Venezuela produce more oil?",
+                "a": (
+                    "Despite holding the world's largest reserves, Venezuela's "
+                    "production has fallen from a peak of 3.45 million bpd in "
+                    "1997 to roughly 1.1 million bpd in 2026. Key factors include "
+                    "decades of underinvestment and mismanagement at PDVSA, US "
+                    "economic sanctions (2017–present), massive brain drain of "
+                    "skilled petroleum engineers, crumbling infrastructure "
+                    "(refineries operating at ~35% capacity), and frequent power "
+                    "outages. The January 2026 hydrocarbon reform aims to attract "
+                    "foreign investment to reverse this decline."
+                ),
+            },
+            {
+                "q": "Who owns Venezuela's oil?",
+                "a": (
+                    "Venezuela's oil is owned by the state through PDVSA "
+                    "(Petróleos de Venezuela, S.A.), the national oil company "
+                    "founded in 1976. PDVSA operates joint ventures with "
+                    "international partners including Chevron, BP, Eni, Repsol, "
+                    "Shell, and Maurel & Prom. PDVSA also owns Citgo Petroleum, "
+                    "the 7th-largest US refiner, through its subsidiary PDV "
+                    "Holding."
+                ),
+            },
+            {
+                "q": "Can US companies invest in Venezuela oil?",
+                "a": (
+                    "Yes, under specific OFAC General Licenses issued since "
+                    "January 2026. GL 50A explicitly authorizes oil and gas "
+                    "operations for six named companies (BP, Chevron, Eni, "
+                    "Maurel & Prom, Repsol, Shell). GL 52 broadly authorizes "
+                    "transactions with PDVSA by established US entities. GL 49A "
+                    "permits negotiations and contingent contracts for new "
+                    "investment. However, all payments to PDVSA must go through "
+                    "US Treasury-controlled Foreign Government Deposit Funds, "
+                    "and transactions with Russia, China, Iran, North Korea, "
+                    "and Cuba entities remain prohibited."
+                ),
+            },
+            {
+                "q": "What is the Orinoco Oil Belt?",
+                "a": (
+                    "The Orinoco Oil Belt (Faja Petrolífera del Orinoco) is a "
+                    "vast petroleum deposit in central Venezuela spanning "
+                    "approximately 55,000 square kilometers. It is the world's "
+                    "largest known deposit of petroleum, containing an estimated "
+                    "1.3 trillion barrels of extra-heavy crude oil in place, "
+                    "with 380–652 billion barrels technically recoverable "
+                    "(USGS estimate). The Belt hosts most of Venezuela's "
+                    "production today, including Chevron's Petroindependencia "
+                    "and Petropiar joint ventures."
+                ),
+            },
+            {
+                "q": "What happened to PDVSA?",
+                "a": (
+                    "PDVSA was once one of the world's largest and most "
+                    "efficient oil companies. Its decline began after President "
+                    "Chávez fired 18,000 skilled employees following the "
+                    "2002–2003 oil strike, then accelerated under Maduro as "
+                    "revenue was diverted to social programs, debt servicing "
+                    "collapsed, and US sanctions (EO 13884, 2019) blocked most "
+                    "commercial transactions. By July 2020 production hit a "
+                    "record low of 392,000 bpd. The January 2026 political "
+                    "transition and new hydrocarbon reform law are the first "
+                    "structural attempt to reverse the decline, granting "
+                    "partners operational autonomy for the first time."
+                ),
+            },
+            {
+                "q": "Is Citgo owned by Venezuela?",
+                "a": (
+                    "Citgo Petroleum is owned by PDV Holding, a subsidiary of "
+                    "PDVSA — Venezuela's state oil company. However, Citgo has "
+                    "been effectively separated from Venezuelan government "
+                    "control since 2019 when the US recognized opposition "
+                    "leader Juan Guaidó and allowed an opposition-appointed "
+                    "board to manage it. As of 2026, the Rodriguez "
+                    "administration is seeking to retake the Citgo board, and "
+                    "Elliott Investment Management's $5.9B acquisition of PDV "
+                    "Holding is pending Treasury approval."
+                ),
+            },
+        ]
+
+        graph = [
+            {
+                "@type": "BreadcrumbList",
+                "itemListElement": [
+                    {"@type": "ListItem", "position": 1, "name": "Home", "item": f"{base}/"},
+                    {"@type": "ListItem", "position": 2, "name": "Invest in Venezuela", "item": f"{base}/invest-in-venezuela"},
+                    {"@type": "ListItem", "position": 3, "name": "Venezuela Oil", "item": canonical},
+                ],
+            },
+            {
+                "@type": "Article",
+                "@id": f"{canonical}#article",
+                "url": canonical,
+                "headline": title,
+                "description": description,
+                "datePublished": seo["published_iso"],
+                "dateModified": seo["modified_iso"],
+                "author": {"@type": "Organization", "name": _s.site_name, "url": base + "/"},
+                "publisher": {
+                    "@type": "Organization",
+                    "name": _s.site_name,
+                    "url": base + "/",
+                    "logo": {
+                        "@type": "ImageObject",
+                        "url": f"{base}/static/og-image.png?v=3",
+                    },
+                },
+                "mainEntityOfPage": {"@type": "WebPage", "@id": canonical, "name": title},
+            },
+            {
+                "@type": "FAQPage",
+                "mainEntity": [
+                    {
+                        "@type": "Question",
+                        "name": q["q"],
+                        "acceptedAnswer": {"@type": "Answer", "text": q["a"]},
+                    }
+                    for q in faq
+                ],
+            },
+        ]
+        jsonld = _json.dumps(
+            {"@context": "https://schema.org", "@graph": graph},
+            ensure_ascii=False,
+        )
+
+        template = _env.get_template("venezuela_oil.html.j2")
+        html = template.render(
+            seo=seo,
+            jsonld=jsonld,
+            faq=faq,
+            updated_label=_date.today().strftime("%B %-d, %Y"),
+            current_year=_date.today().year,
+            recent_briefings=_fetch_recent_briefings(),
+        )
+        return Response(html, mimetype="text/html")
+    except HTTPException:
+        raise
+    except Exception as exc:
+        logger.exception("Venezuela oil page render failed: %s", exc)
+        abort(500)
+
+
 @app.route("/travel")
 @app.route("/travel/")
 def travel_page():
@@ -5491,20 +5897,23 @@ def travel_page():
         # Round 3 (Apr 2026): 28d GSC — "travel" intent + Level-3 in title for
         # the dominant "travel to Venezuela" / "Caracas safety" queries; desc
         # keeps OFAC/embassy/printable card signals without repeating the title.
-        title = "Venezuela Travel 2026: US Level-3, Caracas Safety, Visa & Hotels"
+        title = "Venezuela Travel Advisory 2026: Is Venezuela Safe? Level-3 Guide"
         description = (
-            "Venezuela business travel: State Dept Reconsider (Level-3) advisory, "
-            "Caracas security zones, vetted hotels, airport transfers, embassies, "
-            "cell/SIM, OFAC context — includes printable emergency card (2026)."
+            "Is Venezuela safe to visit in 2026? US State Dept Level-3 "
+            "(Reconsider Travel) advisory, Caracas safety zones, vetted hotels, "
+            "airport transfers, embassies, visa requirements, OFAC compliance — "
+            "complete travel guide with printable emergency card."
         )
         seo = {
             "title": title,
             "description": description,
             "keywords": (
-                "travel to Venezuela, Caracas business travel, Caracas hotels, "
-                "Caracas restaurants, Caracas safety, embassies in Caracas, "
-                "Caracas airport transfer, Venezuela security firms, "
-                "Caracas hospitals, Venezuela travel checklist"
+                "Venezuela travel advisory, is Venezuela safe, "
+                "travel to Venezuela, Venezuela safety, Caracas safety, "
+                "Caracas business travel, Caracas hotels, Venezuela travel guide, "
+                "embassies in Caracas, Venezuela security, "
+                "Caracas airport transfer, Venezuela travel checklist, "
+                "is it safe to travel to Venezuela"
             ),
             "canonical": canonical,
             "site_name": _s.site_name,
@@ -5518,16 +5927,32 @@ def travel_page():
 
         faq = [
             {
-                "q": "Is it safe to travel to Caracas right now?",
+                "q": "Is Venezuela safe to visit in 2026?",
                 "a": (
-                    "The US State Department currently rates Venezuela at "
-                    "Level 3 (Reconsider Travel), with Level 4 (Do Not Travel) "
-                    "still applying to the Colombia border states (Apure, "
-                    "Barinas, Táchira, Zulia). Caracas itself can be navigated "
-                    "by experienced business travellers who stay in the safer "
-                    "central-east corridor (Las Mercedes, Altamira, La Castellana, "
+                    "Venezuela remains rated Level 3 (Reconsider Travel) by "
+                    "the US State Department as of 2026, downgraded from Level 4 "
+                    "in March 2026 after the political transition. Several border "
+                    "states (Apure, Táchira, Amazonas, rural Bolívar) remain at "
+                    "Level 4 (Do Not Travel). Caracas can be navigated by "
+                    "experienced business travellers who stay in safer "
+                    "neighbourhoods (Las Mercedes, Altamira, La Castellana, "
                     "El Rosal, Chacao), pre-arrange all transport, and engage "
-                    "a corporate security advisory before travel."
+                    "a corporate security advisory before travel. Safety scores "
+                    "remain low globally (1.9/10 on IsItSafeToTravel), and "
+                    "violent crime, kidnapping, and fake checkpoints are ongoing "
+                    "risks."
+                ),
+            },
+            {
+                "q": "What is the current Venezuela travel advisory level?",
+                "a": (
+                    "The US State Department rates Venezuela at Level 3 — "
+                    "Reconsider Travel — as of April 2026. This was downgraded "
+                    "from Level 4 (Do Not Travel) on March 19, 2026 following "
+                    "the political transition. Risk indicators include crime, "
+                    "kidnapping, terrorism, and poor health infrastructure. "
+                    "Specific regions including the Colombia border, Amazonas, "
+                    "Apure, and Táchira states remain at Level 4."
                 ),
             },
             {
@@ -5771,6 +6196,619 @@ def travel_emergency_card():
         raise
     except Exception as exc:
         logger.exception("emergency card render failed: %s", exc)
+        abort(500)
+
+
+@app.route("/is-venezuela-safe")
+@app.route("/is-venezuela-safe/")
+def is_venezuela_safe_page():
+    """
+    Dedicated safety assessment for Venezuela — crime data, regional
+    breakdown, neighborhood safety zones, traveler tips, and FAQ.
+    Targets "is venezuela safe" (2,900+ monthly searches).
+    """
+    try:
+        from src.page_renderer import _env, _base_url, _iso, settings as _s
+        from datetime import date as _date, datetime as _dt
+        import json as _json
+
+        base = _base_url()
+        canonical = f"{base}/is-venezuela-safe"
+        title = (
+            "Is Venezuela Safe? 2026 Safety Assessment, Crime Data & Travel Risks"
+        )
+        description = (
+            "Is Venezuela safe to visit in 2026? Honest safety assessment — "
+            "US State Dept Level-3 advisory, crime statistics, Caracas neighborhood "
+            "safety zones, kidnapping risk, regional breakdown, and practical "
+            "security tips for tourists and business travelers."
+        )
+        seo = {
+            "title": title,
+            "description": description,
+            "keywords": (
+                "is Venezuela safe, Venezuela safety, is it safe to travel to Venezuela, "
+                "Venezuela crime, Venezuela danger, Caracas safety, Venezuela travel risk, "
+                "Venezuela kidnapping, Venezuela safety 2026, is Venezuela safe for tourists, "
+                "is Venezuela safe for Americans, Venezuela crime rate, "
+                "Venezuela travel warning, Venezuela security"
+            ),
+            "canonical": canonical,
+            "site_name": _s.site_name,
+            "site_url": base,
+            "locale": _s.site_locale,
+            "og_image": f"{base}/static/og-image.png?v=3",
+            "og_type": "article",
+            "published_iso": _iso(_dt.utcnow()),
+            "modified_iso": _iso(_dt.utcnow()),
+        }
+
+        faq = [
+            {
+                "q": "Is Venezuela safe for tourists in 2026?",
+                "a": (
+                    "Venezuela is safer than it was during the Maduro era but still carries "
+                    "significant risks. The US State Department rates it Level 3 (Reconsider "
+                    "Travel) as of March 2026, downgraded from Level 4 after the political "
+                    "transition. Organized tours to destinations like Margarita Island and "
+                    "the Andes are relatively manageable, but independent travel requires "
+                    "serious security awareness. Caracas can be navigated safely by "
+                    "experienced travelers who stay in vetted neighborhoods, pre-arrange all "
+                    "transport, and avoid displaying valuables."
+                ),
+            },
+            {
+                "q": "What is the crime rate in Venezuela?",
+                "a": (
+                    "Venezuela has one of the highest homicide rates in the world, though "
+                    "the rate has declined since 2018. The Venezuelan Violence Observatory "
+                    "(OVV) estimated approximately 26.8 homicides per 100,000 inhabitants "
+                    "in 2025, down from a peak of 81.4 in 2016. Robbery, express kidnapping, "
+                    "and carjacking remain common, particularly in Caracas, Maracaibo, "
+                    "Valencia, and border areas."
+                ),
+            },
+            {
+                "q": "Is Caracas safe?",
+                "a": (
+                    "Parts of Caracas are reasonably safe for business travelers who take "
+                    "proper precautions. The eastern municipalities of Chacao, Baruta, and "
+                    "El Hatillo — including neighborhoods like Altamira, Las Mercedes, "
+                    "La Castellana, El Rosal, and Country Club — have private security "
+                    "presence and are where most international hotels and offices are "
+                    "located. Western Caracas (Petare, Catia, La Vega, 23 de Enero, Coche) "
+                    "should be avoided entirely. Always pre-arrange transport and never "
+                    "walk alone at night, even in safer areas."
+                ),
+            },
+            {
+                "q": "Is Venezuela safe for Americans?",
+                "a": (
+                    "American citizens face the same crime risks as other visitors, plus "
+                    "additional considerations: the US Embassy in Caracas only reopened in "
+                    "March 2026 after a 7-year closure and has limited consular capacity. "
+                    "Americans should enroll in the Smart Traveler Enrollment Program (STEP), "
+                    "carry the embassy emergency number (+1-202-501-4444), and maintain "
+                    "copies of all documents. The OFAC sanctions framework also means "
+                    "Americans must be careful about certain financial transactions in "
+                    "Venezuela."
+                ),
+            },
+            {
+                "q": "What areas of Venezuela are the most dangerous?",
+                "a": (
+                    "The most dangerous areas are the Colombian border states (Apure, "
+                    "Táchira, Amazonas), which remain at Level 4 (Do Not Travel) due to "
+                    "armed groups including ELN and FARC dissidents. Within cities, "
+                    "informal settlements (barrios) on hillsides surrounding Caracas, "
+                    "Maracaibo, and Valencia have extremely high crime rates. Petare, "
+                    "on the eastern edge of Caracas, is one of the largest informal "
+                    "settlements in Latin America."
+                ),
+            },
+            {
+                "q": "Has Venezuela gotten safer since the political transition?",
+                "a": (
+                    "Yes, measurably. The January 2026 political transition that removed "
+                    "Nicolás Maduro from power led to the US downgrading Venezuela from "
+                    "Level 4 to Level 3 in March 2026. The Rodriguez interim government "
+                    "has deployed additional police patrols in Caracas business districts "
+                    "and reopened the US Embassy. However, structural crime drivers — "
+                    "poverty, armed gangs, weak judiciary — remain largely unchanged in "
+                    "the short term."
+                ),
+            },
+            {
+                "q": "Is it safe to drive in Venezuela?",
+                "a": (
+                    "Driving in Venezuela carries significant risks including carjacking, "
+                    "fake police checkpoints, and poor road conditions. Night driving "
+                    "outside cities is strongly discouraged. Most security consultants "
+                    "recommend using pre-arranged drivers from vetted services rather than "
+                    "self-driving. If you must drive, keep windows up and doors locked, "
+                    "do not stop at informal checkpoints, and avoid displaying GPS devices "
+                    "or phones."
+                ),
+            },
+            {
+                "q": "What should I do in an emergency in Venezuela?",
+                "a": (
+                    "Emergency numbers: Police 171, Ambulance 171, Fire 171 (unified "
+                    "emergency line). US Embassy emergency: +1-202-501-4444. Response "
+                    "times for Venezuelan emergency services are unreliable, especially "
+                    "outside Caracas. For medical emergencies, go directly to a private "
+                    "clinic (Clínica El Ávila, Policlínica Metropolitana, Centro Médico "
+                    "de Caracas) rather than waiting for an ambulance. Carry our printable "
+                    "emergency card for quick reference."
+                ),
+            },
+        ]
+
+        graph = [
+            {
+                "@type": "BreadcrumbList",
+                "itemListElement": [
+                    {"@type": "ListItem", "position": 1, "name": "Home", "item": f"{base}/"},
+                    {"@type": "ListItem", "position": 2, "name": "Travel to Venezuela", "item": f"{base}/travel"},
+                    {"@type": "ListItem", "position": 3, "name": "Is Venezuela Safe?", "item": canonical},
+                ],
+            },
+            {
+                "@type": "Article",
+                "@id": f"{canonical}#article",
+                "url": canonical,
+                "headline": title,
+                "description": description,
+                "datePublished": seo["published_iso"],
+                "dateModified": seo["modified_iso"],
+                "author": {"@type": "Organization", "name": _s.site_name, "url": base + "/"},
+                "publisher": {
+                    "@type": "Organization",
+                    "name": _s.site_name,
+                    "url": base + "/",
+                    "logo": {
+                        "@type": "ImageObject",
+                        "url": f"{base}/static/og-image.png?v=3",
+                    },
+                },
+                "mainEntityOfPage": {"@type": "WebPage", "@id": canonical, "name": title},
+            },
+            {
+                "@type": "FAQPage",
+                "mainEntity": [
+                    {
+                        "@type": "Question",
+                        "name": q["q"],
+                        "acceptedAnswer": {"@type": "Answer", "text": q["a"]},
+                    }
+                    for q in faq
+                ],
+            },
+        ]
+        jsonld = _json.dumps(
+            {"@context": "https://schema.org", "@graph": graph},
+            ensure_ascii=False,
+        )
+
+        template = _env.get_template("is_venezuela_safe.html.j2")
+        html = template.render(
+            seo=seo,
+            jsonld=jsonld,
+            faq=faq,
+            updated_label=_date.today().strftime("%B %-d, %Y"),
+            current_year=_date.today().year,
+            recent_briefings=_fetch_recent_briefings(),
+        )
+        return Response(html, mimetype="text/html")
+    except HTTPException:
+        raise
+    except Exception as exc:
+        logger.exception("Is Venezuela Safe page render failed: %s", exc)
+        abort(500)
+
+
+@app.route("/ofac-sanctions-list")
+@app.route("/ofac-sanctions-list/")
+def ofac_sanctions_list_page():
+    """
+    Comprehensive guide to the OFAC Sanctions List and SDN List,
+    with Venezuela-specific focus. Targets "ofac sanctions list"
+    (5,400+ monthly searches) and "sdn list" (3,600+ monthly searches).
+    """
+    try:
+        from src.page_renderer import _env, _base_url, _iso, settings as _s
+        from datetime import date as _date, datetime as _dt
+        import json as _json
+
+        base = _base_url()
+        canonical = f"{base}/ofac-sanctions-list"
+        title = (
+            "OFAC Sanctions List & SDN List: Complete Guide (2026)"
+        )
+        description = (
+            "What is the OFAC sanctions list? Complete guide to the SDN List, "
+            "Venezuela sanctions program, Executive Orders, General Licenses, "
+            "how to search the OFAC list, compliance best practices, and 2026 "
+            "updates after the Venezuela political transition."
+        )
+        seo = {
+            "title": title,
+            "description": description,
+            "keywords": (
+                "OFAC sanctions list, SDN list, OFAC SDN list, "
+                "ofac sanctions list search, specially designated nationals, "
+                "OFAC Venezuela, Venezuela sanctions, OFAC compliance, "
+                "SDN list search, OFAC sanctions check, OFAC penalties, "
+                "sdn list venezuela, ofac blocked persons, "
+                "treasury sanctions list, ofac search tool"
+            ),
+            "canonical": canonical,
+            "site_name": _s.site_name,
+            "site_url": base,
+            "locale": _s.site_locale,
+            "og_image": f"{base}/static/og-image.png?v=3",
+            "og_type": "article",
+            "published_iso": _iso(_dt.utcnow()),
+            "modified_iso": _iso(_dt.utcnow()),
+        }
+
+        faq = [
+            {
+                "q": "What is the OFAC sanctions list?",
+                "a": (
+                    "The OFAC sanctions list is a collection of lists maintained by the "
+                    "Office of Foreign Assets Control (part of the US Treasury Department) "
+                    "that identify individuals, companies, and entities subject to US "
+                    "economic sanctions. The most well-known is the Specially Designated "
+                    "Nationals and Blocked Persons (SDN) List. US persons are generally "
+                    "prohibited from doing business with anyone on these lists, and their "
+                    "assets within US jurisdiction must be blocked (frozen)."
+                ),
+            },
+            {
+                "q": "What is the difference between the SDN List and the Consolidated Sanctions List?",
+                "a": (
+                    "The SDN List is OFAC's primary sanctions list containing individuals "
+                    "and entities whose assets are blocked. The Consolidated Sanctions List "
+                    "(also called the Non-SDN Consolidated List) combines several other "
+                    "OFAC lists — including the Sectoral Sanctions Identifications (SSI) "
+                    "List, the Foreign Sanctions Evaders List, and others — into a single "
+                    "searchable file. For comprehensive compliance screening, organizations "
+                    "should check both the SDN List and the Consolidated List."
+                ),
+            },
+            {
+                "q": "How do I search the OFAC sanctions list?",
+                "a": (
+                    "OFAC provides a free online search tool at sanctionssearch.ofac.treas.gov. "
+                    "You can search by name, address, country, or ID number. The tool uses "
+                    "fuzzy matching to catch name variations. For Venezuela-specific checks, "
+                    "you can also use our free OFAC Venezuela Sanctions Checker tool, which "
+                    "cross-references the SDN list with our curated Venezuela entity database."
+                ),
+            },
+            {
+                "q": "Can I do business with Venezuela under current sanctions?",
+                "a": (
+                    "Yes, but with significant restrictions. Following the January 2026 "
+                    "political transition, OFAC has issued several General Licenses that "
+                    "authorize specific activities: GL 50A allows six named oil companies "
+                    "to operate JVs with PDVSA; GL 52 authorizes new US-person investment "
+                    "in Venezuela's oil sector. However, transactions with SDN-listed "
+                    "individuals or entities remain prohibited unless specifically authorized. "
+                    "Always consult qualified legal counsel before engaging in any "
+                    "Venezuela-related transactions."
+                ),
+            },
+            {
+                "q": "What happens if I violate OFAC sanctions?",
+                "a": (
+                    "OFAC sanctions violations carry severe penalties. Civil penalties can "
+                    "reach up to $330,947 per violation (adjusted annually for inflation) or "
+                    "twice the value of the transaction, whichever is greater. Criminal "
+                    "penalties can include fines up to $1,000,000 and imprisonment for up to "
+                    "20 years per violation. Both individuals and corporations can be held "
+                    "liable. OFAC encourages voluntary self-disclosure, which is treated as "
+                    "a mitigating factor in enforcement actions."
+                ),
+            },
+            {
+                "q": "How often is the SDN list updated?",
+                "a": (
+                    "OFAC updates the SDN List on a rolling basis — there is no fixed "
+                    "schedule. Additions, removals, and modifications can happen multiple "
+                    "times per week. OFAC publishes changes to the Federal Register and "
+                    "posts updated list files on its website. Compliance programs should "
+                    "screen against the most current version of the list and have processes "
+                    "to incorporate updates promptly."
+                ),
+            },
+            {
+                "q": "What is a General License?",
+                "a": (
+                    "A General License is a blanket authorization issued by OFAC that allows "
+                    "all US persons (or a defined subset) to engage in transactions that "
+                    "would otherwise be prohibited by sanctions. Unlike a specific license — "
+                    "which is granted to a particular applicant — a general license does not "
+                    "require an application. For Venezuela, key general licenses include "
+                    "GL 5H (Citgo operations), GL 50A (oil JV operations for six named "
+                    "companies), and GL 52 (new investment)."
+                ),
+            },
+            {
+                "q": "Are PDVSA bonds still sanctioned?",
+                "a": (
+                    "Partially. E.O. 13808 (August 2017) prohibits dealings in new debt "
+                    "issued by the Government of Venezuela or PDVSA after August 25, 2017. "
+                    "GL 46B provides limited authorization for dealings in certain PDVSA "
+                    "debt instruments for restructuring purposes. Secondary-market trading "
+                    "in pre-August 2017 bonds is generally permitted but subject to "
+                    "compliance review. The PDVSA 2020 bond situation is particularly "
+                    "complex due to the Citgo collateral and competing creditor claims."
+                ),
+            },
+        ]
+
+        graph = [
+            {
+                "@type": "BreadcrumbList",
+                "itemListElement": [
+                    {"@type": "ListItem", "position": 1, "name": "Home", "item": f"{base}/"},
+                    {"@type": "ListItem", "position": 2, "name": "Sanctions Tracker", "item": f"{base}/sanctions-tracker"},
+                    {"@type": "ListItem", "position": 3, "name": "OFAC Sanctions List", "item": canonical},
+                ],
+            },
+            {
+                "@type": "Article",
+                "@id": f"{canonical}#article",
+                "url": canonical,
+                "headline": title,
+                "description": description,
+                "datePublished": seo["published_iso"],
+                "dateModified": seo["modified_iso"],
+                "author": {"@type": "Organization", "name": _s.site_name, "url": base + "/"},
+                "publisher": {
+                    "@type": "Organization",
+                    "name": _s.site_name,
+                    "url": base + "/",
+                    "logo": {
+                        "@type": "ImageObject",
+                        "url": f"{base}/static/og-image.png?v=3",
+                    },
+                },
+                "mainEntityOfPage": {"@type": "WebPage", "@id": canonical, "name": title},
+            },
+            {
+                "@type": "FAQPage",
+                "mainEntity": [
+                    {
+                        "@type": "Question",
+                        "name": q["q"],
+                        "acceptedAnswer": {"@type": "Answer", "text": q["a"]},
+                    }
+                    for q in faq
+                ],
+            },
+        ]
+        jsonld = _json.dumps(
+            {"@context": "https://schema.org", "@graph": graph},
+            ensure_ascii=False,
+        )
+
+        template = _env.get_template("ofac_sanctions_list.html.j2")
+        html = template.render(
+            seo=seo,
+            jsonld=jsonld,
+            faq=faq,
+            updated_label=_date.today().strftime("%B %-d, %Y"),
+            current_year=_date.today().year,
+            recent_briefings=_fetch_recent_briefings(),
+        )
+        return Response(html, mimetype="text/html")
+    except HTTPException:
+        raise
+    except Exception as exc:
+        logger.exception("OFAC sanctions list page render failed: %s", exc)
+        abort(500)
+
+
+@app.route("/why-is-venezuela-sanctioned")
+@app.route("/why-is-venezuela-sanctioned/")
+def why_is_venezuela_sanctioned_page():
+    """
+    Explainer on the history and reasons behind US sanctions on Venezuela.
+    Targets "why did the us sanction venezuela" (110/mo),
+    "why is venezuelan oil sanctioned" (110/mo),
+    "why is venezuela sanctioned" (90/mo),
+    "did obama sanction venezuela" (90/mo).
+    """
+    try:
+        from src.page_renderer import _env, _base_url, _iso, settings as _s
+        from datetime import date as _date, datetime as _dt
+        import json as _json
+
+        base = _base_url()
+        canonical = f"{base}/why-is-venezuela-sanctioned"
+        title = (
+            "Why Is Venezuela Sanctioned? Complete History & 2026 Status"
+        )
+        description = (
+            "Why did the US sanction Venezuela? Complete history from Obama's "
+            "first targeted sanctions (2015) through Trump's oil embargo, Biden's "
+            "conditional relief, and the 2026 post-transition recalibration. "
+            "Covers PDVSA, Executive Orders, and current status."
+        )
+        seo = {
+            "title": title,
+            "description": description,
+            "keywords": (
+                "why is Venezuela sanctioned, why did the US sanction Venezuela, "
+                "Venezuela sanctions history, why is Venezuelan oil sanctioned, "
+                "did Obama sanction Venezuela, Venezuela sanctions explained, "
+                "US sanctions on Venezuela, PDVSA sanctions, Venezuela embargo, "
+                "Venezuela sanctions timeline, Trump Venezuela sanctions, "
+                "Biden Venezuela sanctions"
+            ),
+            "canonical": canonical,
+            "site_name": _s.site_name,
+            "site_url": base,
+            "locale": _s.site_locale,
+            "og_image": f"{base}/static/og-image.png?v=3",
+            "og_type": "article",
+            "published_iso": _iso(_dt.utcnow()),
+            "modified_iso": _iso(_dt.utcnow()),
+        }
+
+        faq = [
+            {
+                "q": "Did Obama sanction Venezuela?",
+                "a": (
+                    "Yes. President Obama signed the Venezuela Defense of Human Rights "
+                    "and Civil Society Act in December 2014, and in March 2015 issued "
+                    "Executive Order 13692, which authorized targeted sanctions against "
+                    "Venezuelan officials involved in human rights abuses, corruption, "
+                    "and undermining democratic processes. Seven Venezuelan officials "
+                    "were initially sanctioned. These were narrow, targeted sanctions "
+                    "against individuals — not the broad economic or oil sanctions that "
+                    "came later under Trump."
+                ),
+            },
+            {
+                "q": "Why did Trump escalate sanctions on Venezuela?",
+                "a": (
+                    "The Trump administration dramatically escalated sanctions between "
+                    "2017 and 2019 for several reasons: the May 2018 presidential "
+                    "election was widely condemned as fraudulent; the Maduro government "
+                    "intensified repression against the opposition and civil society; "
+                    "and the US sought to pressure Maduro to leave power after "
+                    "recognizing opposition leader Juan Guaidó as interim president in "
+                    "January 2019. The most consequential step was sanctioning PDVSA "
+                    "(the state oil company) in January 2019, which cut off Venezuela's "
+                    "primary revenue source."
+                ),
+            },
+            {
+                "q": "Why is Venezuelan oil specifically sanctioned?",
+                "a": (
+                    "Venezuelan oil was sanctioned because PDVSA revenue was the Maduro "
+                    "regime's primary funding source — oil exports accounted for roughly "
+                    "95% of Venezuela's export earnings and the majority of government "
+                    "revenue. The theory was that cutting off oil revenue would deprive "
+                    "the regime of the resources needed to maintain its security apparatus "
+                    "and patronage networks. In practice, production crashed from 1.15 "
+                    "million bpd in January 2019 to 392,000 bpd by July 2020."
+                ),
+            },
+            {
+                "q": "Are Venezuela sanctions still in effect in 2026?",
+                "a": (
+                    "Yes, but significantly modified. Following the January 2026 political "
+                    "transition, the US has issued General Licenses that open up Venezuela's "
+                    "oil sector to authorized operators (GL 50A) and new investment (GL 52). "
+                    "However, the underlying Executive Orders remain in effect, the SDN list "
+                    "still contains hundreds of Venezuelan individuals and entities, and "
+                    "unauthorized transactions with the Government of Venezuela remain "
+                    "prohibited. The sanctions architecture is intact but operating through "
+                    "a permissive licensing framework."
+                ),
+            },
+            {
+                "q": "Can American companies do business in Venezuela now?",
+                "a": (
+                    "In the oil sector, yes — if they are among the six companies named "
+                    "in GL 50A (Chevron, BP, Eni, Repsol, Shell, Maurel & Prom) or "
+                    "operating under GL 52 for new investment. Other sectors remain "
+                    "more restricted, though many routine commercial transactions with "
+                    "non-sanctioned Venezuelan parties are permissible. US persons must "
+                    "still screen all counterparties against the SDN list and comply with "
+                    "all applicable OFAC requirements. Legal counsel is essential."
+                ),
+            },
+            {
+                "q": "Has Venezuela been removed from the sanctions list?",
+                "a": (
+                    "No. Venezuela as a country has not been 'removed from sanctions.' "
+                    "The underlying Executive Orders establishing the Venezuela sanctions "
+                    "program remain active. Individual SDN entries have been modified — "
+                    "some individuals have been delisted following the political transition "
+                    "— but the program architecture remains in place. The current approach "
+                    "uses General Licenses to authorize specific activities rather than "
+                    "lifting the sanctions wholesale."
+                ),
+            },
+            {
+                "q": "What are the penalties for violating Venezuela sanctions?",
+                "a": (
+                    "Violations of Venezuela sanctions carry the same penalties as other "
+                    "OFAC programs: civil penalties up to $330,947 per violation (or twice "
+                    "the transaction value), and criminal penalties up to $1,000,000 in "
+                    "fines and 20 years imprisonment per willful violation. Both US persons "
+                    "and foreign persons who cause US persons to violate sanctions can be "
+                    "held liable."
+                ),
+            },
+        ]
+
+        graph = [
+            {
+                "@type": "BreadcrumbList",
+                "itemListElement": [
+                    {"@type": "ListItem", "position": 1, "name": "Home", "item": f"{base}/"},
+                    {"@type": "ListItem", "position": 2, "name": "Sanctions Tracker", "item": f"{base}/sanctions-tracker"},
+                    {"@type": "ListItem", "position": 3, "name": "Why Is Venezuela Sanctioned?", "item": canonical},
+                ],
+            },
+            {
+                "@type": "Article",
+                "@id": f"{canonical}#article",
+                "url": canonical,
+                "headline": title,
+                "description": description,
+                "datePublished": seo["published_iso"],
+                "dateModified": seo["modified_iso"],
+                "author": {"@type": "Organization", "name": _s.site_name, "url": base + "/"},
+                "publisher": {
+                    "@type": "Organization",
+                    "name": _s.site_name,
+                    "url": base + "/",
+                    "logo": {
+                        "@type": "ImageObject",
+                        "url": f"{base}/static/og-image.png?v=3",
+                    },
+                },
+                "mainEntityOfPage": {"@type": "WebPage", "@id": canonical, "name": title},
+            },
+            {
+                "@type": "FAQPage",
+                "mainEntity": [
+                    {
+                        "@type": "Question",
+                        "name": q["q"],
+                        "acceptedAnswer": {"@type": "Answer", "text": q["a"]},
+                    }
+                    for q in faq
+                ],
+            },
+        ]
+        jsonld = _json.dumps(
+            {"@context": "https://schema.org", "@graph": graph},
+            ensure_ascii=False,
+        )
+
+        template = _env.get_template("why_is_venezuela_sanctioned.html.j2")
+        html = template.render(
+            seo=seo,
+            jsonld=jsonld,
+            faq=faq,
+            updated_label=_date.today().strftime("%B %-d, %Y"),
+            current_year=_date.today().year,
+            recent_briefings=_fetch_recent_briefings(),
+        )
+        return Response(html, mimetype="text/html")
+    except HTTPException:
+        raise
+    except Exception as exc:
+        logger.exception("Why Venezuela sanctioned page render failed: %s", exc)
         abort(500)
 
 
@@ -6133,7 +7171,12 @@ def sitemap_xml():
         # _HIGH_DEMAND_PROFILE_SLUGS whitelist).
         {"loc": f"{base}/research/sdn/", "lastmod": today_iso, "changefreq": "weekly", "priority": "0.85"},
         {"loc": f"{base}/calendar", "lastmod": today_iso, "changefreq": "daily", "priority": "0.7"},
+        {"loc": f"{base}/tps-venezuela", "lastmod": today_iso, "changefreq": "weekly", "priority": "0.85"},
+        {"loc": f"{base}/venezuela-oil", "lastmod": today_iso, "changefreq": "weekly", "priority": "0.85"},
         {"loc": f"{base}/travel", "lastmod": today_iso, "changefreq": "weekly", "priority": "0.8"},
+        {"loc": f"{base}/is-venezuela-safe", "lastmod": today_iso, "changefreq": "weekly", "priority": "0.85"},
+        {"loc": f"{base}/ofac-sanctions-list", "lastmod": today_iso, "changefreq": "weekly", "priority": "0.85"},
+        {"loc": f"{base}/why-is-venezuela-sanctioned", "lastmod": today_iso, "changefreq": "weekly", "priority": "0.8"},
         {"loc": f"{base}/get-venezuela-visa", "lastmod": today_iso, "changefreq": "weekly", "priority": "0.85"},
         {"loc": f"{base}/sources", "lastmod": today_iso, "changefreq": "weekly", "priority": "0.6"},
         {"loc": f"{base}/briefing", "lastmod": today_iso, "changefreq": "daily", "priority": "0.9"},

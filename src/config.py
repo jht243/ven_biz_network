@@ -142,6 +142,12 @@ class Settings(BaseSettings):
     # intake entirely without removing the scraper.
     google_news_daily_cap: int = 6
 
+    # ── SEO: Semrush API ──────────────────────────────────────────────
+    # API key from https://www.semrush.com/accounts/subscription-info/api-units/
+    # Used for keyword research, domain analytics, and competitor gap analysis.
+    semrush_api_key: str = ""
+    semrush_database: str = "us"
+
     # ── Distribution: IndexNow (Bing, Yandex, Seznam, Naver, Mojeek) ──
     # The IndexNow key — generated in Bing Webmaster Tools at
     # bing.com/indexnow/getstarted. The key is NOT a secret: it's

@@ -1,0 +1,946 @@
+{% extends "_base.html.j2" %}
+{% from "_base.html.j2" import share_button %}
+
+{% block head_extra %}
+<style>
+  .tps-hero { background: linear-gradient(180deg, #f6f8fa 0%, var(--white) 100%); padding: 28px 0 16px; margin-bottom: 16px; }
+  .tps-hero .kicker { font-size: 12px; text-transform: uppercase; letter-spacing: 1.4px; color: #cc0000; font-weight: 700; }
+  .tps-hero h1 { font-family: var(--font-serif); font-size: 32px; color: var(--sr-blue-dark); margin: 8px 0 8px; line-height: 1.2; }
+  .tps-hero p.lead { font-family: var(--font-serif); font-style: italic; color: var(--sr-gray-text); font-size: 16px; max-width: 720px; margin: 0; }
+
+  .toc { background: var(--sr-gray-bg); border-left: 3px solid var(--sr-blue); padding: 18px 22px; margin: 0 0 32px; font-size: 14px; }
+  .toc h3 { font-family: var(--font-serif); font-size: 14px; text-transform: uppercase; letter-spacing: 1px; color: var(--sr-blue-dark); margin-bottom: 10px; }
+  .toc ol { margin-left: 20px; columns: 2; column-gap: 24px; }
+  .toc li { margin-bottom: 6px; }
+  @media (max-width: 640px) { .toc ol { columns: 1; } }
+
+  .sec { margin: 40px 0 24px; padding-top: 8px; }
+  .sec h2 { font-family: var(--font-serif); font-size: 26px; color: var(--sr-blue-dark); margin-bottom: 8px; }
+  .sec .sec-lead { color: var(--sr-gray-text); margin-bottom: 18px; font-size: 15px; }
+
+  .card-grid { display: grid; grid-template-columns: 1fr; gap: 14px; margin-bottom: 18px; }
+  @media (min-width: 720px) { .card-grid.cols-2 { grid-template-columns: 1fr 1fr; } }
+  @media (min-width: 980px) { .card-grid.cols-3 { grid-template-columns: 1fr 1fr 1fr; } }
+
+  .card { background: var(--white); border: 1px solid var(--sr-gray-light); border-radius: 4px; padding: 18px 20px; transition: border-color 0.15s, transform 0.15s; }
+  .card:hover { border-color: var(--sr-blue); transform: translateY(-1px); }
+  .card h3 { font-family: var(--font-serif); font-size: 17px; color: var(--sr-blue-dark); margin-bottom: 6px; }
+  .card .meta { font-size: 12px; text-transform: uppercase; letter-spacing: 0.5px; color: var(--sr-gray-text); margin-bottom: 8px; }
+  .card .row { font-size: 14px; margin: 4px 0; }
+  .card .row strong { color: var(--sr-dark-text); display: inline-block; min-width: 96px; font-weight: 600; }
+  .card a.cta { font-size: 13px; color: var(--sr-blue); font-weight: 600; text-decoration: none; }
+  .card a.cta:hover { text-decoration: underline; }
+  .card .note { font-size: 13px; color: var(--sr-gray-text); margin-top: 10px; line-height: 1.55; padding-top: 10px; border-top: 1px dotted var(--sr-gray-light); }
+
+  .em-table { width: 100%; border-collapse: collapse; margin: 8px 0 18px; font-size: 14px; }
+  .em-table th, .em-table td { text-align: left; padding: 10px 12px; border-bottom: 1px solid var(--sr-gray-light); }
+  .em-table th { background: var(--sr-gray-bg); font-size: 12px; text-transform: uppercase; letter-spacing: 0.5px; color: var(--sr-gray-text); font-weight: 600; }
+  .em-table td.num { font-family: var(--font-sans); font-weight: 600; color: var(--sr-blue); white-space: nowrap; }
+
+  .disclaimer { background: #fff8e1; border-left: 4px solid #f5b041; padding: 14px 18px; border-radius: 3px; margin: 20px 0; font-size: 13.5px; line-height: 1.65; color: var(--sr-dark-text); }
+
+  .timeline { position: relative; padding: 0 0 0 32px; margin: 24px 0 28px; }
+  .timeline::before { content: ""; position: absolute; top: 0; bottom: 0; left: 14px; width: 3px; background: var(--sr-gray-light); border-radius: 2px; }
+  .tl-item { position: relative; margin-bottom: 24px; }
+  .tl-item:last-child { margin-bottom: 0; }
+  .tl-dot { position: absolute; left: -25px; top: 3px; width: 14px; height: 14px; border-radius: 50%; border: 3px solid var(--sr-blue); background: var(--white); z-index: 1; }
+  .tl-item.positive .tl-dot { border-color: #2e7d32; }
+  .tl-item.negative .tl-dot { border-color: #cc0000; }
+  .tl-item.pending .tl-dot { border-color: #f5b041; }
+  .tl-date { font-size: 12px; text-transform: uppercase; letter-spacing: 0.8px; color: var(--sr-gray-text); font-weight: 700; margin-bottom: 3px; }
+  .tl-title { font-family: var(--font-serif); font-size: 15px; color: var(--sr-blue-dark); font-weight: 700; margin-bottom: 4px; }
+  .tl-desc { font-size: 14px; color: var(--sr-dark-text); line-height: 1.6; }
+
+  .stat-grid { display: grid; grid-template-columns: 1fr; gap: 14px; margin: 18px 0 24px; }
+  @media (min-width: 640px) { .stat-grid { grid-template-columns: 1fr 1fr 1fr; } }
+  .stat-card { background: var(--sr-gray-bg); border: 1px solid var(--sr-gray-light); border-radius: 6px; padding: 18px 20px; text-align: center; }
+  .stat-card .stat-num { font-family: var(--font-serif); font-size: 32px; font-weight: 700; color: var(--sr-blue-dark); line-height: 1.1; }
+  .stat-card .stat-label { font-size: 13px; color: var(--sr-gray-text); margin-top: 6px; text-transform: uppercase; letter-spacing: 0.5px; }
+
+  .faq-list { margin: 18px 0 28px; }
+  .faq-item { border: 1px solid var(--sr-gray-light); border-radius: 4px; margin-bottom: 10px; overflow: hidden; }
+  .faq-q { display: flex; align-items: center; gap: 12px; padding: 16px 18px; cursor: pointer; background: var(--white); font-family: var(--font-serif); font-size: 16px; font-weight: 700; color: var(--sr-blue-dark); transition: background 0.15s; border: 0; width: 100%; text-align: left; }
+  .faq-q:hover { background: var(--sr-gray-bg); }
+  .faq-q .faq-icon { flex-shrink: 0; width: 24px; height: 24px; border-radius: 50%; background: var(--sr-blue); color: var(--white); display: flex; align-items: center; justify-content: center; font-size: 14px; font-weight: 700; transition: transform 0.2s; font-family: var(--font-sans); }
+  .faq-item.open .faq-q .faq-icon { transform: rotate(45deg); }
+  .faq-a { padding: 0 18px 16px; font-size: 15px; line-height: 1.7; color: var(--sr-dark-text); display: none; }
+  .faq-item.open .faq-a { display: block; }
+
+  .related-grid { display: grid; grid-template-columns: 1fr; gap: 12px; margin: 16px 0 24px; }
+  @media (min-width: 720px) { .related-grid { grid-template-columns: 1fr 1fr; } }
+  .related-link { display: block; padding: 16px 18px; background: var(--white); border: 1px solid var(--sr-gray-light); border-radius: 4px; text-decoration: none; color: inherit; transition: border-color 0.15s, transform 0.15s; }
+  .related-link:hover { border-color: var(--sr-blue); transform: translateY(-1px); }
+  .related-link .rl-tag { font-size: 11px; text-transform: uppercase; letter-spacing: 1px; color: var(--sr-red); font-weight: 700; margin-bottom: 4px; }
+  .related-link .rl-title { font-family: var(--font-serif); font-size: 16px; color: var(--sr-blue-dark); font-weight: 700; margin-bottom: 4px; }
+  .related-link .rl-desc { font-size: 13px; color: var(--sr-gray-text); line-height: 1.5; }
+
+  .cta-box { background: #f0f5ff; border: 2px solid var(--sr-blue); border-radius: 6px; padding: 20px 22px; margin: 24px 0; text-align: center; }
+  .cta-box h3 { font-family: var(--font-serif); font-size: 18px; color: var(--sr-blue-dark); margin-bottom: 8px; }
+  .cta-box p { font-size: 14px; color: var(--sr-dark-text); margin-bottom: 14px; }
+  .cta-box a.btn { display: inline-block; background: var(--sr-blue); color: var(--white); padding: 10px 24px; border-radius: 3px; text-decoration: none; font-weight: 600; font-size: 14px; letter-spacing: 0.5px; text-transform: uppercase; }
+  .cta-box a.btn:hover { background: var(--sr-blue-dark); color: var(--white); }
+
+  .step-list { counter-reset: steps; list-style: none; margin: 16px 0 24px 0; padding: 0; }
+  .step-list li { counter-increment: steps; position: relative; padding: 12px 16px 12px 52px; margin-bottom: 10px; background: var(--sr-gray-bg); border-radius: 4px; font-size: 14px; line-height: 1.6; }
+  .step-list li::before { content: counter(steps); position: absolute; left: 14px; top: 12px; width: 28px; height: 28px; border-radius: 50%; background: var(--sr-blue); color: var(--white); font-weight: 700; font-size: 13px; display: flex; align-items: center; justify-content: center; font-family: var(--font-sans); }
+</style>
+{% endblock %}
+
+{% block content %}
+<section class="container-wide">
+
+  <nav class="breadcrumbs" aria-label="Breadcrumb">
+    <a href="/">Home</a><span>/</span>
+    <a href="/explainers">Explainers</a><span>/</span>
+    <span>OFAC Sanctions List</span>
+    <span style="margin-left:auto;">{{ share_button(seo.canonical, seo.title) }}</span>
+  </nav>
+
+  <header class="tps-hero">
+    <div class="kicker">Compliance &middot; Updated {{ updated_label }}</div>
+    <h1>OFAC Sanctions List &amp; SDN List: Complete Guide ({{ current_year }})</h1>
+    <p class="lead">
+      Comprehensive guide to OFAC sanctions programs, the Specially Designated
+      Nationals (SDN) list, and how they affect business with Venezuela.
+    </p>
+  </header>
+
+  {# ============ Key stats banner ============ #}
+  <div class="stat-grid">
+    <div class="stat-card">
+      <div class="stat-num">2,300+</div>
+      <div class="stat-label">SDN Entries (Venezuela)</div>
+    </div>
+    <div class="stat-card">
+      <div class="stat-num">5</div>
+      <div class="stat-label">Active Executive Orders</div>
+    </div>
+    <div class="stat-card">
+      <div class="stat-num">Regular</div>
+      <div class="stat-label">Update Frequency</div>
+    </div>
+  </div>
+
+  {# ============ Table of contents ============ #}
+  <nav class="toc" aria-label="Table of contents">
+    <h3>Contents</h3>
+    <ol>
+      <li><a href="#what-is-ofac">What Is the OFAC Sanctions List?</a></li>
+      <li><a href="#sdn-list">The SDN List Explained</a></li>
+      <li><a href="#venezuela-program">Venezuela Sanctions Program</a></li>
+      <li><a href="#sanctioned-entities">Key Sanctioned Entities</a></li>
+      <li><a href="#how-to-check">How to Check the OFAC Sanctions List</a></li>
+      <li><a href="#compliance">Compliance Best Practices</a></li>
+      <li><a href="#recent-changes">Recent Changes ({{ current_year }})</a></li>
+      <li><a href="#faq">Frequently Asked Questions</a></li>
+    </ol>
+  </nav>
+
+  {# ======================================================================= #}
+  {# Section 1: What Is OFAC?                                                #}
+  {# ======================================================================= #}
+  <section id="what-is-ofac" class="sec">
+    <h2>1. What Is the OFAC Sanctions List?</h2>
+    <p class="sec-lead">
+      OFAC administers and enforces US economic and trade sanctions against
+      targeted foreign countries, regimes, terrorists, narcotics traffickers,
+      and other threats to national security.
+    </p>
+
+    <p>
+      The <strong>Office of Foreign Assets Control (OFAC)</strong> is a division
+      of the US Department of the Treasury. Established during the War of 1812
+      and formalized in its current form in 1950, OFAC is the primary agency
+      responsible for administering and enforcing economic and trade sanctions
+      based on US foreign policy and national security objectives.
+    </p>
+    <p>
+      OFAC maintains several sanctions lists, each serving a distinct purpose:
+    </p>
+    <ul style="margin: 0 0 16px 24px;">
+      <li>
+        <strong>SDN List</strong> &mdash; Specially Designated Nationals and
+        Blocked Persons List. The primary sanctions list containing individuals
+        and entities whose assets are blocked and with whom US persons are
+        generally prohibited from transacting.
+      </li>
+      <li>
+        <strong>Sectoral Sanctions Identifications (SSI) List</strong> &mdash;
+        Persons operating in sectors of the economy identified under certain
+        Executive Orders (e.g., Venezuela&rsquo;s oil sector).
+      </li>
+      <li>
+        <strong>Non-SDN Lists</strong> &mdash; Including the Foreign Sanctions
+        Evaders (FSE) List, the Non-SDN Palestinian Legislative Council (PLC)
+        List, and others with varying prohibition levels.
+      </li>
+      <li>
+        <strong>Consolidated Sanctions List</strong> &mdash; A single
+        downloadable file merging all of the above lists for screening purposes.
+      </li>
+    </ul>
+
+    <div class="card" style="margin-bottom: 18px;">
+      <h3>Penalties for OFAC Violations</h3>
+      <div class="meta">Enforcement</div>
+      <div class="row"><strong>Civil penalty</strong> Up to $330,000+ per violation, or twice the value of the underlying transaction (whichever is greater)</div>
+      <div class="row"><strong>Criminal fine</strong> Up to $1,000,000 per violation</div>
+      <div class="row"><strong>Imprisonment</strong> Up to 20 years per violation</div>
+      <div class="note">
+        Penalties are adjusted annually for inflation. OFAC published updated
+        penalty guidelines in 2024 under the Federal Civil Penalties Inflation
+        Adjustment Act. Both intentional violations and negligent failures to
+        screen can result in enforcement actions.
+      </div>
+    </div>
+
+    <p>
+      OFAC sanctions are based on authorities granted by the International
+      Emergency Economic Powers Act (IEEPA), the Trading with the Enemy Act
+      (TWEA), and specific country-based legislation. US persons&mdash;including
+      all US citizens, permanent residents, entities organized under US law,
+      and anyone physically located in the United States&mdash;must comply with
+      OFAC regulations regardless of where a transaction occurs.
+    </p>
+  </section>
+
+  {# ======================================================================= #}
+  {# Section 2: The SDN List Explained                                       #}
+  {# ======================================================================= #}
+  <section id="sdn-list" class="sec">
+    <h2>2. The SDN List Explained</h2>
+    <p class="sec-lead">
+      The Specially Designated Nationals and Blocked Persons (SDN) List is
+      OFAC&rsquo;s most consequential sanctions tool. Being placed on the SDN
+      list effectively cuts an individual or entity off from the US financial
+      system.
+    </p>
+
+    <h3>What Does It Mean to Be on the SDN List?</h3>
+    <p>
+      When OFAC designates a person or entity as a Specially Designated National,
+      two primary consequences follow:
+    </p>
+    <ul style="margin: 0 0 16px 24px;">
+      <li>
+        <strong>Asset blocking:</strong> All property and interests in property
+        of the SDN that are within the United States, or within the possession or
+        control of US persons, are frozen. The SDN cannot access, transfer, or
+        otherwise deal in these assets.
+      </li>
+      <li>
+        <strong>Transaction prohibition:</strong> US persons are generally
+        prohibited from engaging in any transactions or dealings with the SDN,
+        including financial transfers, trade in goods or services, and any other
+        economic activity.
+      </li>
+    </ul>
+
+    <h3>The 50% Ownership Rule</h3>
+    <p>
+      Under OFAC guidance, any entity that is <strong>50% or more owned</strong>,
+      directly or indirectly, by one or more SDNs is itself treated as blocked,
+      even if the entity does not appear on the SDN list by name. This means
+      compliance teams must look beyond the published list and investigate the
+      ownership structure of counterparties.
+    </p>
+
+    <h3>How Names Get Added (Designation Process)</h3>
+    <p>
+      OFAC designations typically originate from interagency referrals
+      involving the Treasury Department, State Department, and intelligence
+      community. The process generally involves:
+    </p>
+    <ul style="margin: 0 0 16px 24px;">
+      <li>Identification of a target based on sanctionable conduct or association</li>
+      <li>Evidentiary review and legal analysis within OFAC and the Office of the General Counsel</li>
+      <li>Interagency coordination (State, NSC, Justice, as applicable)</li>
+      <li>Publication of the designation in the Federal Register</li>
+    </ul>
+
+    <h3>Delisting Procedures</h3>
+    <p>
+      Designated persons may petition OFAC for removal from the SDN list by
+      demonstrating that the circumstances leading to designation no longer apply
+      or that the designation was based on insufficient evidence. The process
+      involves submitting a written petition to OFAC, which will review the
+      request and may consult with other agencies. Delisting can also occur as
+      part of broader diplomatic negotiations, as has happened in the Venezuela
+      context following political transitions.
+    </p>
+
+    <h3>How to Search the SDN List</h3>
+    <p>
+      OFAC provides a free online search tool at
+      <a href="https://sanctionssearch.ofac.treas.gov/" rel="nofollow noopener" target="_blank">sanctionssearch.ofac.treas.gov</a>.
+      Users can search by name, ID number, country, or program to identify
+      whether a person or entity appears on the SDN list or other OFAC lists.
+    </p>
+
+    <div class="cta-box">
+      <h3>Check Venezuela SDN Entries Instantly</h3>
+      <p>
+        Use our purpose-built sanctions checker to search all Venezuela-related
+        OFAC designations, with context on each entry and related general licenses.
+      </p>
+      <a class="btn" href="/tools/ofac-venezuela-sanctions-checker">Search Venezuela SDN &rarr;</a>
+    </div>
+  </section>
+
+  {# ======================================================================= #}
+  {# Section 3: Venezuela Sanctions Program                                  #}
+  {# ======================================================================= #}
+  <section id="venezuela-program" class="sec">
+    <h2>3. Venezuela Sanctions Program</h2>
+    <p class="sec-lead">
+      The US sanctions program targeting Venezuela is one of OFAC&rsquo;s most
+      complex, built through multiple Executive Orders and modified by dozens
+      of General Licenses.
+    </p>
+
+    <h3>Executive Orders</h3>
+    <p>
+      Five Executive Orders form the legal backbone of the Venezuela sanctions
+      program. Each targets different aspects of the Venezuelan government and
+      economy:
+    </p>
+
+    <table class="em-table">
+      <thead>
+        <tr>
+          <th>Executive Order</th>
+          <th>Date</th>
+          <th>Scope</th>
+        </tr>
+      </thead>
+      <tbody>
+        <tr>
+          <td><strong>E.O. 13692</strong></td>
+          <td class="num">Mar 2015</td>
+          <td>Initial authority to sanction persons undermining democratic processes, involved in human rights abuses, corruption, or political repression in Venezuela</td>
+        </tr>
+        <tr>
+          <td><strong>E.O. 13808</strong></td>
+          <td class="num">Aug 2017</td>
+          <td>Restricted dealings in new debt and equity of the Venezuelan government, PDVSA, and any entity owned or controlled by them</td>
+        </tr>
+        <tr>
+          <td><strong>E.O. 13827</strong></td>
+          <td class="num">Mar 2018</td>
+          <td>Prohibited transactions involving the Venezuelan government&rsquo;s issuance of digital currency (the &ldquo;Petro&rdquo; cryptocurrency)</td>
+        </tr>
+        <tr>
+          <td><strong>E.O. 13835</strong></td>
+          <td class="num">May 2018</td>
+          <td>Prohibited the purchase of debt owed to the Venezuelan government, including invoices and accounts receivable</td>
+        </tr>
+        <tr>
+          <td><strong>E.O. 13850</strong></td>
+          <td class="num">Nov 2018</td>
+          <td>Authorized blocking of persons operating in Venezuela&rsquo;s gold sector; later amended by E.O. 13857 (Jan 2019) to clarify that PDVSA is subject to blocking</td>
+        </tr>
+        <tr>
+          <td><strong>E.O. 13884</strong></td>
+          <td class="num">Aug 2019</td>
+          <td>Broadest authority: blocked all property and interests in property of the Government of Venezuela, with limited exceptions</td>
+        </tr>
+      </tbody>
+    </table>
+
+    <h3>Post-Transition Scope (2026)</h3>
+    <p>
+      Following the political transition in Venezuela in January 2026, the
+      sanctions landscape has shifted significantly. While the Executive Orders
+      remain technically in effect, the Treasury Department has issued new and
+      amended General Licenses to facilitate legitimate economic activity in
+      support of the transitional government. The practical scope of sanctions
+      enforcement is now focused on individuals and entities associated with
+      the former Maduro government and its illicit financial networks.
+    </p>
+
+    <h3>Key General Licenses</h3>
+    <p>
+      General Licenses (GLs) authorize activities that would otherwise be
+      prohibited under the Executive Orders. They do not require individual
+      application&mdash;any US person meeting the GL&rsquo;s conditions may
+      rely on it. Key active GLs for Venezuela include:
+    </p>
+
+    <div class="card-grid cols-2">
+      <div class="card">
+        <h3>GL 5H &mdash; Citgo Operations</h3>
+        <div class="meta">Petroleum · Active</div>
+        <p style="font-size: 14px; line-height: 1.6; margin-top: 8px;">
+          Authorizes transactions related to the maintenance of operations and
+          contracts of Citgo Petroleum Corporation and its subsidiaries. Citgo,
+          a US-based subsidiary of PDVSA, is managed by an ad hoc board
+          recognized by the transitional government.
+        </p>
+      </div>
+
+      <div class="card">
+        <h3>GL 46B &mdash; Debt Transactions</h3>
+        <div class="meta">Finance · Active</div>
+        <p style="font-size: 14px; line-height: 1.6; margin-top: 8px;">
+          Authorizes certain transactions involving bonds issued by the
+          Government of Venezuela and PDVSA, including secondary-market trading
+          of existing debt instruments. Does not authorize new lending to the
+          Venezuelan government.
+        </p>
+      </div>
+
+      <div class="card">
+        <h3>GL 50A &mdash; Oil Operations</h3>
+        <div class="meta">Energy · Active</div>
+        <p style="font-size: 14px; line-height: 1.6; margin-top: 8px;">
+          Authorizes transactions related to oil and gas operations in
+          Venezuela involving specified companies. Originally issued as a
+          six-month license, it has been renewed and amended to support the
+          transition-era energy sector.
+        </p>
+      </div>
+
+      <div class="card">
+        <h3>GL 52 &mdash; New Investment</h3>
+        <div class="meta">Investment · Active</div>
+        <p style="font-size: 14px; line-height: 1.6; margin-top: 8px;">
+          Authorizes new investment in Venezuela in certain sectors, issued
+          in connection with the political transition. Subject to conditions
+          including compliance with anti-corruption requirements and
+          reporting obligations to OFAC.
+        </p>
+      </div>
+    </div>
+
+    <div class="cta-box">
+      <h3>Venezuela General License Navigator</h3>
+      <p>
+        Explore all active OFAC General Licenses for Venezuela with plain-English
+        summaries, scope analysis, and expiration tracking.
+      </p>
+      <a class="btn" href="/tools/ofac-venezuela-general-licenses">View All General Licenses &rarr;</a>
+    </div>
+  </section>
+
+  {# ======================================================================= #}
+  {# Section 4: Key Sanctioned Entities                                      #}
+  {# ======================================================================= #}
+  <section id="sanctioned-entities" class="sec">
+    <h2>4. Key Sanctioned Entities (Venezuela)</h2>
+    <p class="sec-lead">
+      Major Venezuelan government entities and state-owned enterprises that have
+      been designated under the Venezuela sanctions program.
+    </p>
+
+    <table class="em-table">
+      <thead>
+        <tr>
+          <th>Entity</th>
+          <th>Type</th>
+          <th>Primary EO</th>
+          <th>Status</th>
+        </tr>
+      </thead>
+      <tbody>
+        <tr>
+          <td><strong>PDVSA</strong> (Petr&oacute;leos de Venezuela, S.A.)</td>
+          <td>State oil company</td>
+          <td class="num">E.O. 13850</td>
+          <td>Blocked; GL 50A applies</td>
+        </tr>
+        <tr>
+          <td><strong>CVP</strong> (Corporaci&oacute;n Venezolana del Petr&oacute;leo)</td>
+          <td>PDVSA subsidiary</td>
+          <td class="num">E.O. 13850</td>
+          <td>Blocked (50% rule)</td>
+        </tr>
+        <tr>
+          <td><strong>Bandes</strong> (Banco de Desarrollo Econ&oacute;mico y Social)</td>
+          <td>State development bank</td>
+          <td class="num">E.O. 13884</td>
+          <td>Blocked</td>
+        </tr>
+        <tr>
+          <td><strong>Conviasa</strong></td>
+          <td>State airline</td>
+          <td class="num">E.O. 13884</td>
+          <td>Blocked</td>
+        </tr>
+        <tr>
+          <td><strong>Banco Central de Venezuela</strong></td>
+          <td>Central bank</td>
+          <td class="num">E.O. 13884</td>
+          <td>Blocked; under review</td>
+        </tr>
+        <tr>
+          <td><strong>Minerven</strong></td>
+          <td>State mining company</td>
+          <td class="num">E.O. 13850</td>
+          <td>Blocked (gold sector)</td>
+        </tr>
+        <tr>
+          <td><strong>CANTV</strong></td>
+          <td>State telecom</td>
+          <td class="num">E.O. 13884</td>
+          <td>Blocked (Gov&rsquo;t of Venezuela)</td>
+        </tr>
+      </tbody>
+    </table>
+
+    <div class="disclaimer">
+      <strong>Post-transition note:</strong> Following the January 2026 political
+      transition, OFAC has initiated a review of Venezuela-related designations.
+      Some entities associated with the former government may be delisted or
+      have their status modified in connection with the democratic transition.
+      Check the latest SDN list for current designations.
+    </div>
+  </section>
+
+  {# ======================================================================= #}
+  {# Section 5: How to Check the OFAC Sanctions List                         #}
+  {# ======================================================================= #}
+  <section id="how-to-check" class="sec">
+    <h2>5. How to Check the OFAC Sanctions List</h2>
+    <p class="sec-lead">
+      Step-by-step guide to searching OFAC&rsquo;s official sanctions database
+      and integrating screening into your compliance workflow.
+    </p>
+
+    <h3>Using OFAC&rsquo;s Sanctions List Search Tool</h3>
+    <ol class="step-list">
+      <li>
+        Navigate to <a href="https://sanctionssearch.ofac.treas.gov/" rel="nofollow noopener" target="_blank">sanctionssearch.ofac.treas.gov</a>
+      </li>
+      <li>
+        Enter the name, alias, or ID number of the person or entity you want to
+        screen. OFAC&rsquo;s search supports partial name matching and phonetic
+        variations.
+      </li>
+      <li>
+        Optionally filter by <strong>Program</strong> (e.g., &ldquo;VENEZUELA&rdquo;)
+        or <strong>Type</strong> (individual, entity, vessel, aircraft) to narrow
+        results.
+      </li>
+      <li>
+        Review the results. Each entry shows the SDN name, program, aliases,
+        addresses, nationality, date of birth, and identification documents.
+      </li>
+      <li>
+        If you find a potential match, review the full SDN entry and any
+        associated General Licenses before making a compliance determination.
+        When in doubt, consult legal counsel.
+      </li>
+    </ol>
+
+    <h3>SDN List Downloads</h3>
+    <p>
+      For automated screening, OFAC provides the full SDN list in multiple
+      machine-readable formats:
+    </p>
+    <div class="card-grid cols-3">
+      <div class="card">
+        <h3>CSV Format</h3>
+        <div class="meta">Flat file</div>
+        <p style="font-size: 14px; line-height: 1.6; margin-top: 8px;">
+          Comma-separated values suitable for spreadsheet analysis and
+          database import. Available from the OFAC website.
+        </p>
+      </div>
+      <div class="card">
+        <h3>XML Format</h3>
+        <div class="meta">Structured data</div>
+        <p style="font-size: 14px; line-height: 1.6; margin-top: 8px;">
+          Full structured data including all aliases, addresses, and
+          identification documents. Preferred for automated compliance systems.
+        </p>
+      </div>
+      <div class="card">
+        <h3>PDF Format</h3>
+        <div class="meta">Reference</div>
+        <p style="font-size: 14px; line-height: 1.6; margin-top: 8px;">
+          Human-readable list published periodically. Useful for reference
+          but not recommended for automated screening.
+        </p>
+      </div>
+    </div>
+
+    <h3>Third-Party Screening Tools</h3>
+    <p>
+      Many financial institutions and businesses use commercial sanctions
+      screening software that integrates OFAC data with other sanctions lists
+      (EU, UN, UK, Canada). These tools typically offer fuzzy-name matching,
+      real-time updates, and audit-trail features that exceed the capabilities
+      of OFAC&rsquo;s free tool. Major providers include Dow Jones Risk &amp;
+      Compliance, Refinitiv World-Check, and LexisNexis.
+    </p>
+
+    <div class="cta-box">
+      <h3>Venezuela-Specific Sanctions Checker</h3>
+      <p>
+        Our free screening tool covers all Venezuela-program SDN entries with
+        enhanced context, related General Licenses, and entity relationship mapping.
+      </p>
+      <a class="btn" href="/tools/ofac-venezuela-sanctions-checker">Check Venezuela SDN List &rarr;</a>
+    </div>
+  </section>
+
+  {# ======================================================================= #}
+  {# Section 6: Compliance Best Practices                                    #}
+  {# ======================================================================= #}
+  <section id="compliance" class="sec">
+    <h2>6. Compliance Best Practices</h2>
+    <p class="sec-lead">
+      A robust OFAC compliance program is essential for any organization
+      conducting business with or involving Venezuela. OFAC has published
+      detailed guidance on the elements of an effective compliance program.
+    </p>
+
+    <div class="card-grid cols-2">
+      <div class="card">
+        <h3>Know Your Customer (KYC)</h3>
+        <div class="meta">Foundation</div>
+        <p style="font-size: 14px; line-height: 1.6; margin-top: 8px;">
+          Establish robust KYC procedures that include beneficial ownership
+          identification. The 50% rule means you must determine not just who
+          your direct counterparty is, but who ultimately owns and controls
+          them. Enhanced due diligence is required for Venezuelan counterparties.
+        </p>
+      </div>
+
+      <div class="card">
+        <h3>Transaction Screening</h3>
+        <div class="meta">Ongoing</div>
+        <p style="font-size: 14px; line-height: 1.6; margin-top: 8px;">
+          Screen all parties to a transaction&mdash;including intermediaries,
+          beneficial owners, and end users&mdash;against the SDN list and other
+          OFAC lists before processing. Re-screen existing relationships
+          whenever OFAC updates its lists (typically multiple times per month).
+        </p>
+      </div>
+
+      <div class="card">
+        <h3>Record Keeping</h3>
+        <div class="meta">Regulatory</div>
+        <p style="font-size: 14px; line-height: 1.6; margin-top: 8px;">
+          Maintain records of all compliance screening, due diligence, and
+          blocked or rejected transactions for at least five years. OFAC may
+          request documentation during examinations. Records should include
+          screening methodology, results, and any follow-up analysis.
+        </p>
+      </div>
+
+      <div class="card">
+        <h3>Voluntary Self-Disclosure</h3>
+        <div class="meta">Enforcement</div>
+        <p style="font-size: 14px; line-height: 1.6; margin-top: 8px;">
+          If you discover an apparent OFAC violation, voluntary self-disclosure
+          (VSD) to OFAC is a significant mitigating factor in enforcement
+          proceedings. OFAC&rsquo;s Economic Sanctions Enforcement Guidelines
+          provide that VSD can reduce the base civil penalty by up to 50%.
+        </p>
+      </div>
+    </div>
+
+    <div class="disclaimer">
+      <strong>When to consult legal counsel:</strong> Any transaction involving
+      Venezuela, Venezuelan nationals, or entities with Venezuelan government
+      connections should be reviewed by counsel experienced in US sanctions law.
+      This is especially important during the current transition period, where
+      the status of many designations and General Licenses is evolving rapidly.
+    </div>
+  </section>
+
+  {# ======================================================================= #}
+  {# Section 7: Recent Changes (2026)                                        #}
+  {# ======================================================================= #}
+  <section id="recent-changes" class="sec">
+    <h2>7. Recent Changes ({{ current_year }})</h2>
+    <p class="sec-lead">
+      The Venezuela sanctions program has undergone significant changes following
+      the political transition in early 2026.
+    </p>
+
+    <div class="timeline">
+      <div class="tl-item positive">
+        <span class="tl-dot"></span>
+        <div class="tl-date">January 2026</div>
+        <div class="tl-title">Political Transition in Venezuela</div>
+        <div class="tl-desc">
+          Following the contested 2024 presidential election and sustained
+          international pressure, a political transition begins in Venezuela.
+          The US government signals willingness to recalibrate sanctions in
+          response to democratic progress.
+        </div>
+      </div>
+
+      <div class="tl-item positive">
+        <span class="tl-dot"></span>
+        <div class="tl-date">January&ndash;February 2026</div>
+        <div class="tl-title">New General Licenses Issued</div>
+        <div class="tl-desc">
+          Treasury issues amended and new General Licenses (including GL 50A
+          and GL 52) to facilitate legitimate investment and oil operations
+          in support of the transitional government. These GLs mark the most
+          significant easing of Venezuela sanctions since the program&rsquo;s
+          expansion in 2019.
+        </div>
+      </div>
+
+      <div class="tl-item positive">
+        <span class="tl-dot"></span>
+        <div class="tl-date">February&ndash;March 2026</div>
+        <div class="tl-title">Targeted Delistings Begin</div>
+        <div class="tl-desc">
+          OFAC begins targeted delistings of individuals and entities
+          associated with the former Maduro government who cooperated with
+          the transition process. The focus shifts from broad economic
+          sanctions to targeted measures against individuals involved in
+          corruption, narcotics trafficking, and human rights abuses.
+        </div>
+      </div>
+
+      <div class="tl-item pending">
+        <span class="tl-dot"></span>
+        <div class="tl-date">Q2 2026</div>
+        <div class="tl-title">Comprehensive Sanctions Review</div>
+        <div class="tl-desc">
+          Treasury conducts a comprehensive review of the Venezuela
+          sanctions program, with potential for further modifications
+          contingent on continued democratic progress. Results expected
+          by mid-2026.
+        </div>
+      </div>
+    </div>
+  </section>
+
+  {# ======================================================================= #}
+  {# Section 8: FAQ                                                          #}
+  {# ======================================================================= #}
+  <section id="faq" class="sec">
+    <h2>8. Frequently Asked Questions</h2>
+    <p class="sec-lead">
+      Common questions about the OFAC sanctions list, the SDN list, and
+      Venezuela sanctions, answered in plain English.
+    </p>
+
+    <div class="faq-list">
+      {% for item in faq %}
+      <div class="faq-item{% if loop.first %} open{% endif %}">
+        <button type="button" class="faq-q">
+          <span class="faq-icon">+</span>
+          {{ item.q }}
+        </button>
+        <div class="faq-a">{{ item.a | safe }}</div>
+      </div>
+      {% endfor %}
+
+      <div class="faq-item">
+        <button type="button" class="faq-q">
+          <span class="faq-icon">+</span>
+          What is the difference between the SDN List and the Consolidated Sanctions List?
+        </button>
+        <div class="faq-a">
+          <p>
+            The <strong>SDN List</strong> (Specially Designated Nationals and Blocked
+            Persons List) is OFAC&rsquo;s primary sanctions list, containing individuals
+            and entities whose assets are fully blocked. The <strong>Consolidated
+            Sanctions List</strong> is a single downloadable file that merges the SDN
+            list with all other OFAC lists&mdash;including the Sectoral Sanctions
+            Identifications (SSI) List, the Foreign Sanctions Evaders (FSE) List,
+            and others. For comprehensive screening, compliance teams should use
+            the Consolidated Sanctions List, as prohibitions may apply under non-SDN
+            lists as well.
+          </p>
+        </div>
+      </div>
+
+      <div class="faq-item">
+        <button type="button" class="faq-q">
+          <span class="faq-icon">+</span>
+          Can I do business with Venezuela?
+        </button>
+        <div class="faq-a">
+          <p>
+            It depends on the nature of the business and the parties involved.
+            Following the January 2026 political transition, OFAC has issued
+            General Licenses authorizing certain categories of activity,
+            including oil operations (GL 50A) and new investment (GL 52).
+            However, broad sanctions under E.O. 13884 remain in effect, and
+            any transaction involving SDN-listed parties or the former Maduro
+            government apparatus remains prohibited. All Venezuela-related
+            business activities should be reviewed by legal counsel experienced
+            in US sanctions law before proceeding.
+          </p>
+        </div>
+      </div>
+
+      <div class="faq-item">
+        <button type="button" class="faq-q">
+          <span class="faq-icon">+</span>
+          What happens if I violate OFAC sanctions?
+        </button>
+        <div class="faq-a">
+          <p>
+            OFAC violations can result in severe penalties. Civil penalties
+            can reach $330,000+ per violation or twice the value of the
+            underlying transaction. Criminal penalties include fines up to
+            $1,000,000 and imprisonment of up to 20 years per willful
+            violation. OFAC enforces on a strict liability basis, meaning
+            that even unintentional violations can result in penalties.
+            Voluntary self-disclosure of violations is a significant
+            mitigating factor. Companies and individuals may also face
+            reputational harm, loss of banking relationships, and regulatory
+            scrutiny.
+          </p>
+        </div>
+      </div>
+
+      <div class="faq-item">
+        <button type="button" class="faq-q">
+          <span class="faq-icon">+</span>
+          How often is the SDN list updated?
+        </button>
+        <div class="faq-a">
+          <p>
+            OFAC updates the SDN list on a rolling basis, with changes
+            published as they occur rather than on a fixed schedule. In
+            practice, the list is typically updated multiple times per month,
+            and sometimes multiple times per week. New designations,
+            amendments, and removals are published in the Federal Register
+            and on OFAC&rsquo;s website. Compliance teams should subscribe
+            to OFAC&rsquo;s email notifications and re-screen counterparties
+            whenever updates are published.
+          </p>
+        </div>
+      </div>
+
+      <div class="faq-item">
+        <button type="button" class="faq-q">
+          <span class="faq-icon">+</span>
+          Are PDVSA bonds still sanctioned?
+        </button>
+        <div class="faq-a">
+          <p>
+            PDVSA and the Government of Venezuela remain on the SDN list.
+            However, General License 46B authorizes certain secondary-market
+            transactions involving existing Venezuelan sovereign and
+            PDVSA-issued debt. This means holders can trade existing bonds
+            on secondary markets, but new lending to or bond purchases
+            directly from the Venezuelan government or PDVSA remain
+            restricted unless specifically authorized. The status of bond
+            sanctions may evolve as OFAC continues its post-transition
+            review. Consult legal counsel before transacting in Venezuelan
+            sovereign or PDVSA debt.
+          </p>
+        </div>
+      </div>
+
+      <div class="faq-item">
+        <button type="button" class="faq-q">
+          <span class="faq-icon">+</span>
+          What is a General License?
+        </button>
+        <div class="faq-a">
+          <p>
+            A <strong>General License</strong> is a standing authorization
+            issued by OFAC that permits certain categories of transactions
+            that would otherwise be prohibited under a sanctions program. Unlike
+            a <strong>Specific License</strong>, which is granted on a
+            case-by-case basis to a particular applicant, a General License
+            is available to anyone who meets the stated conditions. General
+            Licenses for the Venezuela program authorize activities such as
+            oil operations (GL 50A), Citgo-related transactions (GL 5H),
+            bond trading (GL 46B), and new investment (GL 52). Reliance on
+            a General License should be documented in your compliance records.
+          </p>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  {# ======================================================================= #}
+  {# Related Coverage                                                         #}
+  {# ======================================================================= #}
+  <section class="sec">
+    <h2>Related Coverage</h2>
+    <p class="sec-lead">
+      Explore related tools and analysis on Caracas Research.
+    </p>
+
+    <div class="related-grid">
+      <a class="related-link" href="/sanctions-tracker">
+        <div class="rl-tag">Sanctions</div>
+        <div class="rl-title">Venezuela Sanctions Tracker</div>
+        <div class="rl-desc">Real-time tracking of US, EU, and Canadian sanctions on Venezuela, including SDN designations, General Licenses, and enforcement actions.</div>
+      </a>
+      <a class="related-link" href="/research/sdn">
+        <div class="rl-tag">Research</div>
+        <div class="rl-title">SDN Research Hub</div>
+        <div class="rl-desc">Deep-dive profiles on designated Venezuelan individuals and entities, with relationship mapping and designation history.</div>
+      </a>
+      <a class="related-link" href="/tools/ofac-venezuela-sanctions-checker">
+        <div class="rl-tag">Tool</div>
+        <div class="rl-title">OFAC Venezuela Sanctions Checker</div>
+        <div class="rl-desc">Free screening tool for Venezuela-related OFAC designations, with context and General License applicability for each entry.</div>
+      </a>
+      <a class="related-link" href="/venezuela-oil">
+        <div class="rl-tag">Energy</div>
+        <div class="rl-title">Venezuela Oil &amp; Energy</div>
+        <div class="rl-desc">Analysis of Venezuela&rsquo;s oil sector, production data, licensing, and the impact of sanctions on energy operations.</div>
+      </a>
+    </div>
+  </section>
+
+  {# ======================================================================= #}
+  {# Disclaimer                                                              #}
+  {# ======================================================================= #}
+  <div class="disclaimer">
+    <strong>Disclaimer:</strong> This page is for informational purposes only and
+    does not constitute legal advice. OFAC sanctions regulations are complex and
+    subject to frequent change. Organizations and individuals should consult
+    qualified legal counsel before engaging in any transactions involving
+    Venezuela or Venezuelan parties. Information is current as of
+    {{ updated_label }} and may change as OFAC issues new guidance.
+  </div>
+
+  {# ======================================================================= #}
+  {# Newsletter CTA                                                          #}
+  {# ======================================================================= #}
+  <div style="margin-top: 40px; padding: 18px; background: var(--sr-gray-bg); border-radius: 4px;">
+    <p style="font-size: 14px; color: var(--sr-dark-text); margin: 0;">
+      <strong>Stay informed on Venezuela sanctions changes.</strong>
+      Subscribe to the Caracas Research daily briefing for OFAC updates,
+      General License changes, SDN list updates, and compliance analysis.
+      <a href="/#signup" style="font-weight: 600;">Get the daily briefing &rarr;</a>
+    </p>
+  </div>
+
+  <p style="font-size: 12px; color: var(--sr-gray-text); margin: 24px 0;">
+    Sources: US Department of the Treasury, Office of Foreign Assets Control;
+    Federal Register notices; Executive Orders 13692, 13808, 13827, 13835,
+    13850, 13884; OFAC General Licenses; OFAC Sanctions List Search
+    (sanctionssearch.ofac.treas.gov). All referenced regulatory documents
+    are part of the public record.
+  </p>
+
+</section>
+
+<script>
+(function initFaqToggle() {
+  document.querySelectorAll('.faq-q').forEach(function(btn) {
+    btn.addEventListener('click', function() {
+      var item = btn.closest('.faq-item');
+      if (!item) return;
+      item.classList.toggle('open');
+    });
+  });
+})();
+</script>
+
+{% from "_recent_briefings.html.j2" import recent_briefings_rail %}
+{{ recent_briefings_rail(
+     recent_briefings,
+     heading="Latest analysis",
+     intro="Recent briefings on OFAC sanctions, SDN designations, General Licenses, and Venezuela compliance developments.",
+) }}
+{% endblock %}

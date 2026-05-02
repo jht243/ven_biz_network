@@ -1,0 +1,867 @@
+{% extends "_base.html.j2" %}
+{% from "_base.html.j2" import share_button %}
+
+{% block head_extra %}
+<style>
+  .sanc-hero { background: linear-gradient(180deg, #f6f8fa 0%, var(--white) 100%); padding: 28px 0 16px; margin-bottom: 16px; }
+  .sanc-hero .kicker { font-size: 12px; text-transform: uppercase; letter-spacing: 1.4px; color: #cc0000; font-weight: 700; }
+  .sanc-hero h1 { font-family: var(--font-serif); font-size: 32px; color: var(--sr-blue-dark); margin: 8px 0 8px; line-height: 1.2; }
+  .sanc-hero p.lead { font-family: var(--font-serif); font-style: italic; color: var(--sr-gray-text); font-size: 16px; max-width: 720px; margin: 0; }
+
+  .era-banner { display: grid; grid-template-columns: repeat(5, 1fr); gap: 0; margin: 24px 0 28px; border: 1px solid var(--sr-gray-light); border-radius: 6px; overflow: hidden; }
+  @media (max-width: 768px) { .era-banner { grid-template-columns: 1fr; } }
+  .era-cell { padding: 16px 14px; text-align: center; border-right: 1px solid var(--sr-gray-light); position: relative; }
+  .era-cell:last-child { border-right: none; }
+  .era-cell .era-year { font-family: var(--font-serif); font-size: 20px; font-weight: 700; color: var(--sr-blue-dark); }
+  .era-cell .era-label { font-size: 12px; color: var(--sr-gray-text); margin-top: 4px; line-height: 1.4; }
+  .era-cell.obama { border-top: 3px solid #1565c0; }
+  .era-cell.trump1 { border-top: 3px solid #cc0000; }
+  .era-cell.biden { border-top: 3px solid #2e7d32; }
+  .era-cell.trump2 { border-top: 3px solid #b71c1c; }
+  .era-cell.transition { border-top: 3px solid #f5b041; }
+
+  .toc { background: var(--sr-gray-bg); border-left: 3px solid var(--sr-blue); padding: 18px 22px; margin: 0 0 32px; font-size: 14px; }
+  .toc h3 { font-family: var(--font-serif); font-size: 14px; text-transform: uppercase; letter-spacing: 1px; color: var(--sr-blue-dark); margin-bottom: 10px; }
+  .toc ol { margin-left: 20px; columns: 2; column-gap: 24px; }
+  .toc li { margin-bottom: 6px; }
+  @media (max-width: 640px) { .toc ol { columns: 1; } }
+
+  .sec { margin: 40px 0 24px; padding-top: 8px; }
+  .sec h2 { font-family: var(--font-serif); font-size: 26px; color: var(--sr-blue-dark); margin-bottom: 8px; }
+  .sec .sec-lead { color: var(--sr-gray-text); margin-bottom: 18px; font-size: 15px; }
+
+  .card-grid { display: grid; grid-template-columns: 1fr; gap: 14px; margin-bottom: 18px; }
+  @media (min-width: 720px) { .card-grid.cols-2 { grid-template-columns: 1fr 1fr; } }
+  @media (min-width: 980px) { .card-grid.cols-3 { grid-template-columns: 1fr 1fr 1fr; } }
+
+  .card { background: var(--white); border: 1px solid var(--sr-gray-light); border-radius: 4px; padding: 18px 20px; transition: border-color 0.15s, transform 0.15s; }
+  .card:hover { border-color: var(--sr-blue); transform: translateY(-1px); }
+  .card h3 { font-family: var(--font-serif); font-size: 17px; color: var(--sr-blue-dark); margin-bottom: 6px; }
+  .card .meta { font-size: 12px; text-transform: uppercase; letter-spacing: 0.5px; color: var(--sr-gray-text); margin-bottom: 8px; }
+  .card .row { font-size: 14px; margin: 4px 0; }
+  .card .row strong { color: var(--sr-dark-text); display: inline-block; min-width: 96px; font-weight: 600; }
+  .card a.cta { font-size: 13px; color: var(--sr-blue); font-weight: 600; text-decoration: none; }
+  .card a.cta:hover { text-decoration: underline; }
+  .card .note { font-size: 13px; color: var(--sr-gray-text); margin-top: 10px; line-height: 1.55; padding-top: 10px; border-top: 1px dotted var(--sr-gray-light); }
+
+  .em-table { width: 100%; border-collapse: collapse; margin: 8px 0 18px; font-size: 14px; }
+  .em-table th, .em-table td { text-align: left; padding: 10px 12px; border-bottom: 1px solid var(--sr-gray-light); }
+  .em-table th { background: var(--sr-gray-bg); font-size: 12px; text-transform: uppercase; letter-spacing: 0.5px; color: var(--sr-gray-text); font-weight: 600; }
+  .em-table td.num { font-family: var(--font-sans); font-weight: 600; color: var(--sr-blue); white-space: nowrap; }
+
+  .disclaimer { background: #fff8e1; border-left: 4px solid #f5b041; padding: 14px 18px; border-radius: 3px; margin: 20px 0; font-size: 13.5px; line-height: 1.65; color: var(--sr-dark-text); }
+
+  .timeline { position: relative; padding: 0 0 0 32px; margin: 24px 0 28px; }
+  .timeline::before { content: ""; position: absolute; top: 0; bottom: 0; left: 14px; width: 3px; background: var(--sr-gray-light); border-radius: 2px; }
+  .tl-item { position: relative; margin-bottom: 24px; }
+  .tl-item:last-child { margin-bottom: 0; }
+  .tl-dot { position: absolute; left: -25px; top: 3px; width: 14px; height: 14px; border-radius: 50%; border: 3px solid var(--sr-blue); background: var(--white); z-index: 1; }
+  .tl-item.positive .tl-dot { border-color: #2e7d32; }
+  .tl-item.negative .tl-dot { border-color: #cc0000; }
+  .tl-item.pending .tl-dot { border-color: #f5b041; }
+  .tl-date { font-size: 12px; text-transform: uppercase; letter-spacing: 0.8px; color: var(--sr-gray-text); font-weight: 700; margin-bottom: 3px; }
+  .tl-title { font-family: var(--font-serif); font-size: 15px; color: var(--sr-blue-dark); font-weight: 700; margin-bottom: 4px; }
+  .tl-desc { font-size: 14px; color: var(--sr-dark-text); line-height: 1.6; }
+
+  .stat-grid { display: grid; grid-template-columns: 1fr; gap: 14px; margin: 18px 0 24px; }
+  @media (min-width: 640px) { .stat-grid { grid-template-columns: 1fr 1fr 1fr; } }
+  .stat-card { background: var(--sr-gray-bg); border: 1px solid var(--sr-gray-light); border-radius: 6px; padding: 18px 20px; text-align: center; }
+  .stat-card .stat-num { font-family: var(--font-serif); font-size: 32px; font-weight: 700; color: var(--sr-blue-dark); line-height: 1.1; }
+  .stat-card .stat-label { font-size: 13px; color: var(--sr-gray-text); margin-top: 6px; text-transform: uppercase; letter-spacing: 0.5px; }
+
+  .reasons-list { list-style: none; padding: 0; margin: 16px 0; }
+  .reasons-list li { padding: 12px 16px; margin-bottom: 8px; background: var(--sr-gray-bg); border-left: 4px solid var(--sr-blue); border-radius: 0 4px 4px 0; font-size: 15px; line-height: 1.6; }
+  .reasons-list li strong { color: var(--sr-blue-dark); }
+
+  .faq-list { margin: 18px 0 28px; }
+  .faq-item { border: 1px solid var(--sr-gray-light); border-radius: 4px; margin-bottom: 10px; overflow: hidden; }
+  .faq-q { display: flex; align-items: center; gap: 12px; padding: 16px 18px; cursor: pointer; background: var(--white); font-family: var(--font-serif); font-size: 16px; font-weight: 700; color: var(--sr-blue-dark); transition: background 0.15s; border: 0; width: 100%; text-align: left; }
+  .faq-q:hover { background: var(--sr-gray-bg); }
+  .faq-q .faq-icon { flex-shrink: 0; width: 24px; height: 24px; border-radius: 50%; background: var(--sr-blue); color: var(--white); display: flex; align-items: center; justify-content: center; font-size: 14px; font-weight: 700; transition: transform 0.2s; font-family: var(--font-sans); }
+  .faq-item.open .faq-q .faq-icon { transform: rotate(45deg); }
+  .faq-a { padding: 0 18px 16px; font-size: 15px; line-height: 1.7; color: var(--sr-dark-text); display: none; }
+  .faq-item.open .faq-a { display: block; }
+
+  .related-grid { display: grid; grid-template-columns: 1fr; gap: 12px; margin: 16px 0 24px; }
+  @media (min-width: 720px) { .related-grid { grid-template-columns: 1fr 1fr; } }
+  .related-link { display: block; padding: 16px 18px; background: var(--white); border: 1px solid var(--sr-gray-light); border-radius: 4px; text-decoration: none; color: inherit; transition: border-color 0.15s, transform 0.15s; }
+  .related-link:hover { border-color: var(--sr-blue); transform: translateY(-1px); }
+  .related-link .rl-tag { font-size: 11px; text-transform: uppercase; letter-spacing: 1px; color: var(--sr-red); font-weight: 700; margin-bottom: 4px; }
+  .related-link .rl-title { font-family: var(--font-serif); font-size: 16px; color: var(--sr-blue-dark); font-weight: 700; margin-bottom: 4px; }
+  .related-link .rl-desc { font-size: 13px; color: var(--sr-gray-text); line-height: 1.5; }
+</style>
+{% endblock %}
+
+{% block content %}
+<section class="container-wide">
+
+  <nav class="breadcrumbs" aria-label="Breadcrumb">
+    <a href="/">Home</a><span>/</span>
+    <a href="/sanctions-tracker">Sanctions</a><span>/</span>
+    <span>Why Is Venezuela Sanctioned</span>
+    <span style="margin-left:auto;">{{ share_button(seo.canonical, seo.title) }}</span>
+  </nav>
+
+  <header class="sanc-hero">
+    <div class="kicker">Explainer &middot; Updated {{ updated_label }}</div>
+    <h1>Why Is Venezuela Sanctioned? Complete History &amp; {{ current_year }} Status</h1>
+    <p class="lead">
+      The definitive explainer on why the United States imposed sanctions on
+      Venezuela&mdash;from the first targeted measures under Obama to the
+      maximum-pressure campaigns, conditional relief, and post-transition
+      recalibration through {{ current_year }}.
+    </p>
+  </header>
+
+  {# ============ Timeline era banner ============ #}
+  <div class="era-banner">
+    <div class="era-cell obama">
+      <div class="era-year">2015</div>
+      <div class="era-label">First targeted sanctions (Obama)</div>
+    </div>
+    <div class="era-cell trump1">
+      <div class="era-year">2017&ndash;19</div>
+      <div class="era-label">Escalation &amp; oil embargo (Trump)</div>
+    </div>
+    <div class="era-cell biden">
+      <div class="era-year">2021&ndash;23</div>
+      <div class="era-label">Conditional relief (Biden)</div>
+    </div>
+    <div class="era-cell trump2">
+      <div class="era-year">2024&ndash;25</div>
+      <div class="era-label">Maximum pressure redux (Trump II)</div>
+    </div>
+    <div class="era-cell transition">
+      <div class="era-year">2026</div>
+      <div class="era-label">Post-transition recalibration</div>
+    </div>
+  </div>
+
+  {# ============ Table of contents ============ #}
+  <nav class="toc" aria-label="Table of contents">
+    <h3>Contents</h3>
+    <ol>
+      <li><a href="#short-answer">The Short Answer</a></li>
+      <li><a href="#obama-era">The Obama Era (2014&ndash;2017)</a></li>
+      <li><a href="#trump-escalation">The Trump Escalation (2017&ndash;2021)</a></li>
+      <li><a href="#biden-approach">The Biden Approach (2021&ndash;2024)</a></li>
+      <li><a href="#trump-ii">Trump II &amp; Political Transition (2025&ndash;2026)</a></li>
+      <li><a href="#oil-sanctions">Why Is Venezuelan Oil Sanctioned?</a></li>
+      <li><a href="#2026-transition">What Changed After the 2026 Transition?</a></li>
+      <li><a href="#faq">Frequently Asked Questions</a></li>
+    </ol>
+  </nav>
+
+  {# ======================================================================= #}
+  <section id="short-answer" class="sec">
+    <h2>1. The Short Answer</h2>
+    <p class="sec-lead">
+      Venezuela was sanctioned because of a convergence of democratic collapse,
+      human rights atrocities, corruption, and drug trafficking&mdash;all of which
+      threatened US national security interests and hemispheric stability.
+    </p>
+
+    <ul class="reasons-list">
+      <li>
+        <strong>Democratic backsliding:</strong> The systematic dismantling of
+        democratic institutions under Hugo Ch&aacute;vez and Nicol&aacute;s Maduro,
+        including the neutering of the National Assembly, packing of courts, and
+        elimination of free press.
+      </li>
+      <li>
+        <strong>Human rights abuses:</strong> Arbitrary detention of political
+        opponents, extrajudicial killings by security forces (documented by the
+        UN Fact-Finding Mission), torture, and enforced disappearances.
+      </li>
+      <li>
+        <strong>Corruption and kleptocracy:</strong> Billions siphoned from
+        Petr&oacute;leos de Venezuela (PDVSA) and state institutions. Senior
+        officials laundered funds through international financial networks.
+      </li>
+      <li>
+        <strong>Drug trafficking:</strong> Senior Venezuelan military and
+        government officials facilitated cocaine transit through Venezuelan
+        territory. Multiple officials were indicted by US federal courts.
+      </li>
+      <li>
+        <strong>Undermining elections:</strong> The 2018 presidential election
+        was widely condemned as fraudulent by the US, EU, Lima Group, and most
+        democracies, leading to the recognition crisis of 2019.
+      </li>
+    </ul>
+
+    <p>
+      Sanctions evolved from narrow, individual-targeting measures in 2015 to a
+      comprehensive economic embargo by 2019, and have since fluctuated based on
+      whether the Venezuelan government demonstrated willingness to negotiate
+      genuinely democratic outcomes.
+    </p>
+  </section>
+
+  {# ======================================================================= #}
+  <section id="obama-era" class="sec">
+    <h2>2. The Obama Era (2014&ndash;2017)</h2>
+    <p class="sec-lead">
+      The first US sanctions on Venezuela were targeted, bipartisan, and focused
+      exclusively on individuals responsible for human rights abuses and
+      corruption&mdash;not on the economy or oil sector.
+    </p>
+
+    <div class="timeline">
+      <div class="tl-item">
+        <span class="tl-dot"></span>
+        <div class="tl-date">December 2014</div>
+        <div class="tl-title">Venezuela Defense of Human Rights and Civil Society Act</div>
+        <div class="tl-desc">
+          Congress passes (and Obama signs) legislation requiring the President to
+          impose sanctions on Venezuelan officials responsible for significant acts
+          of violence against anti-government protesters, the arrest or prosecution
+          of people exercising legitimate rights, or significant public corruption.
+          The vote was bipartisan and nearly unanimous.
+        </div>
+      </div>
+
+      <div class="tl-item negative">
+        <span class="tl-dot"></span>
+        <div class="tl-date">February 2014 (context)</div>
+        <div class="tl-title">La Salida Protests</div>
+        <div class="tl-desc">
+          Widespread anti-government protests erupt across Venezuela. Security
+          forces and pro-government militias (colectivos) kill at least 43 people.
+          Opposition leader Leopoldo L&oacute;pez is arrested and charged with
+          inciting violence&mdash;a prosecution widely seen as politically motivated.
+          These events galvanize US congressional action.
+        </div>
+      </div>
+
+      <div class="tl-item negative">
+        <span class="tl-dot"></span>
+        <div class="tl-date">March 9, 2015</div>
+        <div class="tl-title">Executive Order 13692</div>
+        <div class="tl-desc">
+          President Obama issues E.O. 13692, declaring a national emergency with
+          respect to the situation in Venezuela and authorizing the Treasury
+          Department to sanction individuals involved in: (a) actions undermining
+          democratic processes, (b) significant acts of violence or human rights
+          abuses, (c) significant public corruption, and (d) actions prohibiting
+          the free exercise of human rights. Seven Venezuelan officials are
+          immediately designated to the SDN list.
+        </div>
+      </div>
+
+      <div class="tl-item">
+        <span class="tl-dot"></span>
+        <div class="tl-date">2015&ndash;2016</div>
+        <div class="tl-title">Additional Individual Designations</div>
+        <div class="tl-desc">
+          OFAC adds additional Venezuelan officials to the SDN list under E.O.
+          13692. All designations remain targeted at individuals&mdash;no sectoral
+          or economic sanctions are imposed. The approach focuses on accountability
+          for specific officials while avoiding harm to the general population.
+        </div>
+      </div>
+    </div>
+
+    <div class="card">
+      <h3>Key Point: Obama Did Not Sanction Venezuelan Oil</h3>
+      <div class="note">
+        The Obama-era sanctions were strictly targeted at individual officials.
+        No economic sectors were sanctioned. American companies continued to
+        purchase Venezuelan crude oil throughout this period without restriction.
+        The question &ldquo;did Obama sanction Venezuela?&rdquo; is best answered
+        as: yes, but only specific individuals&mdash;not the country&rsquo;s economy.
+      </div>
+    </div>
+  </section>
+
+  {# ======================================================================= #}
+  <section id="trump-escalation" class="sec">
+    <h2>3. The Trump Escalation (2017&ndash;2021)</h2>
+    <p class="sec-lead">
+      The Trump administration dramatically expanded sanctions from targeted
+      individual measures to a comprehensive economic embargo&mdash;including,
+      critically, the oil sector that funded the Maduro regime.
+    </p>
+
+    <table class="em-table">
+      <thead>
+        <tr>
+          <th>Executive Order</th>
+          <th>Date</th>
+          <th>What It Did</th>
+        </tr>
+      </thead>
+      <tbody>
+        <tr>
+          <td>E.O. 13808</td>
+          <td>Aug 2017</td>
+          <td>Banned dealing in new Venezuelan government and PDVSA debt</td>
+        </tr>
+        <tr>
+          <td>E.O. 13827</td>
+          <td>Mar 2018</td>
+          <td>Prohibited transactions involving the Venezuelan &ldquo;Petro&rdquo; digital currency</td>
+        </tr>
+        <tr>
+          <td>E.O. 13835</td>
+          <td>May 2018</td>
+          <td>Banned purchase of existing Venezuelan government debt</td>
+        </tr>
+        <tr>
+          <td>E.O. 13850</td>
+          <td>Nov 2018</td>
+          <td>Gold sector sanctions; authorized sanctions on any sector of the economy</td>
+        </tr>
+        <tr>
+          <td>E.O. 13884</td>
+          <td>Aug 2019</td>
+          <td>Full economic embargo on the Government of Venezuela</td>
+        </tr>
+      </tbody>
+    </table>
+
+    <h3 style="font-family: var(--font-serif); font-size: 19px; color: var(--sr-blue-dark); margin: 24px 0 12px;">
+      The Oil Sanctions: PDVSA Designation (January 2019)
+    </h3>
+    <p>
+      On January 28, 2019, OFAC designated PDVSA as a Specially Designated
+      National (SDN), effectively imposing a near-total embargo on Venezuelan
+      crude oil. This was the single most consequential sanctions action against
+      Venezuela because oil revenue accounted for approximately 95% of
+      Venezuela&rsquo;s export earnings and was the primary funding mechanism
+      for the Maduro government&rsquo;s security apparatus.
+    </p>
+    <p>
+      The designation was paired with a General License (GL 7) that allowed a
+      wind-down period for existing contracts, and a specific authorization for
+      Chevron (GL 8, later replaced by GL 41) to maintain limited operations.
+    </p>
+
+    <div class="stat-grid">
+      <div class="stat-card">
+        <div class="stat-num">1.15M</div>
+        <div class="stat-label">bpd production (Jan 2019)</div>
+      </div>
+      <div class="stat-card">
+        <div class="stat-num">392K</div>
+        <div class="stat-label">bpd production (late 2020)</div>
+      </div>
+      <div class="stat-card">
+        <div class="stat-num">~66%</div>
+        <div class="stat-label">Production decline</div>
+      </div>
+    </div>
+
+    <h3 style="font-family: var(--font-serif); font-size: 19px; color: var(--sr-blue-dark); margin: 24px 0 12px;">
+      The Guaid&oacute; Gambit (January 2019)
+    </h3>
+    <p>
+      The sanctions escalation coincided with the US (and over 50 other
+      countries) recognizing National Assembly President Juan Guaid&oacute; as
+      Venezuela&rsquo;s legitimate interim president, following the widely
+      condemned May 2018 presidential election. The strategy was to use maximum
+      economic pressure to force Maduro from power.
+    </p>
+    <p>
+      The policy ultimately failed to achieve regime change. Maduro retained
+      control of the military and key institutions, while the economic
+      contraction devastated ordinary Venezuelans and contributed to the
+      migration crisis that displaced over 7 million people.
+    </p>
+
+    <h3 style="font-family: var(--font-serif); font-size: 19px; color: var(--sr-blue-dark); margin: 24px 0 12px;">
+      Humanitarian Criticism
+    </h3>
+    <p>
+      International organizations, including the UN and humanitarian NGOs,
+      expressed concern that broad economic sanctions exacerbated Venezuela&rsquo;s
+      humanitarian crisis. Critics argued that while the Maduro government bore
+      primary responsibility for economic mismanagement, sanctions made it harder
+      for ordinary Venezuelans to access food, medicine, and basic goods. The US
+      government maintained that sanctions included humanitarian exemptions and
+      that the Maduro regime was responsible for blocking aid distribution.
+    </p>
+  </section>
+
+  {# ======================================================================= #}
+  <section id="biden-approach" class="sec">
+    <h2>4. The Biden Approach (2021&ndash;2024)</h2>
+    <p class="sec-lead">
+      The Biden administration shifted from maximum pressure to conditional
+      engagement&mdash;offering sanctions relief in exchange for verifiable
+      democratic progress.
+    </p>
+
+    <div class="timeline">
+      <div class="tl-item positive">
+        <span class="tl-dot"></span>
+        <div class="tl-date">2021&ndash;2022</div>
+        <div class="tl-title">Review and Initial Engagement</div>
+        <div class="tl-desc">
+          The Biden team maintained existing sanctions but began back-channel
+          engagement with the Maduro government. Limited authorizations were
+          issued for specific humanitarian and energy-related activities. Chevron&rsquo;s
+          GL 41 was renewed, allowing the company to maintain (but not expand)
+          its Venezuelan operations.
+        </div>
+      </div>
+
+      <div class="tl-item positive">
+        <span class="tl-dot"></span>
+        <div class="tl-date">October 2023</div>
+        <div class="tl-title">Barbados Agreement &amp; GL 44</div>
+        <div class="tl-desc">
+          Following negotiations in Barbados between the Maduro government and
+          the Venezuelan opposition (with US and Norwegian facilitation), OFAC
+          issued General License 44, authorizing transactions involving
+          Venezuela&rsquo;s oil and gas sector for a six-month period. The license
+          was contingent on Venezuela&rsquo;s commitment to hold free and fair
+          presidential elections with all candidates permitted to run.
+        </div>
+      </div>
+
+      <div class="tl-item negative">
+        <span class="tl-dot"></span>
+        <div class="tl-date">January&ndash;March 2024</div>
+        <div class="tl-title">Maduro Blocks Opposition Candidates</div>
+        <div class="tl-desc">
+          The Maduro-controlled Supreme Tribunal (TSJ) upheld the disqualification
+          of opposition primary winner Mar&iacute;a Corina Machado and subsequently
+          blocked multiple alternative candidates. The US determined that Venezuela
+          had violated the Barbados Agreement&rsquo;s democratic commitments.
+        </div>
+      </div>
+
+      <div class="tl-item negative">
+        <span class="tl-dot"></span>
+        <div class="tl-date">April 2024</div>
+        <div class="tl-title">GL 44 Revoked</div>
+        <div class="tl-desc">
+          OFAC revoked General License 44 and issued a 45-day wind-down period
+          (GL 44A). Venezuela returned to a restricted sanctions framework.
+          Chevron&rsquo;s specific authorization under GL 41 continued, but
+          broader oil-sector access was closed.
+        </div>
+      </div>
+
+      <div class="tl-item">
+        <span class="tl-dot"></span>
+        <div class="tl-date">July 2024</div>
+        <div class="tl-title">Disputed Presidential Election</div>
+        <div class="tl-desc">
+          Venezuela held presidential elections on July 28, 2024. The opposition
+          (Edmundo Gonz&aacute;lez Urrutia) claimed victory with published
+          precinct-level tally sheets. The Maduro-controlled CNE declared Maduro
+          the winner without publishing disaggregated results. The US and most
+          democracies recognized Gonz&aacute;lez as the election&rsquo;s legitimate
+          winner.
+        </div>
+      </div>
+    </div>
+  </section>
+
+  {# ======================================================================= #}
+  <section id="trump-ii" class="sec">
+    <h2>5. Trump II &amp; the Political Transition (2025&ndash;2026)</h2>
+    <p class="sec-lead">
+      The second Trump administration reimposed maximum pressure before a
+      political transition in January 2026 reshaped the sanctions landscape.
+    </p>
+
+    <div class="timeline">
+      <div class="tl-item negative">
+        <span class="tl-dot"></span>
+        <div class="tl-date">January&ndash;February 2025</div>
+        <div class="tl-title">Maximum Pressure Reimposed</div>
+        <div class="tl-desc">
+          The incoming Trump administration signaled a return to maximum pressure.
+          Secondary sanctions threats were issued against countries purchasing
+          Venezuelan crude. The &ldquo;25% tariff&rdquo; threat on countries buying
+          Venezuelan oil was deployed as additional leverage.
+        </div>
+      </div>
+
+      <div class="tl-item negative">
+        <span class="tl-dot"></span>
+        <div class="tl-date">March&ndash;April 2025</div>
+        <div class="tl-title">Additional SDN Designations</div>
+        <div class="tl-desc">
+          OFAC added dozens of individuals and entities to the SDN list,
+          including officials connected to the disputed 2024 election,
+          military commanders, and PDVSA-linked intermediaries facilitating
+          sanctions evasion through third countries.
+        </div>
+      </div>
+
+      <div class="tl-item positive">
+        <span class="tl-dot"></span>
+        <div class="tl-date">January 2026</div>
+        <div class="tl-title">Political Transition</div>
+        <div class="tl-desc">
+          A political transition in Venezuela results in Maduro&rsquo;s
+          departure from power. A transitional government with international
+          recognition takes office. The US begins recalibrating its sanctions
+          posture in response to the changed political reality.
+        </div>
+      </div>
+
+      <div class="tl-item positive">
+        <span class="tl-dot"></span>
+        <div class="tl-date">February&ndash;March 2026</div>
+        <div class="tl-title">GL 50A and GL 52 Issued</div>
+        <div class="tl-desc">
+          OFAC issues General License 50A (authorizing oil and gas operations
+          with Venezuelan state entities) and General License 52 (authorizing
+          new investment in specified sectors). These licenses open the oil
+          sector to US persons for the first time since 2019 on a broad basis,
+          while maintaining individual sanctions on former regime officials.
+        </div>
+      </div>
+
+      <div class="tl-item pending">
+        <span class="tl-dot"></span>
+        <div class="tl-date">2026 (Ongoing)</div>
+        <div class="tl-title">Targeted Sanctions Remain</div>
+        <div class="tl-desc">
+          The SDN list remains active. Individuals sanctioned for human rights
+          abuses, corruption, and drug trafficking retain their designations.
+          US persons must still screen counterparties against OFAC lists.
+          Full normalization is contingent on continued democratic progress.
+        </div>
+      </div>
+    </div>
+  </section>
+
+  {# ======================================================================= #}
+  <section id="oil-sanctions" class="sec">
+    <h2>6. Why Is Venezuelan Oil Specifically Sanctioned?</h2>
+    <p class="sec-lead">
+      Oil is not just another commodity in Venezuela&mdash;it was the financial
+      lifeline of the Maduro regime&rsquo;s apparatus of repression.
+    </p>
+
+    <p>
+      Venezuela holds the world&rsquo;s largest proven oil reserves (approximately
+      303 billion barrels). Under the Ch&aacute;vez and Maduro governments, PDVSA
+      functioned less as a commercial enterprise and more as a mechanism for
+      regime financing. Oil revenue funded the military, security services,
+      colectivos (armed pro-government militias), social patronage programs used
+      to buy political loyalty, and personal enrichment of senior officials.
+    </p>
+
+    <div class="card" style="margin: 18px 0;">
+      <h3>The Economic Logic of Oil Sanctions</h3>
+      <div class="row"><strong>Revenue share</strong>Oil accounted for ~95% of Venezuela&rsquo;s export earnings</div>
+      <div class="row"><strong>Regime funding</strong>PDVSA directly financed security apparatus and political patronage</div>
+      <div class="row"><strong>Theory of action</strong>Cut oil revenue &rarr; constrain regime resources &rarr; force negotiation</div>
+      <div class="row"><strong>Mechanism</strong>Block US persons from purchasing Venezuelan crude or providing services to PDVSA</div>
+    </div>
+
+    <h3 style="font-family: var(--font-serif); font-size: 19px; color: var(--sr-blue-dark); margin: 24px 0 12px;">
+      Did Oil Sanctions Work?
+    </h3>
+    <p>
+      This remains actively debated. Oil sanctions demonstrably reduced Venezuelan
+      production and government revenue. However, critics argue they failed to
+      achieve their stated objective (regime change) while inflicting severe
+      humanitarian costs. Supporters counter that sanctions constrained
+      Maduro&rsquo;s ability to finance repression and ultimately contributed to
+      the conditions that led to the 2026 political transition.
+    </p>
+    <p>
+      It is also important to note that Venezuela&rsquo;s oil production had
+      already declined dramatically before sanctions due to years of
+      mismanagement, underinvestment, and the appointment of political loyalists
+      (rather than petroleum engineers) to run PDVSA. Sanctions accelerated an
+      existing decline rather than causing it from scratch.
+    </p>
+
+    <h3 style="font-family: var(--font-serif); font-size: 19px; color: var(--sr-blue-dark); margin: 24px 0 12px;">
+      Current Status of Oil Sanctions ({{ current_year }})
+    </h3>
+    <p>
+      Following the January 2026 political transition, oil sanctions have been
+      significantly relaxed. GL 50A authorizes US persons to engage in oil and
+      gas transactions with Venezuelan state entities under the new transitional
+      government. However, transactions with SDN-listed individuals remain
+      prohibited, and companies must conduct due diligence to ensure their
+      Venezuelan counterparties are not sanctioned persons.
+    </p>
+  </section>
+
+  {# ======================================================================= #}
+  <section id="2026-transition" class="sec">
+    <h2>7. What Has Changed Since the 2026 Transition?</h2>
+    <p class="sec-lead">
+      The political transition has fundamentally altered the sanctions landscape,
+      but normalization is not yet complete.
+    </p>
+
+    <div class="card-grid cols-2">
+      <div class="card">
+        <h3>What&rsquo;s Been Opened</h3>
+        <div class="row">&bull; Oil and gas operations (GL 50A)</div>
+        <div class="row">&bull; New investment in designated sectors (GL 52)</div>
+        <div class="row">&bull; Financial transactions with the transitional government</div>
+        <div class="row">&bull; Commercial banking relationships (select banks delisted)</div>
+        <div class="row">&bull; Telecommunications and technology transfers</div>
+      </div>
+
+      <div class="card">
+        <h3>What Remains Sanctioned</h3>
+        <div class="row">&bull; SDN-listed individuals (former regime officials)</div>
+        <div class="row">&bull; Entities owned or controlled by designated persons</div>
+        <div class="row">&bull; Drug trafficking-related designations (Kingpin Act)</div>
+        <div class="row">&bull; Certain military/intelligence entities not yet delisted</div>
+        <div class="row">&bull; Transactions that benefit blocked persons</div>
+      </div>
+    </div>
+
+    <h3 style="font-family: var(--font-serif); font-size: 19px; color: var(--sr-blue-dark); margin: 24px 0 12px;">
+      Path to Further Normalization
+    </h3>
+    <p>
+      Full normalization&mdash;including revocation of the underlying executive
+      orders and removal of the national-emergency declaration&mdash;will depend
+      on sustained democratic progress in Venezuela. Key benchmarks include:
+      scheduling and holding internationally supervised elections, establishing
+      an independent judiciary, releasing remaining political prisoners, and
+      cooperating with international accountability mechanisms.
+    </p>
+    <p>
+      Until then, US persons operating in Venezuela should continue to maintain
+      robust OFAC compliance programs, screen all counterparties against the SDN
+      list, and monitor general-license conditions for any modifications or
+      expirations.
+    </p>
+  </section>
+
+  {# ======================================================================= #}
+  <section id="faq" class="sec">
+    <h2>8. Frequently Asked Questions</h2>
+    <p class="sec-lead">
+      Common questions about US sanctions on Venezuela, answered clearly.
+    </p>
+
+    <div class="faq-list">
+      {% for item in faq %}
+      <div class="faq-item{% if loop.first %} open{% endif %}">
+        <button type="button" class="faq-q">
+          <span class="faq-icon">+</span>
+          {{ item.q }}
+        </button>
+        <div class="faq-a">{{ item.a | safe }}</div>
+      </div>
+      {% endfor %}
+
+      <div class="faq-item">
+        <button type="button" class="faq-q">
+          <span class="faq-icon">+</span>
+          Did Obama sanction Venezuela?
+        </button>
+        <div class="faq-a">
+          <p>
+            Yes. President Obama signed the Venezuela Defense of Human Rights and
+            Civil Society Act in December 2014 and issued Executive Order 13692 in
+            March 2015, which authorized targeted sanctions on individual
+            Venezuelan officials responsible for human rights abuses and
+            corruption. However, Obama did <strong>not</strong> impose economic or
+            oil-sector sanctions. His sanctions targeted seven specific officials
+            initially, with additional individuals added subsequently. The Venezuelan
+            economy and oil trade operated without US sanctions restrictions during
+            the Obama period.
+          </p>
+        </div>
+      </div>
+
+      <div class="faq-item">
+        <button type="button" class="faq-q">
+          <span class="faq-icon">+</span>
+          Why did Trump escalate sanctions on Venezuela?
+        </button>
+        <div class="faq-a">
+          <p>
+            The Trump administration escalated sanctions in response to several
+            developments: (1) the May 2018 presidential election, which the US and
+            most democracies condemned as fraudulent; (2) the ongoing humanitarian
+            crisis and mass migration; (3) the recognition of Juan Guaid&oacute; as
+            legitimate interim president in January 2019; and (4) the calculation
+            that economic pressure could force Maduro from power. The escalation
+            culminated in the PDVSA designation (January 2019) and a full economic
+            embargo (E.O. 13884, August 2019).
+          </p>
+        </div>
+      </div>
+
+      <div class="faq-item">
+        <button type="button" class="faq-q">
+          <span class="faq-icon">+</span>
+          Are Venezuela sanctions still in effect in {{ current_year }}?
+        </button>
+        <div class="faq-a">
+          <p>
+            Partially. Following the January 2026 political transition, the US
+            has issued broad general licenses (GL 50A for oil operations, GL 52 for
+            new investment) that authorize most commercial activity with the
+            transitional government. However, the underlying executive orders remain
+            in force, individual sanctions on former Maduro regime officials continue,
+            and the SDN list is still actively enforced. US persons must still
+            maintain OFAC compliance programs and screen counterparties.
+          </p>
+        </div>
+      </div>
+
+      <div class="faq-item">
+        <button type="button" class="faq-q">
+          <span class="faq-icon">+</span>
+          Can American companies do business in Venezuela now?
+        </button>
+        <div class="faq-a">
+          <p>
+            Yes, with important caveats. General Licenses 50A and 52 authorize most
+            oil/gas operations and new investment. However, companies must: (1) ensure
+            they are not dealing with SDN-listed persons or entities; (2) conduct
+            enhanced due diligence on Venezuelan counterparties; (3) monitor for
+            changes in general-license terms; and (4) maintain compliance programs
+            that account for the risk of transactions inadvertently benefiting blocked
+            persons. Companies should consult with OFAC counsel before initiating
+            new Venezuelan operations.
+          </p>
+        </div>
+      </div>
+
+      <div class="faq-item">
+        <button type="button" class="faq-q">
+          <span class="faq-icon">+</span>
+          Why is Venezuelan oil sanctioned?
+        </button>
+        <div class="faq-a">
+          <p>
+            Venezuelan oil was sanctioned because PDVSA&rsquo;s revenue was the
+            primary funding mechanism for the Maduro regime. Oil accounted for
+            approximately 95% of Venezuela&rsquo;s export earnings, and PDVSA
+            directly financed the military, security forces, and political patronage
+            networks that kept Maduro in power. The US calculated that cutting oil
+            revenue would constrain the regime&rsquo;s ability to fund repression
+            and force it to negotiate. As of {{ current_year }}, oil sanctions have
+            been significantly relaxed following the political transition.
+          </p>
+        </div>
+      </div>
+
+      <div class="faq-item">
+        <button type="button" class="faq-q">
+          <span class="faq-icon">+</span>
+          Has Venezuela been removed from the SDN list?
+        </button>
+        <div class="faq-a">
+          <p>
+            No. &ldquo;Venezuela&rdquo; as a country is not on the SDN list&mdash;but
+            numerous Venezuelan individuals and entities remain designated.
+            Following the 2026 transition, some entities associated with the new
+            transitional government have been delisted, and broad general licenses
+            authorize transactions with the government. However, former Maduro
+            regime officials, military commanders, and narcotics-linked individuals
+            remain on the SDN list, and their assets are blocked.
+          </p>
+        </div>
+      </div>
+
+      <div class="faq-item">
+        <button type="button" class="faq-q">
+          <span class="faq-icon">+</span>
+          What are the penalties for violating Venezuela sanctions?
+        </button>
+        <div class="faq-a">
+          <p>
+            Violations of US sanctions on Venezuela can result in: civil penalties
+            of up to approximately $356,579 per violation (adjusted annually for
+            inflation) or twice the value of the underlying transaction; criminal
+            penalties of up to $1 million in fines and 20 years in prison for
+            willful violations; and reputational damage including public disclosure
+            of enforcement actions. OFAC applies strict liability&mdash;intent is
+            not required for civil penalties. Companies should maintain robust
+            compliance programs to mitigate risk.
+          </p>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  {# ======================================================================= #}
+  <section class="sec">
+    <h2>Related Coverage</h2>
+    <p class="sec-lead">
+      Explore related sanctions, oil, and policy coverage on Caracas Research.
+    </p>
+
+    <div class="related-grid">
+      <a class="related-link" href="/ofac-sanctions-list">
+        <div class="rl-tag">Sanctions</div>
+        <div class="rl-title">OFAC Sanctions List: Venezuela</div>
+        <div class="rl-desc">Searchable database of all Venezuelan individuals and entities on the OFAC SDN list, with designation dates and legal authorities.</div>
+      </a>
+      <a class="related-link" href="/sanctions-tracker">
+        <div class="rl-tag">Tracker</div>
+        <div class="rl-title">Venezuela Sanctions Tracker</div>
+        <div class="rl-desc">Real-time monitoring of US, EU, and Canadian sanctions changes&mdash;executive orders, general licenses, and SDN updates.</div>
+      </a>
+      <a class="related-link" href="/venezuela-oil">
+        <div class="rl-tag">Energy</div>
+        <div class="rl-title">Venezuela Oil Sector Analysis</div>
+        <div class="rl-desc">Production data, export flows, PDVSA restructuring, and the investment landscape for Venezuela&rsquo;s oil and gas sector.</div>
+      </a>
+      <a class="related-link" href="/tps-venezuela">
+        <div class="rl-tag">Immigration</div>
+        <div class="rl-title">TPS Venezuela: Status &amp; Timeline</div>
+        <div class="rl-desc">Complete guide to Temporary Protected Status for Venezuelans, including the termination, legal challenges, and what comes next.</div>
+      </a>
+    </div>
+  </section>
+
+  <div class="disclaimer">
+    <strong>Disclaimer:</strong> This page is for informational purposes only and does
+    not constitute legal advice. Sanctions law is complex and fact-specific.
+    Companies and individuals operating in or with Venezuela should consult
+    qualified OFAC counsel. Information is current as of {{ updated_label }} and
+    subject to change as US policy evolves.
+  </div>
+
+  <div style="margin-top: 40px; padding: 18px; background: var(--sr-gray-bg); border-radius: 4px;">
+    <p style="font-size: 14px; color: var(--sr-dark-text); margin: 0;">
+      <strong>Stay current on Venezuela sanctions.</strong>
+      Subscribe to the Caracas Research daily briefing for real-time sanctions
+      updates, general-license changes, and compliance guidance.
+      <a href="/#signup" style="font-weight: 600;">Get the daily briefing &rarr;</a>
+    </p>
+  </div>
+
+  <p style="font-size: 12px; color: var(--sr-gray-text); margin: 24px 0;">
+    Sources: OFAC sanctions actions and general licenses; Federal Register;
+    Executive Orders 13692, 13808, 13827, 13835, 13850, 13884; Congressional
+    Research Service reports; US Department of State press statements; PDVSA
+    production data (OPEC Monthly Oil Market Report). Court filings and
+    indictments referenced are part of the public record.
+  </p>
+
+</section>
+
+<script>
+(function initFaqToggle() {
+  document.querySelectorAll('.faq-q').forEach(function(btn) {
+    btn.addEventListener('click', function() {
+      var item = btn.closest('.faq-item');
+      if (!item) return;
+      item.classList.toggle('open');
+    });
+  });
+})();
+</script>
+
+{% from "_recent_briefings.html.j2" import recent_briefings_rail %}
+{{ recent_briefings_rail(
+     recent_briefings,
+     heading="Latest analysis",
+     intro="Recent briefings on Venezuela sanctions policy, compliance developments, and political transition updates.",
+) }}
+{% endblock %}
