@@ -1840,3 +1840,166 @@ def slugify_name(name: str) -> str:
     """Deterministic slug from a person's name. Stable across runs."""
     norm = unicodedata.normalize("NFKD", name).encode("ascii", "ignore").decode("ascii")
     return _SLUG_RX.sub("-", norm.lower()).strip("-")
+
+
+# ──────────────────────────────────────────────────────────────────────
+# In-content auto-linking — turn a name mention inside an editorial
+# briefing into a link to that person's /people/<slug> profile.
+# ──────────────────────────────────────────────────────────────────────
+#
+# Why this exists:
+#   The whole point of the /people/ profiles is to capture incidental
+#   name-search traffic AND to give readers somewhere to click when a
+#   briefing mentions a power figure. Without auto-linking, a briefing
+#   that names "Delcy Rodríguez" three times has no path from the
+#   sentence to the profile — the reader has to guess we have a page
+#   on her. Auto-linking closes that loop.
+#
+# Editorial conventions baked into this implementation:
+#   • Link only the FIRST mention per person, per page. Linking every
+#     mention reads as link-spam and confuses readers. The first
+#     mention is where you introduce the person; subsequent mentions
+#     can stay plain text.
+#   • Open in a new tab (target="_blank" rel="noopener"). The
+#     briefing the reader is currently on is the primary content;
+#     the profile is a side-trip.
+#   • Skip text already inside <a>, <code>, <pre>, headings, or
+#     <script>/<style>. We don't want to nest links or break code
+#     blocks where a name might appear in a quoted source.
+#   • Match longest names first ("Nicolás Maduro Moros" before
+#     "Maduro") so the link wraps the most-specific phrase.
+#   • Match aliases too — if the briefing only ever says "Maduro"
+#     and never "Nicolás Maduro", the alias still links.
+
+# Tags whose contents must NOT be auto-linked. Includes <a> (no nested
+# links), <code>/<pre> (don't break inline code or code blocks where
+# a name might appear), headings (the name is already structural —
+# wrapping it in a link distracts), and script/style (obvious).
+_LINK_SKIP_PARENTS: frozenset[str] = frozenset({
+    "a", "code", "pre", "h1", "h2", "h3", "h4", "h5", "h6",
+    "script", "style", "title",
+})
+
+
+# Module-level cache of the compiled (regex, slug, label) triples.
+# Built lazily on first use so unit tests that import this module
+# without rendering pages don't pay the regex-compile cost.
+_LINKER_CACHE: list[tuple[re.Pattern, str, str]] | None = None
+
+
+def _build_linker_patterns() -> list[tuple[re.Pattern, str, str]]:
+    """Build the list of (compiled regex, slug, label) triples used by
+    link_people_in_html(). Sorted longest-label-first so a multi-word
+    canonical name wins over a one-word alias.
+
+    The negative lookbehind/lookahead `(?<!\\w)` and `(?!\\w)` give us
+    word-boundary matching that works correctly across Unicode letters
+    (Python's `\\b` is fine but explicit lookarounds are easier to
+    reason about for diacritic-heavy names).
+    """
+    patterns: list[tuple[re.Pattern, str, str]] = []
+    seen_labels: set[str] = set()
+    for slug, person in PEOPLE.items():
+        for label in (person.name, *person.aliases):
+            if not label or label in seen_labels:
+                continue
+            seen_labels.add(label)
+            patterns.append((
+                re.compile(r"(?<!\w)" + re.escape(label) + r"(?!\w)", re.UNICODE),
+                slug,
+                label,
+            ))
+    patterns.sort(key=lambda p: len(p[2]), reverse=True)
+    return patterns
+
+
+def link_people_in_html(html: str) -> str:
+    """Walk an HTML fragment and link the first mention of each known
+    power figure to their /people/<slug> profile, opening in a new tab.
+
+    Returns the modified HTML as a string. Idempotent at the document
+    level: a name already wrapped in an <a> stays untouched, and each
+    person is linked at most once per document.
+
+    Editorial convention: this links the FIRST occurrence per person
+    per document. Subsequent mentions are left plain. See module
+    header for rationale.
+    """
+    if not html:
+        return html
+
+    # Local import keeps BeautifulSoup out of cold-import paths that
+    # don't render pages (CLI scripts, scrapers, tests of pure data).
+    from bs4 import BeautifulSoup, NavigableString
+
+    global _LINKER_CACHE
+    if _LINKER_CACHE is None:
+        _LINKER_CACHE = _build_linker_patterns()
+    patterns = _LINKER_CACHE
+
+    # html.parser leaves the fragment as-is (lxml would wrap in
+    # <html><body>). We pass through arbitrary user-generated HTML
+    # from blog_posts.body_html, which is already well-formed but
+    # not a full document.
+    soup = BeautifulSoup(html, "html.parser")
+    linked_slugs: set[str] = set()
+
+    # Snapshot text nodes first — modifying the tree while iterating
+    # would skip newly-inserted siblings.
+    text_nodes: list[NavigableString] = []
+    for node in soup.find_all(string=True):
+        if not isinstance(node, NavigableString):
+            continue
+        parent = node.parent
+        skip = False
+        while parent is not None and getattr(parent, "name", None):
+            if parent.name in _LINK_SKIP_PARENTS:
+                skip = True
+                break
+            parent = parent.parent
+        if skip:
+            continue
+        text_nodes.append(node)
+
+    for node in text_nodes:
+        if len(linked_slugs) >= len(PEOPLE):
+            break  # every known person already linked once — short-circuit
+        text = str(node)
+        # Collect all non-overlapping first-occurrence matches in this
+        # text node, one per as-yet-unlinked slug. Patterns are already
+        # sorted longest-first so multi-word names beat one-word
+        # aliases when the same span could match either.
+        matches: list[tuple[int, int, str]] = []
+        for pattern, slug, _label in patterns:
+            if slug in linked_slugs:
+                continue
+            for m in pattern.finditer(text):
+                # Skip if this match overlaps any earlier (longer) match
+                if any(not (m.end() <= s or m.start() >= e)
+                       for s, e, _ in matches):
+                    continue
+                matches.append((m.start(), m.end(), slug))
+                break  # first occurrence per slug, per node
+        if not matches:
+            continue
+        matches.sort()
+        replacements: list = []
+        cursor = 0
+        for start, end, slug in matches:
+            if start > cursor:
+                replacements.append(NavigableString(text[cursor:start]))
+            new_a = soup.new_tag(
+                "a",
+                href=f"/people/{slug}",
+                target="_blank",
+                rel="noopener",
+            )
+            new_a.string = text[start:end]
+            replacements.append(new_a)
+            linked_slugs.add(slug)
+            cursor = end
+        if cursor < len(text):
+            replacements.append(NavigableString(text[cursor:]))
+        node.replace_with(*replacements)
+
+    return str(soup)

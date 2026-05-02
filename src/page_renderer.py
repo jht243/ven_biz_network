@@ -111,6 +111,20 @@ _env = Environment(
     autoescape=select_autoescape(["html", "xml", "j2"]),
 )
 
+# Jinja filter that walks an HTML fragment and links the first mention
+# of each known Venezuelan power figure to /people/<slug>, opening in
+# a new tab. Registered globally so it composes with `| safe` on any
+# user-generated HTML field — primarily blog_posts.body_html on
+# /briefing/<slug> pages. See src/data/people.py for the algorithm.
+def _link_people_filter(html: str) -> str:
+    if not html:
+        return html
+    from src.data.people import link_people_in_html
+    return link_people_in_html(html)
+
+
+_env.filters["link_people"] = _link_people_filter
+
 
 def _base_url() -> str:
     return settings.site_url.rstrip("/")
