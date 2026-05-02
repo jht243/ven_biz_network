@@ -344,6 +344,41 @@ class ClimateSnapshot(Base):
     updated_at = Column(DateTime, default=datetime.utcnow, onupdate=datetime.utcnow)
 
 
+class VisaOrder(Base):
+    """Tracks a paid visa-service order from Stripe checkout through intake
+    completion. Created when the webhook fires; the token field provides a
+    unique, unguessable URL the customer uses to fill the intake form.
+    """
+
+    __tablename__ = "visa_orders"
+
+    id = Column(Integer, primary_key=True, autoincrement=True)
+
+    # Stripe identifiers
+    stripe_session_id = Column(String(255), nullable=False, unique=True, index=True)
+    stripe_payment_intent = Column(String(255), nullable=True)
+    amount_total = Column(Integer, nullable=True)
+    currency = Column(String(10), nullable=True)
+
+    # Customer info from Stripe checkout
+    customer_name = Column(String(255), nullable=True)
+    customer_email = Column(String(255), nullable=False, index=True)
+    customer_phone = Column(String(50), nullable=True)
+
+    # Intake form token — URL-safe, unguessable
+    intake_token = Column(String(64), nullable=False, unique=True, index=True)
+
+    # Intake form data (JSON blob, saved incrementally)
+    intake_data = Column(JSON, nullable=True)
+    intake_completed_at = Column(DateTime, nullable=True)
+
+    # Workflow status: pending_intake | intake_in_progress | intake_complete | submitted | approved | denied
+    status = Column(String(40), nullable=False, default="pending_intake", index=True)
+
+    created_at = Column(DateTime, default=datetime.utcnow, index=True)
+    updated_at = Column(DateTime, default=datetime.utcnow, onupdate=datetime.utcnow)
+
+
 class ScrapeLog(Base):
     """Tracks every scrape attempt for diagnostics and retry logic."""
 

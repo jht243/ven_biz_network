@@ -1,0 +1,700 @@
+{% extends "_base.html.j2" %}
+
+{% block head_extra %}
+<style>
+  .intake-shell { max-width: 740px; margin: 0 auto; padding: 24px; }
+  .intake-header { margin: 20px 0 28px; }
+  .intake-header h1 { font-family: var(--font-serif); font-size: 30px; color: var(--sr-blue-dark); margin: 0 0 8px; }
+  .intake-header p { color: #4b5a70; font-size: 15px; line-height: 1.6; margin: 0; }
+
+  .progress-bar { display: flex; gap: 4px; margin: 0 0 28px; }
+  .progress-step { flex: 1; height: 6px; border-radius: 3px; background: #e2e8f0; transition: background 0.3s; }
+  .progress-step.done { background: #1b7a3f; }
+  .progress-step.active { background: var(--sr-blue); }
+
+  .step-section { display: none; }
+  .step-section.active { display: block; }
+
+  .step-title { font-family: var(--font-serif); font-size: 22px; color: var(--sr-blue-dark); margin: 0 0 4px; }
+  .step-subtitle { font-size: 14px; color: #5a687a; margin: 0 0 20px; line-height: 1.5; }
+
+  .form-group { margin: 0 0 18px; }
+  .form-group label { display: block; font-size: 14px; font-weight: 700; color: var(--sr-blue-dark); margin: 0 0 5px; }
+  .form-group .hint { display: block; font-size: 12.5px; color: #6c757d; margin: 0 0 5px; line-height: 1.45; }
+  .form-group input, .form-group select, .form-group textarea {
+    width: 100%; padding: 10px 12px; border: 1px solid #c8d4e2; border-radius: 4px;
+    font-size: 14px; font-family: var(--font-sans); color: #1e324c; background: #fff;
+    box-sizing: border-box;
+  }
+  .form-group input:focus, .form-group select:focus, .form-group textarea:focus {
+    outline: none; border-color: var(--sr-blue); box-shadow: 0 0 0 2px rgba(0,43,94,0.12);
+  }
+  .form-group textarea { min-height: 80px; resize: vertical; }
+  .form-group .required::after { content: " *"; color: var(--sr-red); }
+
+  .form-row { display: grid; grid-template-columns: 1fr 1fr; gap: 14px; }
+  @media (max-width: 600px) { .form-row { grid-template-columns: 1fr; } }
+
+  .upload-zone { border: 2px dashed #c8d4e2; border-radius: 6px; padding: 18px; text-align: center; cursor: pointer; transition: border-color 0.2s, background 0.2s; }
+  .upload-zone:hover, .upload-zone.dragover { border-color: var(--sr-blue); background: #f0f5fc; }
+  .upload-zone input[type="file"] { display: none; }
+  .upload-zone .upload-label { font-size: 14px; color: #4b5a70; }
+  .upload-zone .upload-label strong { color: var(--sr-blue); }
+  .upload-status { font-size: 13px; margin-top: 6px; color: #1b7a3f; }
+  .upload-status.error { color: var(--sr-red); }
+
+  .btn-row { display: flex; gap: 10px; margin: 24px 0 8px; }
+  .btn-next, .btn-prev, .btn-submit, .btn-save {
+    display: inline-flex; align-items: center; justify-content: center;
+    min-height: 44px; border-radius: 5px; padding: 10px 22px; font-size: 14px; font-weight: 700;
+    text-decoration: none; border: none; cursor: pointer; font-family: var(--font-sans);
+  }
+  .btn-next { background: var(--sr-blue); color: #fff; }
+  .btn-next:hover { background: var(--sr-blue-dark); }
+  .btn-prev { background: #fff; color: var(--sr-blue-dark); border: 1px solid #c8d4e2; }
+  .btn-prev:hover { border-color: var(--sr-blue); color: var(--sr-blue); }
+  .btn-submit { background: #1b7a3f; color: #fff; }
+  .btn-submit:hover { background: #145f30; }
+  .btn-save { background: #fff; color: #5a687a; border: 1px solid #dfe6ef; margin-left: auto; }
+  .btn-save:hover { border-color: var(--sr-blue); color: var(--sr-blue); }
+
+  .save-notice { font-size: 13px; color: #1b7a3f; margin: 8px 0; display: none; }
+  .save-notice.show { display: block; }
+
+  .info-box { background: #f0f5fc; border: 1px solid #c3d7ed; border-left: 4px solid var(--sr-blue); border-radius: 4px; padding: 14px 16px; margin: 0 0 20px; font-size: 13.5px; color: #1e324c; line-height: 1.55; }
+  .warning-box { background: #fff8f0; border: 1px solid #f0d4a8; border-left: 4px solid #e8a020; border-radius: 4px; padding: 14px 16px; margin: 0 0 20px; font-size: 13.5px; color: #5a4520; line-height: 1.55; }
+
+  .completion-card { text-align: center; padding: 40px 20px; }
+  .completion-card .check-circle { width: 64px; height: 64px; border-radius: 50%; background: #e8f5ec; display: inline-flex; align-items: center; justify-content: center; margin: 0 0 16px; }
+  .completion-card .check-circle svg { width: 32px; height: 32px; color: #1b7a3f; }
+  .completion-card h2 { font-family: var(--font-serif); font-size: 26px; color: var(--sr-blue-dark); margin: 0 0 10px; }
+  .completion-card p { font-size: 15px; color: #4b5a70; line-height: 1.6; max-width: 520px; margin: 0 auto 10px; }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="intake-shell">
+  {% if completed %}
+  <div class="completion-card">
+    <div class="check-circle">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M5 13l4 4L19 7"/></svg>
+    </div>
+    <h2>Intake form submitted</h2>
+    <p>We have your documents and information. Our team will review everything and submit your Venezuela visa application. You will receive an email update once the application is filed.</p>
+    <p style="font-size:13px; color:#6c757d;">Reference: {{ order.intake_token[:8] }}...</p>
+  </div>
+  {% else %}
+  <div class="intake-header">
+    <h1>Venezuela visa intake form</h1>
+    <p>Complete this form so we can prepare and file your Venezuela e-visa application.
+       You can <strong>save and come back later</strong> — your progress is saved automatically.
+       Fields marked with <span style="color:var(--sr-red);">*</span> are required before final submission.</p>
+  </div>
+
+  <div class="progress-bar" id="progressBar">
+    <div class="progress-step active" data-step="0"></div>
+    <div class="progress-step" data-step="1"></div>
+    <div class="progress-step" data-step="2"></div>
+    <div class="progress-step" data-step="3"></div>
+    <div class="progress-step" data-step="4"></div>
+    <div class="progress-step" data-step="5"></div>
+  </div>
+
+  <form id="intakeForm" novalidate>
+
+    <!-- STEP 0: Personal Information -->
+    <div class="step-section active" data-step="0">
+      <h2 class="step-title">Personal information</h2>
+      <p class="step-subtitle">Exactly as it appears on your passport. Names must match your passport precisely — mismatches cause denials.</p>
+
+      <div class="form-row">
+        <div class="form-group">
+          <label class="required" for="first_name">First name(s)</label>
+          <span class="hint">All first and middle names as shown on passport</span>
+          <input type="text" id="first_name" name="first_name" required>
+        </div>
+        <div class="form-group">
+          <label class="required" for="last_name">Last name(s)</label>
+          <span class="hint">All last/family names as shown on passport</span>
+          <input type="text" id="last_name" name="last_name" required>
+        </div>
+      </div>
+
+      <div class="form-row">
+        <div class="form-group">
+          <label class="required" for="gender">Gender</label>
+          <select id="gender" name="gender" required>
+            <option value="">Select...</option>
+            <option value="male">Male</option>
+            <option value="female">Female</option>
+          </select>
+        </div>
+        <div class="form-group">
+          <label class="required" for="date_of_birth">Date of birth</label>
+          <input type="date" id="date_of_birth" name="date_of_birth" required>
+        </div>
+      </div>
+
+      <div class="form-row">
+        <div class="form-group">
+          <label class="required" for="city_of_birth">City of birth</label>
+          <span class="hint">If born outside your passport country, enter your current city of residence instead</span>
+          <input type="text" id="city_of_birth" name="city_of_birth" required>
+        </div>
+        <div class="form-group">
+          <label class="required" for="country_of_birth">Country of birth</label>
+          <input type="text" id="country_of_birth" name="country_of_birth" required>
+        </div>
+      </div>
+
+      <div class="form-row">
+        <div class="form-group">
+          <label class="required" for="nationality">Nationality</label>
+          <input type="text" id="nationality" name="nationality" required>
+        </div>
+        <div class="form-group">
+          <label class="required" for="marital_status">Marital status</label>
+          <select id="marital_status" name="marital_status" required>
+            <option value="">Select...</option>
+            <option value="single">Single</option>
+            <option value="married">Married</option>
+            <option value="divorced">Divorced</option>
+            <option value="widowed">Widowed</option>
+          </select>
+        </div>
+      </div>
+
+      <div class="form-group">
+        <label class="required" for="email">Email address</label>
+        <span class="hint">We will use this to communicate updates about your application</span>
+        <input type="email" id="email" name="email" required value="{{ order.customer_email or '' }}">
+      </div>
+
+      <div class="form-row">
+        <div class="form-group">
+          <label class="required" for="phone">Phone number</label>
+          <span class="hint">Include country code (e.g. +1 for US)</span>
+          <input type="tel" id="phone" name="phone" required value="{{ order.customer_phone or '' }}">
+        </div>
+        <div class="form-group">
+          <label for="phone_alt">Alternate phone (optional)</label>
+          <input type="tel" id="phone_alt" name="phone_alt">
+        </div>
+      </div>
+    </div>
+
+    <!-- STEP 1: Passport Details -->
+    <div class="step-section" data-step="1">
+      <h2 class="step-title">Passport details</h2>
+      <p class="step-subtitle">Your passport must be valid for at least 6 months beyond your planned entry date and have at least 2 blank pages.</p>
+
+      <div class="form-row">
+        <div class="form-group">
+          <label class="required" for="passport_number">Passport number</label>
+          <input type="text" id="passport_number" name="passport_number" required>
+        </div>
+        <div class="form-group">
+          <label class="required" for="passport_country">Passport country</label>
+          <input type="text" id="passport_country" name="passport_country" required>
+        </div>
+      </div>
+
+      <div class="form-row">
+        <div class="form-group">
+          <label class="required" for="passport_issue_date">Issue date</label>
+          <input type="date" id="passport_issue_date" name="passport_issue_date" required>
+        </div>
+        <div class="form-group">
+          <label class="required" for="passport_expiry_date">Expiry date</label>
+          <span class="hint">Must be 6+ months after your planned entry</span>
+          <input type="date" id="passport_expiry_date" name="passport_expiry_date" required>
+        </div>
+      </div>
+
+      <div class="form-group">
+        <label class="required" for="passport_issue_authority">Issuing authority</label>
+        <span class="hint">E.g. "U.S. Department of State" or "HM Passport Office"</span>
+        <input type="text" id="passport_issue_authority" name="passport_issue_authority" required>
+      </div>
+    </div>
+
+    <!-- STEP 2: Residence & Contact -->
+    <div class="step-section" data-step="2">
+      <h2 class="step-title">Current residence</h2>
+      <p class="step-subtitle">Your home address in your country of residence. This is required for the Cancillería Digital registration.</p>
+
+      <div class="form-group">
+        <label class="required" for="residence_street">Street address</label>
+        <input type="text" id="residence_street" name="residence_street" required>
+      </div>
+
+      <div class="form-row">
+        <div class="form-group">
+          <label class="required" for="residence_city">City</label>
+          <input type="text" id="residence_city" name="residence_city" required>
+        </div>
+        <div class="form-group">
+          <label for="residence_state">State / Province</label>
+          <input type="text" id="residence_state" name="residence_state">
+        </div>
+      </div>
+
+      <div class="form-row">
+        <div class="form-group">
+          <label class="required" for="residence_zip">Postal / ZIP code</label>
+          <input type="text" id="residence_zip" name="residence_zip" required>
+        </div>
+        <div class="form-group">
+          <label class="required" for="residence_country">Country</label>
+          <input type="text" id="residence_country" name="residence_country" required>
+        </div>
+      </div>
+
+      <div class="form-group">
+        <label class="required" for="residency_status">Residency status</label>
+        <span class="hint">Select "permanent" if you are a citizen or permanent resident; "transit" if on a visa or temporary status</span>
+        <select id="residency_status" name="residency_status" required>
+          <option value="">Select...</option>
+          <option value="permanent">Permanent resident / Citizen</option>
+          <option value="transit">Visa / Temporary status</option>
+        </select>
+      </div>
+
+      <div class="form-group" id="residency_doc_group" style="display:none;">
+        <label class="required" for="residency_document_type">Residency document type</label>
+        <span class="hint">If on a visa or temporary status, describe the document (e.g. H-1B, Student Visa, Work Permit)</span>
+        <input type="text" id="residency_document_type" name="residency_document_type">
+      </div>
+
+      <div class="form-group">
+        <label for="occupation">Occupation / Job title</label>
+        <span class="hint">Your current job title and employer name (used on the application form)</span>
+        <input type="text" id="occupation" name="occupation">
+      </div>
+    </div>
+
+    <!-- STEP 3: Travel Details -->
+    <div class="step-section" data-step="3">
+      <h2 class="step-title">Travel details</h2>
+      <p class="step-subtitle">Flight and accommodation details for your Venezuela trip. A confirmed flight reservation and hotel booking are now required for the e-visa application.</p>
+
+      <div class="warning-box">
+        <strong>Don't have flights or hotels booked yet?</strong> Save this form and come back when you do.
+        A confirmed flight reservation and hotel booking are required as of April 2026.
+        Click "Save progress" below and return to this page anytime.
+      </div>
+
+      <div class="form-row">
+        <div class="form-group">
+          <label class="required" for="visa_type">Visa type</label>
+          <select id="visa_type" name="visa_type" required>
+            <option value="">Select...</option>
+            <option value="tourist_trv">Tourist (TR-V)</option>
+            <option value="business_trn">Business (TR-N)</option>
+          </select>
+        </div>
+        <div class="form-group">
+          <label class="required" for="travel_purpose">Purpose of travel</label>
+          <span class="hint">Brief description (e.g. "Tourism and sightseeing" or "Business meetings")</span>
+          <input type="text" id="travel_purpose" name="travel_purpose" required>
+        </div>
+      </div>
+
+      <div class="form-row">
+        <div class="form-group">
+          <label class="required" for="arrival_date">Planned arrival date</label>
+          <input type="date" id="arrival_date" name="arrival_date" required>
+        </div>
+        <div class="form-group">
+          <label class="required" for="departure_date">Planned departure date</label>
+          <input type="date" id="departure_date" name="departure_date" required>
+        </div>
+      </div>
+
+      <div class="form-row">
+        <div class="form-group">
+          <label class="required" for="airline_flight">Airline / Flight number</label>
+          <span class="hint">E.g. "AV 142" (Avianca 142, Bogotá → Caracas)</span>
+          <input type="text" id="airline_flight" name="airline_flight" required>
+        </div>
+        <div class="form-group">
+          <label class="required" for="arrival_time">Arrival time in Venezuela</label>
+          <span class="hint">Local time from your itinerary (e.g. 10:40)</span>
+          <input type="time" id="arrival_time" name="arrival_time" required>
+        </div>
+      </div>
+
+      <div class="form-group">
+        <label class="required" for="hotel_name">Hotel / Accommodation name</label>
+        <span class="hint">Full name of your confirmed hotel in Venezuela</span>
+        <input type="text" id="hotel_name" name="hotel_name" required>
+      </div>
+
+      <div class="form-group">
+        <label class="required" for="hotel_address">Hotel address in Venezuela</label>
+        <span class="hint">Full address including city (e.g. "Av Eugenio Mendoza, La Castellana, Caracas, 1060")</span>
+        <input type="text" id="hotel_address" name="hotel_address" required>
+      </div>
+
+      <div class="form-group" id="business_letter_group" style="display:none;">
+        <label for="business_contact">Business contact / Inviting company in Venezuela</label>
+        <span class="hint">For business visas: name and address of the Venezuelan company inviting you</span>
+        <textarea id="business_contact" name="business_contact" rows="3"></textarea>
+      </div>
+
+      <div class="form-group">
+        <label for="emergency_contact">Emergency contact</label>
+        <span class="hint">Name, phone, and relationship of someone to contact in an emergency</span>
+        <input type="text" id="emergency_contact" name="emergency_contact">
+      </div>
+    </div>
+
+    <!-- STEP 4: Document Uploads -->
+    <div class="step-section" data-step="4">
+      <h2 class="step-title">Document uploads</h2>
+      <p class="step-subtitle">Upload clear, readable scans or photos. Max 10 MB per file. JPG, PNG, or PDF accepted. We will review each document before filing.</p>
+
+      <div class="info-box">
+        <strong>File guidelines:</strong> Keep images under 3 MB and at least 1000 px wide.
+        Scans should be clearly readable with no glare or cut-off edges.
+        Save multi-page documents as a single PDF.
+      </div>
+
+      <div class="form-group">
+        <label class="required">Passport front page</label>
+        <span class="hint">Clear scan or photo of the data page (page with your photo and details)</span>
+        <div class="upload-zone" data-field="passport_scan">
+          <input type="file" accept="image/*,.pdf" id="file_passport_scan">
+          <div class="upload-label"><strong>Click to upload</strong> or drag and drop</div>
+          <div class="upload-status" id="status_passport_scan"></div>
+        </div>
+      </div>
+
+      <div class="form-group">
+        <label class="required">ID photo (white background)</label>
+        <span class="hint">Recent passport-style photo, 2×2 inches, white background, facing forward</span>
+        <div class="upload-zone" data-field="id_photo">
+          <input type="file" accept="image/*,.pdf" id="file_id_photo">
+          <div class="upload-label"><strong>Click to upload</strong> or drag and drop</div>
+          <div class="upload-status" id="status_id_photo"></div>
+        </div>
+      </div>
+
+      <div class="form-group">
+        <label class="required">Flight reservation / itinerary</label>
+        <span class="hint">Confirmed booking showing your name, flight number, and dates</span>
+        <div class="upload-zone" data-field="flight_itinerary">
+          <input type="file" accept="image/*,.pdf" id="file_flight_itinerary">
+          <div class="upload-label"><strong>Click to upload</strong> or drag and drop</div>
+          <div class="upload-status" id="status_flight_itinerary"></div>
+        </div>
+      </div>
+
+      <div class="form-group">
+        <label class="required">Hotel reservation</label>
+        <span class="hint">Confirmed booking showing hotel name, address, and dates (first hotel if visiting multiple cities)</span>
+        <div class="upload-zone" data-field="hotel_reservation">
+          <input type="file" accept="image/*,.pdf" id="file_hotel_reservation">
+          <div class="upload-label"><strong>Click to upload</strong> or drag and drop</div>
+          <div class="upload-status" id="status_hotel_reservation"></div>
+        </div>
+      </div>
+
+      <div class="form-group">
+        <label class="required">Proof of funds (solvencia económica)</label>
+        <span class="hint">Most recent bank statement or bank balance letter showing sufficient funds for your trip</span>
+        <div class="upload-zone" data-field="proof_of_funds">
+          <input type="file" accept="image/*,.pdf" id="file_proof_of_funds">
+          <div class="upload-label"><strong>Click to upload</strong> or drag and drop</div>
+          <div class="upload-status" id="status_proof_of_funds"></div>
+        </div>
+      </div>
+
+      <div class="form-group" id="business_letter_upload_group" style="display:none;">
+        <label>Business invitation letter (TR-N only)</label>
+        <span class="hint">Letter from the Venezuelan company inviting you, on company letterhead</span>
+        <div class="upload-zone" data-field="business_letter">
+          <input type="file" accept="image/*,.pdf" id="file_business_letter">
+          <div class="upload-label"><strong>Click to upload</strong> or drag and drop</div>
+          <div class="upload-status" id="status_business_letter"></div>
+        </div>
+      </div>
+
+      <div class="form-group">
+        <label>Additional documents (optional)</label>
+        <span class="hint">Employer letter, yellow fever certificate, travel insurance, or any other supporting documents</span>
+        <div class="upload-zone" data-field="additional_docs">
+          <input type="file" accept="image/*,.pdf" id="file_additional_docs" multiple>
+          <div class="upload-label"><strong>Click to upload</strong> or drag and drop</div>
+          <div class="upload-status" id="status_additional_docs"></div>
+        </div>
+      </div>
+    </div>
+
+    <!-- STEP 5: Review & Submit -->
+    <div class="step-section" data-step="5">
+      <h2 class="step-title">Review and submit</h2>
+      <p class="step-subtitle">Please review your information below. Once submitted, our team will review the package and submit your visa application the same business day.</p>
+
+      <div class="info-box">
+        <strong>What happens next:</strong> After you submit, our team reviews your documents for completeness and quality,
+        fills out the Cancillería Digital application in Spanish, uploads your files, and submits.
+        You will receive email updates at each stage. Government processing typically takes 1–3 weeks.
+      </div>
+
+      <div id="reviewSummary" style="margin: 0 0 20px;"></div>
+
+      <div class="form-group">
+        <label for="special_notes">Special notes or questions (optional)</label>
+        <textarea id="special_notes" name="special_notes" rows="3" placeholder="Any special circumstances, questions, or additional context for our team..."></textarea>
+      </div>
+
+      <div class="form-group">
+        <label style="display:flex; align-items:flex-start; gap:8px; cursor:pointer;">
+          <input type="checkbox" id="consent" name="consent" style="width:auto; margin-top:3px;" required>
+          <span style="font-size:13.5px; color:#4b5a70; line-height:1.5;">
+            I confirm the information provided is accurate and matches my passport.
+            I understand that Caracas Research is an independent application-preparation service,
+            not a government agency, and that visa approval is solely at the discretion of Venezuelan authorities.
+          </span>
+        </label>
+      </div>
+    </div>
+
+    <div class="save-notice" id="saveNotice">Progress saved.</div>
+
+    <div class="btn-row">
+      <button type="button" class="btn-prev" id="btnPrev" style="display:none;">← Back</button>
+      <button type="button" class="btn-next" id="btnNext">Continue →</button>
+      <button type="submit" class="btn-submit" id="btnSubmit" style="display:none;">Submit application</button>
+      <button type="button" class="btn-save" id="btnSave">Save progress</button>
+    </div>
+  </form>
+  {% endif %}
+</div>
+
+{% if not completed %}
+<script>
+(function() {
+  const TOKEN = "{{ order.intake_token }}";
+  const SAVE_URL = "/visa-intake/" + TOKEN + "/save";
+  const UPLOAD_URL = "/visa-intake/" + TOKEN + "/upload";
+  const SUBMIT_URL = "/visa-intake/" + TOKEN + "/submit";
+
+  const steps = document.querySelectorAll('.step-section');
+  const progressSteps = document.querySelectorAll('.progress-step');
+  const btnNext = document.getElementById('btnNext');
+  const btnPrev = document.getElementById('btnPrev');
+  const btnSubmit = document.getElementById('btnSubmit');
+  const btnSave = document.getElementById('btnSave');
+  const saveNotice = document.getElementById('saveNotice');
+  let currentStep = 0;
+  const totalSteps = steps.length;
+
+  // Pre-fill saved data
+  const saved = {{ intake_data | tojson }};
+  if (saved) {
+    Object.entries(saved).forEach(function(pair) {
+      var el = document.getElementById(pair[0]);
+      if (el) {
+        if (el.type === 'checkbox') el.checked = !!pair[1];
+        else el.value = pair[1] || '';
+      }
+    });
+  }
+
+  function showStep(n) {
+    steps.forEach(function(s, i) {
+      s.classList.toggle('active', i === n);
+    });
+    progressSteps.forEach(function(s, i) {
+      s.classList.remove('active', 'done');
+      if (i < n) s.classList.add('done');
+      else if (i === n) s.classList.add('active');
+    });
+    btnPrev.style.display = n > 0 ? '' : 'none';
+    btnNext.style.display = n < totalSteps - 1 ? '' : 'none';
+    btnSubmit.style.display = n === totalSteps - 1 ? '' : 'none';
+    currentStep = n;
+    window.scrollTo({ top: 0, behavior: 'smooth' });
+
+    if (n === totalSteps - 1) buildReview();
+  }
+
+  function gatherData() {
+    var data = {};
+    document.querySelectorAll('#intakeForm input, #intakeForm select, #intakeForm textarea').forEach(function(el) {
+      if (!el.name || el.type === 'file') return;
+      if (el.type === 'checkbox') data[el.name] = el.checked;
+      else data[el.name] = el.value;
+    });
+    return data;
+  }
+
+  function autoSave() {
+    var data = gatherData();
+    fetch(SAVE_URL, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(data),
+    }).then(function(r) {
+      if (r.ok) {
+        saveNotice.classList.add('show');
+        setTimeout(function() { saveNotice.classList.remove('show'); }, 2500);
+      }
+    }).catch(function() {});
+  }
+
+  btnSave.addEventListener('click', autoSave);
+
+  btnNext.addEventListener('click', function() {
+    autoSave();
+    if (currentStep < totalSteps - 1) showStep(currentStep + 1);
+  });
+
+  btnPrev.addEventListener('click', function() {
+    if (currentStep > 0) showStep(currentStep - 1);
+  });
+
+  document.getElementById('intakeForm').addEventListener('submit', function(e) {
+    e.preventDefault();
+    var consent = document.getElementById('consent');
+    if (!consent.checked) {
+      alert('Please confirm the accuracy of your information before submitting.');
+      return;
+    }
+    var data = gatherData();
+    btnSubmit.disabled = true;
+    btnSubmit.textContent = 'Submitting...';
+    fetch(SUBMIT_URL, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(data),
+    }).then(function(r) {
+      if (r.ok) window.location.reload();
+      else {
+        btnSubmit.disabled = false;
+        btnSubmit.textContent = 'Submit application';
+        alert('Submission failed. Please try again or contact support.');
+      }
+    }).catch(function() {
+      btnSubmit.disabled = false;
+      btnSubmit.textContent = 'Submit application';
+      alert('Network error. Please check your connection and try again.');
+    });
+  });
+
+  // Conditional fields
+  document.getElementById('residency_status').addEventListener('change', function() {
+    document.getElementById('residency_doc_group').style.display = this.value === 'transit' ? '' : 'none';
+  });
+  document.getElementById('visa_type').addEventListener('change', function() {
+    var isBiz = this.value === 'business_trn';
+    document.getElementById('business_letter_group').style.display = isBiz ? '' : 'none';
+    document.getElementById('business_letter_upload_group').style.display = isBiz ? '' : 'none';
+  });
+  // Trigger on load
+  if (saved) {
+    var rs = document.getElementById('residency_status');
+    if (rs.value) rs.dispatchEvent(new Event('change'));
+    var vt = document.getElementById('visa_type');
+    if (vt.value) vt.dispatchEvent(new Event('change'));
+  }
+
+  // File uploads
+  document.querySelectorAll('.upload-zone').forEach(function(zone) {
+    var field = zone.dataset.field;
+    var input = zone.querySelector('input[type="file"]');
+    var statusEl = zone.querySelector('.upload-status');
+
+    zone.addEventListener('click', function(e) {
+      if (e.target !== input) input.click();
+    });
+    zone.addEventListener('dragover', function(e) { e.preventDefault(); zone.classList.add('dragover'); });
+    zone.addEventListener('dragleave', function() { zone.classList.remove('dragover'); });
+    zone.addEventListener('drop', function(e) {
+      e.preventDefault();
+      zone.classList.remove('dragover');
+      input.files = e.dataTransfer.files;
+      uploadFile(field, input.files, statusEl);
+    });
+    input.addEventListener('change', function() {
+      if (input.files.length) uploadFile(field, input.files, statusEl);
+    });
+
+    // Show existing uploads
+    if (saved && saved['_file_' + field]) {
+      statusEl.textContent = '✓ ' + saved['_file_' + field];
+      statusEl.className = 'upload-status';
+    }
+  });
+
+  function uploadFile(field, files, statusEl) {
+    var fd = new FormData();
+    for (var i = 0; i < files.length; i++) fd.append('file', files[i]);
+    fd.append('field', field);
+    statusEl.textContent = 'Uploading...';
+    statusEl.className = 'upload-status';
+    fetch(UPLOAD_URL, {
+      method: 'POST',
+      body: fd,
+    }).then(function(r) { return r.json(); }).then(function(data) {
+      if (data.ok) {
+        statusEl.textContent = '✓ ' + data.filename;
+        statusEl.className = 'upload-status';
+      } else {
+        statusEl.textContent = 'Upload failed: ' + (data.error || 'unknown error');
+        statusEl.className = 'upload-status error';
+      }
+    }).catch(function() {
+      statusEl.textContent = 'Upload failed. Try again.';
+      statusEl.className = 'upload-status error';
+    });
+  }
+
+  function buildReview() {
+    var data = gatherData();
+    var sections = [
+      { title: 'Personal information', fields: [
+        ['Name', (data.first_name || '') + ' ' + (data.last_name || '')],
+        ['Gender', data.gender], ['Date of birth', data.date_of_birth],
+        ['City of birth', data.city_of_birth], ['Nationality', data.nationality],
+        ['Email', data.email], ['Phone', data.phone],
+      ]},
+      { title: 'Passport', fields: [
+        ['Passport #', data.passport_number], ['Country', data.passport_country],
+        ['Issue date', data.passport_issue_date], ['Expiry', data.passport_expiry_date],
+      ]},
+      { title: 'Residence', fields: [
+        ['Address', [data.residence_street, data.residence_city, data.residence_state, data.residence_zip, data.residence_country].filter(Boolean).join(', ')],
+        ['Status', data.residency_status],
+      ]},
+      { title: 'Travel', fields: [
+        ['Visa type', data.visa_type], ['Purpose', data.travel_purpose],
+        ['Arrival', data.arrival_date], ['Departure', data.departure_date],
+        ['Flight', data.airline_flight], ['Hotel', data.hotel_name],
+      ]},
+    ];
+    var html = '';
+    sections.forEach(function(s) {
+      html += '<div style="margin:0 0 16px;"><strong style="font-size:15px;color:var(--sr-blue-dark);">' + s.title + '</strong>';
+      html += '<table style="width:100%;font-size:13.5px;margin:6px 0 0;border-collapse:collapse;">';
+      s.fields.forEach(function(f) {
+        var val = f[1] || '<span style="color:var(--sr-red);">Not provided</span>';
+        html += '<tr><td style="padding:4px 10px 4px 0;color:#6c757d;white-space:nowrap;vertical-align:top;">' + f[0] + '</td><td style="padding:4px 0;">' + val + '</td></tr>';
+      });
+      html += '</table></div>';
+    });
+    document.getElementById('reviewSummary').innerHTML = html;
+  }
+
+  // Auto-save on step change & periodically
+  var autoSaveTimer;
+  document.getElementById('intakeForm').addEventListener('input', function() {
+    clearTimeout(autoSaveTimer);
+    autoSaveTimer = setTimeout(autoSave, 10000);
+  });
+})();
+</script>
+{% endif %}
+{% endblock %}

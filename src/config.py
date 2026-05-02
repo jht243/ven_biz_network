@@ -79,6 +79,7 @@ class Settings(BaseSettings):
     stripe_visa_payment_link_id: str = "plink_1TS1T2GWYDLBQAio3Z6tN9N2"
     visa_order_notification_email: str = ""
     visa_order_email_provider: str = "resend"
+    visa_order_from_email: str = ""
 
     # Google reporting (GA4 + Search Console)
     google_reporting_sa_json: str = ""
@@ -262,5 +263,6 @@ settings = Settings()
 settings.storage_dir.mkdir(parents=True, exist_ok=True)
 (settings.storage_dir / "pdfs").mkdir(exist_ok=True)
 (settings.storage_dir / "ocr_output").mkdir(exist_ok=True)
+(settings.storage_dir / "visa_intake").mkdir(exist_ok=True)
 settings.output_dir.mkdir(parents=True, exist_ok=True)
 settings.google_reporting_output_dir.mkdir(parents=True, exist_ok=True)

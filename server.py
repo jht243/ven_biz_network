@@ -218,7 +218,52 @@ def _format_usd_minor_units(amount: int | None, currency: str | None) -> str:
     return f"{amount} {currency_code}"
 
 
-def _send_visa_order_notification(session: dict) -> bool:
+def _create_visa_order(session: dict) -> "str | None":
+    """Persist a VisaOrder row and return the intake token, or None on error."""
+    import secrets
+    from src.models import VisaOrder, SessionLocal, init_db
+
+    init_db()
+    customer_details = session.get("customer_details") or {}
+    customer_email = customer_details.get("email") or session.get("customer_email") or ""
+    if not customer_email:
+        logger.error("Cannot create visa order: no customer email in session")
+        return None
+
+    token = secrets.token_urlsafe(32)
+    db = SessionLocal()
+    try:
+        order = VisaOrder(
+            stripe_session_id=session.get("id") or "unknown",
+            stripe_payment_intent=session.get("payment_intent"),
+            amount_total=session.get("amount_total"),
+            currency=session.get("currency"),
+            customer_name=customer_details.get("name") or "Unknown",
+            customer_email=customer_email,
+            customer_phone=customer_details.get("phone") or "",
+            intake_token=token,
+            status="pending_intake",
+        )
+        db.add(order)
+        db.commit()
+        return token
+    except Exception as exc:
+        db.rollback()
+        logger.exception("Failed to create visa order: %s", exc)
+        return None
+    finally:
+        db.close()
+
+
+def _visa_from_address() -> str | None:
+    """Return the 'from' address for visa-related emails, or None for default."""
+    addr = (settings.visa_order_from_email or "").strip()
+    if addr:
+        return f"{settings.site_name} <{addr}>"
+    return None
+
+
+def _send_visa_order_notification(session: dict, intake_token: str | None = None) -> bool:
     """Email the site owner when the Stripe visa-service checkout completes."""
     from src.newsletter import send_email
 
@@ -236,6 +281,8 @@ def _send_visa_order_notification(session: dict) -> bool:
     payment_status = session.get("payment_status") or "unknown"
     dashboard_url = f"https://dashboard.stripe.com/payments/{session.get('payment_intent')}" if session.get("payment_intent") else "https://dashboard.stripe.com/payments"
 
+    intake_url = f"{settings.site_url}/visa-intake/{intake_token}" if intake_token else "N/A"
+
     subject = f"New Venezuela visa application order - {amount}"
     html = f"""
     <h2>New Venezuela visa application order</h2>
@@ -247,9 +294,9 @@ def _send_visa_order_notification(session: dict) -> bool:
       <tr><td><strong>Customer email</strong></td><td>{_xml_escape(customer_email)}</td></tr>
       <tr><td><strong>Customer phone</strong></td><td>{_xml_escape(customer_phone)}</td></tr>
       <tr><td><strong>Checkout session</strong></td><td>{_xml_escape(session_id)}</td></tr>
+      <tr><td><strong>Intake form</strong></td><td><a href="{_xml_escape(intake_url)}">{_xml_escape(intake_url)}</a></td></tr>
     </table>
     <p><a href="{_xml_escape(dashboard_url)}">Open payment in Stripe</a></p>
-    <p>Next step: contact the customer for passport country, visa type, travel date, and document upload instructions.</p>
     """
 
     result = send_email(
@@ -257,6 +304,74 @@ def _send_visa_order_notification(session: dict) -> bool:
         subject=subject,
         html_body=html,
         provider_name=settings.visa_order_email_provider,
+        from_override=_visa_from_address(),
+    )
+    return bool(result.get("success"))
+
+
+def _send_visa_intake_email_to_customer(customer_email: str, customer_name: str, intake_token: str) -> bool:
+    """Send the customer their intake form link after payment."""
+    from src.newsletter import send_email
+
+    intake_url = f"{settings.site_url}/visa-intake/{intake_token}"
+
+    site_url = settings.site_url
+    subject = "Action Required: Your Venezuela Visa Questionnaire"
+    html = f"""
+    <div style="font-family: Arial, Helvetica, sans-serif; max-width: 600px; margin: 0 auto; color: #1e324c; line-height: 1.7;">
+      <p style="font-size: 15px;">Hi {_xml_escape(customer_name)},</p>
+      <p style="font-size: 15px;">
+        Thank you for choosing Caracas Research to assist with your Venezuela visa.
+        We have received your order and our team has officially opened your file.
+      </p>
+      <p style="font-size: 15px;">
+        To move forward with your application, please complete our secure intake
+        questionnaire at the link below:
+      </p>
+      <p style="margin: 24px 0;">
+        <a href="{_xml_escape(intake_url)}"
+           style="display: inline-block; background: #002b5e; color: #fff; padding: 14px 28px;
+                  border-radius: 5px; text-decoration: none; font-weight: bold; font-size: 15px;">
+          Venezuela Visa Questionnaire &rarr;
+        </a>
+      </p>
+      <h3 style="color: #002b5e; font-size: 16px; margin: 28px 0 12px;">Important: Before you begin</h3>
+      <p style="font-size: 15px;">
+        To complete the form in one sitting, please ensure you have the following
+        details ready, as they are mandatory for the consulate:
+      </p>
+      <ul style="font-size: 15px; padding-left: 20px;">
+        <li style="margin-bottom: 10px;">
+          <strong>Your Flight Dates:</strong> The specific dates you plan to enter
+          and exit the country.
+        </li>
+        <li style="margin-bottom: 10px;">
+          <strong>Accommodation Details:</strong> The exact address or location of
+          where you will be staying while in Venezuela.
+        </li>
+      </ul>
+      <p style="font-size: 15px;">
+        This information is vital for us to accurately prepare your documents and
+        ensure a smooth submission to the consulate.
+      </p>
+      <p style="font-size: 15px;">
+        If you have any questions while filling out the form, please feel free to
+        reply to this email.
+      </p>
+      <p style="font-size: 15px; margin-top: 28px;">
+        Best regards,<br><br>
+        <strong>The Caracas Research Team</strong><br>
+        <a href="{_xml_escape(site_url)}" style="color: #002b5e;">{_xml_escape(site_url)}</a>
+      </p>
+    </div>
+    """
+
+    result = send_email(
+        to=customer_email,
+        subject=subject,
+        html_body=html,
+        provider_name=settings.visa_order_email_provider,
+        from_override=_visa_from_address(),
     )
     return bool(result.get("success"))
 
@@ -321,10 +436,8 @@ def index():
 def stripe_webhook():
     """
     Receive Stripe Checkout events for the paid Venezuela visa service.
-
-    Configure Stripe to send checkout.session.completed events here and set
-    STRIPE_WEBHOOK_SECRET to the endpoint signing secret. The handler filters
-    to the visa-service payment link before emailing the site owner.
+    Creates a visa order, emails the team, and sends the customer their
+    intake form link.
     """
     payload = request.get_data(cache=False)
     signature = request.headers.get("Stripe-Signature")
@@ -343,21 +456,195 @@ def stripe_webhook():
 
     session = ((event.get("data") or {}).get("object") or {})
     payment_link = session.get("payment_link")
-    expected_payment_link = (settings.stripe_visa_payment_link_id or "").strip()
-    if expected_payment_link and payment_link != expected_payment_link:
-        logger.info("Stripe checkout ignored for payment_link=%s", payment_link)
-        return jsonify({"received": True, "ignored": "non_visa_payment_link"}), 200
-
     session_id = session.get("id")
+
     if session_id and session_id in _STRIPE_VISA_NOTIFIED_SESSION_IDS:
         return jsonify({"received": True, "duplicate": True}), 200
 
-    if not _send_visa_order_notification(session):
-        return jsonify({"error": "email notification failed"}), 500
+    visa_link_id = (settings.stripe_visa_payment_link_id or "").strip()
+
+    if visa_link_id and payment_link != visa_link_id:
+        logger.info("Stripe checkout ignored for non-visa payment_link=%s", payment_link)
+        return jsonify({"received": True, "ignored": "non_visa_payment_link"}), 200
+
+    intake_token = _create_visa_order(session)
+    _send_visa_order_notification(session, intake_token=intake_token)
+
+    customer_details = session.get("customer_details") or {}
+    customer_email = customer_details.get("email") or session.get("customer_email") or ""
+    customer_name = customer_details.get("name") or "Customer"
+    if intake_token and customer_email:
+        _send_visa_intake_email_to_customer(customer_email, customer_name, intake_token)
 
     if session_id:
         _STRIPE_VISA_NOTIFIED_SESSION_IDS.add(session_id)
     return jsonify({"received": True, "notified": True}), 200
+
+
+@app.route("/visa-intake/<token>")
+@app.route("/visa-intake/<token>/")
+def visa_intake_form(token):
+    """Serve the visa intake form for a paid order."""
+    from src.models import VisaOrder, SessionLocal, init_db
+    from src.page_renderer import _env
+
+    init_db()
+    db = SessionLocal()
+    try:
+        order = db.query(VisaOrder).filter_by(intake_token=token).first()
+        if not order:
+            abort(404)
+        completed = order.status == "intake_complete"
+        template = _env.get_template("visa_intake_form.html.j2")
+        html = template.render(
+            seo={"title": "Venezuela Visa Intake Form", "description": "Complete your visa intake form.", "robots": "noindex, nofollow"},
+            order=order,
+            intake_data=order.intake_data or {},
+            completed=completed,
+        )
+        return Response(html, mimetype="text/html")
+    finally:
+        db.close()
+
+
+@app.post("/visa-intake/<token>/save")
+def visa_intake_save(token):
+    """Auto-save intake form data (JSON merge)."""
+    from src.models import VisaOrder, SessionLocal, init_db
+
+    init_db()
+    db = SessionLocal()
+    try:
+        order = db.query(VisaOrder).filter_by(intake_token=token).first()
+        if not order:
+            return jsonify({"error": "not found"}), 404
+        if order.status == "intake_complete":
+            return jsonify({"error": "already submitted"}), 400
+
+        data = request.get_json(silent=True) or {}
+        existing = order.intake_data or {}
+        existing.update(data)
+        order.intake_data = existing
+        if order.status == "pending_intake":
+            order.status = "intake_in_progress"
+        db.commit()
+        return jsonify({"ok": True})
+    except Exception as exc:
+        db.rollback()
+        logger.exception("Failed to save intake data: %s", exc)
+        return jsonify({"error": "save failed"}), 500
+    finally:
+        db.close()
+
+
+@app.post("/visa-intake/<token>/upload")
+def visa_intake_upload(token):
+    """Handle file upload for an intake form field. Stores to Supabase Storage."""
+    from src.models import VisaOrder, SessionLocal, init_db
+
+    init_db()
+    db = SessionLocal()
+    try:
+        order = db.query(VisaOrder).filter_by(intake_token=token).first()
+        if not order:
+            return jsonify({"ok": False, "error": "not found"}), 404
+        if order.status == "intake_complete":
+            return jsonify({"ok": False, "error": "already submitted"}), 400
+
+        field = request.form.get("field", "unknown")
+        uploaded = request.files.get("file")
+        if not uploaded or not uploaded.filename:
+            return jsonify({"ok": False, "error": "no file"}), 400
+
+        max_size = 10 * 1024 * 1024  # 10 MB
+        file_bytes = uploaded.read()
+        if len(file_bytes) > max_size:
+            return jsonify({"ok": False, "error": "File too large (max 10 MB)"}), 400
+
+        import os
+        safe_name = uploaded.filename.replace("/", "_").replace("\\", "_")
+        ext = os.path.splitext(safe_name)[1].lower() or ".bin"
+        storage_name = f"{token[:8]}_{field}{ext}"
+
+        stored = _store_intake_file(token, storage_name, file_bytes, uploaded.content_type)
+        if not stored:
+            return jsonify({"ok": False, "error": "storage failed"}), 500
+
+        existing = order.intake_data or {}
+        existing[f"_file_{field}"] = safe_name
+        existing[f"_file_{field}_path"] = stored
+        order.intake_data = existing
+        from sqlalchemy.orm.attributes import flag_modified
+        flag_modified(order, "intake_data")
+        db.commit()
+        return jsonify({"ok": True, "filename": safe_name})
+    except Exception as exc:
+        db.rollback()
+        logger.exception("Failed to upload intake file: %s", exc)
+        return jsonify({"ok": False, "error": "upload failed"}), 500
+    finally:
+        db.close()
+
+
+def _store_intake_file(token: str, filename: str, data: bytes, content_type: str | None) -> str | None:
+    """Store an intake file to local storage and return the path."""
+    upload_dir = settings.storage_dir / "visa_intake" / token[:8]
+    upload_dir.mkdir(parents=True, exist_ok=True)
+    filepath = upload_dir / filename
+    filepath.write_bytes(data)
+    return str(filepath)
+
+
+@app.post("/visa-intake/<token>/submit")
+def visa_intake_submit(token):
+    """Mark the intake form as complete and notify the team."""
+    from datetime import datetime
+    from src.models import VisaOrder, SessionLocal, init_db
+    from src.newsletter import send_email
+
+    init_db()
+    db = SessionLocal()
+    try:
+        order = db.query(VisaOrder).filter_by(intake_token=token).first()
+        if not order:
+            return jsonify({"error": "not found"}), 404
+        if order.status == "intake_complete":
+            return jsonify({"ok": True, "already": True})
+
+        data = request.get_json(silent=True) or {}
+        existing = order.intake_data or {}
+        existing.update(data)
+        order.intake_data = existing
+        order.status = "intake_complete"
+        order.intake_completed_at = datetime.utcnow()
+        from sqlalchemy.orm.attributes import flag_modified
+        flag_modified(order, "intake_data")
+        db.commit()
+
+        # Notify team
+        recipient = _visa_order_email_recipient()
+        if recipient:
+            intake_url = f"{settings.site_url}/visa-intake/{token}"
+            name = f"{existing.get('first_name', '')} {existing.get('last_name', '')}".strip() or order.customer_name
+            subject = f"Visa intake form completed — {name}"
+            html = f"""
+            <h2>Visa intake form completed</h2>
+            <p><strong>{_xml_escape(name)}</strong> ({_xml_escape(order.customer_email)}) has completed their visa intake form.</p>
+            <p><strong>Visa type:</strong> {_xml_escape(existing.get('visa_type', 'Not specified'))}<br>
+            <strong>Arrival date:</strong> {_xml_escape(existing.get('arrival_date', 'Not specified'))}<br>
+            <strong>Passport country:</strong> {_xml_escape(existing.get('passport_country', 'Not specified'))}</p>
+            <p><a href="{_xml_escape(intake_url)}">View intake form</a></p>
+            <p>Next step: review documents and submit the visa application through Cancillería Digital.</p>
+            """
+            send_email(to=recipient, subject=subject, html_body=html, provider_name=settings.visa_order_email_provider)
+
+        return jsonify({"ok": True})
+    except Exception as exc:
+        db.rollback()
+        logger.exception("Failed to submit intake: %s", exc)
+        return jsonify({"error": "submit failed"}), 500
+    finally:
+        db.close()
 
 
 @app.post("/admin/regen-report")

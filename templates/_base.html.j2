@@ -19,7 +19,7 @@
   {% if _seo.keywords %}<meta name="keywords" content="{{ _seo.keywords }}">{% endif %}
   {% if _seo.news_keywords %}<meta name="news_keywords" content="{{ _seo.news_keywords }}">{% endif %}
   <meta name="author" content="{{ _seo.site_name|default('Caracas Research') }}">
-  <meta name="robots" content="index, follow, max-image-preview:large, max-snippet:-1">
+  <meta name="robots" content="{{ _seo.robots|default('index, follow, max-image-preview:large, max-snippet:-1') }}">
   <link rel="canonical" href="{{ _seo.canonical|default('') }}">
   <link rel="alternate" hreflang="en" href="{{ _seo.canonical|default('') }}">
   <link rel="alternate" hreflang="x-default" href="{{ _seo.canonical|default('') }}">
