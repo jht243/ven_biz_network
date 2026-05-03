@@ -20,6 +20,7 @@ from xml.sax.saxutils import escape as _xml_escape
 import httpx
 from flask import Flask, send_from_directory, abort, request, jsonify, Response, redirect
 from werkzeug.exceptions import HTTPException
+from werkzeug.utils import secure_filename
 
 from src.config import settings
 from src.data.visa_requirements import US_EMBASSY_VENEZUELA_EVISA_INSTRUCTIONS
@@ -676,6 +677,35 @@ def _admin_authenticated():
     return request.cookies.get("admin_session") == settings.visa_admin_key
 
 
+def _visa_intake_download_url(*, token: str, stored_path: str) -> str | None:
+    """
+    Build a download URL for an intake file. Prefer Supabase signed URLs on
+    production (ephemeral disk). Returns None only if no usable URL can be built.
+    """
+    from src.storage_remote import signed_url as _signed_url
+    from src.storage_remote import supabase_storage_enabled
+
+    if stored_path.startswith("supabase://"):
+        parts = stored_path.replace("supabase://", "").split("/", 1)
+        bucket_name, obj_key = parts[0], parts[1] if len(parts) > 1 else ""
+        return _signed_url(obj_key, bucket=bucket_name, expires_in=7200)
+    if stored_path.startswith("http"):
+        return stored_path
+
+    local_name = stored_path.replace("\\", "/").split("/")[-1]
+    if not local_name or ".." in local_name:
+        return None
+    object_key = f"{token[:8]}/{local_name}"
+    if supabase_storage_enabled():
+        su = _signed_url(object_key, bucket=settings.supabase_visa_intake_bucket, expires_in=7200)
+        if su:
+            return su
+    fn = secure_filename(local_name)
+    if not fn:
+        return None
+    return f"/admin/visa-file/{token[:8]}/{fn}"
+
+
 @app.route("/admin", methods=["GET", "POST"])
 def admin_login():
     """Simple password login for the admin panel."""
@@ -739,21 +769,8 @@ def admin_visa_orders():
                 if k.startswith("_file_") and not k.endswith("_path"):
                     field_name = k.replace("_file_", "")
                     file_path = data.get(f"_file_{field_name}_path", "")
-                    if file_path.startswith("supabase://"):
-                        # Private Supabase bucket — generate a signed URL
-                        from src.storage_remote import signed_url as _signed_url
-                        parts = file_path.replace("supabase://", "").split("/", 1)
-                        bucket_name, obj_key = parts[0], parts[1] if len(parts) > 1 else ""
-                        su = _signed_url(obj_key, bucket=bucket_name, expires_in=7200)
-                        files[field_name] = {"name": v, "url": su or "#no-signed-url"}
-                    elif file_path.startswith("http"):
-                        files[field_name] = {"name": v, "url": file_path}
-                    else:
-                        local_filename = file_path.split("/")[-1] if "/" in file_path else file_path
-                        files[field_name] = {
-                            "name": v,
-                            "url": f"/admin/visa-file/{o.intake_token[:8]}/{local_filename}"
-                        }
+                    dl = _visa_intake_download_url(token=o.intake_token, stored_path=file_path)
+                    files[field_name] = {"name": v, "url": dl or "#"}
             name = f"{data.get('primer_nombre', '')} {data.get('primer_apellido', '')}".strip() or o.customer_name or "Unknown"
             rows.append({
                 "id": o.id,
@@ -797,7 +814,11 @@ def admin_visa_orders():
                 html += '<div class="files"><strong>Uploaded documents:</strong><br>'
                 for field_name, finfo in r["files"].items():
                     label = field_name.replace("_", " ").title()
-                    html += f' <a href="{_xml_escape(finfo["url"])}" target="_blank">{label}: {_xml_escape(finfo["name"])}</a>'
+                    u = finfo["url"]
+                    if u and u not in ("#", "#no-signed-url"):
+                        html += f' <a href="{_xml_escape(u)}" target="_blank" rel="noopener">{label}: {_xml_escape(finfo["name"])}</a>'
+                    else:
+                        html += f' <span style="color:#856404;">{label}: {_xml_escape(finfo["name"])} — file not available (not in cloud storage; customer may need to re-upload)</span>'
                 html += "</div>"
             else:
                 html += '<div class="files" style="color:#6c757d;">No files uploaded yet.</div>'
@@ -817,18 +838,35 @@ def admin_visa_orders():
 
 @app.route("/admin/visa-file/<token_prefix>/<filename>")
 def admin_visa_file(token_prefix, filename):
-    """Serve a locally-stored intake file. Protected by session auth."""
+    """Serve a locally-stored intake file, or redirect to Supabase if absent (Render)."""
     if not _admin_authenticated():
         return redirect("/admin")
 
+    if ".." in filename or "/" in filename:
+        abort(400)
+    fname = secure_filename(filename)
+    if not fname:
+        abort(400)
+
     import mimetypes
-    filepath = settings.storage_dir / "visa_intake" / token_prefix / filename
-    if not filepath.exists():
-        abort(404)
-    mime = mimetypes.guess_type(str(filepath))[0] or "application/octet-stream"
-    return Response(filepath.read_bytes(), mimetype=mime, headers={
-        "Content-Disposition": f"inline; filename=\"{filename}\""
-    })
+    filepath = settings.storage_dir / "visa_intake" / token_prefix / fname
+    if filepath.exists():
+        mime = mimetypes.guess_type(str(filepath))[0] or "application/octet-stream"
+        return Response(filepath.read_bytes(), mimetype=mime, headers={
+            "Content-Disposition": f'inline; filename="{fname}"'
+        })
+
+    # Ephemeral filesystem on cloud: object may only exist in Supabase
+    from src.storage_remote import signed_url as _signed_url
+    from src.storage_remote import supabase_storage_enabled
+    if supabase_storage_enabled():
+        object_key = f"{token_prefix}/{fname}"
+        su = _signed_url(object_key, bucket=settings.supabase_visa_intake_bucket, expires_in=3600)
+        if su:
+            return redirect(su, code=302)
+
+    logger.warning("admin_visa_file: not found locally or in Supabase: %s/%s", token_prefix, fname)
+    abort(404)
 
 
 @app.post("/admin/regen-report")
