@@ -148,10 +148,12 @@
             <p>{{ step.detail }}</p>
             {% if step.url %}
             <div class="step-cta-row">
-              {% if 'cancilleriadigital' in step.url and us_embassy_eguide_url is defined and us_embassy_eguide_url %}
-              <a class="step-cta step-cta-embassy" href="{{ us_embassy_eguide_url }}" rel="nofollow noopener" target="_blank">Embassy Application Instructions &rarr;</a>
-              {% endif %}
               <a class="step-cta" href="{{ step.url }}" rel="nofollow noopener" target="_blank">{% if 'usembassy' in step.url %}Embassy Application Instructions{% else %}{{ step.url_label or 'Open the e-visa portal' }}{% endif %} &rarr;</a>
+            </div>
+            {% endif %}
+            {% if 'electronic application form' in step.title|lower or 'complete the' in step.title|lower %}
+            <div class="step-cta-row">
+              <a class="step-cta" href="/get-venezuela-visa">Same-day visa service &rarr;</a>
             </div>
             {% endif %}
           </div>
