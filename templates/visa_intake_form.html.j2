@@ -32,8 +32,7 @@
   .form-group textarea { min-height: 80px; resize: vertical; }
   .form-group .required::after { content: " *"; color: var(--sr-red); }
 
-  .form-row { display: grid; grid-template-columns: 1fr 1fr; gap: 14px; }
-  @media (max-width: 600px) { .form-row { grid-template-columns: 1fr; } }
+  .form-row { display: grid; grid-template-columns: 1fr; gap: 0; }
 
   .upload-zone { border: 2px dashed #c8d4e2; border-radius: 6px; padding: 18px; text-align: center; cursor: pointer; transition: border-color 0.2s, background 0.2s; }
   .upload-zone:hover, .upload-zone.dragover { border-color: var(--sr-blue); background: #f0f5fc; }
@@ -102,19 +101,19 @@
 
   <form id="intakeForm" novalidate>
 
-    <!-- STEP 0: Personal Information (Datos Básicos) -->
+    <!-- STEP 0: Personal Information -->
     <div class="step-section active" data-step="0">
       <h2 class="step-title">Personal information</h2>
-      <p class="step-subtitle">Exactly as it appears on your passport. Names must match your passport precisely — mismatches cause denials. These fields map directly to the Cancillería Digital registration.</p>
+      <p class="step-subtitle">Exactly as it appears on your passport. Names must match your passport precisely — mismatches cause denials.</p>
 
       <div class="form-row">
         <div class="form-group">
-          <label class="required" for="primer_nombre">First name (Primer Nombre)</label>
+          <label class="required" for="primer_nombre">First name</label>
           <span class="hint">Your first name only, as shown on passport</span>
           <input type="text" id="primer_nombre" name="primer_nombre" required>
         </div>
         <div class="form-group">
-          <label for="otros_nombres">Other / Middle names (Otros Nombres)</label>
+          <label for="otros_nombres">Other / Middle names</label>
           <span class="hint">Any additional given names — leave blank if none</span>
           <input type="text" id="otros_nombres" name="otros_nombres">
         </div>
@@ -122,12 +121,12 @@
 
       <div class="form-row">
         <div class="form-group">
-          <label class="required" for="primer_apellido">First last name (Primer Apellido)</label>
+          <label class="required" for="primer_apellido">Primary surname</label>
           <span class="hint">Your primary surname as shown on passport</span>
           <input type="text" id="primer_apellido" name="primer_apellido" required>
         </div>
         <div class="form-group">
-          <label for="segundo_apellido">Second last name (Segundo Apellido)</label>
+          <label for="segundo_apellido">Second surname</label>
           <span class="hint">If applicable — common in Latin American naming; leave blank if none</span>
           <input type="text" id="segundo_apellido" name="segundo_apellido">
         </div>
@@ -135,57 +134,47 @@
 
       <div class="form-row">
         <div class="form-group">
-          <label class="required" for="gender">Gender (Sexo)</label>
+          <label class="required" for="gender">Gender</label>
           <select id="gender" name="gender" required>
             <option value="">Select...</option>
-            <option value="masculino">Male (Masculino)</option>
-            <option value="femenino">Female (Femenino)</option>
+            <option value="masculino">Male</option>
+            <option value="femenino">Female</option>
           </select>
         </div>
         <div class="form-group">
-          <label class="required" for="date_of_birth">Date of birth (Fecha de Nacimiento)</label>
+          <label class="required" for="date_of_birth">Date of birth</label>
           <input type="date" id="date_of_birth" name="date_of_birth" required>
         </div>
       </div>
 
       <div class="form-row">
         <div class="form-group">
-          <label class="required" for="marital_status">Marital status (Estado Civil)</label>
+          <label class="required" for="marital_status">Marital status</label>
           <select id="marital_status" name="marital_status" required>
             <option value="">Select...</option>
-            <option value="soltero">Single (Soltero/a)</option>
-            <option value="casado">Married (Casado/a)</option>
-            <option value="divorciado">Divorced (Divorciado/a)</option>
-            <option value="viudo">Widowed (Viudo/a)</option>
+            <option value="soltero">Single</option>
+            <option value="casado">Married</option>
+            <option value="divorciado">Divorced</option>
+            <option value="viudo">Widowed</option>
           </select>
         </div>
         <div class="form-group">
-          <label class="required" for="nationality">Nationality (Nacionalidad)</label>
-          <span class="hint">E.g. "Estadounidense" for American, "Canadiense" for Canadian</span>
+          <label class="required" for="nationality">Nationality</label>
+          <span class="hint">E.g. "American", "Canadian", "British"</span>
           <input type="text" id="nationality" name="nationality" required>
         </div>
       </div>
 
       <div class="form-row">
         <div class="form-group">
-          <label class="required" for="country_of_birth">Country of birth (País de Nacimiento)</label>
+          <label class="required" for="country_of_birth">Country of birth</label>
           <input type="text" id="country_of_birth" name="country_of_birth" required>
         </div>
         <div class="form-group">
-          <label class="required" for="city_of_birth">City of birth (Ciudad)</label>
+          <label class="required" for="city_of_birth">City of birth</label>
           <span class="hint">If born outside your passport country, enter your current city of residence instead</span>
           <input type="text" id="city_of_birth" name="city_of_birth" required>
         </div>
-      </div>
-
-      <div class="form-group">
-        <label class="required" for="acquired_nationality">Acquired nationality? (Nacionalidad Adquirida)</label>
-        <span class="hint">Select "Yes" if your nationality was acquired (naturalized), "No" if by birth</span>
-        <select id="acquired_nationality" name="acquired_nationality" required>
-          <option value="">Select...</option>
-          <option value="no">No</option>
-          <option value="yes">Yes</option>
-        </select>
       </div>
 
       <div class="form-group">
@@ -196,93 +185,88 @@
 
       <div class="form-row">
         <div class="form-group">
-          <label class="required" for="phone_cell">Cell phone (Teléfono Celular)</label>
+          <label class="required" for="phone_cell">Cell phone</label>
           <span class="hint">Include country code (e.g. +1 516 697 5436)</span>
           <input type="tel" id="phone_cell" name="phone_cell" required value="{{ order.customer_phone or '' }}">
         </div>
         <div class="form-group">
-          <label for="phone_landline">Landline (Teléfono Fijo)</label>
+          <label for="phone_landline">Landline</label>
           <span class="hint">If you don't have a landline, you can repeat your cell number</span>
           <input type="tel" id="phone_landline" name="phone_landline">
         </div>
       </div>
     </div>
 
-    <!-- STEP 1: Passport Details (Datos del Pasaporte / Identificaciones) -->
+    <!-- STEP 1: Passport Details -->
     <div class="step-section" data-step="1">
       <h2 class="step-title">Passport details</h2>
       <p class="step-subtitle">Your passport must be valid for at least 6 months beyond your planned entry date and have at least 2 blank pages.</p>
 
       <div class="form-row">
         <div class="form-group">
-          <label class="required" for="passport_type">Passport type (Tipo)</label>
+          <label class="required" for="passport_type">Passport type</label>
           <select id="passport_type" name="passport_type" required>
             <option value="">Select...</option>
-            <option value="ordinario">Ordinary (Ordinario)</option>
-            <option value="diplomatico">Diplomatic (Diplomático)</option>
-            <option value="oficial">Official (Oficial)</option>
+            <option value="ordinario">Ordinary</option>
+            <option value="diplomatico">Diplomatic</option>
+            <option value="oficial">Official</option>
           </select>
         </div>
         <div class="form-group">
-          <label class="required" for="passport_number">Passport number (Número)</label>
+          <label class="required" for="passport_number">Passport number</label>
           <input type="text" id="passport_number" name="passport_number" required>
         </div>
       </div>
 
-      <div class="form-group">
-        <label class="required" for="passport_country">Country of issue (País de emisión)</label>
-        <input type="text" id="passport_country" name="passport_country" required>
-      </div>
-
       <div class="form-row">
         <div class="form-group">
-          <label class="required" for="passport_issue_date">Issue date (Fecha de emisión)</label>
-          <input type="date" id="passport_issue_date" name="passport_issue_date" required>
+          <label class="required" for="passport_country">Issuing country</label>
+          <span class="hint">E.g. "United States", "Canada", "United Kingdom"</span>
+          <input type="text" id="passport_country" name="passport_country" required>
         </div>
         <div class="form-group">
-          <label class="required" for="passport_expiry_date">Expiry date (Fecha de vencimiento)</label>
-          <span class="hint">Must be 6+ months after your planned entry</span>
-          <input type="date" id="passport_expiry_date" name="passport_expiry_date" required>
+          <label class="required" for="passport_issue_date">Issue date</label>
+          <input type="date" id="passport_issue_date" name="passport_issue_date" required>
         </div>
       </div>
 
       <div class="form-group">
-        <label class="required" for="passport_issue_authority">Issuing authority</label>
-        <span class="hint">E.g. "U.S. Department of State" or "HM Passport Office"</span>
-        <input type="text" id="passport_issue_authority" name="passport_issue_authority" required>
+        <label class="required" for="passport_expiry_date">Expiry date</label>
+        <span class="hint">Must be 6+ months after your planned entry</span>
+        <input type="date" id="passport_expiry_date" name="passport_expiry_date" required>
       </div>
     </div>
 
-    <!-- STEP 2: Residence & Contact (Datos de Contacto) -->
+    <!-- STEP 2: Residence & Contact -->
     <div class="step-section" data-step="2">
       <h2 class="step-title">Current residence &amp; contact</h2>
-      <p class="step-subtitle">Your home address as it will appear on the Cancillería Digital registration. These fields match the portal exactly.</p>
+      <p class="step-subtitle">Your home address in your country of residence.</p>
 
       <div class="form-row">
         <div class="form-group">
-          <label class="required" for="residence_country">Country where you reside (País donde se encuentra)</label>
+          <label class="required" for="residence_country">Country where you reside</label>
           <input type="text" id="residence_country" name="residence_country" required>
         </div>
         <div class="form-group">
-          <label class="required" for="residence_city">City (Ciudad)</label>
+          <label class="required" for="residence_city">City</label>
           <input type="text" id="residence_city" name="residence_city" required>
         </div>
       </div>
 
       <div class="form-group">
-        <label class="required" for="residence_street">Street / Avenue (Calle/Avenida/Esq)</label>
-        <span class="hint">E.g. "SE 14TH COURT" or "123 Main Street"</span>
+        <label class="required" for="residence_street">Street / Avenue</label>
+        <span class="hint">E.g. "SE 14th Court" or "123 Main Street"</span>
         <input type="text" id="residence_street" name="residence_street" required>
       </div>
 
       <div class="form-row">
         <div class="form-group">
-          <label class="required" for="residence_building">Building / House number (Edificio/Casa)</label>
+          <label class="required" for="residence_building">Building / House number</label>
           <span class="hint">House number or building name</span>
           <input type="text" id="residence_building" name="residence_building" required>
         </div>
         <div class="form-group">
-          <label for="residence_floor_apt">Floor / Apartment (Piso/Apto)</label>
+          <label for="residence_floor_apt">Floor / Apartment</label>
           <span class="hint">Enter 0 or leave blank if not applicable</span>
           <input type="text" id="residence_floor_apt" name="residence_floor_apt">
         </div>
@@ -290,7 +274,7 @@
 
       <div class="form-row">
         <div class="form-group">
-          <label class="required" for="residence_zip">Postal / ZIP code (Código Postal)</label>
+          <label class="required" for="residence_zip">Postal / ZIP code</label>
           <input type="text" id="residence_zip" name="residence_zip" required>
         </div>
         <div class="form-group">
@@ -301,11 +285,11 @@
 
       <div class="form-group">
         <label class="required" for="residency_status">Residency status</label>
-        <span class="hint">Select "Permanente" if you are a citizen or permanent resident; "Transito" if on a visa or temporary status</span>
+        <span class="hint">Select "Permanent" if you are a citizen or permanent resident; "Temporary" if on a visa or temporary status</span>
         <select id="residency_status" name="residency_status" required>
           <option value="">Select...</option>
-          <option value="permanente">Permanent resident / Citizen (Permanente)</option>
-          <option value="transito">Visa / Temporary status (Transito)</option>
+          <option value="permanente">Permanent resident / Citizen</option>
+          <option value="transito">Visa / Temporary status</option>
         </select>
       </div>
 
@@ -321,31 +305,35 @@
         <input type="text" id="occupation" name="occupation">
       </div>
 
-      <h3 style="font-family: var(--font-serif); font-size: 18px; color: var(--sr-blue-dark); margin: 28px 0 6px;">Emergency contact (Contacto)</h3>
-      <p class="step-subtitle" style="margin-top:0;">The portal requires at least one emergency contact with full details.</p>
+      <div class="warning-box" style="margin-top: 28px;">
+        <strong>Emergency contact — Required by the Venezuelan visa portal.</strong>
+        You must provide at least one emergency contact with the details below. This is mandatory for all visa applications.
+      </div>
+
+      <h3 style="font-family: var(--font-serif); font-size: 18px; color: var(--sr-blue-dark); margin: 16px 0 6px;">Emergency contact</h3>
 
       <div class="form-row">
         <div class="form-group">
-          <label class="required" for="emergency_name">Full name (Nombres y Apellidos)</label>
+          <label class="required" for="emergency_name">Full name</label>
           <input type="text" id="emergency_name" name="emergency_name" required>
         </div>
         <div class="form-group">
-          <label class="required" for="emergency_document">ID or Passport number (Documento)</label>
+          <label class="required" for="emergency_document">ID or Passport number</label>
           <input type="text" id="emergency_document" name="emergency_document" required>
         </div>
       </div>
 
       <div class="form-row">
         <div class="form-group">
-          <label class="required" for="emergency_relationship">Relationship (Parentesco)</label>
+          <label class="required" for="emergency_relationship">Relationship</label>
           <span class="hint">E.g. "Friend", "Spouse", "Parent", "N/A"</span>
           <input type="text" id="emergency_relationship" name="emergency_relationship" required>
         </div>
         <div class="form-group">
-          <label class="required" for="emergency_is_family">Is a family member? (¿Es familiar?)</label>
+          <label class="required" for="emergency_is_family">Is a family member?</label>
           <select id="emergency_is_family" name="emergency_is_family" required>
             <option value="">Select...</option>
-            <option value="yes">Yes (Sí)</option>
+            <option value="yes">Yes</option>
             <option value="no">No</option>
           </select>
         </div>
@@ -353,29 +341,29 @@
 
       <div class="form-row">
         <div class="form-group">
-          <label class="required" for="emergency_phone">Phone (Teléfono)</label>
+          <label class="required" for="emergency_phone">Phone</label>
           <input type="tel" id="emergency_phone" name="emergency_phone" required>
         </div>
         <div class="form-group">
-          <label class="required" for="emergency_email">Email (Correo Electrónico)</label>
+          <label class="required" for="emergency_email">Email</label>
           <input type="email" id="emergency_email" name="emergency_email" required>
         </div>
       </div>
 
       <div class="form-group">
-        <label class="required" for="emergency_in_venezuela">Resides in Venezuela? (¿Reside en Venezuela?)</label>
+        <label class="required" for="emergency_in_venezuela">Resides in Venezuela?</label>
         <select id="emergency_in_venezuela" name="emergency_in_venezuela" required>
           <option value="">Select...</option>
-          <option value="yes">Yes (Sí)</option>
+          <option value="yes">Yes</option>
           <option value="no">No</option>
         </select>
       </div>
     </div>
 
-    <!-- STEP 3: Travel Details (Datos del Viaje + Seleccionar Trámite) -->
+    <!-- STEP 3: Travel Details -->
     <div class="step-section" data-step="3">
       <h2 class="step-title">Travel details</h2>
-      <p class="step-subtitle">Flight and accommodation details for your Venezuela trip. These fields match the Cancillería Digital application exactly.</p>
+      <p class="step-subtitle">Flight and accommodation details for your Venezuela trip.</p>
 
       <div class="warning-box">
         <strong>Don't have flights or hotels booked yet?</strong> Save this form and come back when you do.
@@ -384,12 +372,12 @@
       </div>
 
       <div class="form-group">
-        <label class="required" for="visa_type">Visa type (Seleccionar trámite)</label>
+        <label class="required" for="visa_type">Visa type</label>
         <select id="visa_type" name="visa_type" required>
           <option value="">Select...</option>
-          <option value="visa_de_turista">Tourist Visa (Visa de Turista)</option>
-          <option value="visa_transeunte_negocio">Business Transit Visa (Visa Transeúnte Negocio)</option>
-          <option value="visa_turista_hijos">Tourist Visa for Children (Visa de Turista para Hijos)</option>
+          <option value="visa_de_turista">Tourist Visa</option>
+          <option value="visa_transeunte_negocio">Business Transit Visa</option>
+          <option value="visa_turista_hijos">Tourist Visa for Children</option>
           <option value="visa_pro_90">Visa Pro 90</option>
         </select>
       </div>
@@ -402,58 +390,58 @@
 
       <div class="form-row">
         <div class="form-group">
-          <label class="required" for="transport_type">Transport type (Tipo de Transporte)</label>
+          <label class="required" for="transport_type">Transport type</label>
           <select id="transport_type" name="transport_type" required>
             <option value="">Select...</option>
-            <option value="aereo">Air (Aéreo)</option>
-            <option value="terrestre">Land (Terrestre)</option>
-            <option value="maritimo">Sea (Marítimo)</option>
+            <option value="aereo">Air</option>
+            <option value="terrestre">Land</option>
+            <option value="maritimo">Sea</option>
           </select>
         </div>
         <div class="form-group">
-          <label class="required" for="ticket_number">Ticket number (Nro de Boleto)</label>
-          <span class="hint">Your airline ticket/confirmation number from your booking</span>
+          <label class="required" for="ticket_number">Ticket / Confirmation number</label>
+          <span class="hint">Your airline ticket or booking confirmation number</span>
           <input type="text" id="ticket_number" name="ticket_number" required>
         </div>
       </div>
 
       <div class="form-row">
         <div class="form-group">
-          <label class="required" for="arrival_date">Travel date (Fecha de Viaje)</label>
+          <label class="required" for="arrival_date">Entry date</label>
           <input type="date" id="arrival_date" name="arrival_date" required>
         </div>
         <div class="form-group">
-          <label class="required" for="arrival_time">Travel time (Hora de viaje)</label>
+          <label class="required" for="arrival_time">Travel time</label>
           <span class="hint">Departure or arrival time from your itinerary</span>
           <input type="time" id="arrival_time" name="arrival_time" required>
         </div>
       </div>
 
       <div class="form-group">
-        <label class="required" for="airline_name">Airline (Aerolínea)</label>
+        <label class="required" for="airline_name">Airline</label>
         <span class="hint">E.g. "Wingo", "Avianca", "Copa Airlines"</span>
         <input type="text" id="airline_name" name="airline_name" required>
       </div>
 
       <div class="form-row">
         <div class="form-group">
-          <label class="required" for="flight_outbound">Outbound flight number (Vuelo ida)</label>
+          <label class="required" for="flight_outbound">Outbound flight number</label>
           <span class="hint">E.g. "P5 7402 (MDE > CCS)"</span>
           <input type="text" id="flight_outbound" name="flight_outbound" required>
         </div>
         <div class="form-group">
-          <label class="required" for="flight_return">Return flight number (Vuelo regreso)</label>
+          <label class="required" for="flight_return">Return flight number</label>
           <span class="hint">E.g. "P5 7403 (CCS > MDE)"</span>
           <input type="text" id="flight_return" name="flight_return" required>
         </div>
       </div>
 
       <div class="form-group">
-        <label class="required" for="departure_date">Departure / Exit date (Fecha salida)</label>
+        <label class="required" for="departure_date">Departure / Exit date</label>
         <input type="date" id="departure_date" name="departure_date" required>
       </div>
 
-      <h3 style="font-family: var(--font-serif); font-size: 18px; color: var(--sr-blue-dark); margin: 28px 0 6px;">Accommodation in Venezuela (Lugar de Alojamiento)</h3>
+      <h3 style="font-family: var(--font-serif); font-size: 18px; color: var(--sr-blue-dark); margin: 28px 0 6px;">Accommodation in Venezuela</h3>
 
       <div class="form-group">
         <label class="required" for="hotel_name">Hotel / Accommodation name</label>
@@ -463,12 +451,12 @@
 
       <div class="form-row">
         <div class="form-group">
-          <label class="required" for="hotel_address">Hotel address (Dirección)</label>
+          <label class="required" for="hotel_address">Hotel address</label>
           <span class="hint">Full address including city (e.g. "La Castellana, Caracas, Venezuela")</span>
           <input type="text" id="hotel_address" name="hotel_address" required>
         </div>
         <div class="form-group">
-          <label for="hotel_phone">Hotel phone (Teléfono)</label>
+          <label for="hotel_phone">Hotel phone</label>
           <span class="hint">Include country code (e.g. "+58 212-3188130")</span>
           <input type="tel" id="hotel_phone" name="hotel_phone">
         </div>
@@ -480,46 +468,46 @@
         <textarea id="business_contact" name="business_contact" rows="3"></textarea>
       </div>
 
-      <h3 style="font-family: var(--font-serif); font-size: 18px; color: var(--sr-blue-dark); margin: 28px 0 6px;">Financial sponsor (Responsable Económico)</h3>
+      <h3 style="font-family: var(--font-serif); font-size: 18px; color: var(--sr-blue-dark); margin: 28px 0 6px;">Financial sponsor</h3>
       <p class="step-subtitle" style="margin-top:0;">Who is financially responsible for this trip?</p>
 
       <div class="form-row">
         <div class="form-group">
-          <label class="required" for="financial_sponsor_name">Name (Nombre)</label>
+          <label class="required" for="financial_sponsor_name">Name</label>
           <span class="hint">If paying for yourself, enter your own name</span>
           <input type="text" id="financial_sponsor_name" name="financial_sponsor_name" required>
         </div>
         <div class="form-group">
-          <label class="required" for="financial_sponsor_relationship">Relationship (Relación)</label>
-          <span class="hint">E.g. "Self / propio solicitante", "Spouse", "Employer"</span>
+          <label class="required" for="financial_sponsor_relationship">Relationship</label>
+          <span class="hint">E.g. "Self", "Spouse", "Employer"</span>
           <input type="text" id="financial_sponsor_relationship" name="financial_sponsor_relationship" required>
         </div>
       </div>
 
-      <h3 style="font-family: var(--font-serif); font-size: 18px; color: var(--sr-blue-dark); margin: 28px 0 6px;">Contact in Venezuela (Contacto en Venezuela)</h3>
-      <p class="step-subtitle" style="margin-top:0;">A person or place that can be contacted while you are in Venezuela (can be your hotel).</p>
+      <h3 style="font-family: var(--font-serif); font-size: 18px; color: var(--sr-blue-dark); margin: 28px 0 6px;">Contact in Venezuela</h3>
+      <p class="step-subtitle" style="margin-top:0;">A person or place that can be contacted while you are in Venezuela — <strong>can be your hotel</strong>.</p>
 
       <div class="form-row">
         <div class="form-group">
-          <label class="required" for="venezuela_contact_name">Name (Nombre)</label>
+          <label class="required" for="venezuela_contact_name">Name</label>
           <span class="hint">E.g. your hotel name or a local contact person</span>
           <input type="text" id="venezuela_contact_name" name="venezuela_contact_name" required>
         </div>
         <div class="form-group">
-          <label class="required" for="venezuela_contact_relationship">Relationship (Relación)</label>
-          <span class="hint">E.g. "Hotel / alojamiento", "Friend", "Business associate"</span>
+          <label class="required" for="venezuela_contact_relationship">Relationship</label>
+          <span class="hint">E.g. "Hotel", "Friend", "Business associate"</span>
           <input type="text" id="venezuela_contact_relationship" name="venezuela_contact_relationship" required>
         </div>
       </div>
 
       <div class="form-group">
-        <label class="required" for="venezuela_contact_phone">Phone (Teléfono)</label>
+        <label class="required" for="venezuela_contact_phone">Phone</label>
         <span class="hint">Venezuelan phone number with country code +58</span>
         <input type="tel" id="venezuela_contact_phone" name="venezuela_contact_phone" required>
       </div>
 
       <div class="form-group">
-        <label class="required" for="visited_venezuela_before">Have you visited Venezuela before? (¿Ha visitado Venezuela antes?)</label>
+        <label class="required" for="visited_venezuela_before">Have you visited Venezuela before?</label>
         <select id="visited_venezuela_before" name="visited_venezuela_before" required>
           <option value="">Select...</option>
           <option value="no">No</option>
@@ -627,9 +615,10 @@
 
       <div id="reviewSummary" style="margin: 0 0 20px;"></div>
 
-      <div class="form-group">
-        <label for="special_notes">Special notes or questions (optional)</label>
-        <textarea id="special_notes" name="special_notes" rows="3" placeholder="Any special circumstances, questions, or additional context for our team..."></textarea>
+      <div class="form-group" style="margin-top: 24px;">
+        <label for="special_notes">Any other comments or questions?</label>
+        <span class="hint">Anything else you'd like us to know — special circumstances, questions about the process, travel notes, etc.</span>
+        <textarea id="special_notes" name="special_notes" rows="4" placeholder="Type here..."></textarea>
       </div>
 
       <div class="form-group">
@@ -839,34 +828,33 @@
     var data = gatherData();
     var fullName = [data.primer_nombre, data.otros_nombres, data.primer_apellido, data.segundo_apellido].filter(Boolean).join(' ');
     var sections = [
-      { title: 'Personal information (Datos Básicos)', fields: [
+      { title: 'Personal information', fields: [
         ['Name', fullName],
         ['Gender', data.gender], ['Date of birth', data.date_of_birth],
         ['Marital status', data.marital_status],
-        ['Nationality', data.nationality], ['Acquired nationality', data.acquired_nationality],
+        ['Nationality', data.nationality],
         ['Country of birth', data.country_of_birth], ['City of birth', data.city_of_birth],
         ['Email', data.email], ['Cell phone', data.phone_cell], ['Landline', data.phone_landline],
       ]},
-      { title: 'Passport (Identificaciones)', fields: [
+      { title: 'Passport', fields: [
         ['Type', data.passport_type], ['Passport #', data.passport_number],
         ['Country of issue', data.passport_country],
         ['Issue date', data.passport_issue_date], ['Expiry', data.passport_expiry_date],
-        ['Issuing authority', data.passport_issue_authority],
       ]},
-      { title: 'Residence & Contact (Datos de Contacto)', fields: [
+      { title: 'Residence & Contact', fields: [
         ['Country', data.residence_country], ['City', data.residence_city],
         ['Street', data.residence_street],
         ['Building/House #', data.residence_building], ['Floor/Apt', data.residence_floor_apt],
         ['ZIP', data.residence_zip], ['State', data.residence_state],
         ['Residency status', data.residency_status],
       ]},
-      { title: 'Emergency Contact (Contacto)', fields: [
+      { title: 'Emergency Contact', fields: [
         ['Name', data.emergency_name], ['Document/Passport', data.emergency_document],
         ['Relationship', data.emergency_relationship], ['Family member?', data.emergency_is_family],
         ['Phone', data.emergency_phone], ['Email', data.emergency_email],
         ['In Venezuela?', data.emergency_in_venezuela],
       ]},
-      { title: 'Travel (Datos del Viaje)', fields: [
+      { title: 'Travel', fields: [
         ['Visa type', data.visa_type], ['Purpose', data.travel_purpose],
         ['Transport type', data.transport_type], ['Ticket #', data.ticket_number],
         ['Entry date', data.arrival_date], ['Travel time', data.arrival_time],
@@ -876,7 +864,7 @@
         ['Hotel', data.hotel_name], ['Hotel address', data.hotel_address],
         ['Hotel phone', data.hotel_phone],
       ]},
-      { title: 'Financial Sponsor (Responsable Económico)', fields: [
+      { title: 'Financial Sponsor', fields: [
         ['Name', data.financial_sponsor_name],
         ['Relationship', data.financial_sponsor_relationship],
       ]},
