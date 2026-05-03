@@ -133,6 +133,33 @@ def public_object_url(object_key: str, bucket: Optional[str] = None) -> Optional
     return f"{base}/storage/v1/object/public/{target_bucket}/{object_key}"
 
 
+def signed_url(object_key: str, *, bucket: Optional[str] = None, expires_in: int = 3600) -> Optional[str]:
+    """Create a short-lived signed URL for a private-bucket object.
+
+    Returns the signed URL string, or None if storage is not configured.
+    """
+    if not supabase_storage_enabled():
+        return None
+
+    base = _supabase_base_url()
+    target_bucket = bucket or settings.supabase_report_bucket
+    url = f"{base}/storage/v1/object/sign/{target_bucket}/{object_key}"
+    headers = {
+        "Authorization": f"Bearer {settings.supabase_service_key}",
+        "Content-Type": "application/json",
+    }
+    resp = httpx.post(url, json={"expiresIn": expires_in}, headers=headers, timeout=15)
+    if resp.status_code >= 400:
+        logger.warning("Signed URL failed %d for %s/%s: %s",
+                        resp.status_code, target_bucket, object_key, resp.text[:200])
+        return None
+    data = resp.json()
+    signed_path = data.get("signedURL") or data.get("signedUrl") or ""
+    if signed_path:
+        return f"{base}/storage/v1{signed_path}" if signed_path.startswith("/") else signed_path
+    return None
+
+
 def fetch_report_html() -> Optional[str]:
     """
     Fetch the latest report.html from Supabase Storage.

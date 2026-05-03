@@ -587,11 +587,35 @@ def visa_intake_upload(token):
 
 
 def _store_intake_file(token: str, filename: str, data: bytes, content_type: str | None) -> str | None:
-    """Store an intake file to local storage and return the path."""
+    """Store an intake file to Supabase Storage (preferred) with local fallback.
+
+    Returns the storage path/URL on success, None on failure.
+    """
+    object_key = f"{token[:8]}/{filename}"
+
+    # Try Supabase Storage first (private bucket)
+    from src.storage_remote import supabase_storage_enabled, upload_object
+    if supabase_storage_enabled():
+        try:
+            upload_object(
+                object_key,
+                data,
+                content_type=content_type or "application/octet-stream",
+                cache_control="private, max-age=0",
+                bucket=settings.supabase_visa_intake_bucket,
+            )
+            ref = f"supabase://{settings.supabase_visa_intake_bucket}/{object_key}"
+            logger.info("Intake file uploaded to Supabase: %s", ref)
+            return ref
+        except Exception as exc:
+            logger.warning("Supabase upload failed for %s, falling back to local: %s", object_key, exc)
+
+    # Local fallback
     upload_dir = settings.storage_dir / "visa_intake" / token[:8]
     upload_dir.mkdir(parents=True, exist_ok=True)
     filepath = upload_dir / filename
     filepath.write_bytes(data)
+    logger.info("Intake file saved locally: %s", filepath)
     return str(filepath)
 
 
@@ -625,7 +649,7 @@ def visa_intake_submit(token):
         recipient = _visa_order_email_recipient()
         if recipient:
             intake_url = f"{settings.site_url}/visa-intake/{token}"
-            name = f"{existing.get('first_name', '')} {existing.get('last_name', '')}".strip() or order.customer_name
+            name = f"{existing.get('primer_nombre', '')} {existing.get('primer_apellido', '')}".strip() or order.customer_name
             subject = f"Visa intake form completed — {name}"
             html = f"""
             <h2>Visa intake form completed</h2>
@@ -645,6 +669,121 @@ def visa_intake_submit(token):
         return jsonify({"error": "submit failed"}), 500
     finally:
         db.close()
+
+
+@app.route("/admin/visa-orders")
+def admin_visa_orders():
+    """List all visa orders with links to their files. Protected by a simple secret key."""
+    admin_key = request.args.get("key", "")
+    expected = (settings.visa_admin_key or "").strip()
+    if not expected or admin_key != expected:
+        abort(403)
+
+    from src.models import VisaOrder, SessionLocal, init_db
+    init_db()
+    db = SessionLocal()
+    try:
+        orders = db.query(VisaOrder).order_by(VisaOrder.created_at.desc()).all()
+        rows = []
+        for o in orders:
+            files = {}
+            data = o.intake_data or {}
+            for k, v in data.items():
+                if k.startswith("_file_") and not k.endswith("_path"):
+                    field_name = k.replace("_file_", "")
+                    file_path = data.get(f"_file_{field_name}_path", "")
+                    if file_path.startswith("supabase://"):
+                        # Private Supabase bucket — generate a signed URL
+                        from src.storage_remote import signed_url as _signed_url
+                        parts = file_path.replace("supabase://", "").split("/", 1)
+                        bucket_name, obj_key = parts[0], parts[1] if len(parts) > 1 else ""
+                        su = _signed_url(obj_key, bucket=bucket_name, expires_in=7200)
+                        files[field_name] = {"name": v, "url": su or "#no-signed-url"}
+                    elif file_path.startswith("http"):
+                        files[field_name] = {"name": v, "url": file_path}
+                    else:
+                        local_filename = file_path.split("/")[-1] if "/" in file_path else file_path
+                        files[field_name] = {
+                            "name": v,
+                            "url": f"/admin/visa-file/{o.intake_token[:8]}/{local_filename}?key={admin_key}"
+                        }
+            name = f"{data.get('primer_nombre', '')} {data.get('primer_apellido', '')}".strip() or o.customer_name or "Unknown"
+            rows.append({
+                "id": o.id,
+                "name": name,
+                "email": o.customer_email,
+                "status": o.status,
+                "created": str(o.created_at),
+                "token": o.intake_token,
+                "intake_url": f"{settings.site_url}/visa-intake/{o.intake_token}",
+                "files": files,
+                "data": {k: v for k, v in data.items() if not k.startswith("_file_")},
+            })
+
+        html = """<!DOCTYPE html><html><head><title>Visa Orders — Admin</title>
+        <style>
+          body { font-family: -apple-system, sans-serif; max-width: 1100px; margin: 20px auto; padding: 0 20px; color: #1e324c; }
+          h1 { color: #002b5e; }
+          .order { border: 1px solid #ddd; border-radius: 8px; padding: 20px; margin: 16px 0; background: #fafbfc; }
+          .order h3 { margin: 0 0 8px; color: #002b5e; }
+          .meta { font-size: 13px; color: #6c757d; margin-bottom: 12px; }
+          .files { margin: 12px 0; }
+          .files a { display: inline-block; background: #002b5e; color: #fff; padding: 6px 14px; border-radius: 4px; text-decoration: none; margin: 4px 4px 4px 0; font-size: 13px; }
+          .files a:hover { background: #003d82; }
+          table { border-collapse: collapse; width: 100%; font-size: 13px; margin-top: 8px; }
+          td { padding: 3px 8px; border-bottom: 1px solid #eee; vertical-align: top; }
+          td:first-child { color: #6c757d; white-space: nowrap; width: 200px; }
+          .badge { display: inline-block; padding: 2px 8px; border-radius: 3px; font-size: 12px; font-weight: 600; }
+          .badge-complete { background: #d4edda; color: #155724; }
+          .badge-progress { background: #fff3cd; color: #856404; }
+          .badge-pending { background: #e2e3e5; color: #383d41; }
+        </style></head><body>
+        <h1>Visa Orders</h1>"""
+
+        for r in rows:
+            badge_class = "badge-complete" if r["status"] == "intake_complete" else ("badge-progress" if "progress" in r["status"] else "badge-pending")
+            html += f"""<div class="order">
+              <h3>{_xml_escape(r['name'])} <span class="badge {badge_class}">{r['status']}</span></h3>
+              <div class="meta">{_xml_escape(r['email'])} · Created {r['created']} · <a href="{_xml_escape(r['intake_url'])}">View form</a></div>"""
+
+            if r["files"]:
+                html += '<div class="files"><strong>Uploaded documents:</strong><br>'
+                for field_name, finfo in r["files"].items():
+                    label = field_name.replace("_", " ").title()
+                    html += f' <a href="{_xml_escape(finfo["url"])}" target="_blank">{label}: {_xml_escape(finfo["name"])}</a>'
+                html += "</div>"
+            else:
+                html += '<div class="files" style="color:#6c757d;">No files uploaded yet.</div>'
+
+            if r["data"]:
+                html += "<table>"
+                for k, v in r["data"].items():
+                    html += f"<tr><td>{_xml_escape(k)}</td><td>{_xml_escape(str(v))}</td></tr>"
+                html += "</table>"
+            html += "</div>"
+
+        html += "</body></html>"
+        return Response(html, mimetype="text/html")
+    finally:
+        db.close()
+
+
+@app.route("/admin/visa-file/<token_prefix>/<filename>")
+def admin_visa_file(token_prefix, filename):
+    """Serve a locally-stored intake file. Protected by admin key."""
+    admin_key = request.args.get("key", "")
+    expected = (settings.visa_admin_key or "").strip()
+    if not expected or admin_key != expected:
+        abort(403)
+
+    import mimetypes
+    filepath = settings.storage_dir / "visa_intake" / token_prefix / filename
+    if not filepath.exists():
+        abort(404)
+    mime = mimetypes.guess_type(str(filepath))[0] or "application/octet-stream"
+    return Response(filepath.read_bytes(), mimetype=mime, headers={
+        "Content-Disposition": f"inline; filename=\"{filename}\""
+    })
 
 
 @app.post("/admin/regen-report")

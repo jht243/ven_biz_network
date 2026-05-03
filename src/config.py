@@ -80,6 +80,7 @@ class Settings(BaseSettings):
     visa_order_notification_email: str = ""
     visa_order_email_provider: str = "resend"
     visa_order_from_email: str = ""
+    visa_admin_key: str = ""
 
     # Google reporting (GA4 + Search Console)
     google_reporting_sa_json: str = ""
@@ -97,6 +98,7 @@ class Settings(BaseSettings):
     supabase_url: str = ""
     supabase_service_key: str = ""
     supabase_report_bucket: str = "reports"
+    supabase_visa_intake_bucket: str = "visa-intake"
     # Object key for the homepage report HTML inside the bucket. MUST be
     # unique per project when multiple projects share a Supabase bucket
     # (e.g. different sites running in the same Render workspace). The
