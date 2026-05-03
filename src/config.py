@@ -81,6 +81,7 @@ class Settings(BaseSettings):
     visa_order_email_provider: str = "resend"
     visa_order_from_email: str = ""
     visa_admin_key: str = ""
+    visa_admin_password: str = ""
 
     # Google reporting (GA4 + Search Console)
     google_reporting_sa_json: str = ""

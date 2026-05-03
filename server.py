@@ -37,6 +37,7 @@ app = Flask(
     static_folder=str(_STATIC_DIR),
     static_url_path="/static",
 )
+app.secret_key = settings.visa_admin_key or "fallback-dev-key"
 
 
 GZIP_MIME_PREFIXES = (
@@ -671,13 +672,59 @@ def visa_intake_submit(token):
         db.close()
 
 
+def _admin_authenticated():
+    return request.cookies.get("admin_session") == settings.visa_admin_key
+
+
+@app.route("/admin", methods=["GET", "POST"])
+def admin_login():
+    """Simple password login for the admin panel."""
+    if _admin_authenticated():
+        return redirect("/admin/visa-orders")
+
+    error = ""
+    if request.method == "POST":
+        password = request.form.get("password", "")
+        if password == settings.visa_admin_password:
+            resp = redirect("/admin/visa-orders")
+            resp.set_cookie("admin_session", settings.visa_admin_key, httponly=True, samesite="Lax", max_age=60*60*24*7)
+            return resp
+        error = "Incorrect password."
+
+    html = """<!DOCTYPE html><html><head><title>Admin Login</title>
+    <style>
+      body { font-family: -apple-system, sans-serif; display: flex; align-items: center; justify-content: center; min-height: 100vh; margin: 0; background: #f7f8fa; }
+      .login-box { background: #fff; padding: 40px; border-radius: 8px; box-shadow: 0 2px 12px rgba(0,0,0,0.08); width: 320px; }
+      h2 { margin: 0 0 20px; color: #002b5e; font-size: 22px; }
+      input[type="password"] { width: 100%; padding: 10px 12px; border: 1px solid #c8d4e2; border-radius: 4px; font-size: 14px; box-sizing: border-box; margin-bottom: 14px; }
+      input[type="password"]:focus { outline: none; border-color: #002b5e; box-shadow: 0 0 0 2px rgba(0,43,94,0.12); }
+      button { width: 100%; padding: 12px; background: #002b5e; color: #fff; border: none; border-radius: 4px; font-size: 14px; font-weight: 700; cursor: pointer; }
+      button:hover { background: #003d82; }
+      .error { color: #dc3545; font-size: 13px; margin-bottom: 10px; }
+    </style></head><body>
+    <div class="login-box">
+      <h2>Admin</h2>
+      """ + (f'<div class="error">{error}</div>' if error else '') + """
+      <form method="POST">
+        <input type="password" name="password" placeholder="Password" autofocus>
+        <button type="submit">Log in</button>
+      </form>
+    </div></body></html>"""
+    return Response(html, mimetype="text/html")
+
+
+@app.route("/admin/logout")
+def admin_logout():
+    resp = redirect("/admin")
+    resp.delete_cookie("admin_session")
+    return resp
+
+
 @app.route("/admin/visa-orders")
 def admin_visa_orders():
-    """List all visa orders with links to their files. Protected by a simple secret key."""
-    admin_key = request.args.get("key", "")
-    expected = (settings.visa_admin_key or "").strip()
-    if not expected or admin_key != expected:
-        abort(403)
+    """List all visa orders with links to their files."""
+    if not _admin_authenticated():
+        return redirect("/admin")
 
     from src.models import VisaOrder, SessionLocal, init_db
     init_db()
@@ -705,7 +752,7 @@ def admin_visa_orders():
                         local_filename = file_path.split("/")[-1] if "/" in file_path else file_path
                         files[field_name] = {
                             "name": v,
-                            "url": f"/admin/visa-file/{o.intake_token[:8]}/{local_filename}?key={admin_key}"
+                            "url": f"/admin/visa-file/{o.intake_token[:8]}/{local_filename}"
                         }
             name = f"{data.get('primer_nombre', '')} {data.get('primer_apellido', '')}".strip() or o.customer_name or "Unknown"
             rows.append({
@@ -770,11 +817,9 @@ def admin_visa_orders():
 
 @app.route("/admin/visa-file/<token_prefix>/<filename>")
 def admin_visa_file(token_prefix, filename):
-    """Serve a locally-stored intake file. Protected by admin key."""
-    admin_key = request.args.get("key", "")
-    expected = (settings.visa_admin_key or "").strip()
-    if not expected or admin_key != expected:
-        abort(403)
+    """Serve a locally-stored intake file. Protected by session auth."""
+    if not _admin_authenticated():
+        return redirect("/admin")
 
     import mimetypes
     filepath = settings.storage_dir / "visa_intake" / token_prefix / filename
