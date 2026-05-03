@@ -228,7 +228,10 @@ def process_prospects(*, limit: int | None = None, unprocessed_only: bool = Fals
             prospect.recommended_target_url = choose_target_url(link_opportunity, crawl.get("text", ""))
             prospect.page_text_snippet = (crawl.get("text") or "")[:2000]
 
-            contact_email = find_contact_email(prospect.domain)
+            # RULE: ALWAYS attempt contact discovery regardless of crawl outcome.
+            # Even if the article page returned 403/timeout/DNS error, we probe
+            # /contact, /about, /team, etc. on the source URL host and apex domain.
+            contact_email = find_contact_email(prospect.domain, source_url=prospect.source_url)
             if contact_email:
                 prospect.contact_email = contact_email
                 prospect.email_status = EmailStatus.FOUND

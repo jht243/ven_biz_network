@@ -1,4 +1,11 @@
-"""Scrape public pages for one usable outreach email."""
+"""Scrape public pages for one usable outreach email.
+
+RULE: Contact discovery ALWAYS runs for every prospect, regardless of whether
+the main backlink source page could be crawled. We probe /contact, /about,
+/team, /editorial, etc. on both the source URL's host and the apex domain.
+A failed article crawl (403, timeout, DNS) must never prevent us from
+finding a contact email on other pages of the same site.
+"""
 
 from __future__ import annotations
 
@@ -9,6 +16,8 @@ import socket
 from urllib.parse import urlparse
 
 import httpx
+
+from src.outreach.crawler import USER_AGENTS
 
 logger = logging.getLogger(__name__)
 
@@ -64,19 +73,77 @@ def _domain_resolves(domain: str) -> bool:
         return False
 
 
-def find_contact_email(domain: str, *, timeout: int = 10) -> str | None:
-    """Find one public contact email by scraping likely contact pages."""
+def _origins_from_source_url(source_url: str | None) -> list[str]:
+    """Origins under the same host as the backlink (priority when article URL 403s)."""
+    if not source_url:
+        return []
+    p = urlparse(source_url)
+    if not p.netloc:
+        return []
+    scheme = p.scheme if p.scheme in ("http", "https") else "https"
+    primary = f"{scheme}://{p.netloc}"
+    out = [primary]
+    if scheme == "http":
+        out.append(f"https://{p.netloc}")
+    return out
+
+
+def _origins_for_domain(domain: str) -> list[str]:
+    if not domain:
+        return []
+    return [
+        f"https://{domain}",
+        f"https://www.{domain}",
+        f"http://{domain}",
+    ]
+
+
+def _merge_origins(*lists: list[str]) -> list[str]:
+    seen: set[str] = set()
+    out: list[str] = []
+    for lst in lists:
+        for item in lst:
+            key = item.rstrip("/")
+            if key not in seen:
+                seen.add(key)
+                out.append(item)
+    return out
+
+
+def _any_host_resolves(origins: list[str]) -> bool:
+    for o in origins:
+        parsed = urlparse(o)
+        host = parsed.hostname
+        if host and _domain_resolves(host):
+            return True
+    return False
+
+
+def find_contact_email(
+    domain: str,
+    *,
+    source_url: str | None = None,
+    timeout: int = 10,
+) -> str | None:
+    """Find one public contact email by scraping likely contact pages.
+
+    Tries the backlink source URL's host first (same subdomain/CDN as the page),
+    then the normalized prospect domain. Uses the main crawler's User-Agent.
+    """
     domain = _normalize_domain(domain)
-    if not domain or not _domain_resolves(domain):
+    origins = _merge_origins(
+        _origins_from_source_url(source_url),
+        _origins_for_domain(domain),
+    )
+    if not origins or not _any_host_resolves(origins):
         return None
 
-    bases = [f"https://{domain}", f"https://www.{domain}", f"http://{domain}"]
-    headers = {"User-Agent": "CaracasResearchBot/1.0 (+https://www.caracasresearch.com)"}
-    seen_urls = set()
+    headers = {"User-Agent": USER_AGENTS[0]}
+    seen_urls: set[str] = set()
     with httpx.Client(timeout=timeout, follow_redirects=True, headers=headers) as client:
-        for base in bases:
+        for base in origins:
             for path in CONTACT_PATHS:
-                url = base.rstrip("/") + path
+                url = base.rstrip("/") + (path or "")
                 if url in seen_urls:
                     continue
                 seen_urls.add(url)
