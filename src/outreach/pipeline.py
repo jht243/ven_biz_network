@@ -7,6 +7,7 @@ import io
 import logging
 import time
 from collections import defaultdict
+from datetime import date, datetime, timedelta
 from pathlib import Path
 from urllib.parse import urlparse
 
@@ -290,28 +291,67 @@ def generate_pending_emails(*, limit: int | None = None) -> dict:
         db.close()
 
 
+def _daily_limit() -> int:
+    """Calculate today's send limit based on warmup schedule."""
+    base = settings.outreach_daily_limit or 5
+    start = settings.outreach_start_date
+    if not start:
+        return base
+    try:
+        start_date = datetime.strptime(start, "%Y-%m-%d").date()
+    except ValueError:
+        return base
+    days_active = (date.today() - start_date).days
+    if days_active < 7:
+        return base  # Week 1: 5/day
+    elif days_active < 14:
+        return min(15, base * 3)  # Week 2: 15/day
+    elif days_active < 21:
+        return min(30, base * 6)  # Week 3: 30/day
+    else:
+        return min(50, base * 10)  # Week 4+: 50/day
+
+
+def _sent_today_count(db) -> int:
+    """Count outreach emails sent today."""
+    today_start = datetime.combine(date.today(), datetime.min.time())
+    return (
+        db.query(OutreachEmail)
+        .filter(OutreachEmail.sent_at >= today_start)
+        .count()
+    )
+
+
 def send_pending_emails(*, limit: int | None = None, dry_run: bool = False) -> dict:
     """Send initial emails for queued qualified prospects."""
     init_db()
     db = SessionLocal()
     try:
+        daily_cap = _daily_limit()
+        already_sent = _sent_today_count(db)
+        remaining = max(0, daily_cap - already_sent)
+        if remaining == 0 and not dry_run:
+            logger.info("Daily send limit reached (%d/%d). Skipping.", already_sent, daily_cap)
+            return {"attempted": 0, "sent": 0, "failed": 0, "daily_limit": daily_cap, "sent_today": already_sent}
+
+        effective_limit = min(remaining, limit) if limit else remaining
         query = (
             db.query(Prospect)
             .filter(Prospect.outreach_status == OutreachStatus.QUEUED)
             .filter(Prospect.contact_email.isnot(None))
             .order_by(Prospect.score.desc())
+            .limit(effective_limit)
         )
-        if limit:
-            query = query.limit(limit)
         prospect_ids = [p.id for p in query.all()]
     finally:
         db.close()
 
-    summary = {"attempted": 0, "sent": 0, "failed": 0}
+    summary = {"attempted": 0, "sent": 0, "failed": 0, "daily_limit": daily_cap, "sent_today": already_sent}
     for prospect_id in prospect_ids:
         summary["attempted"] += 1
         ok = send_email(prospect_id, 1, dry_run=dry_run)
         summary["sent" if ok else "failed"] += 1
+        summary["sent_today"] += 1 if ok else 0
         if not dry_run:
             time.sleep(max(0, settings.outreach_delay_seconds))
     return summary

@@ -165,10 +165,13 @@ class Settings(BaseSettings):
     semrush_database: str = "us"
 
     # ── Backlink outreach MVP ─────────────────────────────────────────
-    resend_outreach_from: str = "Jonathan <jonathan@caracasresearch.com>"
+    resend_outreach_from: str = "Jonathan <jonathan@intake.layer3labs.io>"
+    resend_outreach_reply_to: str = "jonathan@layer3labs.io"
     outreach_min_score: int = 65
     outreach_batch_size: int = 50
     outreach_delay_seconds: int = 30
+    outreach_daily_limit: int = 5
+    outreach_start_date: str = ""
 
     # ── Distribution: IndexNow (Bing, Yandex, Seznam, Naver, Mojeek) ──
     # The IndexNow key — generated in Bing Webmaster Tools at

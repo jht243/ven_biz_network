@@ -415,6 +415,7 @@ def send_email(prospect_id: str, sequence_num: int = 1, *, dry_run: bool = False
             provider_name="resend",
             dry_run=dry_run,
             from_override=settings.resend_outreach_from,
+            reply_to=settings.resend_outreach_reply_to or None,
         )
         ok = bool(result.get("success"))
         if ok:

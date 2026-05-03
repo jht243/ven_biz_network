@@ -75,8 +75,9 @@ class SendGridProvider(EmailProvider):
 class ResendProvider(EmailProvider):
     API_URL = "https://api.resend.com/emails"
 
-    def __init__(self, from_override: str | None = None):
+    def __init__(self, from_override: str | None = None, reply_to: str | None = None):
         self._from_override = from_override
+        self._reply_to = reply_to
 
     def send(self, to: str, subject: str, html_body: str) -> bool:
         from_addr = self._from_override or f"{settings.site_name} <{settings.newsletter_from_email}>"
@@ -86,6 +87,8 @@ class ResendProvider(EmailProvider):
             "subject": subject,
             "html": html_body,
         }
+        if self._reply_to:
+            payload["reply_to"] = [self._reply_to]
         headers = {
             "Authorization": f"Bearer {settings.resend_api_key}",
             "Content-Type": "application/json",
@@ -117,6 +120,7 @@ def send_email(
     provider_name: str | None = None,
     dry_run: bool = False,
     from_override: str | None = None,
+    reply_to: str | None = None,
 ) -> dict:
     selected_provider = provider_name or settings.seo_email_provider or settings.newsletter_provider
     if dry_run:
@@ -133,8 +137,11 @@ def send_email(
 
     try:
         provider = builder()
-        if from_override and isinstance(provider, ResendProvider):
-            provider._from_override = from_override
+        if isinstance(provider, ResendProvider):
+            if from_override:
+                provider._from_override = from_override
+            if reply_to:
+                provider._reply_to = reply_to
         success = provider.send(to=to, subject=subject, html_body=html_body)
         return {"success": success, "provider": selected_provider, "to": to}
     except Exception as exc:
