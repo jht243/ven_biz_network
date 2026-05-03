@@ -123,10 +123,22 @@ class Settings(BaseSettings):
     # canonical <link>, sitemap entries, JSON-LD identifiers, and OG
     # share URLs. Override via SITE_URL env var when a custom domain
     # is added (Tier 4).
-    site_url: str = "https://caracasresearch.com"
+    site_url: str = "https://www.caracasresearch.com"
     site_name: str = "Caracas Research"
     site_owner_org: str = "Caracas Research"
     site_locale: str = "en_US"
+
+    @property
+    def canonical_site_url(self) -> str:
+        """Customer-facing base URL (emails, payment redirects, intake links).
+
+        Render and other hosts may set SITE_URL to a *.onrender.com hostname;
+        we always prefer the live marketing domain for anything user-visible.
+        """
+        u = (self.site_url or "").strip().rstrip("/")
+        if not u or "onrender.com" in u.lower():
+            return "https://www.caracasresearch.com"
+        return u
 
     # Long-form blog post generator. Each post is roughly 700-900 words and
     # uses ~2-3k completion tokens, so each call costs ~$0.04. The budget

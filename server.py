@@ -283,7 +283,7 @@ def _send_visa_order_notification(session: dict, intake_token: str | None = None
     payment_status = session.get("payment_status") or "unknown"
     dashboard_url = f"https://dashboard.stripe.com/payments/{session.get('payment_intent')}" if session.get("payment_intent") else "https://dashboard.stripe.com/payments"
 
-    intake_url = f"{settings.site_url}/visa-intake/{intake_token}" if intake_token else "N/A"
+    intake_url = f"{settings.canonical_site_url}/visa-intake/{intake_token}" if intake_token else "N/A"
 
     subject = f"New Venezuela visa application order - {amount}"
     html = f"""
@@ -315,9 +315,9 @@ def _send_visa_intake_email_to_customer(customer_email: str, customer_name: str,
     """Send the customer their intake form link after payment."""
     from src.newsletter import send_email
 
-    intake_url = f"{settings.site_url}/visa-intake/{intake_token}"
+    intake_url = f"{settings.canonical_site_url}/visa-intake/{intake_token}"
 
-    site_url = settings.site_url
+    site_url = settings.canonical_site_url
     subject = "Action Required: Your Venezuela Visa Questionnaire"
     html = f"""
     <div style="font-family: Arial, Helvetica, sans-serif; max-width: 600px; margin: 0 auto; color: #1e324c; line-height: 1.7;">
@@ -650,7 +650,7 @@ def visa_intake_submit(token):
         # Notify team
         recipient = _visa_order_email_recipient()
         if recipient:
-            intake_url = f"{settings.site_url}/visa-intake/{token}"
+            intake_url = f"{settings.canonical_site_url}/visa-intake/{token}"
             name = f"{existing.get('primer_nombre', '')} {existing.get('primer_apellido', '')}".strip() or order.customer_name
             subject = f"Visa intake form completed — {name}"
             html = f"""
@@ -779,7 +779,7 @@ def admin_visa_orders():
                 "status": o.status,
                 "created": str(o.created_at),
                 "token": o.intake_token,
-                "intake_url": f"{settings.site_url}/visa-intake/{o.intake_token}",
+                "intake_url": f"{settings.canonical_site_url}/visa-intake/{o.intake_token}",
                 "files": files,
                 "data": {k: v for k, v in data.items() if not k.startswith("_file_")},
             })

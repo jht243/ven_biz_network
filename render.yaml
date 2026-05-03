@@ -30,6 +30,8 @@ services:
         sync: false
       - key: STRIPE_VISA_PAYMENT_LINK_ID
         value: plink_1TS1T2GWYDLBQAio3Z6tN9N2
+      - key: SITE_URL
+        value: https://www.caracasresearch.com
       - key: VISA_ORDER_NOTIFICATION_EMAIL
         sync: false
       - key: VISA_ORDER_EMAIL_PROVIDER
