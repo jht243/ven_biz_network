@@ -54,9 +54,14 @@ def pull(competitors: str, limit: int) -> None:
 
 @cli.command("process")
 @click.option("--limit", default=None, type=int, help="Max prospects to process")
-def process_cmd(limit: int | None) -> None:
+@click.option(
+    "--unprocessed-only",
+    is_flag=True,
+    help="Only prospects not yet crawled (empty page_text_snippet)",
+)
+def process_cmd(limit: int | None, unprocessed_only: bool) -> None:
     """Crawl, classify, score, and find contact emails."""
-    _print_summary(process_prospects(limit=limit))
+    _print_summary(process_prospects(limit=limit, unprocessed_only=unprocessed_only))
 
 
 @cli.command("email")

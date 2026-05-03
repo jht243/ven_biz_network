@@ -11,6 +11,8 @@ from datetime import date, datetime, timedelta
 from pathlib import Path
 from urllib.parse import urlparse
 
+from sqlalchemy import or_
+
 from src.config import settings
 from src.models import (
     EmailStatus,
@@ -176,7 +178,7 @@ def pull_backlink_prospects(
         db.close()
 
 
-def process_prospects(*, limit: int | None = None) -> dict:
+def process_prospects(*, limit: int | None = None, unprocessed_only: bool = False) -> dict:
     """Crawl, classify, score, and find contact emails for imported prospects."""
     init_db()
     client = SemrushClient()
@@ -184,6 +186,13 @@ def process_prospects(*, limit: int | None = None) -> dict:
     summary = {"processed": 0, "qualified": 0, "contacts": 0}
     try:
         query = db.query(Prospect).order_by(Prospect.created_at.asc())
+        if unprocessed_only:
+            query = query.filter(
+                or_(
+                    Prospect.page_text_snippet.is_(None),
+                    Prospect.page_text_snippet == "",
+                )
+            )
         if limit:
             query = query.limit(limit)
         prospects = query.all()
