@@ -164,6 +164,12 @@ class Settings(BaseSettings):
     semrush_api_key: str = ""
     semrush_database: str = "us"
 
+    # ── Backlink outreach MVP ─────────────────────────────────────────
+    resend_outreach_from: str = "Jonathan <jonathan@caracasresearch.com>"
+    outreach_min_score: int = 65
+    outreach_batch_size: int = 50
+    outreach_delay_seconds: int = 30
+
     # ── Distribution: IndexNow (Bing, Yandex, Seznam, Naver, Mojeek) ──
     # The IndexNow key — generated in Bing Webmaster Tools at
     # bing.com/indexnow/getstarted. The key is NOT a secret: it's

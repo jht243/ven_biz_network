@@ -25,6 +25,7 @@ from src.config import settings
 logger = logging.getLogger(__name__)
 
 API_BASE = "https://api.semrush.com/"
+BACKLINK_API_BASE = "https://api.semrush.com/analytics/v1/"
 
 
 @dataclass
@@ -39,14 +40,19 @@ class SemrushClient:
         if not self.database:
             self.database = settings.semrush_database
 
-    def _get(self, params: dict[str, Any]) -> list[dict[str, str]]:
+    def _get(
+        self,
+        params: dict[str, Any],
+        *,
+        base_url: str = API_BASE,
+    ) -> list[dict[str, str]]:
         params["key"] = self.api_key
         if not self.api_key:
             raise ValueError(
                 "SEMRUSH_API_KEY is not set. Get yours at "
                 "https://www.semrush.com/accounts/subscription-info/api-units/"
             )
-        resp = httpx.get(API_BASE, params=params, timeout=self.timeout)
+        resp = httpx.get(base_url, params=params, timeout=self.timeout)
         text = resp.text.strip()
         if resp.status_code != 200 or text.startswith("ERROR"):
             raise RuntimeError(f"Semrush API error: {text}")
@@ -108,6 +114,76 @@ class SemrushClient:
             "display_limit": limit,
             "export_columns": "Dn,Cr,Np,Or,Ot,Oc,Ad",
         })
+
+    def get_domain_authority(self, domain: str) -> int | None:
+        """Return Semrush Authority Score from the Backlinks overview report."""
+        overview = self._get(
+            {
+                "type": "backlinks_overview",
+                "target": domain,
+                "target_type": "root_domain",
+                "export_columns": "ascore",
+            },
+            base_url=BACKLINK_API_BASE,
+        )
+        if not overview:
+            return None
+        row = overview[0]
+        raw = (
+            row.get("ascore")
+            or row.get("Authority Score")
+            or row.get("AuthorityScore")
+            or row.get("AS")
+        )
+        try:
+            return int(float(str(raw).replace(",", "")))
+        except (TypeError, ValueError):
+            return None
+
+    # ── Backlink reports ─────────────────────────────────────────────
+
+    def get_backlinks(
+        self,
+        target: str,
+        *,
+        limit: int = 500,
+        target_type: str = "root_domain",
+    ) -> list[dict[str, str]]:
+        """Backlinks pointing to a domain or URL via the Semrush Backlinks API."""
+        return self._get(
+            {
+                "type": "backlinks",
+                "target": target,
+                "target_type": target_type,
+                "display_limit": limit,
+                "export_columns": (
+                    "page_ascore,source_title,source_url,target_url,anchor,"
+                    "external_num,internal_num,first_seen,last_seen,nofollow"
+                ),
+            },
+            base_url=BACKLINK_API_BASE,
+        )
+
+    def get_referring_domains(
+        self,
+        target: str,
+        *,
+        limit: int = 500,
+        target_type: str = "root_domain",
+    ) -> list[dict[str, str]]:
+        """Referring domains pointing to a domain via the Semrush Backlinks API."""
+        return self._get(
+            {
+                "type": "backlinks_refdomains",
+                "target": target,
+                "target_type": target_type,
+                "display_limit": limit,
+                "export_columns": (
+                    "domain_ascore,domain,backlinks_num,ip,country,first_seen,last_seen"
+                ),
+            },
+            base_url=BACKLINK_API_BASE,
+        )
 
     # ── Keyword-level reports ───────────────────────────────────────
 

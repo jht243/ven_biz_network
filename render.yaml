@@ -113,3 +113,18 @@ services:
         value: onboarding@resend.dev
       - key: LOG_LEVEL
         value: INFO
+
+  - type: cron
+    name: vij-weekly-linkcheck
+    runtime: python
+    schedule: "0 8 * * 1"
+    plan: starter
+    buildCommand: "pip install -r requirements.txt"
+    startCommand: "python scripts/run_outreach.py check"
+    envVars:
+      - key: PYTHON_VERSION
+        value: 3.11.9
+      - key: DATABASE_URL
+        sync: false
+      - key: LOG_LEVEL
+        value: INFO

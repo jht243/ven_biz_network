@@ -836,6 +836,99 @@ def admin_visa_orders():
         db.close()
 
 
+@app.route("/admin/outreach")
+def admin_outreach():
+    """List backlink outreach prospects with quick-send actions."""
+    if not _admin_authenticated():
+        return redirect("/admin")
+
+    from src.models import Prospect, SessionLocal, init_db
+
+    init_db()
+    db = SessionLocal()
+    try:
+        prospects = (
+            db.query(Prospect)
+            .order_by(Prospect.score.desc(), Prospect.created_at.desc())
+            .limit(500)
+            .all()
+        )
+        html = """<!DOCTYPE html><html><head><title>Outreach Prospects — Admin</title>
+        <style>
+          body { font-family: -apple-system, sans-serif; max-width: 1300px; margin: 20px auto; padding: 0 20px; color: #1e324c; }
+          h1 { color: #002b5e; }
+          table { width: 100%; border-collapse: collapse; font-size: 13px; }
+          th, td { padding: 8px; border-bottom: 1px solid #e5e9ef; text-align: left; vertical-align: top; }
+          th { background: #f5f7fa; color: #002b5e; position: sticky; top: 0; }
+          a { color: #002b5e; }
+          .badge { display: inline-block; padding: 2px 7px; border-radius: 999px; font-size: 12px; font-weight: 700; }
+          .good { background: #d4edda; color: #155724; }
+          .mid { background: #fff3cd; color: #856404; }
+          .bad { background: #f8d7da; color: #721c24; }
+          .muted { color: #6c757d; }
+          button { background: #002b5e; color: #fff; border: 0; border-radius: 4px; padding: 5px 9px; cursor: pointer; }
+        </style></head><body>
+        <h1>Outreach Prospects</h1>
+        <p><a href="/admin/outreach/export">Export CSV</a> · <a href="/admin/visa-orders">Visa orders</a> · <a href="/admin/logout">Logout</a></p>
+        <table><thead><tr>
+          <th>Score</th><th>Domain</th><th>Site Type</th><th>Link Opportunity</th><th>Email Angle</th><th>Source</th><th>Target</th><th>Contact</th><th>Status</th><th>Action</th>
+        </tr></thead><tbody>"""
+        for p in prospects:
+            score_class = "good" if (p.score or 0) >= 65 else ("mid" if (p.score or 0) >= 45 else "bad")
+            link_opportunity = p.link_opportunity or (p.category.value if p.category else "")
+            email_status = p.email_status.value if p.email_status else ""
+            outreach_status = p.outreach_status.value if p.outreach_status else ""
+            can_send = p.contact_email and not p.outreach_status
+            source_url = p.source_url or "#"
+            target_url = p.recommended_target_url or ""
+            html += f"""<tr>
+              <td><span class="badge {score_class}">{p.score or 0}</span></td>
+              <td><strong>{_xml_escape(p.domain or "")}</strong><br><span class="muted">{_xml_escape(p.competitor_linked_to or "")}</span></td>
+              <td>{_xml_escape(p.site_type or '')}</td>
+              <td>{_xml_escape(link_opportunity)}</td>
+              <td>{_xml_escape(p.email_angle or '')}<br><span class="muted">{_xml_escape(p.email_template_key or '')}</span></td>
+              <td><a href="{_xml_escape(source_url)}" target="_blank" rel="noopener">{_xml_escape((p.source_page_title or source_url)[:90])}</a></td>
+              <td>{f'<a href="{_xml_escape(target_url)}" target="_blank" rel="noopener">{_xml_escape(target_url)}</a>' if target_url else ''}</td>
+              <td>{_xml_escape(p.contact_email or '')}<br><span class="muted">{_xml_escape(email_status)}</span></td>
+              <td>{_xml_escape(outreach_status)}</td>
+              <td>"""
+            if can_send:
+                html += f"""<form method="POST" action="/admin/outreach/send/{_xml_escape(p.id)}"><button type="submit">Send</button></form>"""
+            html += "</td></tr>"
+        html += "</tbody></table></body></html>"
+        return Response(html, mimetype="text/html")
+    finally:
+        db.close()
+
+
+@app.route("/admin/outreach/export")
+def admin_outreach_export():
+    """Download all outreach prospects as CSV."""
+    if not _admin_authenticated():
+        return redirect("/admin")
+
+    from src.outreach.pipeline import export_prospects
+
+    csv_text = export_prospects()
+    return Response(
+        csv_text,
+        mimetype="text/csv",
+        headers={"Content-Disposition": "attachment; filename=outreach-prospects.csv"},
+    )
+
+
+@app.post("/admin/outreach/send/<prospect_id>")
+def admin_outreach_send(prospect_id):
+    """Send one queued outreach email."""
+    if not _admin_authenticated():
+        return redirect("/admin")
+
+    from src.outreach.emailgen import send_email
+
+    send_email(prospect_id, 1)
+    return redirect("/admin/outreach")
+
+
 @app.route("/admin/visa-file/<token_prefix>/<filename>")
 def admin_visa_file(token_prefix, filename):
     """Serve a locally-stored intake file, or redirect to Supabase if absent (Render)."""

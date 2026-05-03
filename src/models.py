@@ -1,4 +1,5 @@
 import enum
+import uuid
 from datetime import datetime, date
 from threading import Lock
 
@@ -16,6 +17,7 @@ from sqlalchemy import (
     JSON,
     LargeBinary,
     UniqueConstraint,
+    ForeignKey,
 )
 from sqlalchemy import inspect as sa_inspect, text as sa_text
 from sqlalchemy.orm import declarative_base, sessionmaker
@@ -92,6 +94,45 @@ class GazetteStatus(str, enum.Enum):
 class GazetteType(str, enum.Enum):
     ORDINARIA = "ordinaria"
     EXTRAORDINARIA = "extraordinaria"
+
+
+class ProspectCategory(str, enum.Enum):
+    TRAVEL = "travel"
+    SANCTIONS_COMPLIANCE = "sanctions_compliance"
+    INVESTMENT_BUSINESS = "investment_business"
+    POLICY_THINK_TANK = "policy_think_tank"
+    GENERAL_VENEZUELA = "general_venezuela"
+    CORPORATE_EXPOSURE = "corporate_exposure"
+    REJECT = "reject"
+
+
+class EmailStatus(str, enum.Enum):
+    NOT_FOUND = "not_found"
+    FOUND = "found"
+    VERIFIED = "verified"
+    BOUNCED = "bounced"
+
+
+class OutreachStatus(str, enum.Enum):
+    PENDING = "pending"
+    QUEUED = "queued"
+    SENT = "sent"
+    REPLIED = "replied"
+    CONVERTED = "converted"
+    DECLINED = "declined"
+
+
+class ReplyStatus(str, enum.Enum):
+    PENDING = "pending"
+    OPENED = "opened"
+    REPLIED = "replied"
+    BOUNCED = "bounced"
+
+
+class BacklinkStatus(str, enum.Enum):
+    ACTIVE = "active"
+    REMOVED = "removed"
+    NOT_FOUND = "not_found"
 
 
 class GazetteEntry(Base):
@@ -394,6 +435,115 @@ class ScrapeLog(Base):
     created_at = Column(DateTime, default=datetime.utcnow)
 
 
+class Prospect(Base):
+    """A domain/page that links to a competitor but not yet to Caracas Research."""
+
+    __tablename__ = "outreach_prospects"
+    __table_args__ = (
+        UniqueConstraint("domain", "source_url", name="uq_outreach_domain_source"),
+    )
+
+    id = Column(String(36), primary_key=True, default=lambda: str(uuid.uuid4()))
+    domain = Column(String(255), nullable=False, index=True)
+    source_url = Column(String(1000), nullable=False, index=True)
+    competitor_linked_to = Column(String(255), nullable=True, index=True)
+    competitor_target_url = Column(String(1000), nullable=True)
+    anchor_text = Column(Text, nullable=True)
+    source_page_title = Column(Text, nullable=True)
+    category = Column(
+        _enum_values(ProspectCategory),
+        default=ProspectCategory.GENERAL_VENEZUELA,
+        index=True,
+    )
+    site_type = Column(String(80), nullable=True, index=True)
+    link_opportunity = Column(String(80), nullable=True, index=True)
+    email_angle = Column(String(120), nullable=True)
+    email_template_key = Column(String(80), nullable=True, index=True)
+    reject_reason = Column(Text, nullable=True)
+    source_page_topic = Column(String(255), nullable=True)
+    is_resource_page = Column(Boolean, nullable=True)
+    site_language = Column(String(10), nullable=True, index=True)
+    authority_score = Column(Integer, nullable=True)
+    competitor_count = Column(Integer, nullable=False, default=1)
+    score = Column(Integer, nullable=False, default=0, index=True)
+    recommended_target_url = Column(String(1000), nullable=True)
+    reason_to_link = Column(Text, nullable=True)
+    contact_email = Column(String(255), nullable=True, index=True)
+    email_status = Column(
+        _enum_values(EmailStatus),
+        default=EmailStatus.NOT_FOUND,
+        index=True,
+    )
+    outreach_status = Column(
+        _enum_values(OutreachStatus),
+        default=OutreachStatus.PENDING,
+        index=True,
+    )
+    page_text_snippet = Column(Text, nullable=True)
+    created_at = Column(DateTime, default=datetime.utcnow, index=True)
+    updated_at = Column(DateTime, default=datetime.utcnow, onupdate=datetime.utcnow)
+
+
+class OutreachEmail(Base):
+    """Generated outreach sequence for a prospect."""
+
+    __tablename__ = "outreach_emails"
+    __table_args__ = (
+        UniqueConstraint(
+            "prospect_id",
+            "sequence_num",
+            name="uq_outreach_email_sequence",
+        ),
+    )
+
+    id = Column(String(36), primary_key=True, default=lambda: str(uuid.uuid4()))
+    prospect_id = Column(
+        String(36),
+        ForeignKey("outreach_prospects.id", ondelete="CASCADE"),
+        nullable=False,
+        index=True,
+    )
+    sequence_num = Column(Integer, nullable=False, default=1, index=True)
+    subject = Column(Text, nullable=False)
+    body = Column(Text, nullable=False)
+    sent_at = Column(DateTime, nullable=True, index=True)
+    resend_message_id = Column(String(255), nullable=True)
+    reply_status = Column(
+        _enum_values(ReplyStatus),
+        default=ReplyStatus.PENDING,
+        index=True,
+    )
+    created_at = Column(DateTime, default=datetime.utcnow, index=True)
+    updated_at = Column(DateTime, default=datetime.utcnow, onupdate=datetime.utcnow)
+
+
+class BacklinkRecord(Base):
+    """Weekly backlink checks for outreach prospects."""
+
+    __tablename__ = "outreach_backlinks"
+
+    id = Column(String(36), primary_key=True, default=lambda: str(uuid.uuid4()))
+    prospect_id = Column(
+        String(36),
+        ForeignKey("outreach_prospects.id", ondelete="CASCADE"),
+        nullable=False,
+        index=True,
+    )
+    source_url = Column(String(1000), nullable=False, index=True)
+    target_url = Column(String(1000), nullable=True)
+    anchor_text = Column(Text, nullable=True)
+    rel = Column(String(255), nullable=True)
+    first_seen = Column(DateTime, nullable=True)
+    status = Column(
+        _enum_values(BacklinkStatus),
+        default=BacklinkStatus.NOT_FOUND,
+        index=True,
+    )
+    last_checked_at = Column(DateTime, nullable=True, index=True)
+    created_at = Column(DateTime, default=datetime.utcnow, index=True)
+    updated_at = Column(DateTime, default=datetime.utcnow, onupdate=datetime.utcnow)
+
+
 engine = create_engine(settings.database_url, echo=False)
 SessionLocal = sessionmaker(bind=engine)
 _init_lock = Lock()
@@ -438,6 +588,14 @@ def _ensure_columns() -> None:
         ("blog_posts", "social_hook", "TEXT"),
         ("blog_posts", "og_image_bytes", blob_type),
         ("blog_posts", "takeaways_json", json_type),
+        ("outreach_prospects", "site_type", "VARCHAR(80)"),
+        ("outreach_prospects", "link_opportunity", "VARCHAR(80)"),
+        ("outreach_prospects", "email_angle", "VARCHAR(120)"),
+        ("outreach_prospects", "email_template_key", "VARCHAR(80)"),
+        ("outreach_prospects", "reject_reason", "TEXT"),
+        ("outreach_prospects", "source_page_topic", "VARCHAR(255)"),
+        ("outreach_prospects", "is_resource_page", "BOOLEAN"),
+        ("outreach_prospects", "site_language", "VARCHAR(10)"),
     ]
 
     for table_name, column_name, column_type in additions:
