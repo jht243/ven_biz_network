@@ -35,7 +35,12 @@ WHOIS_SKIP_DOMAINS = (
     "web.com", "networksolutions.com", "godaddy.com", "namecheap.com",
     "tucows.com", "enom.com", "register.com", "name.com", "dynadot.com",
     "gandi.net", "hover.com", "porkbun.com", "cloudflare.com",
+    "amazon.com", "digitalregistra.co.id", "nexigen.digital",
 )
+WHOIS_SKIP_LOCAL_EXACT = frozenset(
+    ("registrar", "hostmaster", "dnsadmin", "whois", "registry-abuse", "domain.operations"),
+)
+WHOIS_SKIP_LOCAL_PREFIX = ("registry-", "dns-",)
 PREFERRED_PREFIXES = ("editor", "news", "contact", "hello", "info", "team", "press")
 CONTACT_PATHS = ("", "/contact", "/contact-us", "/about", "/about-us", "/team", "/editorial")
 
@@ -57,6 +62,8 @@ def _email_candidates(text: str, domain: str) -> list[str]:
             continue
         local, host = email.split("@", 1)
         if any(local.startswith(prefix) for prefix in SKIP_PREFIXES):
+            continue
+        if _is_disallowed_registry_or_privacy_email(email):
             continue
         if "." not in host:
             continue
@@ -132,10 +139,20 @@ def _any_host_resolves(origins: list[str]) -> bool:
     return False
 
 
-def _is_privacy_email(email: str) -> bool:
-    """True if the email belongs to a known WHOIS privacy/proxy service."""
-    host = email.split("@", 1)[-1].lower()
-    return any(host.endswith(d) for d in WHOIS_SKIP_DOMAINS)
+def _is_disallowed_registry_or_privacy_email(email: str) -> bool:
+    """Block privacy forwarders, registrar contacts, and registry ops addresses."""
+    if not email or "@" not in email:
+        return True
+    local, _, host = email.partition("@")
+    local_l = local.lower()
+    host_l = host.lower()
+    if local_l in WHOIS_SKIP_LOCAL_EXACT:
+        return True
+    if any(local_l.startswith(p) for p in WHOIS_SKIP_LOCAL_PREFIX):
+        return True
+    if any(host_l == d or host_l.endswith("." + d) for d in WHOIS_SKIP_DOMAINS):
+        return True
+    return False
 
 
 def _whois_email_rdap(domain: str, *, timeout: int = 10) -> str | None:
@@ -165,7 +182,7 @@ def _whois_email_rdap(domain: str, *, timeout: int = 10) -> str | None:
             for field in vcard[1]:
                 if len(field) >= 4 and field[0] == "email":
                     email = str(field[3]).lower().strip()
-                    if "@" in email and not _is_privacy_email(email):
+                    if "@" in email and not _is_disallowed_registry_or_privacy_email(email):
                         local = email.split("@")[0]
                         if not any(local.startswith(p) for p in SKIP_PREFIXES):
                             return email
@@ -177,7 +194,7 @@ def _whois_email_rdap(domain: str, *, timeout: int = 10) -> str | None:
                 for field in sub_vcard[1]:
                     if len(field) >= 4 and field[0] == "email":
                         email = str(field[3]).lower().strip()
-                        if "@" in email and not _is_privacy_email(email):
+                        if "@" in email and not _is_disallowed_registry_or_privacy_email(email):
                             local = email.split("@")[0]
                             if not any(local.startswith(p) for p in SKIP_PREFIXES):
                                 return email
@@ -201,7 +218,7 @@ def _whois_email_text(domain: str, *, timeout: int = 10) -> str | None:
 
     candidates = _email_candidates(resp.text, domain)
     for c in candidates:
-        if not _is_privacy_email(c):
+        if not _is_disallowed_registry_or_privacy_email(c):
             return c
     return None
 

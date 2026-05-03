@@ -178,12 +178,25 @@ def pull_backlink_prospects(
         db.close()
 
 
-def process_prospects(*, limit: int | None = None, unprocessed_only: bool = False) -> dict:
+def process_prospects(
+    *,
+    limit: int | None = None,
+    unprocessed_only: bool = False,
+    reprocess_scraped: bool = False,
+) -> dict:
     """Crawl, classify, score, and find contact emails for imported prospects."""
+    if unprocessed_only and reprocess_scraped:
+        raise ValueError("Use only one of unprocessed_only or reprocess_scraped")
     init_db()
     client = SemrushClient()
     db = SessionLocal()
-    summary = {"processed": 0, "qualified": 0, "contacts": 0}
+    summary = {
+        "processed": 0,
+        "qualified": 0,
+        "contact_lookup_hit": 0,
+        "contact_new": 0,
+        "contact_updated": 0,
+    }
     try:
         query = db.query(Prospect).order_by(Prospect.created_at.asc())
         if unprocessed_only:
@@ -193,6 +206,8 @@ def process_prospects(*, limit: int | None = None, unprocessed_only: bool = Fals
                     Prospect.page_text_snippet == "",
                 )
             )
+        if reprocess_scraped:
+            query = query.filter(Prospect.page_text_snippet.isnot(None))
         if limit:
             query = query.limit(limit)
         prospects = query.all()
@@ -229,22 +244,26 @@ def process_prospects(*, limit: int | None = None, unprocessed_only: bool = Fals
             prospect.page_text_snippet = (crawl.get("text") or "")[:2000]
 
             # RULE: ALWAYS attempt contact discovery regardless of crawl outcome.
-            # Even if the article page returned 403/timeout/DNS error, we probe
-            # /contact, /about, /team, etc. on the source URL host and apex domain.
+            prior_email = prospect.contact_email
             contact_email = find_contact_email(prospect.domain, source_url=prospect.source_url)
             if contact_email:
+                summary["contact_lookup_hit"] += 1
+                if not prior_email:
+                    summary["contact_new"] += 1
+                elif prior_email != contact_email:
+                    summary["contact_updated"] += 1
                 prospect.contact_email = contact_email
                 prospect.email_status = EmailStatus.FOUND
-                summary["contacts"] += 1
-                if link_opportunity == "reject":
-                    link_opportunity = "general_venezuela"
-                    prospect.category = ProspectCategory(link_opportunity)
-                    prospect.link_opportunity = link_opportunity
-                    template_key, email_angle = "general_research_reference", "updated Venezuela research reference"
-                    prospect.email_template_key = template_key
-                    prospect.email_angle = email_angle
-                    prospect.reject_reason = None
-                    prospect.recommended_target_url = choose_target_url(link_opportunity, crawl.get("text", ""))
+
+            if prospect.contact_email and link_opportunity == "reject":
+                link_opportunity = "general_venezuela"
+                prospect.category = ProspectCategory(link_opportunity)
+                prospect.link_opportunity = link_opportunity
+                template_key, email_angle = "general_research_reference", "updated Venezuela research reference"
+                prospect.email_template_key = template_key
+                prospect.email_angle = email_angle
+                prospect.reject_reason = None
+                prospect.recommended_target_url = choose_target_url(link_opportunity, crawl.get("text", ""))
 
             authority = prospect.authority_score
             if authority is None:

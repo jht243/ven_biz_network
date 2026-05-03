@@ -59,9 +59,20 @@ def pull(competitors: str, limit: int) -> None:
     is_flag=True,
     help="Only prospects not yet crawled (empty page_text_snippet)",
 )
-def process_cmd(limit: int | None, unprocessed_only: bool) -> None:
+@click.option(
+    "--reprocess-scraped",
+    is_flag=True,
+    help="Re-crawl prospects that already have page_text_snippet (refresh contacts with new rules)",
+)
+def process_cmd(limit: int | None, unprocessed_only: bool, reprocess_scraped: bool) -> None:
     """Crawl, classify, score, and find contact emails."""
-    _print_summary(process_prospects(limit=limit, unprocessed_only=unprocessed_only))
+    _print_summary(
+        process_prospects(
+            limit=limit,
+            unprocessed_only=unprocessed_only,
+            reprocess_scraped=reprocess_scraped,
+        )
+    )
 
 
 @cli.command("email")
