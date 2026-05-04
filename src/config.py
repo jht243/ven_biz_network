@@ -80,6 +80,7 @@ class Settings(BaseSettings):
     visa_order_notification_email: str = ""
     visa_order_email_provider: str = "resend"
     visa_order_from_email: str = ""
+    visa_reply_to_email: str = ""
     visa_admin_key: str = ""
     visa_admin_password: str = ""
     # Shared Cancillería Digital login password (shown only in admin for copy/paste).

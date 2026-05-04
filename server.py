@@ -282,6 +282,12 @@ def _visa_from_address() -> str | None:
     return None
 
 
+def _visa_reply_to() -> str | None:
+    """Return the reply-to address for visa-related emails, or None."""
+    addr = (settings.visa_reply_to_email or "").strip()
+    return addr or None
+
+
 def _send_visa_order_notification(session: dict, intake_token: str | None = None) -> bool:
     """Email the site owner when the Stripe visa-service checkout completes."""
     from src.newsletter import send_email
@@ -324,6 +330,7 @@ def _send_visa_order_notification(session: dict, intake_token: str | None = None
         html_body=html,
         provider_name=settings.visa_order_email_provider,
         from_override=_visa_from_address(),
+        reply_to=_visa_reply_to(),
     )
     return bool(result.get("success"))
 
@@ -391,6 +398,7 @@ def _send_visa_intake_email_to_customer(customer_email: str, customer_name: str,
         html_body=html,
         provider_name=settings.visa_order_email_provider,
         from_override=_visa_from_address(),
+        reply_to=_visa_reply_to(),
     )
     return bool(result.get("success"))
 
@@ -432,6 +440,7 @@ def _send_visa_submitted_confirmation_email(customer_email: str, customer_name: 
         html_body=html,
         provider_name=settings.visa_order_email_provider,
         from_override=_visa_from_address(),
+        reply_to=_visa_reply_to(),
     )
     return bool(result.get("success"))
 
@@ -726,6 +735,7 @@ def visa_intake_submit(token):
                 html_body=html,
                 provider_name=settings.visa_order_email_provider,
                 from_override=_visa_from_address(),
+                reply_to=_visa_reply_to(),
             )
         else:
             logger.warning("Visa intake submitted but VISA_ORDER_NOTIFICATION_EMAIL is not set; skipping team email")
