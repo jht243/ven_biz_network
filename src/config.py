@@ -138,6 +138,8 @@ class Settings(BaseSettings):
         u = (self.site_url or "").strip().rstrip("/")
         if not u or "onrender.com" in u.lower():
             return "https://www.caracasresearch.com"
+        if not u.startswith(("http://", "https://")):
+            u = "https://" + u
         return u
 
     # Long-form blog post generator. Each post is roughly 700-900 words and

@@ -1192,7 +1192,8 @@ def _build_jsonld(entries: list[dict], seo: dict, generated_at: datetime) -> str
     """
     import json as _json
 
-    base = settings.site_url.rstrip("/")
+    _raw = (settings.site_url or "").strip().rstrip("/")
+    base = ("https://" + _raw) if _raw and not _raw.startswith(("http://", "https://")) else _raw
     iso_now = generated_at.replace(tzinfo=timezone.utc).isoformat()
 
     organization = {
@@ -1333,7 +1334,8 @@ def _build_seo(entries: list[dict], generated_at: datetime) -> dict:
         keyword-rich description gives Google a high-quality snippet
         it'll actually use.
     """
-    base = settings.site_url.rstrip("/")
+    _raw = (settings.site_url or "").strip().rstrip("/")
+    base = ("https://" + _raw) if _raw and not _raw.startswith(("http://", "https://")) else _raw
 
     sector_counter: dict[str, int] = {}
     for entry in entries[:25]:

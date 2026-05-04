@@ -127,7 +127,10 @@ _env.filters["link_people"] = _link_people_filter
 
 
 def _base_url() -> str:
-    return settings.site_url.rstrip("/")
+    url = (settings.site_url or "").strip().rstrip("/")
+    if url and not url.startswith(("http://", "https://")):
+        url = "https://" + url
+    return url
 
 
 # Google's SERP truncates titles around 60 chars (varies by font width)
