@@ -806,9 +806,14 @@ def admin_visa_orders():
                 "token": o.intake_token,
                 "intake_url": f"{settings.canonical_site_url}/visa-intake/{o.intake_token}",
                 "files": files,
-                "data": {k: v for k, v in data.items() if not k.startswith("_file_")},
+                "portal_registration_email": (data.get("_internal_portal_registration_email") or ""),
+                "data": {
+                    k: v for k, v in data.items()
+                    if not k.startswith("_file_") and not k.startswith("_internal_")
+                },
             })
 
+        portal_pw = json.dumps(settings.visa_portal_shared_password)
         html = """<!DOCTYPE html><html><head><title>Visa Orders — Admin</title>
         <style>
           body { font-family: -apple-system, sans-serif; max-width: 1100px; margin: 20px auto; padding: 0 20px; color: #1e324c; }
@@ -816,6 +821,11 @@ def admin_visa_orders():
           .order { border: 1px solid #ddd; border-radius: 8px; padding: 20px; margin: 16px 0; background: #fafbfc; }
           .order h3 { margin: 0 0 8px; color: #002b5e; }
           .meta { font-size: 13px; color: #6c757d; margin-bottom: 12px; }
+          .portal-creds { margin: 12px 0; padding: 12px; background: #fff; border: 1px solid #c8d4e2; border-radius: 6px; font-size: 13px; }
+          .portal-btn { padding: 6px 12px; border: 1px solid #c8d4e2; border-radius: 4px; background: #fff; font-size: 12px; font-weight: 600; cursor: pointer; color: #002b5e; }
+          .portal-btn:hover { background: #f0f5fc; }
+          .portal-btn-primary { background: #002b5e; color: #fff; border-color: #002b5e; }
+          .portal-btn-primary:hover { background: #003d82; }
           .files { margin: 12px 0; }
           .files a { display: inline-block; background: #002b5e; color: #fff; padding: 6px 14px; border-radius: 4px; text-decoration: none; margin: 4px 4px 4px 0; font-size: 13px; }
           .files a:hover { background: #003d82; }
@@ -833,7 +843,24 @@ def admin_visa_orders():
             badge_class = "badge-complete" if r["status"] == "intake_complete" else ("badge-progress" if "progress" in r["status"] else "badge-pending")
             html += f"""<div class="order">
               <h3>{_xml_escape(r['name'])} <span class="badge {badge_class}">{r['status']}</span></h3>
-              <div class="meta">{_xml_escape(r['email'])} · Created {r['created']} · <a href="{_xml_escape(r['intake_url'])}">View form</a></div>"""
+              <div class="meta">{_xml_escape(r['email'])} · Created {r['created']} · <a href="{_xml_escape(r['intake_url'])}">View form</a></div>
+              <div class="portal-creds">
+                <div style="font-weight:700;color:#002b5e;margin-bottom:8px;">Cancillería portal (internal — team use only)</div>
+                <div style="display:flex;flex-wrap:wrap;align-items:center;gap:8px;margin-bottom:10px;">
+                  <label for="portal-email-{r['id']}" style="color:#4b5a70;">Registration email</label>
+                  <input type="email" id="portal-email-{r['id']}" value="{_xml_escape(r['portal_registration_email'])}" autocomplete="off"
+                    style="flex:1;min-width:220px;max-width:420px;padding:7px 10px;border:1px solid #c8d4e2;border-radius:4px;font-size:13px;"
+                    placeholder="Email used for their Cancillería account">
+                  <button type="button" class="portal-btn" onclick="copyPortalEmail({r['id']})">Copy email</button>
+                  <button type="button" class="portal-btn portal-btn-primary" onclick="savePortalEmail({r['id']})">Save</button>
+                  <span id="portal-save-msg-{r['id']}" style="font-size:12px;"></span>
+                </div>
+                <div style="display:flex;flex-wrap:wrap;align-items:center;gap:8px;">
+                  <span style="color:#4b5a70;">Password</span>
+                  <code style="background:#f0f3f7;padding:5px 10px;border-radius:4px;font-size:13px;">{_xml_escape(settings.visa_portal_shared_password)}</code>
+                  <button type="button" class="portal-btn" onclick="copyPortalPassword()">Copy password</button>
+                </div>
+              </div>"""
 
             if r["files"]:
                 html += '<div class="files"><strong>Uploaded documents:</strong><br>'
@@ -855,8 +882,77 @@ def admin_visa_orders():
                 html += "</table>"
             html += "</div>"
 
-        html += "</body></html>"
+        html += f"""<script>
+const PORTAL_PW = {portal_pw};
+function copyPortalEmail(id) {{
+  var el = document.getElementById('portal-email-' + id);
+  if (el && el.value) navigator.clipboard.writeText(el.value);
+}}
+function copyPortalPassword() {{
+  navigator.clipboard.writeText(PORTAL_PW);
+}}
+async function savePortalEmail(id) {{
+  var el = document.getElementById('portal-email-' + id);
+  var msg = document.getElementById('portal-save-msg-' + id);
+  msg.style.color = '#1b7a3f';
+  msg.textContent = 'Saving…';
+  try {{
+    var r = await fetch('/admin/visa-order/' + id + '/portal-email', {{
+      method: 'POST',
+      headers: {{ 'Content-Type': 'application/json' }},
+      body: JSON.stringify({{ portal_registration_email: el ? el.value : '' }})
+    }});
+    if (r.ok) {{
+      msg.textContent = 'Saved';
+      setTimeout(function() {{ msg.textContent = ''; }}, 2500);
+    }} else {{
+      msg.style.color = '#dc3545';
+      msg.textContent = 'Save failed';
+    }}
+  }} catch (e) {{
+    msg.style.color = '#dc3545';
+    msg.textContent = 'Error';
+  }}
+}}
+</script></body></html>"""
         return Response(html, mimetype="text/html")
+    finally:
+        db.close()
+
+
+@app.post("/admin/visa-order/<int:order_id>/portal-email")
+def admin_save_portal_registration_email(order_id: int):
+    """Store Cancillería portal registration email (internal, admin only)."""
+    if not _admin_authenticated():
+        return jsonify({"error": "unauthorized"}), 401
+
+    from sqlalchemy.orm.attributes import flag_modified
+    from src.models import VisaOrder, SessionLocal, init_db
+
+    body = request.get_json(silent=True) or {}
+    raw = body.get("portal_registration_email", "")
+    email = (raw or "").strip() if raw is not None else ""
+
+    init_db()
+    db = SessionLocal()
+    try:
+        order = db.query(VisaOrder).filter_by(id=order_id).first()
+        if not order:
+            return jsonify({"error": "not found"}), 404
+
+        data = dict(order.intake_data or {})
+        if email:
+            data["_internal_portal_registration_email"] = email
+        else:
+            data.pop("_internal_portal_registration_email", None)
+        order.intake_data = data
+        flag_modified(order, "intake_data")
+        db.commit()
+        return jsonify({"ok": True})
+    except Exception as exc:
+        db.rollback()
+        logger.exception("Failed to save portal email: %s", exc)
+        return jsonify({"error": "save failed"}), 500
     finally:
         db.close()
 

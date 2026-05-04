@@ -82,6 +82,8 @@ class Settings(BaseSettings):
     visa_order_from_email: str = ""
     visa_admin_key: str = ""
     visa_admin_password: str = ""
+    # Shared Cancillería Digital login password (shown only in admin for copy/paste).
+    visa_portal_shared_password: str = "VisaVene34!"
 
     # Google reporting (GA4 + Search Console)
     google_reporting_sa_json: str = ""
