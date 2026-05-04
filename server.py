@@ -395,6 +395,47 @@ def _send_visa_intake_email_to_customer(customer_email: str, customer_name: str,
     return bool(result.get("success"))
 
 
+def _send_visa_submitted_confirmation_email(customer_email: str, customer_name: str) -> bool:
+    """Notify the customer that their application has been filed with the consulate."""
+    from src.newsletter import send_email
+
+    site_url = settings.canonical_site_url
+    subject = "Your Venezuela visa application has been submitted"
+    html = f"""
+    <div style="font-family: Arial, Helvetica, sans-serif; max-width: 600px; margin: 0 auto; color: #1e324c; line-height: 1.7;">
+      <p style="font-size: 15px;">Hi {_xml_escape(customer_name)},</p>
+      <p style="font-size: 15px;">
+        Good news: your Venezuela visa application has been submitted to the consulate
+        on your behalf. Our team has completed this step of the process.
+      </p>
+      <p style="font-size: 15px;">
+        We will email you with any updates as soon as we receive them from the authorities.
+      </p>
+      <p style="font-size: 15px;">
+        At this stage, average processing time is typically <strong>2–3 weeks</strong>,
+        though timelines can vary by consulate workload.
+      </p>
+      <p style="font-size: 15px;">
+        If you have questions in the meantime, reply to this email and we will get back to you.
+      </p>
+      <p style="font-size: 15px; margin-top: 28px;">
+        Best regards,<br><br>
+        <strong>The Caracas Research Team</strong><br>
+        <a href="{_xml_escape(site_url)}" style="color: #002b5e;">{_xml_escape(site_url)}</a>
+      </p>
+    </div>
+    """
+
+    result = send_email(
+        to=customer_email,
+        subject=subject,
+        html_body=html,
+        provider_name=settings.visa_order_email_provider,
+        from_override=_visa_from_address(),
+    )
+    return bool(result.get("success"))
+
+
 @app.before_request
 def _serve_nav_page_cache():
     """Return cached HTML for top-nav pages when still fresh."""
@@ -797,6 +838,15 @@ def admin_visa_orders():
                     dl = _visa_intake_download_url(token=o.intake_token, stored_path=file_path)
                     files[field_name] = {"name": v, "url": dl or "#"}
             name = _visa_applicant_display_name(data, o.customer_name) or "Unknown"
+            raw_sent = (data.get("_internal_visa_submitted_notice_sent_at") or "").strip()
+            visa_submitted_sent_label = ""
+            if raw_sent:
+                try:
+                    from datetime import datetime as _dt
+                    parsed = _dt.fromisoformat(raw_sent.replace("Z", "+00:00"))
+                    visa_submitted_sent_label = parsed.strftime("Last notice sent: %b %d, %Y · %H:%M UTC")
+                except Exception:
+                    visa_submitted_sent_label = "Submitted notice emailed previously"
             rows.append({
                 "id": o.id,
                 "name": name,
@@ -807,6 +857,7 @@ def admin_visa_orders():
                 "intake_url": f"{settings.canonical_site_url}/visa-intake/{o.intake_token}",
                 "files": files,
                 "portal_registration_email": (data.get("_internal_portal_registration_email") or ""),
+                "visa_submitted_sent_label": visa_submitted_sent_label,
                 "data": {
                     k: v for k, v in data.items()
                     if not k.startswith("_file_") and not k.startswith("_internal_")
@@ -842,7 +893,12 @@ def admin_visa_orders():
         for r in rows:
             badge_class = "badge-complete" if r["status"] == "intake_complete" else ("badge-progress" if "progress" in r["status"] else "badge-pending")
             html += f"""<div class="order">
-              <h3>{_xml_escape(r['name'])} <span class="badge {badge_class}">{r['status']}</span></h3>
+              <h3 style="display:flex;flex-wrap:wrap;align-items:center;gap:10px;margin:0 0 8px;line-height:1.35;">
+                <span>{_xml_escape(r['name'])}</span>
+                <span class="badge {badge_class}">{r['status']}</span>
+                <button type="button" class="portal-btn portal-btn-primary" onclick="confirmVisaSubmitted({r['id']})">Confirm visa submitted</button>
+                <span id="visa-submitted-msg-{r['id']}" style="font-size:12px;color:#1b7a3f;font-weight:600;">{_xml_escape(r['visa_submitted_sent_label'])}</span>
+              </h3>
               <div class="meta">{_xml_escape(r['email'])} · Created {r['created']} · <a href="{_xml_escape(r['intake_url'])}">View form</a></div>
               <div class="portal-creds">
                 <div style="font-weight:700;color:#002b5e;margin-bottom:8px;">Cancillería portal (internal — team use only)</div>
@@ -914,6 +970,25 @@ async function savePortalEmail(id) {{
     msg.textContent = 'Error';
   }}
 }}
+async function confirmVisaSubmitted(id) {{
+  var msg = document.getElementById('visa-submitted-msg-' + id);
+  msg.style.color = '#6c757d';
+  msg.textContent = 'Sending…';
+  try {{
+    var r = await fetch('/admin/visa-order/' + id + '/confirm-visa-submitted', {{ method: 'POST' }});
+    var j = await r.json().catch(function() {{ return {{}}; }});
+    if (r.ok && j.ok) {{
+      msg.style.color = '#1b7a3f';
+      msg.textContent = j.sent_label || 'Email sent';
+    }} else {{
+      msg.style.color = '#dc3545';
+      msg.textContent = j.error || 'Failed';
+    }}
+  }} catch (e) {{
+    msg.style.color = '#dc3545';
+    msg.textContent = 'Error';
+  }}
+}}
 </script></body></html>"""
         return Response(html, mimetype="text/html")
     finally:
@@ -953,6 +1028,51 @@ def admin_save_portal_registration_email(order_id: int):
         db.rollback()
         logger.exception("Failed to save portal email: %s", exc)
         return jsonify({"error": "save failed"}), 500
+    finally:
+        db.close()
+
+
+@app.post("/admin/visa-order/<int:order_id>/confirm-visa-submitted")
+def admin_confirm_visa_submitted(order_id: int):
+    """Email the customer that their visa has been submitted; record timestamp (admin only)."""
+    if not _admin_authenticated():
+        return jsonify({"error": "unauthorized"}), 401
+
+    from datetime import datetime
+    from sqlalchemy.orm.attributes import flag_modified
+    from src.models import VisaOrder, SessionLocal, init_db
+
+    init_db()
+    db = SessionLocal()
+    try:
+        order = db.query(VisaOrder).filter_by(id=order_id).first()
+        if not order:
+            return jsonify({"error": "not found"}), 404
+        if not (order.customer_email or "").strip():
+            return jsonify({"error": "no customer email"}), 400
+
+        display_name = _visa_applicant_display_name(order.intake_data or {}, order.customer_name) or "Customer"
+        sent_ok = _send_visa_submitted_confirmation_email(order.customer_email.strip(), display_name)
+        if not sent_ok:
+            return jsonify({"error": "email failed"}), 502
+
+        data = dict(order.intake_data or {})
+        now_iso = datetime.utcnow().replace(microsecond=0).isoformat() + "Z"
+        data["_internal_visa_submitted_notice_sent_at"] = now_iso
+        order.intake_data = data
+        flag_modified(order, "intake_data")
+        db.commit()
+
+        try:
+            parsed = datetime.fromisoformat(now_iso.replace("Z", "+00:00"))
+            sent_label = parsed.strftime("Last notice sent: %b %d, %Y · %H:%M UTC")
+        except Exception:
+            sent_label = "Submitted notice emailed"
+        return jsonify({"ok": True, "sent_label": sent_label})
+    except Exception as exc:
+        db.rollback()
+        logger.exception("confirm visa submitted: %s", exc)
+        return jsonify({"error": "server error"}), 500
     finally:
         db.close()
 
