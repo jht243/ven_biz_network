@@ -867,6 +867,7 @@ def admin_visa_orders():
                 "intake_url": f"{settings.canonical_site_url}/visa-intake/{o.intake_token}",
                 "files": files,
                 "portal_registration_email": (data.get("_internal_portal_registration_email") or ""),
+                "portal_password": (data.get("_internal_portal_password") or settings.visa_portal_shared_password),
                 "visa_submitted_sent_label": visa_submitted_sent_label,
                 "data": {
                     k: v for k, v in data.items()
@@ -923,8 +924,11 @@ def admin_visa_orders():
                 </div>
                 <div style="display:flex;flex-wrap:wrap;align-items:center;gap:8px;">
                   <span style="color:#4b5a70;">Password</span>
-                  <code style="background:#f0f3f7;padding:5px 10px;border-radius:4px;font-size:13px;">{_xml_escape(settings.visa_portal_shared_password)}</code>
-                  <button type="button" class="portal-btn" onclick="copyPortalPassword()">Copy password</button>
+                  <input type="text" id="portal-pw-{r['id']}" value="{_xml_escape(r['portal_password'])}" autocomplete="off"
+                    style="min-width:160px;max-width:280px;padding:7px 10px;border:1px solid #c8d4e2;border-radius:4px;font-size:13px;font-family:monospace;">
+                  <button type="button" class="portal-btn" onclick="copyPortalPassword({r['id']})">Copy password</button>
+                  <button type="button" class="portal-btn portal-btn-primary" onclick="savePortalPassword({r['id']})">Save</button>
+                  <span id="portal-pw-msg-{r['id']}" style="font-size:12px;"></span>
                 </div>
               </div>"""
 
@@ -954,8 +958,25 @@ function copyPortalEmail(id) {{
   var el = document.getElementById('portal-email-' + id);
   if (el && el.value) navigator.clipboard.writeText(el.value);
 }}
-function copyPortalPassword() {{
-  navigator.clipboard.writeText(PORTAL_PW);
+function copyPortalPassword(id) {{
+  var el = document.getElementById('portal-pw-' + id);
+  if (el && el.value) navigator.clipboard.writeText(el.value);
+}}
+async function savePortalPassword(id) {{
+  var el = document.getElementById('portal-pw-' + id);
+  var msg = document.getElementById('portal-pw-msg-' + id);
+  var r = await fetch('/admin/visa-order/' + id + '/portal-password', {{
+    method: 'POST',
+    headers: {{'Content-Type': 'application/json'}},
+    body: JSON.stringify({{ portal_password: el ? el.value : '' }})
+  }});
+  if (r.ok) {{
+    msg.textContent = 'Saved';
+    setTimeout(function() {{ msg.textContent = ''; }}, 2500);
+  }} else {{
+    msg.textContent = 'Error';
+    msg.style.color = 'red';
+  }}
 }}
 async function savePortalEmail(id) {{
   var el = document.getElementById('portal-email-' + id);
@@ -1037,6 +1058,42 @@ def admin_save_portal_registration_email(order_id: int):
     except Exception as exc:
         db.rollback()
         logger.exception("Failed to save portal email: %s", exc)
+        return jsonify({"error": "save failed"}), 500
+    finally:
+        db.close()
+
+
+@app.post("/admin/visa-order/<int:order_id>/portal-password")
+def admin_save_portal_password(order_id: int):
+    """Store per-order Cancillería portal password override (internal, admin only)."""
+    if not _admin_authenticated():
+        return jsonify({"error": "unauthorized"}), 401
+
+    from sqlalchemy.orm.attributes import flag_modified
+    from src.models import VisaOrder, SessionLocal, init_db
+
+    body = request.get_json(silent=True) or {}
+    pw = (body.get("portal_password") or "").strip()
+
+    init_db()
+    db = SessionLocal()
+    try:
+        order = db.query(VisaOrder).filter_by(id=order_id).first()
+        if not order:
+            return jsonify({"error": "not found"}), 404
+
+        data = dict(order.intake_data or {})
+        if pw and pw != settings.visa_portal_shared_password:
+            data["_internal_portal_password"] = pw
+        else:
+            data.pop("_internal_portal_password", None)
+        order.intake_data = data
+        flag_modified(order, "intake_data")
+        db.commit()
+        return jsonify({"ok": True})
+    except Exception as exc:
+        db.rollback()
+        logger.exception("Failed to save portal password: %s", exc)
         return jsonify({"error": "save failed"}), 500
     finally:
         db.close()
