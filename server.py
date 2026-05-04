@@ -211,6 +211,23 @@ def _visa_order_email_recipient() -> str:
     return ""
 
 
+def _visa_applicant_display_name(intake_data: dict | None, customer_name: str | None = None) -> str:
+    """Full name from intake fields, falling back to Stripe customer name."""
+    data = intake_data or {}
+    parts = [
+        data.get("primer_nombre", ""),
+        data.get("otros_nombres", ""),
+        data.get("primer_apellido", ""),
+        data.get("segundo_apellido", ""),
+    ]
+    name = " ".join(str(p).strip() for p in parts if p and str(p).strip())
+    if name:
+        return name
+    if customer_name and str(customer_name).strip():
+        return str(customer_name).strip()
+    return ""
+
+
 def _format_usd_minor_units(amount: int | None, currency: str | None) -> str:
     if amount is None:
         return "Unknown"
@@ -651,18 +668,26 @@ def visa_intake_submit(token):
         recipient = _visa_order_email_recipient()
         if recipient:
             intake_url = f"{settings.canonical_site_url}/visa-intake/{token}"
-            name = f"{existing.get('primer_nombre', '')} {existing.get('primer_apellido', '')}".strip() or order.customer_name
-            subject = f"Visa intake form completed — {name}"
+            name = _visa_applicant_display_name(existing, order.customer_name) or "Customer"
+            subject = f"Form submitted: {name}"
             html = f"""
-            <h2>Visa intake form completed</h2>
-            <p><strong>{_xml_escape(name)}</strong> ({_xml_escape(order.customer_email)}) has completed their visa intake form.</p>
-            <p><strong>Visa type:</strong> {_xml_escape(existing.get('visa_type', 'Not specified'))}<br>
-            <strong>Arrival date:</strong> {_xml_escape(existing.get('arrival_date', 'Not specified'))}<br>
-            <strong>Passport country:</strong> {_xml_escape(existing.get('passport_country', 'Not specified'))}</p>
-            <p><a href="{_xml_escape(intake_url)}">View intake form</a></p>
-            <p>Next step: review documents and submit the visa application through Cancillería Digital.</p>
+            <h2>Intake form submitted</h2>
+            <p><strong>{_xml_escape(name)}</strong> ({_xml_escape(order.customer_email)}) has submitted their visa intake form.</p>
+            <p><strong>Visa type:</strong> {_xml_escape(str(existing.get('visa_type', 'Not specified')))}<br>
+            <strong>Arrival date:</strong> {_xml_escape(str(existing.get('arrival_date', 'Not specified')))}<br>
+            <strong>Passport country:</strong> {_xml_escape(str(existing.get('passport_country', 'Not specified')))}</p>
+            <p><a href="{_xml_escape(intake_url)}">View intake form in admin</a></p>
+            <p>Next step: review uploaded documents and submit the visa application through Cancillería Digital.</p>
             """
-            send_email(to=recipient, subject=subject, html_body=html, provider_name=settings.visa_order_email_provider)
+            send_email(
+                to=recipient,
+                subject=subject,
+                html_body=html,
+                provider_name=settings.visa_order_email_provider,
+                from_override=_visa_from_address(),
+            )
+        else:
+            logger.warning("Visa intake submitted but VISA_ORDER_NOTIFICATION_EMAIL is not set; skipping team email")
 
         return jsonify({"ok": True})
     except Exception as exc:
@@ -771,7 +796,7 @@ def admin_visa_orders():
                     file_path = data.get(f"_file_{field_name}_path", "")
                     dl = _visa_intake_download_url(token=o.intake_token, stored_path=file_path)
                     files[field_name] = {"name": v, "url": dl or "#"}
-            name = f"{data.get('primer_nombre', '')} {data.get('primer_apellido', '')}".strip() or o.customer_name or "Unknown"
+            name = _visa_applicant_display_name(data, o.customer_name) or "Unknown"
             rows.append({
                 "id": o.id,
                 "name": name,
