@@ -568,7 +568,7 @@
       </div>
 
       <div class="form-group">
-        <label class="required">5. Screenshot of bank balance (solvencia económica)</label>
+        <label class="required">5. Screenshot of bank balance</label>
         <div class="warning-box" style="margin-bottom:10px;">
           <strong>Important:</strong> Please <strong>edit out / redact your account number</strong> before uploading.
           The consulate only needs to see your name and balance — not your full account details.
@@ -826,18 +826,33 @@
 
   function buildReview() {
     var data = gatherData();
+    var labels = {
+      gender: {masculino:'Male',femenino:'Female'},
+      marital_status: {soltero:'Single',casado:'Married',divorciado:'Divorced',viudo:'Widowed',union_libre:'Domestic partnership'},
+      passport_type: {ordinario:'Ordinary',diplomatico:'Diplomatic',oficial:'Official'},
+      visa_type: {visa_de_turista:'Tourist visa',visa_de_negocios:'Business visa',visa_transeunte_negocio:'Transit / Business visa',transito:'Transit',visa_de_trabajo:'Work visa',visa_de_estudiante:'Student visa',visa_de_residencia:'Residence visa',otra:'Other'},
+      transport_type: {aereo:'Air',terrestre:'Land',maritimo:'Sea'},
+      residency_status: {ciudadano:'Citizen',residente_permanente:'Permanent resident',residente_temporal:'Temporary resident',visa_de_trabajo:'Work visa',visa_de_estudiante:'Student visa',otro:'Other'},
+      emergency_is_family: {si:'Yes',no:'No'},
+      emergency_in_venezuela: {si:'Yes',no:'No'},
+      visited_venezuela_before: {si:'Yes',no:'No'}
+    };
+    function display(field, val) {
+      if (!val) return val;
+      return (labels[field] && labels[field][val]) || val;
+    }
     var fullName = [data.primer_nombre, data.otros_nombres, data.primer_apellido, data.segundo_apellido].filter(Boolean).join(' ');
     var sections = [
       { title: 'Personal information', fields: [
         ['Name', fullName],
-        ['Gender', data.gender], ['Date of birth', data.date_of_birth],
-        ['Marital status', data.marital_status],
+        ['Gender', display('gender', data.gender)], ['Date of birth', data.date_of_birth],
+        ['Marital status', display('marital_status', data.marital_status)],
         ['Nationality', data.nationality],
         ['Country of birth', data.country_of_birth], ['City of birth', data.city_of_birth],
         ['Email', data.email], ['Cell phone', data.phone_cell], ['Landline', data.phone_landline],
       ]},
       { title: 'Passport', fields: [
-        ['Type', data.passport_type], ['Passport #', data.passport_number],
+        ['Type', display('passport_type', data.passport_type)], ['Passport #', data.passport_number],
         ['Country of issue', data.passport_country],
         ['Issue date', data.passport_issue_date], ['Expiry', data.passport_expiry_date],
       ]},
@@ -846,17 +861,17 @@
         ['Street', data.residence_street],
         ['Building/House #', data.residence_building], ['Floor/Apt', data.residence_floor_apt],
         ['ZIP', data.residence_zip], ['State', data.residence_state],
-        ['Residency status', data.residency_status],
+        ['Residency status', display('residency_status', data.residency_status)],
       ]},
       { title: 'Emergency Contact', fields: [
         ['Name', data.emergency_name], ['Document/Passport', data.emergency_document],
-        ['Relationship', data.emergency_relationship], ['Family member?', data.emergency_is_family],
+        ['Relationship', data.emergency_relationship], ['Family member?', display('emergency_is_family', data.emergency_is_family)],
         ['Phone', data.emergency_phone], ['Email', data.emergency_email],
-        ['In Venezuela?', data.emergency_in_venezuela],
+        ['In Venezuela?', display('emergency_in_venezuela', data.emergency_in_venezuela)],
       ]},
       { title: 'Travel', fields: [
-        ['Visa type', data.visa_type], ['Purpose', data.travel_purpose],
-        ['Transport type', data.transport_type], ['Ticket #', data.ticket_number],
+        ['Visa type', display('visa_type', data.visa_type)], ['Purpose', data.travel_purpose],
+        ['Transport type', display('transport_type', data.transport_type)], ['Ticket #', data.ticket_number],
         ['Entry date', data.arrival_date], ['Travel time', data.arrival_time],
         ['Airline', data.airline_name],
         ['Outbound flight', data.flight_outbound], ['Return flight', data.flight_return],
@@ -874,7 +889,7 @@
         ['Phone', data.venezuela_contact_phone],
       ]},
       { title: 'Additional Info', fields: [
-        ['Visited Venezuela before?', data.visited_venezuela_before],
+        ['Visited Venezuela before?', display('visited_venezuela_before', data.visited_venezuela_before)],
       ]},
     ];
     var html = '';
