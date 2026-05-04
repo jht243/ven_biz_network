@@ -1759,15 +1759,15 @@ def tool_caracas_safety():
             faq=[
                 {
                     "q": "What is the safest neighborhood in Caracas for foreign business travellers?",
-                    "a": "Las Mercedes, Altamira, La Castellana, and the wider Chacao municipality are the most operationally functional districts and host most foreign-investor meetings, embassies, banks, and business-class hotels.",
+                    "a": "Las Mercedes, Altamira, La Castellana, and the wider Chacao municipality are the most operationally functional districts. They host most foreign-investor meetings, embassies, banks, and business-class hotels, and have the lowest rate of street-crime incidents reported by foreign visitors.",
                 },
                 {
                     "q": "Are areas like Petare, Catia, or 23 de Enero safe to visit?",
-                    "a": "No. These districts are not safe for foreign visitors at any time. Do not enter — including by metro or taxi pass-through.",
+                    "a": "No — these districts are not safe for foreign visitors at any time. Do not enter on foot, by metro, or as a taxi pass-through.",
                 },
                 {
                     "q": "Is the Caracas airport road safe?",
-                    "a": "The Maiquetía / Catia La Mar corridor between Simón Bolívar International Airport and Caracas carries elevated highway-robbery risk, particularly at night. Always pre-arrange a vetted driver and travel during daylight when possible.",
+                    "a": "No — the Maiquetía / Catia La Mar corridor between Simón Bolívar International Airport and Caracas carries elevated highway-robbery risk by Western standards, particularly at night. Always pre-arrange a vetted driver and travel during daylight when possible.",
                 },
             ],
         )
@@ -1860,15 +1860,15 @@ def tool_visa_requirements():
             faq=[
                 {
                     "q": "Do US citizens need a visa to travel to Venezuela?",
-                    "a": "Yes. US citizens require a tourist (TR-V) or business (TR-N) visa issued in advance by the Venezuelan diplomatic mission — visas are not available on arrival. As of March 19, 2026 the US State Department rates Venezuela at travel advisory Level 3 (Reconsider Travel), with Level 4 (Do Not Travel) still applying to the Colombia border region and several specific states.",
+                    "a": "Yes — US citizens require a tourist (TR-V) or business (TR-N) visa issued in advance by the Venezuelan diplomatic mission, and visas are not available on arrival. As of March 19, 2026 the US State Department rates Venezuela at travel advisory Level 3 (Reconsider Travel), with Level 4 (Do Not Travel) still applying to the Colombia border region and several specific states.",
                 },
                 {
                     "q": "Do UK and Canadian citizens need a visa to travel to Venezuela?",
-                    "a": "No. Both UK and Canadian citizens can enter visa-free for tourist stays of up to 90 days. However, both governments currently advise against non-essential travel.",
+                    "a": "No — both UK and Canadian citizens can enter visa-free for tourist stays of up to 90 days. However, both governments currently advise against non-essential travel.",
                 },
                 {
                     "q": "Is Venezuela safe for business travel?",
-                    "a": "Most Western governments rate Venezuela as a high-risk destination. Sophisticated investors typically conduct primary meetings in third-country jurisdictions (Bogotá, Panama, Madrid, Dubai) and use local counsel for in-country execution.",
+                    "a": "No, not by Western standards — most Western governments rate Venezuela as a high-risk destination. Sophisticated investors typically conduct primary meetings in third-country jurisdictions (Bogotá, Panama, Madrid, Dubai) and use local counsel for in-country execution.",
                 },
             ],
         )
@@ -2456,7 +2456,7 @@ def tool_roi_calculator():
                 },
                 {
                     "q": "Is this calculator a substitute for a fully diligenced model?",
-                    "a": "No. The calculator is a first-round filter that surfaces order-of-magnitude returns. A real investment decision requires a fully diligenced model with country-of-origin tax structure, FX repatriation friction, OFAC compliance overlay, and project-finance terms.",
+                    "a": "No — the calculator is a first-round filter that surfaces order-of-magnitude returns, not a substitute for diligence. A real investment decision requires a fully diligenced model with country-of-origin tax structure, FX repatriation friction, OFAC compliance overlay, and project-finance terms.",
                 },
             ],
         )
@@ -2556,7 +2556,7 @@ def tool_bolivar_usd():
                 },
                 {
                     "q": "Can foreign investors freely convert bolívars to USD?",
-                    "a": "Capital repatriation in foreign currency requires registration with the BCV and approval against the prevailing exchange-control regulations. FX availability remains the single largest operational risk for foreign investors.",
+                    "a": "No — capital repatriation in foreign currency requires registration with the BCV and approval against the prevailing exchange-control regulations. FX availability remains the single largest operational risk for foreign investors.",
                 },
                 {
                     "q": "What is the currency of Venezuela?",
@@ -2690,7 +2690,7 @@ def tool_ofac_sanctions_checker():
                 },
                 {
                     "q": "Is this tool free?",
-                    "a": "Yes. The OFAC sanctions exposure checker is completely free to use, with no registration required.",
+                    "a": "Yes — the OFAC sanctions exposure checker is completely free to use, with no registration required. There is no paywall and no usage cap.",
                 },
             ],
         )
@@ -2871,7 +2871,7 @@ def tool_ofac_general_licenses():
             faq=[
                 {
                     "q": "What is an OFAC general license?",
-                    "a": "An OFAC general license is a published authorisation that permits a defined category of transaction that would otherwise be prohibited by US sanctions, without each party having to apply for an individual specific license.",
+                    "a": "An OFAC general license is a published authorisation that permits a defined category of transaction that would otherwise be prohibited by US sanctions. It applies to any party that meets the stated conditions — no individual application is required, unlike a specific license.",
                 },
                 {
                     "q": "Which OFAC general license covers Chevron's Venezuelan operations?",
@@ -2879,7 +2879,7 @@ def tool_ofac_general_licenses():
                 },
                 {
                     "q": "Are OFAC general licenses permanent?",
-                    "a": "No. Most Venezuela-related general licenses are subject to periodic renewal, modification, or revocation by OFAC. Always confirm the current text and expiration on the OFAC website before relying on a general license.",
+                    "a": "No — most Venezuela-related general licenses are subject to periodic renewal, modification, or revocation by OFAC. Always confirm the current text and expiration on the OFAC website before relying on a general license.",
                 },
             ],
         )
@@ -3048,11 +3048,11 @@ def tool_venezuela_trade_leads():
                 },
                 {
                     "q": "Who should U.S. companies contact about a listed opportunity?",
-                    "a": "ITA directs companies seeking additional information to contact tradevenezuela@trade.gov.",
+                    "a": "Email tradevenezuela@trade.gov — that is the address ITA directs companies to for additional information on listed Venezuela trade leads. ITA's commercial-service team will route the inquiry to the relevant sector specialist.",
                 },
                 {
                     "q": "Do trade leads remove OFAC or export-control risk?",
-                    "a": "No. A commercial opportunity still requires sanctions screening, export-control review, payment diligence, and legal advice before quoting, shipping, or contracting.",
+                    "a": "No — a commercial opportunity still requires sanctions screening, export-control review, payment diligence, and legal advice before quoting, shipping, or contracting. The lead identifies the buyer; it does not authorize the transaction.",
                 },
             ],
             dataset={
@@ -3304,7 +3304,7 @@ def tool_venezuela_market_entry_checklist():
             faq=[
                 {
                     "q": "Can U.S. companies do business in Venezuela?",
-                    "a": "Some activity may be possible, but U.S. companies must screen counterparties, review OFAC sanctions, evaluate BIS export controls, and document payment and banking paths before proceeding.",
+                    "a": "Yes, but only with significant compliance overhead — U.S. companies must screen counterparties, review OFAC sanctions, evaluate BIS export controls, and document payment and banking paths before proceeding. Some activity is permissible under existing OFAC general licenses; specific licenses may be required for transactions outside that scope.",
                 },
                 {
                     "q": "What is the first U.S. government contact point for Venezuela opportunities?",
@@ -3312,7 +3312,7 @@ def tool_venezuela_market_entry_checklist():
                 },
                 {
                     "q": "What should be checked before quoting a Venezuelan buyer?",
-                    "a": "Screen the buyer and beneficial owners, classify the product for export controls, confirm any OFAC authorization needed, assess payment rails, and document end use.",
+                    "a": "Screen the buyer and beneficial owners, classify the product for export controls, confirm any OFAC authorization needed, assess payment rails, and document end use. These five checks together cover the OFAC SDN / 50% Rule exposure, the BIS Commerce Control List classification, and the AML / payment-routing risk that determines whether the order is worth quoting.",
                 },
             ],
         )
@@ -5958,7 +5958,7 @@ def tool_public_company_exposure_check():
                 },
                 {
                     "q": "Is this tool a substitute for sanctions counsel?",
-                    "a": "No. The tool surfaces signals that justify deeper diligence; it does not perform full ownership-chain analysis (the OFAC 50% Rule), check non-SDN sectoral lists, or verify enforcement context. For high-stakes counterparties, retain qualified sanctions counsel.",
+                    "a": "No — the tool surfaces signals that justify deeper diligence, not a final compliance answer. It does not perform full ownership-chain analysis (the OFAC 50% Rule), check non-SDN sectoral lists, or verify enforcement context. For high-stakes counterparties, retain qualified sanctions counsel.",
                 },
             ],
         )

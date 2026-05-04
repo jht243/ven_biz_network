@@ -207,7 +207,7 @@ PILLAR: dict = {
     "faqs": [
         {
             "q": "Do I need a visa to travel to Venezuela in 2026?",
-            "a": "It depends on your passport. US and Chinese citizens require a visa in advance — there is no visa on arrival. UK, Canadian, EU (most member states), Brazilian, Colombian, Russian, and UAE passport holders can enter visa-free for tourist stays of 60–90 days, with the exact limit depending on nationality.",
+            "a": "Yes for Americans and Chinese passport holders, no for many others — it depends on your nationality. US and Chinese citizens require a visa in advance and there is no visa on arrival. UK, Canadian, EU (most member states), Brazilian, Colombian, Russian, and UAE passport holders can enter visa-free for tourist stays of 60–90 days, with the exact limit depending on nationality.",
         },
         {
             "q": "How much does a Venezuela visa cost?",
@@ -223,7 +223,7 @@ PILLAR: dict = {
         },
         {
             "q": "Can I apply for a Venezuelan visa on arrival?",
-            "a": "No. Venezuela does not issue tourist or business visas at the airport for any nationality that requires a visa. You must hold an approved e-visa (or printed approval) before boarding your flight to Caracas.",
+            "a": "No — Venezuela does not issue tourist or business visas at the airport for any nationality that requires a visa. You must hold an approved e-visa (or printed approval) before boarding your flight to Caracas.",
         },
         {
             "q": "What's the difference between a TR-V and TR-N visa?",
@@ -235,7 +235,7 @@ PILLAR: dict = {
         },
         {
             "q": "Do I need a visa to travel through Venezuela in transit?",
-            "a": "Most international transits at SVMI (Caracas) airport require you to clear immigration to change terminals, which means you need a tourist visa if your nationality requires one. Confirm your itinerary with the airline — direct connections to Caracas remain limited and most travelers route via Panama City, Bogotá, or Madrid.",
+            "a": "Yes, in most cases — most international transits at SVMI (Caracas) airport require you to clear immigration to change terminals, which means you need a tourist visa if your nationality requires one. Confirm your itinerary with the airline; direct connections to Caracas remain limited and most travelers route via Panama City, Bogotá, or Madrid.",
         },
     ],
     "related_links": [
@@ -338,11 +338,11 @@ US_CITIZENS: dict = {
         },
         {
             "q": "Is the Embassy of Venezuela in Washington DC open?",
-            "a": "No. The Embassy of Venezuela in Washington DC has been closed since 2019, when the US recognized Juan Guaidó as interim president and the Maduro-aligned diplomats were expelled. The full diplomatic mission has not reopened. US-citizen visa applications are processed online through Cancillería Digital, not in person.",
+            "a": "No — the Embassy of Venezuela in Washington DC has been closed since 2019, when the US recognized Juan Guaidó as interim president and the Maduro-aligned diplomats were expelled. The full diplomatic mission has not reopened. US-citizen visa applications are processed online through Cancillería Digital, not in person.",
         },
         {
             "q": "Can US citizens travel to Venezuela right now?",
-            "a": "Yes, with caveats. As of March 19, 2026 the US State Department downgraded Venezuela from Level 4 (Do Not Travel) to Level 3 (Reconsider Travel), with Level 4 still applying to specific border states. The US Embassy in Caracas formally reopened on March 30, 2026. Travel is legal but requires careful planning, an approved e-visa, and comprehensive medical-evacuation insurance.",
+            "a": "Yes, with caveats — as of March 19, 2026 the US State Department downgraded Venezuela from Level 4 (Do Not Travel) to Level 3 (Reconsider Travel), with Level 4 still applying to specific border states. The US Embassy in Caracas formally reopened on March 30, 2026. Travel is legal but requires careful planning, an approved e-visa, and comprehensive medical-evacuation insurance.",
         },
         {
             "q": "What's the difference between TR-V and TR-N for US passport holders?",
@@ -350,7 +350,7 @@ US_CITIZENS: dict = {
         },
         {
             "q": "Do US citizens need a visa to transit through Caracas?",
-            "a": "Most international connections at SVMI airport require you to clear immigration to change terminals, which means a US passport holder needs an approved e-visa even for transit. Direct US–Venezuela commercial flights remain suspended; most travelers route via Panama City, Bogotá, or Madrid.",
+            "a": "Yes — a US passport holder needs an approved e-visa even for transit, because most international connections at SVMI airport require clearing immigration to change terminals. Direct US–Venezuela commercial flights remain suspended; most travelers route via Panama City, Bogotá, or Madrid.",
         },
     ],
     "related_links": [
@@ -521,7 +521,7 @@ BUSINESS_VISA: dict = {
         },
         {
             "q": "Do I need a separate Venezuelan work visa to attend meetings?",
-            "a": "No. Attending meetings, conducting due diligence, and negotiating contracts are squarely within the TR-N business-visitor scope. A separate work visa (laboral) is only required if you intend to take up local Venezuelan employment or be paid by a Venezuelan entity.",
+            "a": "No — attending meetings, conducting due diligence, and negotiating contracts are squarely within the TR-N business-visitor scope. A separate work visa (laboral) is only required if you intend to take up local Venezuelan employment or be paid by a Venezuelan entity.",
         },
         {
             "q": "What does the corporate invitation letter need to include?",
@@ -537,7 +537,7 @@ BUSINESS_VISA: dict = {
         },
         {
             "q": "Should I run business meetings in Venezuela or in a third country?",
-            "a": "Sophisticated investors usually keep primary commercial discussions in third-country jurisdictions — Bogotá, Panama City, Madrid, and Dubai are the most-used venues — and reserve the TR-N for in-country execution, site visits, and signing. This pattern reduces both legal-process and physical-security exposure.",
+            "a": "No — run primary commercial discussions outside Venezuela. Sophisticated investors typically use Bogotá, Panama City, Madrid, or Dubai for the negotiating phase, and reserve the TR-N for in-country execution, site visits, and signing. This pattern reduces both legal-process and physical-security exposure.",
         },
     ],
     "related_links": [
@@ -711,7 +711,7 @@ CHINA_CITIZENS: dict = {
     "faqs": [
         {
             "q": "Do Chinese citizens need a visa for Venezuela?",
-            "a": "Yes. Every Chinese passport holder needs a Venezuelan visa in advance — there is no visa on arrival. Tourist (L), business (F), and investor classifications are all available, with the choice depending on the purpose and length of your stay.",
+            "a": "Yes — every Chinese passport holder needs a Venezuelan visa in advance, and there is no visa on arrival. Tourist (L), business (F), and investor classifications are all available, with the choice depending on the purpose and length of your stay.",
         },
         {
             "q": "Where do Chinese citizens apply for a Venezuelan visa?",
@@ -731,7 +731,7 @@ CHINA_CITIZENS: dict = {
         },
         {
             "q": "Are there direct flights from China to Venezuela?",
-            "a": "Direct China–Caracas service is limited. Most itineraries route through Madrid (Iberia) or Doha (Qatar Airways), with onward connection to SVMI airport in Caracas. Confirm onward connections with the airline before booking.",
+            "a": "No — there is no nonstop China–Caracas commercial service, and direct flights are limited. Most itineraries route through Madrid (Iberia) or Doha (Qatar Airways), with onward connection to SVMI airport in Caracas. Confirm onward connections with the airline before booking.",
         },
     ],
     "related_links": [

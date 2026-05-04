@@ -244,11 +244,11 @@ PEOPLE: dict[str, Person] = {
         faqs=(
             FAQ(
                 q="Where is Nicolás Maduro now?",
-                a="Nicolás Maduro is in U.S. federal custody. He was captured by U.S. special operations forces in Caracas on January 3, 2026 and was arraigned in the Southern District of New York on charges including narco-terrorism conspiracy, cocaine importation conspiracy, and weapons offences against the United States.",
+                a="Nicolás Maduro is in United States federal custody after being captured by U.S. special operations forces in Caracas on January 3, 2026. He was arraigned in the Southern District of New York on charges including narco-terrorism conspiracy, cocaine importation conspiracy, and weapons offences against the United States.",
             ),
             FAQ(
                 q="Is Maduro still the President of Venezuela?",
-                a="No, in practical terms. Vice President Delcy Rodríguez was sworn in as Acting President on January 5, 2026 and continues to lead the Venezuelan government. The Venezuelan state and the National Assembly continue to assert that Maduro is the de jure president; the United States, the EU, and most Latin American governments treat him as removed from power.",
+                a="No — in practical terms, Vice President Delcy Rodríguez was sworn in as Acting President on January 5, 2026 and continues to lead the Venezuelan government. The Venezuelan state and the National Assembly continue to assert that Maduro is the de jure president; the United States, the EU, and most Latin American governments treat him as removed from power.",
             ),
             FAQ(
                 q="Why does Maduro's capture matter to foreign investors?",
@@ -325,11 +325,11 @@ PEOPLE: dict[str, Person] = {
             ),
             FAQ(
                 q="Is Delcy Rodríguez sanctioned by the U.S.?",
-                a="No, not currently. Rodríguez was on the OFAC SDN list from 2018 under Venezuela-related sanctions programs but was removed in 2026 as part of the political settlement that followed the U.S. capture of Nicolás Maduro. Other senior officials in her government remain on the SDN list.",
+                a="No — Rodríguez was removed from the OFAC SDN list in 2026 as part of the political settlement that followed the U.S. capture of Nicolás Maduro. She had been on the list since 2018 under Venezuela-related sanctions programs. Other senior officials in her government remain sanctioned.",
             ),
             FAQ(
                 q="Is she really the president, or just acting?",
-                a="Rodríguez was sworn in as Acting President under Venezuelan constitutional succession rules. The TSJ-mandated 90-day cap on her interim role expired in early April 2026 without elections. As of late April 2026 she remains in office, and is the de facto head of the Venezuelan government recognized by the United States as the negotiation counterparty.",
+                a="No — Rodríguez holds the title of Acting President, not President, having been sworn in under Venezuelan constitutional succession rules after the U.S. capture of Nicolás Maduro. The TSJ-mandated 90-day cap on her interim role expired in early April 2026 without elections. As of late April 2026 she remains in office and is the de facto head of the Venezuelan government recognized by the United States as the negotiation counterparty.",
             ),
         ),
         sources=(
@@ -377,7 +377,7 @@ PEOPLE: dict[str, Person] = {
             ),
             FAQ(
                 q="Is Diosdado Cabello on the OFAC SDN list?",
-                a="Yes. Cabello has been on the OFAC SDN list since 2018 under Venezuela-related sanctions programs.",
+                a="Yes — Cabello has been on the OFAC SDN list since 2018 under Venezuela-related sanctions programs. He remains sanctioned as of April 2026.",
             ),
         ),
         sources=(
@@ -465,7 +465,7 @@ PEOPLE: dict[str, Person] = {
             ),
             FAQ(
                 q="Is Padrino López sanctioned by the U.S.?",
-                a="Yes. Padrino López has been on the OFAC SDN list since 2018 under Venezuela-related sanctions programs and remains on the list as of April 2026.",
+                a="Yes — Padrino López has been on the OFAC SDN list since 2018 under Venezuela-related sanctions programs and remains on the list as of April 2026. Any transaction involving him, entities he controls, or assets in which he holds a 50% or greater interest is prohibited for US persons without an OFAC specific license.",
             ),
         ),
         sources=(
@@ -531,11 +531,11 @@ PEOPLE: dict[str, Person] = {
             ),
             FAQ(
                 q="Is the Procuradora the same as the Fiscal General?",
-                a="No. Both are translated as 'Attorney General' in English but are separate offices. The Procurador General de la República (currently Arianny Seijo Noguera) represents the state in civil and commercial litigation. The Fiscal General de la República (currently Larry Devoe) heads the Public Ministry and prosecutes criminal cases.",
+                a="No — they are separate offices that both translate as 'Attorney General' in English. The Procurador General de la República (currently Arianny Seijo Noguera) represents the state in civil and commercial litigation. The Fiscal General de la República (currently Larry Devoe) heads the Public Ministry and prosecutes criminal cases.",
             ),
             FAQ(
                 q="Is Arianny Seijo Noguera sanctioned?",
-                a="As of April 2026, Arianny Seijo Noguera is not listed on the OFAC SDN list. Compliance teams should always verify against the live OFAC Sanctions Search before relying on this for decision-making.",
+                a="No — as of April 2026, Arianny Seijo Noguera is not listed on the OFAC SDN list. Compliance teams should always verify against the live OFAC Sanctions Search before relying on this for decision-making.",
             ),
         ),
         sources=(
@@ -586,7 +586,7 @@ PEOPLE: dict[str, Person] = {
             ),
             FAQ(
                 q="Did María Corina Machado win the Nobel Peace Prize?",
-                a="Yes. The Norwegian Nobel Committee awarded the 2024 Nobel Peace Prize to María Corina Machado for her leadership of Venezuela's pro-democracy opposition.",
+                a="Yes — the Norwegian Nobel Committee awarded the 2024 Nobel Peace Prize to María Corina Machado for her leadership of Venezuela's pro-democracy opposition. She accepted the prize in Oslo in December 2024, the first Venezuelan ever to receive the Nobel Peace Prize.",
             ),
         ),
         sources=(
@@ -770,7 +770,7 @@ PEOPLE: dict[str, Person] = {
             ),
             FAQ(
                 q="Is Cilia Flores in U.S. custody?",
-                a="Yes. Flores was captured alongside Nicolás Maduro by U.S. special operations forces in Caracas on January 3, 2026, transported to the United States, and arraigned in the Southern District of New York. She has pleaded not guilty.",
+                a="Yes — Flores was captured alongside Nicolás Maduro by U.S. special operations forces in Caracas on January 3, 2026, transported to the United States, and arraigned in the Southern District of New York. She has pleaded not guilty.",
             ),
         ),
         sources=(
@@ -1105,7 +1105,7 @@ PEOPLE: dict[str, Person] = {
         faqs=(
             FAQ(
                 q="Who is Néstor Reverol?",
-                a="Néstor Reverol is a retired Bolivarian National Guard major general who has held senior portfolios in the Maduro government, including Minister of Interior, Justice, and Peace (2016–2020), Minister of Electric Energy (2020–2024), and president of Corpozulia (2024–2025). He has been on the OFAC SDN list since 2017 and is under U.S. federal indictment on narcotics-trafficking charges.",
+                a="Néstor Reverol is a retired Bolivarian National Guard major general who has held a sequence of senior portfolios in the Maduro government. He served as Minister of Interior, Justice, and Peace (2016–2020), Minister of Electric Energy (2020–2024), and president of Corpozulia (2024–2025). He has been on the OFAC SDN list since 2017 and is under U.S. federal indictment on narcotics-trafficking charges.",
             ),
         ),
         sources=(
@@ -1156,11 +1156,11 @@ PEOPLE: dict[str, Person] = {
         faqs=(
             FAQ(
                 q="Is Iván Hernández Dala still the head of DGCIM?",
-                a="No. Hernández Dala headed Venezuela's military counterintelligence service from 2014 until October 2024, when he was replaced by Javier Marcano Tábata. He was subsequently appointed president of CANTV. After the U.S. capture of Nicolás Maduro in January 2026, General Gustavo González López took over the DGCIM.",
+                a="No — Hernández Dala headed Venezuela's military counterintelligence service from 2014 until October 2024, when he was replaced by Javier Marcano Tábata. He was subsequently appointed president of CANTV. After the U.S. capture of Nicolás Maduro in January 2026, General Gustavo González López took over the DGCIM.",
             ),
             FAQ(
                 q="Is Iván Hernández Dala sanctioned?",
-                a="Yes. He has been on the OFAC SDN list since 2019 and is a sanctions target of the EU, UK, and Canada for human-rights violations during his command of the DGCIM.",
+                a="Yes — Hernández Dala has been on the OFAC SDN list since 2019 and is also a sanctions target of the EU, UK, and Canada for human-rights violations during his command of the DGCIM. Any dealing with him or entities he controls requires OFAC authorization and faces parallel blocking orders from EU and UK regulators.",
             ),
         ),
         sources=(
@@ -1208,7 +1208,7 @@ PEOPLE: dict[str, Person] = {
         faqs=(
             FAQ(
                 q="Who is Domingo Hernández Lárez?",
-                a="General-in-Chief Domingo Hernández Lárez is a senior Venezuelan military officer who served as the Strategic Operational Commander of the Bolivarian National Armed Forces (CEOFANB) from 2021 until March 19, 2026, when he was dismissed by Acting President Delcy Rodríguez and replaced by Major General Rafael Prieto Martínez.",
+                a="General-in-Chief Domingo Hernández Lárez is a former Strategic Operational Commander of Venezuela's Bolivarian National Armed Forces (CEOFANB). He held the role from 2021 until March 19, 2026, when he was dismissed by Acting President Delcy Rodríguez and replaced by Major General Rafael Prieto Martínez. He is sanctioned by the U.S., EU, UK, and Canada.",
             ),
         ),
         sources=(
@@ -1311,7 +1311,7 @@ PEOPLE: dict[str, Person] = {
             ),
             FAQ(
                 q="Is Tarek William Saab the same person as Alex Saab?",
-                a="No. Tarek William Saab Halabi (the Fiscal General / Ombudsman) and Alex Nain Saab Moran (a businessman accused of being a frontman for the Maduro government and the subject of a high-profile U.S. extradition case) share a surname but are not closely related. They are two of the most-confused names in Venezuela-related sanctions research.",
+                a="No — they are two different people who share a surname but are not closely related. Tarek William Saab Halabi is the Fiscal General / Ombudsman; Alex Nain Saab Moran is a businessman accused of being a frontman for the Maduro government and the subject of a high-profile U.S. extradition case. They are among the most-confused names in Venezuela-related sanctions research.",
             ),
         ),
         sources=(
@@ -1540,7 +1540,7 @@ PEOPLE: dict[str, Person] = {
         faqs=(
             FAQ(
                 q="Who is Juan Guaidó?",
-                a="Juan Guaidó is a former President of the Venezuelan National Assembly who served as the U.S.-recognized Interim President of Venezuela from January 2019 until the National Assembly voted to dissolve the interim-government structure in December 2022. He has been based in the United States since 2023.",
+                a="Juan Guaidó is a former President of the Venezuelan National Assembly. He served as the U.S.-recognized Interim President of Venezuela from January 2019 until the National Assembly voted to dissolve the interim-government structure in December 2022, and has been based in the United States since 2023.",
             ),
         ),
         sources=(
@@ -1648,7 +1648,7 @@ PEOPLE: dict[str, Person] = {
             ),
             FAQ(
                 q="Is the Fiscal General the same as the Procuradora General?",
-                a="No. Both are translated as 'Attorney General' in English but are separate Venezuelan offices. The Fiscal General de la República (currently Larry Devoe) heads the Public Ministry and prosecutes criminal cases. The Procuradora General de la República (currently Arianny Seijo Noguera) represents the Venezuelan state in civil and commercial litigation, including international arbitration disputes.",
+                a="No — they are two separate Venezuelan offices that both translate as 'Attorney General' in English. The Fiscal General de la República (currently Larry Devoe) heads the Public Ministry and prosecutes criminal cases. The Procuradora General de la República (currently Arianny Seijo Noguera) represents the Venezuelan state in civil and commercial litigation, including international arbitration disputes.",
             ),
         ),
         sources=(
@@ -1764,7 +1764,7 @@ PEOPLE: dict[str, Person] = {
             ),
             FAQ(
                 q="What is PDVSA's oil-production target for 2026?",
-                a="Obregón has stated that PDVSA's target for 2026 is to grow oil production by at least 18 percent.",
+                a="PDVSA is targeting at least 18 percent oil-production growth in 2026, according to public statements by company president Héctor Obregón. Hitting that target would require resolving the operational and counterparty issues that followed the expiry of OFAC General License 44.",
             ),
         ),
         sources=(
