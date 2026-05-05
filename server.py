@@ -3243,16 +3243,16 @@ _APPLY_VISA_VARIANT_SEO: dict[str, dict] = {
     "us-citizens": {
         "title": "Venezuela Visa for US Citizens (2026): E-Visa Application, Fees & Timeline",
         "description": (
-            "How US citizens apply for a Venezuelan tourist (TR-V) or "
-            "business (TR-N) visa through the Cancillería Digital e-visa "
-            "portal. The Embassy of Venezuela in Washington DC has been "
-            "closed since 2019 — full step-by-step playbook, USD 180 fee, "
-            "~15-day timeline, and US-specific payment snags."
+            "US citizens need a visa to enter Venezuela — no visa on arrival. "
+            "Apply online through Cancillería Digital: USD 180 fee, 7–30 day "
+            "approval, no embassy appointment (DC mission closed since 2019). "
+            "Step-by-step guide for tourist (TR-V) and business (TR-N) visas."
         ),
         "keywords": (
-            "venezuela visa for us citizens, venezuela visa us, apply "
-            "for venezuela visa from usa, venezuela embassy washington dc, "
-            "us citizen venezuela e-visa, venezuela visa cost us"
+            "venezuela visa for us citizens, venezuela visa us citizens 2026, "
+            "apply for venezuela visa online, apply for venezuela visa from usa, "
+            "venezuela embassy washington dc, us citizen venezuela e-visa, "
+            "venezuela visa cost us, how to get venezuela visa"
         ),
     },
     "business-visa": {

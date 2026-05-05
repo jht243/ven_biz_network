@@ -270,12 +270,12 @@ US_CITIZENS: dict = {
     "h1": "Venezuela Visa for US Citizens (2026)",
     "kicker": "US passport · Updated for the e-visa era",
     "lede": (
-        "US citizens now apply for Venezuelan tourist (TR-V) and business "
-        "(TR-N) visas online through the Cancillería Digital portal — the "
-        "Venezuelan embassy in Washington DC has been closed since 2019, "
-        "so there is no US consular appointment to book. This page walks "
-        "through the US-specific application: portal, fee, timeline, and "
-        "the common payment and documentation snags."
+        "US citizens need a visa to enter Venezuela — there is no visa on "
+        "arrival for any US passport holder. Applications are submitted "
+        f"online through Venezuela's Cancillería Digital portal; the "
+        f"government fee is USD {EVISA_FEE_USD} and approvals typically "
+        "take 7–30 days. The Venezuelan Embassy in Washington DC has been "
+        "closed since 2019, so the online portal is the only route."
     ),
     "key_facts": [
         {"label": "Visa class", "value": "TR-V (tourism) or TR-N (business), per your case"},
