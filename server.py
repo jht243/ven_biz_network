@@ -7479,6 +7479,32 @@ def travel_page():
 
         faq = [
             {
+                "q": "Can US citizens visit Venezuela in 2026?",
+                "a": (
+                    "Yes — US citizens can travel to Venezuela in 2026. The US "
+                    "State Department downgraded Venezuela from Level 4 (Do Not "
+                    "Travel) to Level 3 (Reconsider Travel) on March 19, 2026 "
+                    "following the political transition. Travel is legal but "
+                    "requires careful planning: US citizens must obtain an "
+                    "e-visa in advance through Venezuela's Cancillería Digital "
+                    "portal (USD 180, 7–30 day approval), carry comprehensive "
+                    "medical-evacuation insurance, and pre-arrange all ground "
+                    "transport. Specific border states remain at Level 4."
+                ),
+            },
+            {
+                "q": "Can Americans travel to Venezuela from the US?",
+                "a": (
+                    "Yes — direct flights from the US to Caracas resumed in "
+                    "March 2026. American Airlines operates Miami (MIA) to "
+                    "Caracas Maiquetía (CCS) daily; United Airlines runs "
+                    "Houston (IAH) to CCS. Americans need a Venezuelan e-visa "
+                    "obtained in advance (no visa on arrival) and should review "
+                    "the Level 3 travel advisory before booking. The US Embassy "
+                    "in Caracas reopened on March 30, 2026."
+                ),
+            },
+            {
                 "q": "Is Venezuela safe to visit in 2026?",
                 "a": (
                     "Venezuela remains rated Level 3 (Reconsider Travel) by "
