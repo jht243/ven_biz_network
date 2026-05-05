@@ -1,5 +1,38 @@
 {% extends "_base.html.j2" %}
 
+{% block head_extra %}
+<style>
+  .tools-index-grid .index-card { border-top: 4px solid #8aa0bc; }
+  .tools-index-grid .index-card[data-category="Travel"] { border-top-color: #0d9488; }
+  .tools-index-grid .index-card[data-category="Travel service"] { border-top-color: #cc0000; }
+  .tools-index-grid .index-card[data-category="Compliance"] { border-top-color: #1d4ed8; }
+  .tools-index-grid .index-card[data-category="Trade"] { border-top-color: #7c3aed; }
+  .tools-index-grid .index-card[data-category="Markets"] { border-top-color: #0f766e; }
+  .tools-index-grid .index-card[data-category="Modelling"] { border-top-color: #9a3412; }
+  .tools-index-grid .index-card[data-category="Real estate"] { border-top-color: #475569; }
+  .tools-index-grid .meta {
+    display: inline-flex;
+    align-items: center;
+    align-self: flex-start;
+    border-radius: 4px;
+    padding: 5px 9px;
+    background: #eef2ff;
+    color: #1e40af;
+    font-size: 11px;
+    font-weight: 800;
+    letter-spacing: 1.3px;
+    margin-bottom: 12px;
+  }
+  .tools-index-grid .index-card[data-category="Travel"] .meta { background: #ccfbf1; color: #0f766e; }
+  .tools-index-grid .index-card[data-category="Travel service"] .meta { background: #fee2e2; color: #991b1b; }
+  .tools-index-grid .index-card[data-category="Compliance"] .meta { background: #dbeafe; color: #1d4ed8; }
+  .tools-index-grid .index-card[data-category="Trade"] .meta { background: #ede9fe; color: #6d28d9; }
+  .tools-index-grid .index-card[data-category="Markets"] .meta { background: #dcfce7; color: #166534; }
+  .tools-index-grid .index-card[data-category="Modelling"] .meta { background: #ffedd5; color: #9a3412; }
+  .tools-index-grid .index-card[data-category="Real estate"] .meta { background: #e2e8f0; color: #334155; }
+</style>
+{% endblock %}
+
 {% block content %}
 <section class="container">
 
@@ -22,9 +55,9 @@
     </p>
   </header>
 
-  <div class="index-grid">
+  <div class="index-grid tools-index-grid" id="tools-grid">
     {% for t in tools %}
-    <article class="index-card">
+    <article class="index-card" data-tool-card data-category="{{ t.category }}">
       <a class="card-link" href="{{ t.url }}" aria-label="{{ t.name }}"></a>
       <a class="title-link" href="{{ t.url }}">{{ t.name }}</a>
       <div class="meta">{{ t.category }}</div>

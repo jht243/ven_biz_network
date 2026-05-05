@@ -4310,14 +4310,25 @@ def tools_index():
                 "category": "Travel",
                 "summary": "Pick your passport country to see whether you need a visa for Venezuela, the maximum stay, the current US/UK travel-advisory level, and what investors should know before flying.",
             },
+            {
+                "url": "/apply-for-venezuelan-visa/planilla",
+                "name": "Planilla de Solicitud de Visa PDF Generator",
+                "category": "Travel",
+                "summary": "Free Venezuela visa application form generator: type with English prompts, then print or save a Spanish-labelled Planilla de Solicitud de Visa PDF for upload.",
+            },
+            {
+                "url": "/apply-for-venezuelan-visa/declaracion-jurada",
+                "name": "Declaración Jurada Visa Venezolana PDF Generator",
+                "category": "Travel",
+                "summary": "Free sworn-statement generator for Venezuela visa files: add your name, nationality, passport number, and signature, then print or save the Spanish declaración jurada PDF.",
+            },
         ]
-
         base = _base_url()
         canonical = f"{base}/tools"
         seo = {
             "title": "Venezuela Investor Tools & Services — Sanctions, BCV, Visa",
-            "description": "Toolkit for evaluating Venezuelan exposure: ITA trade leads, OFAC sanctions screening, OFAC general license lookup, live BCV USD rate, ROI calculator, Caracas safety, visa requirements, and visa filing help.",
-            "keywords": "Venezuela investor tools, Venezuela trade leads, ITA Venezuela, OFAC checker, BCV rate, Venezuela ROI calculator, Caracas safety, Venezuela visa, Venezuela visa service",
+            "description": "Toolkit for evaluating Venezuelan exposure: ITA trade leads, OFAC sanctions screening, OFAC general license lookup, live BCV USD rate, ROI calculator, Caracas safety, visa requirements, visa form generators, and visa filing service.",
+            "keywords": "Venezuela investor tools, Venezuela trade leads, ITA Venezuela, OFAC checker, BCV rate, Venezuela ROI calculator, Caracas safety, Venezuela visa, Venezuela visa service, planilla de solicitud de visa, declaracion jurada visa venezolana",
             "canonical": canonical,
             "site_name": _s.site_name,
             "site_url": base,
