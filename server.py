@@ -1157,14 +1157,29 @@ def admin_confirm_visa_submitted(order_id: int):
 
 def _pdf_signature_style():
     """Return a ReportLab ParagraphStyle that mimics a handwritten signature."""
+    import os
     from reportlab.lib.styles import ParagraphStyle
     from reportlab.lib.enums import TA_LEFT
+    from reportlab.pdfbase.ttfonts import TTFont
+    from reportlab.pdfbase import pdfmetrics
+
+    font_path = os.path.join(os.path.dirname(__file__), "assets", "fonts", "Caveat-Bold.ttf")
+    if os.path.isfile(font_path):
+        try:
+            pdfmetrics.registerFont(TTFont("Caveat", font_path))
+            font_name = "Caveat"
+        except Exception:
+            font_name = "Times-BoldItalic"
+    else:
+        font_name = "Times-BoldItalic"
+
     return ParagraphStyle(
         "Signature",
-        fontName="Times-BoldItalic",
-        fontSize=18,
-        leading=22,
+        fontName=font_name,
+        fontSize=22,
+        leading=26,
         alignment=TA_LEFT,
+        textColor="#1a1a2e",
     )
 
 
