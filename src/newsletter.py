@@ -78,6 +78,15 @@ class ResendProvider(EmailProvider):
     def __init__(self, from_override: str | None = None, reply_to: str | None = None):
         self._from_override = from_override
         self._reply_to = reply_to
+        self._attachments: list[dict] = []
+
+    def add_attachment(self, filename: str, content_bytes: bytes, content_type: str = "application/pdf"):
+        import base64
+        self._attachments.append({
+            "filename": filename,
+            "content": base64.b64encode(content_bytes).decode(),
+            "type": content_type,
+        })
 
     def send(self, to: str, subject: str, html_body: str) -> bool:
         from_addr = self._from_override or f"{settings.site_name} <{settings.newsletter_from_email}>"
@@ -89,6 +98,8 @@ class ResendProvider(EmailProvider):
         }
         if self._reply_to:
             payload["reply_to"] = [self._reply_to]
+        if self._attachments:
+            payload["attachments"] = self._attachments
         headers = {
             "Authorization": f"Bearer {settings.resend_api_key}",
             "Content-Type": "application/json",
@@ -121,6 +132,7 @@ def send_email(
     dry_run: bool = False,
     from_override: str | None = None,
     reply_to: str | None = None,
+    attachments: list[dict] | None = None,
 ) -> dict:
     selected_provider = provider_name or settings.seo_email_provider or settings.newsletter_provider
     if dry_run:
@@ -142,6 +154,13 @@ def send_email(
                 provider._from_override = from_override
             if reply_to:
                 provider._reply_to = reply_to
+            if attachments:
+                for att in attachments:
+                    provider.add_attachment(
+                        filename=att["filename"],
+                        content_bytes=att["content"],
+                        content_type=att.get("content_type", "application/pdf"),
+                    )
         success = provider.send(to=to, subject=subject, html_body=html_body)
         return {"success": success, "provider": selected_provider, "to": to}
     except Exception as exc:

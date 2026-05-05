@@ -403,7 +403,7 @@ def _send_visa_intake_email_to_customer(customer_email: str, customer_name: str,
     return bool(result.get("success"))
 
 
-def _send_visa_submitted_confirmation_email(customer_email: str, customer_name: str) -> bool:
+def _send_visa_submitted_confirmation_email(customer_email: str, customer_name: str, attachment: dict | None = None) -> bool:
     """Notify the customer that their application has been filed with the consulate."""
     from src.newsletter import send_email
 
@@ -422,7 +422,13 @@ def _send_visa_submitted_confirmation_email(customer_email: str, customer_name: 
       <p style="font-size: 15px;">
         At this stage, average processing time is typically <strong>2–3 weeks</strong>,
         though timelines can vary by consulate workload.
-      </p>
+      </p>"""
+    if attachment:
+        html += """
+      <p style="font-size: 15px;">
+        Please find your submission receipt attached to this email for your records.
+      </p>"""
+    html += f"""
       <p style="font-size: 15px;">
         If you have questions in the meantime, reply to this email and we will get back to you.
       </p>
@@ -434,6 +440,8 @@ def _send_visa_submitted_confirmation_email(customer_email: str, customer_name: 
     </div>
     """
 
+    attachments_list = [attachment] if attachment else None
+
     result = send_email(
         to=customer_email,
         subject=subject,
@@ -441,6 +449,7 @@ def _send_visa_submitted_confirmation_email(customer_email: str, customer_name: 
         provider_name=settings.visa_order_email_provider,
         from_override=_visa_from_address(),
         reply_to=_visa_reply_to(),
+        attachments=attachments_list,
     )
     return bool(result.get("success"))
 
@@ -868,6 +877,7 @@ def admin_visa_orders():
                 "files": files,
                 "portal_registration_email": (data.get("_internal_portal_registration_email") or ""),
                 "portal_password": (data.get("_internal_portal_password") or settings.visa_portal_shared_password),
+                "has_receipt": bool(data.get("_internal_receipt_path")),
                 "visa_submitted_sent_label": visa_submitted_sent_label,
                 "data": {
                     k: v for k, v in data.items()
@@ -929,6 +939,19 @@ def admin_visa_orders():
                   <button type="button" class="portal-btn" onclick="copyPortalPassword({r['id']})">Copy password</button>
                   <button type="button" class="portal-btn portal-btn-primary" onclick="savePortalPassword({r['id']})">Save</button>
                   <span id="portal-pw-msg-{r['id']}" style="font-size:12px;"></span>
+                </div>
+              </div>"""
+
+            receipt_status = '<span style="color:#28a745;font-weight:600;">Receipt uploaded</span>' if r["has_receipt"] else '<span style="color:#6c757d;">No receipt yet</span>'
+            html += f"""<div style="margin:12px 0;padding:10px 14px;border:1px solid #dde4ed;border-radius:6px;background:#f8fafc;">
+                <div style="display:flex;flex-wrap:wrap;align-items:center;gap:10px;">
+                  <strong style="color:#002b5e;">Submission receipt (PDF/image)</strong>
+                  {receipt_status}
+                </div>
+                <div style="margin-top:8px;display:flex;flex-wrap:wrap;align-items:center;gap:8px;">
+                  <input type="file" id="receipt-file-{r['id']}" accept=".pdf,.jpg,.jpeg,.png" style="font-size:13px;">
+                  <button type="button" class="portal-btn portal-btn-primary" onclick="uploadReceipt({r['id']})">Upload receipt</button>
+                  <span id="receipt-msg-{r['id']}" style="font-size:12px;"></span>
                 </div>
               </div>"""
 
@@ -1027,6 +1050,33 @@ async function confirmVisaSubmitted(id) {{
     msg.textContent = 'Error';
   }}
 }}
+async function uploadReceipt(id) {{
+  var input = document.getElementById('receipt-file-' + id);
+  var msg = document.getElementById('receipt-msg-' + id);
+  if (!input.files || !input.files[0]) {{
+    msg.textContent = 'Select a file first';
+    msg.style.color = '#dc3545';
+    return;
+  }}
+  msg.style.color = '#6c757d';
+  msg.textContent = 'Uploading…';
+  var fd = new FormData();
+  fd.append('receipt', input.files[0]);
+  try {{
+    var r = await fetch('/admin/visa-order/' + id + '/upload-receipt', {{ method: 'POST', body: fd }});
+    var j = await r.json().catch(function() {{ return {{}}; }});
+    if (r.ok && j.ok) {{
+      msg.style.color = '#28a745';
+      msg.textContent = 'Uploaded';
+    }} else {{
+      msg.style.color = '#dc3545';
+      msg.textContent = j.error || 'Upload failed';
+    }}
+  }} catch (e) {{
+    msg.style.color = '#dc3545';
+    msg.textContent = 'Error';
+  }}
+}}
 </script></body></html>"""
         return Response(html, mimetype="text/html")
     finally:
@@ -1106,6 +1156,47 @@ def admin_save_portal_password(order_id: int):
         db.close()
 
 
+@app.post("/admin/visa-order/<int:order_id>/upload-receipt")
+def admin_upload_receipt(order_id: int):
+    """Upload a submission receipt (PDF or image) for an order."""
+    if not _admin_authenticated():
+        return jsonify({"error": "unauthorized"}), 401
+
+    from sqlalchemy.orm.attributes import flag_modified
+    from src.models import VisaOrder, SessionLocal, init_db
+
+    if "receipt" not in request.files:
+        return jsonify({"error": "no file provided"}), 400
+    file = request.files["receipt"]
+    if not file.filename:
+        return jsonify({"error": "empty filename"}), 400
+
+    init_db()
+    db = SessionLocal()
+    try:
+        order = db.query(VisaOrder).filter_by(id=order_id).first()
+        if not order:
+            return jsonify({"error": "not found"}), 404
+
+        token = order.intake_token or ""
+        stored_path = _store_intake_file(file, token)
+        if not stored_path:
+            return jsonify({"error": "storage failed"}), 500
+
+        data = dict(order.intake_data or {})
+        data["_internal_receipt_path"] = stored_path
+        order.intake_data = data
+        flag_modified(order, "intake_data")
+        db.commit()
+        return jsonify({"ok": True})
+    except Exception as exc:
+        db.rollback()
+        logger.exception("Failed to upload receipt: %s", exc)
+        return jsonify({"error": "upload failed"}), 500
+    finally:
+        db.close()
+
+
 @app.post("/admin/visa-order/<int:order_id>/confirm-visa-submitted")
 def admin_confirm_visa_submitted(order_id: int):
     """Email the customer that their visa has been submitted; record timestamp (admin only)."""
@@ -1126,7 +1217,26 @@ def admin_confirm_visa_submitted(order_id: int):
             return jsonify({"error": "no customer email"}), 400
 
         display_name = _visa_applicant_display_name(order.intake_data or {}, order.customer_name) or "Customer"
-        sent_ok = _send_visa_submitted_confirmation_email(order.customer_email.strip(), display_name)
+
+        # Fetch receipt attachment if available
+        receipt_attachment = None
+        data = dict(order.intake_data or {})
+        receipt_path = data.get("_internal_receipt_path", "")
+        if receipt_path:
+            receipt_bytes = _fetch_intake_file_bytes(receipt_path, order.intake_token or "")
+            if receipt_bytes:
+                ext = receipt_path.rsplit(".", 1)[-1].lower() if "." in receipt_path else "pdf"
+                content_type = "application/pdf" if ext == "pdf" else f"image/{ext}"
+                safe_name = _safe_filename(display_name)
+                receipt_attachment = {
+                    "filename": f"{safe_name}_submission_receipt.{ext}",
+                    "content": receipt_bytes,
+                    "content_type": content_type,
+                }
+
+        sent_ok = _send_visa_submitted_confirmation_email(
+            order.customer_email.strip(), display_name, attachment=receipt_attachment
+        )
         if not sent_ok:
             return jsonify({"error": "email failed"}), 502
 
