@@ -1179,7 +1179,11 @@ def admin_upload_receipt(order_id: int):
             return jsonify({"error": "not found"}), 404
 
         token = order.intake_token or ""
-        stored_path = _store_intake_file(file, token)
+        file_bytes = file.read()
+        filename = file.filename or "receipt.pdf"
+        from werkzeug.utils import secure_filename as _sec
+        safe_fn = _sec(filename) or "receipt.pdf"
+        stored_path = _store_intake_file(token, safe_fn, file_bytes, file.content_type)
         if not stored_path:
             return jsonify({"error": "storage failed"}), 500
 
