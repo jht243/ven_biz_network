@@ -1156,31 +1156,75 @@ def admin_confirm_visa_submitted(order_id: int):
 # ---------------------------------------------------------------------------
 
 def _pdf_signature_style():
-    """Return a ReportLab ParagraphStyle that mimics a handwritten signature."""
-    import os
+    """Return a ReportLab ParagraphStyle for signature context text (e.g. 'Firma:')."""
     from reportlab.lib.styles import ParagraphStyle
     from reportlab.lib.enums import TA_LEFT
+    return ParagraphStyle(
+        "Signature",
+        fontName="Helvetica",
+        fontSize=10,
+        leading=14,
+        alignment=TA_LEFT,
+    )
+
+
+def _register_signature_font():
+    """Register the Caveat handwriting font; return the font name or fallback."""
+    import os
     from reportlab.pdfbase.ttfonts import TTFont
     from reportlab.pdfbase import pdfmetrics
-
     font_path = os.path.join(os.path.dirname(__file__), "assets", "fonts", "Caveat-Bold.ttf")
     if os.path.isfile(font_path):
         try:
             pdfmetrics.registerFont(TTFont("Caveat", font_path))
-            font_name = "Caveat"
+            return "Caveat"
         except Exception:
-            font_name = "Times-BoldItalic"
-    else:
-        font_name = "Times-BoldItalic"
+            pass
+    return "Times-BoldItalic"
 
-    return ParagraphStyle(
-        "Signature",
-        fontName=font_name,
-        fontSize=22,
-        leading=26,
-        alignment=TA_LEFT,
-        textColor="#1a1a2e",
-    )
+
+from reportlab.platypus import Flowable as _Flowable
+
+
+class HandwrittenSignature(_Flowable):
+    """A ReportLab Flowable that draws a signature with natural-looking imperfections."""
+
+    def __init__(self, name: str, font_size: float = 24):
+        _Flowable.__init__(self)
+        self.name = name
+        self.font_size = font_size
+        self.font_name = _register_signature_font()
+        self.width = 300
+        self.height = 50
+
+    def wrap(self, availWidth, availHeight):
+        return self.width, self.height
+
+    def draw(self):
+        import hashlib
+        canvas = self.canv
+        canvas.saveState()
+
+        seed_bytes = hashlib.md5(self.name.encode()).digest()
+        seed_vals = list(seed_bytes)
+
+        rotation = -2.5 + (seed_vals[0] % 50) / 10.0
+        canvas.rotate(rotation)
+
+        canvas.setFont(self.font_name, self.font_size)
+        canvas.setFillColor("#1a1a2e")
+
+        x = 4
+        y = 15
+        for i, ch in enumerate(self.name):
+            y_offset = ((seed_vals[(i + 1) % 16] % 5) - 2) * 0.6
+            x_offset = ((seed_vals[(i + 2) % 16] % 3) - 1) * 0.3
+            canvas.drawString(x + x_offset, y + y_offset, ch)
+            char_width = canvas.stringWidth(ch, self.font_name, self.font_size)
+            spacing_jitter = ((seed_vals[(i + 3) % 16] % 5) - 2) * 0.4
+            x += char_width + spacing_jitter
+
+        canvas.restoreState()
 
 
 def _build_applicant_full_name(data: dict) -> str:
@@ -1348,7 +1392,6 @@ def _generate_planilla_pdf(order) -> bytes | None:
     title_style = ParagraphStyle("PTitle", parent=styles["Heading1"], fontSize=18, spaceAfter=14)
     section_style = ParagraphStyle("PSection", parent=styles["Heading3"], fontSize=12, spaceBefore=14, spaceAfter=4)
     body_style = ParagraphStyle("PBody", parent=styles["Normal"], fontSize=10, leading=14, bulletIndent=18, leftIndent=18)
-    sig_style = _pdf_signature_style()
 
     story = []
     story.append(Paragraph("PLANILLA DE SOLICITUD DE VISA", title_style))
@@ -1390,7 +1433,7 @@ def _generate_planilla_pdf(order) -> bytes | None:
     story.append(Paragraph("10. FIRMA", section_style))
     story.append(Spacer(1, 6))
     story.append(Paragraph("Firma:", body_style))
-    story.append(Paragraph(full_name, sig_style))
+    story.append(HandwrittenSignature(full_name))
     story.append(Spacer(1, 4))
     story.append(Paragraph(f"Fecha: <b>{today}</b>", body_style))
 
@@ -1424,7 +1467,6 @@ def _generate_declaracion_pdf(order) -> bytes | None:
     styles = getSampleStyleSheet()
     title_style = ParagraphStyle("DTitle", parent=styles["Heading1"], fontSize=16, spaceAfter=20)
     body_style = ParagraphStyle("DBody", parent=styles["Normal"], fontSize=11, leading=18, spaceBefore=12)
-    sig_style = _pdf_signature_style()
 
     story = []
     story.append(Paragraph("DECLARACIÓN JURADA", title_style))
@@ -1445,7 +1487,7 @@ def _generate_declaracion_pdf(order) -> bytes | None:
     ))
     story.append(Spacer(1, 30))
     story.append(Paragraph("Firma:", body_style))
-    story.append(Paragraph(full_name, sig_style))
+    story.append(HandwrittenSignature(full_name))
     story.append(Spacer(1, 12))
     story.append(Paragraph(f"Nombre: {full_name}", body_style))
     story.append(Paragraph(f"Fecha: {today_spanish}", body_style))
