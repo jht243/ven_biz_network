@@ -3215,19 +3215,18 @@ def apply_visa_pillar():
         return _render_apply_visa(
             page=get_pillar(),
             canonical_path="/apply-for-venezuelan-visa",
-            title="How To Apply For A Venezuelan Visa Online (2026): E-Visa Process, Fees & Timeline",
+            title="Venezuela Visa — Apply Online (2026): E-Visa Process, Fees & Timeline",
             description=(
-                "Step-by-step guide to applying for a Venezuelan tourist (TR-V) "
-                "or business (TR-N) visa through the Cancillería Digital "
-                "e-visa portal. Documents, the USD 180 fee, the ~15-day "
-                "approval timeline, and FAQs for US citizens, Chinese "
-                "applicants, and business travelers."
+                "Venezuela visa guide for US citizens and international travelers — "
+                "apply online through the Cancillería Digital e-visa portal. "
+                "Tourist (TR-V) and business (TR-N) visas: documents, USD 180 "
+                "fee, 7–30 day approval timeline, and step-by-step instructions."
             ),
             keywords=(
-                "apply for venezuelan visa, venezuela visa application, "
+                "venezuela visa, venezuela visa application, apply for venezuelan visa online, "
                 "venezuela e-visa, cancilleria digital, venezuela tourist "
                 "visa, venezuela business visa, TR-V visa, TR-N visa, "
-                "venezuela visa fee, venezuela visa timeline"
+                "venezuela visa fee, venezuela visa timeline, venezuela visa for us citizens"
             ),
         )
     except HTTPException:
