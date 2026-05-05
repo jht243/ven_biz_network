@@ -2936,6 +2936,46 @@ def _visa_service_jsonld(*, canonical: str, title: str, description: str,
             "mainEntity": [
                 {
                     "@type": "Question",
+                    "name": "Can I apply for a Venezuelan visa online?",
+                    "acceptedAnswer": {
+                        "@type": "Answer",
+                        "text": "Yes — Venezuela's e-visa system is fully online through the Cancillería Digital portal at cancilleriadigital.mppre.gob.ve. There is no in-person consular appointment for US citizens because the Venezuelan Embassy in Washington DC has been closed since 2019. Applications are submitted digitally and the approved visa is delivered electronically.",
+                    },
+                },
+                {
+                    "@type": "Question",
+                    "name": "What documents do I need for a Venezuelan visa?",
+                    "acceptedAnswer": {
+                        "@type": "Answer",
+                        "text": "The standard document package for a Venezuelan tourist or business e-visa includes: a valid passport (at least 6 months validity beyond your intended stay), a passport-style digital photo meeting MPPRE specifications, a round-trip flight itinerary, proof of accommodation in Venezuela, the completed planilla de solicitud de visa, and a declaración jurada (sworn statement). Business visa applicants additionally need a corporate invitation letter from a Venezuelan entity registered with SENIAT.",
+                    },
+                },
+                {
+                    "@type": "Question",
+                    "name": "How much is the Venezuelan government visa fee?",
+                    "acceptedAnswer": {
+                        "@type": "Answer",
+                        "text": "The Venezuelan government e-visa fee is USD 180 for both tourist (TR-V) and business (TR-N) visas, raised from USD 60 in 2025. This fee is paid separately inside the Cancillería Digital portal and is not included in any third-party service fee.",
+                    },
+                },
+                {
+                    "@type": "Question",
+                    "name": "How long does it take to get a Venezuelan visa?",
+                    "acceptedAnswer": {
+                        "@type": "Answer",
+                        "text": "Venezuelan visa approvals typically arrive in around 15 days through Cancillería Digital, with a real-world range of 7–30 days. Apply at least 4–6 weeks before your departure date and do not book non-refundable flights before receiving approval.",
+                    },
+                },
+                {
+                    "@type": "Question",
+                    "name": "Do US citizens need a visa to visit Venezuela?",
+                    "acceptedAnswer": {
+                        "@type": "Answer",
+                        "text": "Yes — US citizens require a tourist (TR-V) or business (TR-N) visa issued in advance. There is no visa on arrival for US passport holders. Applications are submitted online through Venezuela's Cancillería Digital portal. The Venezuelan Embassy in Washington DC closed in 2019 and has not reopened, so all US applications are handled through the digital portal.",
+                    },
+                },
+                {
+                    "@type": "Question",
                     "name": "Can you guarantee Venezuela visa approval?",
                     "acceptedAnswer": {
                         "@type": "Answer",
@@ -2955,7 +2995,7 @@ def _visa_service_jsonld(*, canonical: str, title: str, description: str,
                     "name": "Is the service fee the same as the government visa fee?",
                     "acceptedAnswer": {
                         "@type": "Answer",
-                        "text": "No. The Caracas Research fee covers application preparation, document review, filing, and monitoring. Any Venezuelan government visa fee is separate and paid through the official application channel.",
+                        "text": "No. The Caracas Research fee covers application preparation, document review, filing, and monitoring. The Venezuelan government visa fee is USD 180 and is paid separately through the official Cancillería Digital portal.",
                     },
                 },
             ],
