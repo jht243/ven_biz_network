@@ -950,6 +950,12 @@ def admin_visa_orders():
                 for k, v in r["data"].items():
                     html += f"<tr><td>{_xml_escape(k)}</td><td>{_xml_escape(str(v))}</td></tr>"
                 html += "</table>"
+
+            html += f"""<div style="margin-top:12px;display:flex;gap:10px;flex-wrap:wrap;">
+              <a href="/admin/visa-order/{r['id']}/generate-planilla" target="_blank" class="portal-btn portal-btn-primary" style="text-decoration:none;display:inline-block;">Generate Planilla</a>
+              <a href="/admin/visa-order/{r['id']}/generate-declaracion" target="_blank" class="portal-btn portal-btn-primary" style="text-decoration:none;display:inline-block;">Generate Declaración Jurada</a>
+            </div>"""
+
             html += "</div>"
 
         html += f"""<script>
@@ -1140,6 +1146,241 @@ def admin_confirm_visa_submitted(order_id: int):
         db.rollback()
         logger.exception("confirm visa submitted: %s", exc)
         return jsonify({"error": "server error"}), 500
+    finally:
+        db.close()
+
+
+# ---------------------------------------------------------------------------
+# Admin: PDF document generation (Planilla + Declaración Jurada)
+# ---------------------------------------------------------------------------
+
+def _pdf_signature_style():
+    """Return a ReportLab ParagraphStyle that mimics a handwritten signature."""
+    from reportlab.lib.styles import ParagraphStyle
+    from reportlab.lib.enums import TA_LEFT
+    return ParagraphStyle(
+        "Signature",
+        fontName="Times-BoldItalic",
+        fontSize=18,
+        leading=22,
+        alignment=TA_LEFT,
+    )
+
+
+def _build_applicant_full_name(data: dict) -> str:
+    parts = [data.get("primer_nombre", ""), data.get("otros_nombres", "")]
+    parts += [data.get("primer_apellido", ""), data.get("segundo_apellido", "")]
+    return " ".join(p for p in parts if p).strip()
+
+
+def _safe_filename(name: str) -> str:
+    return name.lower().replace(" ", "_").replace(".", "")
+
+
+@app.route("/admin/visa-order/<int:order_id>/generate-planilla")
+def admin_generate_planilla(order_id: int):
+    """Generate the Planilla de Solicitud de Visa as a PDF."""
+    if not _admin_authenticated():
+        return redirect("/admin")
+
+    from io import BytesIO
+    from datetime import datetime
+    from reportlab.lib.pagesizes import letter
+    from reportlab.lib.styles import getSampleStyleSheet, ParagraphStyle
+    from reportlab.lib.enums import TA_LEFT
+    from reportlab.lib.units import inch
+    from reportlab.platypus import SimpleDocTemplate, Paragraph, Spacer
+    from src.models import VisaOrder, SessionLocal, init_db
+
+    init_db()
+    db = SessionLocal()
+    try:
+        order = db.query(VisaOrder).filter_by(id=order_id).first()
+        if not order:
+            return "Order not found", 404
+
+        d = dict(order.intake_data or {})
+        full_name = _build_applicant_full_name(d)
+        last_names = " ".join(filter(None, [d.get("primer_apellido", ""), d.get("segundo_apellido", "")]))
+        first_names = " ".join(filter(None, [d.get("primer_nombre", ""), d.get("otros_nombres", "")]))
+
+        visa_type_map = {
+            "visa_de_turista": "Turista", "visa_de_negocios": "Negocios",
+            "visa_transeunte_negocio": "Transeúnte / Negocios", "transito": "Tránsito",
+            "visa_de_trabajo": "Trabajo", "visa_de_estudiante": "Estudiante",
+            "visa_de_residencia": "Residencia", "otra": "Otra",
+        }
+        gender_map = {"masculino": "Masculino", "femenino": "Femenino"}
+        marital_map = {
+            "soltero": "Soltero", "casado": "Casado", "divorciado": "Divorciado",
+            "viudo": "Viudo", "union_libre": "Unión Libre",
+        }
+        passport_type_map = {"ordinario": "Ordinario", "diplomatico": "Diplomático", "oficial": "Oficial"}
+        transport_map = {"aereo": "Aéreo", "terrestre": "Terrestre", "maritimo": "Marítimo"}
+
+        visa_type = visa_type_map.get(d.get("visa_type", ""), d.get("visa_type", ""))
+        gender = gender_map.get(d.get("gender", ""), d.get("gender", ""))
+        marital = marital_map.get(d.get("marital_status", ""), d.get("marital_status", ""))
+        passport_type = passport_type_map.get(d.get("passport_type", ""), d.get("passport_type", ""))
+        transport = transport_map.get(d.get("transport_type", ""), d.get("transport_type", ""))
+
+        today = datetime.utcnow().strftime("%d/%m/%Y")
+
+        buf = BytesIO()
+        doc = SimpleDocTemplate(buf, pagesize=letter, leftMargin=0.8*inch, rightMargin=0.8*inch,
+                                topMargin=0.6*inch, bottomMargin=0.6*inch)
+        styles = getSampleStyleSheet()
+        title_style = ParagraphStyle("PTitle", parent=styles["Heading1"], fontSize=18, spaceAfter=14)
+        section_style = ParagraphStyle("PSection", parent=styles["Heading3"], fontSize=12, spaceBefore=14, spaceAfter=4)
+        body_style = ParagraphStyle("PBody", parent=styles["Normal"], fontSize=10, leading=14, bulletIndent=18, leftIndent=18)
+        sig_style = _pdf_signature_style()
+
+        story = []
+        story.append(Paragraph("PLANILLA DE SOLICITUD DE VISA", title_style))
+
+        story.append(Paragraph("1. TIPO DE VISA", section_style))
+        story.append(Paragraph(f"• Tipo: <b>{visa_type}</b> // Fecha de solicitud: <b>{today}</b>", body_style))
+
+        story.append(Paragraph("2. DATOS PERSONALES", section_style))
+        story.append(Paragraph(f"• Apellidos: <b>{last_names}</b> // Nombres: <b>{first_names}</b>", body_style))
+        story.append(Paragraph(f"• Nacionalidad: <b>{d.get('nationality', '')}</b> // Lugar de nacimiento: <b>{d.get('country_of_birth', '')} — {d.get('city_of_birth', '')}</b>", body_style))
+        story.append(Paragraph(f"• Fecha de nacimiento: <b>{d.get('date_of_birth', '')}</b> // Sexo: <b>{gender}</b> // Estado civil: <b>{marital}</b>", body_style))
+
+        story.append(Paragraph("3. DATOS DEL PASAPORTE", section_style))
+        story.append(Paragraph(f"• Tipo: <b>{passport_type}</b> // Número: <b>{d.get('passport_number', '')}</b> // País de emisión: <b>{d.get('passport_country', '')}</b>", body_style))
+        story.append(Paragraph(f"• Fecha de emisión: {d.get('passport_issue_date', '')} // Fecha de vencimiento: {d.get('passport_expiry_date', '')}", body_style))
+
+        story.append(Paragraph("4. DIRECCIÓN DE RESIDENCIA", section_style))
+        addr_parts = filter(None, [d.get("residence_street", ""), d.get("residence_building", ""),
+                                   d.get("residence_floor_apt", ""), d.get("residence_city", ""),
+                                   d.get("residence_state", ""), d.get("residence_zip", ""),
+                                   d.get("residence_country", "")])
+        story.append(Paragraph(f"• Dirección: <b>{', '.join(addr_parts)}</b>", body_style))
+        story.append(Paragraph(f"• Teléfono: {d.get('phone_cell', '')} // Correo electrónico: <b>{d.get('email', '')}</b>", body_style))
+
+        story.append(Paragraph("5. INFORMACIÓN DEL VIAJE", section_style))
+        story.append(Paragraph(f"• Motivo del viaje: <b>{visa_type}</b> // Fecha de entrada: <b>{d.get('arrival_date', '')}</b> // Fecha salida: <b>{d.get('departure_date', '')}</b>", body_style))
+        airline_line = f"• Aerolínea: <b>{d.get('airline_name', '')}</b> // Vuelo ida: <b>{d.get('flight_outbound', '')}</b> // regreso: <b>{d.get('flight_return', '')}</b>"
+        if d.get("ticket_number"):
+            airline_line += f" // Boleto: {d.get('ticket_number', '')}"
+        story.append(Paragraph(airline_line, body_style))
+
+        story.append(Paragraph("6. LUGAR DE ALOJAMIENTO EN VENEZUELA", section_style))
+        story.append(Paragraph(f"• Hotel: <b>{d.get('hotel_name', '')}</b>", body_style))
+        story.append(Paragraph(f"• Dirección: <b>{d.get('hotel_address', '')}</b> // Teléfono: <b>{d.get('hotel_phone', '')}</b>", body_style))
+
+        story.append(Paragraph("7. RESPONSABLE ECONÓMICO", section_style))
+        sponsor_name = d.get("financial_sponsor_name", "") or full_name
+        sponsor_rel = d.get("financial_sponsor_relationship", "") or "Self / propio solicitante"
+        story.append(Paragraph(f"• Nombre: <b>{sponsor_name}</b> // Relación: <b>{sponsor_rel}</b>", body_style))
+
+        story.append(Paragraph("8. CONTACTO EN VENEZUELA", section_style))
+        story.append(Paragraph(f"• Nombre: <b>{d.get('venezuela_contact_name', '')}</b>", body_style))
+        story.append(Paragraph(f"• Relación: <b>{d.get('venezuela_contact_relationship', '')}</b> // Teléfono: <b>{d.get('venezuela_contact_phone', '')}</b>", body_style))
+
+        story.append(Paragraph("9. INFORMACIÓN ADICIONAL", section_style))
+        visited = "Sí" if d.get("visited_venezuela_before") == "si" else "No"
+        story.append(Paragraph(f"• ¿Ha visitado Venezuela antes?: <b>{visited}</b>", body_style))
+
+        story.append(Paragraph("10. FIRMA", section_style))
+        story.append(Spacer(1, 6))
+        story.append(Paragraph(f"Firma:", body_style))
+        story.append(Paragraph(full_name, sig_style))
+        story.append(Spacer(1, 4))
+        story.append(Paragraph(f"Fecha: <b>{today}</b>", body_style))
+
+        doc.build(story)
+        buf.seek(0)
+
+        filename = f"{_safe_filename(full_name or 'applicant')}_planilla.pdf"
+        return Response(
+            buf.getvalue(),
+            mimetype="application/pdf",
+            headers={"Content-Disposition": f'attachment; filename="{filename}"'},
+        )
+    finally:
+        db.close()
+
+
+@app.route("/admin/visa-order/<int:order_id>/generate-declaracion")
+def admin_generate_declaracion(order_id: int):
+    """Generate the Declaración Jurada (sworn criminal record statement) as a PDF."""
+    if not _admin_authenticated():
+        return redirect("/admin")
+
+    from io import BytesIO
+    from datetime import datetime
+    from reportlab.lib.pagesizes import letter
+    from reportlab.lib.styles import getSampleStyleSheet, ParagraphStyle
+    from reportlab.lib.enums import TA_LEFT
+    from reportlab.lib.units import inch
+    from reportlab.platypus import SimpleDocTemplate, Paragraph, Spacer
+    from src.models import VisaOrder, SessionLocal, init_db
+
+    init_db()
+    db = SessionLocal()
+    try:
+        order = db.query(VisaOrder).filter_by(id=order_id).first()
+        if not order:
+            return "Order not found", 404
+
+        d = dict(order.intake_data or {})
+        full_name = _build_applicant_full_name(d)
+        nationality = d.get("nationality", "")
+        passport_number = d.get("passport_number", "")
+
+        today_spanish = datetime.utcnow().strftime("%d de {month} de %Y")
+        months_es = {1: "enero", 2: "febrero", 3: "marzo", 4: "abril", 5: "mayo",
+                     6: "junio", 7: "julio", 8: "agosto", 9: "septiembre",
+                     10: "octubre", 11: "noviembre", 12: "diciembre"}
+        now = datetime.utcnow()
+        today_spanish = f"{now.day} de {months_es[now.month]} de {now.year}"
+
+        buf = BytesIO()
+        doc = SimpleDocTemplate(buf, pagesize=letter, leftMargin=1*inch, rightMargin=1*inch,
+                                topMargin=1*inch, bottomMargin=1*inch)
+        styles = getSampleStyleSheet()
+        title_style = ParagraphStyle("DTitle", parent=styles["Heading1"], fontSize=16, spaceAfter=20)
+        body_style = ParagraphStyle("DBody", parent=styles["Normal"], fontSize=11, leading=18, spaceBefore=12)
+        sig_style = _pdf_signature_style()
+
+        story = []
+        story.append(Paragraph("DECLARACIÓN JURADA", title_style))
+
+        body_text = (
+            f"Yo, <b>{full_name}</b>, ciudadano de los <b>{nationality}</b>, "
+            f"titular del pasaporte No. <b>[{passport_number}]</b>, declaro bajo juramento "
+            f"que no poseo antecedentes penales en mi país de origen ni en ningún otro país."
+        )
+        story.append(Paragraph(body_text, body_style))
+
+        story.append(Paragraph(
+            "La presente declaración se realiza a los fines de cumplir con los requisitos de "
+            "solicitud de visa ante las autoridades de la República Bolivariana de Venezuela.",
+            body_style,
+        ))
+
+        story.append(Paragraph(
+            "Declaro que la información aquí suministrada es verdadera y autorizo su verificación.",
+            body_style,
+        ))
+
+        story.append(Spacer(1, 30))
+        story.append(Paragraph("Firma:", body_style))
+        story.append(Paragraph(full_name, sig_style))
+        story.append(Spacer(1, 12))
+        story.append(Paragraph(f"Nombre: {full_name}", body_style))
+        story.append(Paragraph(f"Fecha: {today_spanish}", body_style))
+
+        doc.build(story)
+        buf.seek(0)
+
+        filename = f"{_safe_filename(full_name or 'applicant')}_declaracion_jurada.pdf"
+        return Response(
+            buf.getvalue(),
+            mimetype="application/pdf",
+            headers={"Content-Disposition": f'attachment; filename="{filename}"'},
+        )
     finally:
         db.close()
 
