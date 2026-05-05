@@ -3215,7 +3215,7 @@ def apply_visa_pillar():
         return _render_apply_visa(
             page=get_pillar(),
             canonical_path="/apply-for-venezuelan-visa",
-            title="How To Apply For A Venezuelan Visa (2026): E-Visa Process, Fees & Timeline",
+            title="How To Apply For A Venezuelan Visa Online (2026): E-Visa Process, Fees & Timeline",
             description=(
                 "Step-by-step guide to applying for a Venezuelan tourist (TR-V) "
                 "or business (TR-N) visa through the Cancillería Digital "

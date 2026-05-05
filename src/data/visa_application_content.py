@@ -155,7 +155,7 @@ SHARED_DOCUMENT_CHECKLIST: list[dict] = [
 PILLAR: dict = {
     "slug": "",  # pillar lives at /apply-for-venezuelan-visa (no sub-slug)
     "page_label": "Apply for a Venezuelan visa",
-    "h1": "How To Apply For A Venezuelan Visa (2026)",
+    "h1": "How To Apply For A Venezuelan Visa Online (2026)",
     "kicker": "Visa & entry guide · Updated for the new e-visa portal",
     "lede": (
         "Venezuela now issues tourist (TR-V) and business (TR-N) visas "
@@ -236,6 +236,10 @@ PILLAR: dict = {
         {
             "q": "Do I need a visa to travel through Venezuela in transit?",
             "a": "Yes, in most cases — most international transits at SVMI (Caracas) airport require you to clear immigration to change terminals, which means you need a tourist visa if your nationality requires one. Confirm your itinerary with the airline; direct connections to Caracas remain limited and most travelers route via Panama City, Bogotá, or Madrid.",
+        },
+        {
+            "q": "Can I apply for a Venezuelan visa online?",
+            "a": f"Yes — Venezuela's e-visa system is fully online through the Cancillería Digital portal at cancilleriadigital.mppre.gob.ve. There is no in-person consular appointment requirement, and the approved visa is delivered electronically. US citizens no longer have a Venezuelan embassy in Washington DC to visit — the mission has been closed since 2019 — so the online portal is the only route. The government fee is USD {EVISA_FEE_USD}. If you'd prefer someone to handle the application on your behalf, Caracas Research offers a same-day filing service at /get-venezuela-visa.",
         },
     ],
     "related_links": [
