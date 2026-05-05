@@ -1340,7 +1340,12 @@ def admin_download_all(order_id: int):
                 original_name = stored_path.replace("\\", "/").split("/")[-1]
                 if original_name.startswith("supabase://"):
                     original_name = stored_path.replace("supabase://", "").split("/")[-1]
-                zf.writestr(f"{folder_name}/{original_name}", file_bytes)
+                ext = ""
+                if "." in original_name:
+                    ext = "." + original_name.rsplit(".", 1)[-1].lower()
+                field_label = key.replace("_file_", "")
+                zip_filename = f"{safe_name}_{field_label}{ext}"
+                zf.writestr(f"{folder_name}/{zip_filename}", file_bytes)
 
         zip_buf.seek(0)
         return Response(
