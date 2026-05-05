@@ -3014,7 +3014,7 @@ def _visa_service_jsonld(*, canonical: str, title: str, description: str,
             "about": [
                 {"@type": "Thing", "name": "Venezuela visa application service"},
                 {"@type": "Thing", "name": "Venezuela e-visa"},
-                {"@type": "Thing", "name": "Cancilleria Digital"},
+                {"@type": "Thing", "name": "Cancillería Digital"},
             ],
         },
         {
@@ -3063,7 +3063,7 @@ def venezuela_visa_service():
                 "same day Venezuela visa application, same day visa application, get Venezuela visa, Venezuela visa application service, how to apply "
                 "for Venezuelan visa, Venezuela e-visa help, Venezuela tourist visa "
                 "application, Venezuela business visa application, visa for Venezuela "
-                "US citizens, Cancilleria Digital visa"
+                "US citizens, Cancillería Digital visa"
             ),
             "canonical": canonical,
             "site_name": _s.site_name,
@@ -3112,13 +3112,16 @@ def venezuela_visa_service_redirect():
     return redirect("/get-venezuela-visa", code=301)
 
 
-def _visa_document_landing_jsonld(*, canonical: str, title: str, description: str, headline: str) -> str:
-    """BreadcrumbList + Article for planilla / declaración SEO landing pages."""
+def _visa_document_landing_jsonld(*, canonical: str, title: str, description: str, headline: str, page: dict) -> str:
+    """BreadcrumbList + Article + FAQPage for planilla / declaracion SEO pages."""
     import json as _json
     from datetime import datetime as _dt
     from src.page_renderer import _base_url, _iso, settings as _s
 
     base = _base_url()
+    preview = page.get("preview") or {}
+    preview_src = preview.get("src") or "/static/og-image.png?v=3"
+    image_url = preview_src if preview_src.startswith("http") else f"{base}{preview_src}"
     graph: list[dict] = [
         {
             "@type": "BreadcrumbList",
@@ -3139,9 +3142,27 @@ def _visa_document_landing_jsonld(*, canonical: str, title: str, description: st
             "publisher": {"@type": "Organization", "name": _s.site_name, "url": f"{base}/"},
             "datePublished": _iso(_dt.utcnow()),
             "dateModified": _iso(_dt.utcnow()),
-            "image": f"{base}/static/og-image.png?v=3",
+            "image": image_url,
         },
     ]
+    if page.get("faq"):
+        graph.append(
+            {
+                "@type": "FAQPage",
+                "@id": f"{canonical}#faq",
+                "mainEntity": [
+                    {
+                        "@type": "Question",
+                        "name": item["q"],
+                        "acceptedAnswer": {
+                            "@type": "Answer",
+                            "text": item["a"],
+                        },
+                    }
+                    for item in page["faq"]
+                ],
+            }
+        )
     return _json.dumps({"@context": "https://schema.org", "@graph": graph}, ensure_ascii=False)
 
 
@@ -3173,6 +3194,7 @@ def _render_visa_document_landing(page: dict) -> Response:
         title=title,
         description=description,
         headline=page["h1"],
+        page=page,
     )
     template = _env.get_template("visa_document_landing.html.j2")
     html = template.render(

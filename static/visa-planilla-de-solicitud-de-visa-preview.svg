@@ -1,0 +1,43 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="900" height="1160" viewBox="0 0 900 1160" role="img" aria-labelledby="title desc">
+  <title id="title">Planilla de Solicitud de Visa Venezuela preview</title>
+  <desc id="desc">An anonymized preview of a generated Venezuela visa application form PDF.</desc>
+  <rect width="900" height="1160" fill="#f4f1ea"/>
+  <rect x="115" y="70" width="670" height="1020" rx="8" fill="#fff" stroke="#d8d1c3"/>
+  <text x="450" y="128" text-anchor="middle" font-family="Arial, sans-serif" font-size="24" font-weight="700" fill="#111">PLANILLA DE SOLICITUD DE VISA</text>
+  <text x="155" y="180" font-family="Arial, sans-serif" font-size="15" font-weight="700" fill="#002b5e">1. TIPO DE VISA</text>
+  <line x1="155" y1="192" x2="745" y2="192" stroke="#333"/>
+  <text x="155" y="222" font-family="Arial, sans-serif" font-size="14" fill="#444">Tipo</text>
+  <line x1="250" y1="222" x2="470" y2="222" stroke="#777"/>
+  <text x="500" y="222" font-family="Arial, sans-serif" font-size="14" fill="#444">Fecha de solicitud</text>
+  <line x1="635" y1="222" x2="745" y2="222" stroke="#777"/>
+  <text x="155" y="280" font-family="Arial, sans-serif" font-size="15" font-weight="700" fill="#002b5e">2. DATOS PERSONALES</text>
+  <line x1="155" y1="292" x2="745" y2="292" stroke="#333"/>
+  <g font-family="Arial, sans-serif" font-size="14" fill="#444">
+    <text x="155" y="324">Apellidos</text><line x1="250" y1="324" x2="745" y2="324" stroke="#777"/>
+    <text x="155" y="360">Nombres</text><line x1="250" y1="360" x2="745" y2="360" stroke="#777"/>
+    <text x="155" y="396">Nacionalidad</text><line x1="250" y1="396" x2="450" y2="396" stroke="#777"/>
+    <text x="480" y="396">Fecha de nacimiento</text><line x1="635" y1="396" x2="745" y2="396" stroke="#777"/>
+  </g>
+  <text x="155" y="455" font-family="Arial, sans-serif" font-size="15" font-weight="700" fill="#002b5e">3. DATOS DEL PASAPORTE</text>
+  <line x1="155" y1="467" x2="745" y2="467" stroke="#333"/>
+  <g font-family="Arial, sans-serif" font-size="14" fill="#444">
+    <text x="155" y="499">Numero</text><line x1="250" y1="499" x2="470" y2="499" stroke="#777"/>
+    <text x="500" y="499">Vencimiento</text><line x1="610" y1="499" x2="745" y2="499" stroke="#777"/>
+  </g>
+  <text x="155" y="560" font-family="Arial, sans-serif" font-size="15" font-weight="700" fill="#002b5e">5. INFORMACION DEL VIAJE</text>
+  <line x1="155" y1="572" x2="745" y2="572" stroke="#333"/>
+  <g font-family="Arial, sans-serif" font-size="14" fill="#444">
+    <text x="155" y="604">Motivo del viaje</text><line x1="285" y1="604" x2="745" y2="604" stroke="#777"/>
+    <text x="155" y="640">Fecha de entrada</text><line x1="285" y1="640" x2="435" y2="640" stroke="#777"/>
+    <text x="470" y="640">Fecha de salida</text><line x1="595" y1="640" x2="745" y2="640" stroke="#777"/>
+  </g>
+  <text x="155" y="720" font-family="Arial, sans-serif" font-size="15" font-weight="700" fill="#002b5e">6. LUGAR DE ALOJAMIENTO EN VENEZUELA</text>
+  <line x1="155" y1="732" x2="745" y2="732" stroke="#333"/>
+  <line x1="155" y1="770" x2="745" y2="770" stroke="#777"/>
+  <line x1="155" y1="810" x2="745" y2="810" stroke="#777"/>
+  <text x="155" y="930" font-family="Arial, sans-serif" font-size="15" font-weight="700" fill="#002b5e">10. FIRMA</text>
+  <line x1="155" y1="970" x2="450" y2="970" stroke="#333"/>
+  <line x1="530" y1="970" x2="745" y2="970" stroke="#333"/>
+  <text x="155" y="995" font-family="Arial, sans-serif" font-size="12" fill="#666">Firma</text>
+  <text x="530" y="995" font-family="Arial, sans-serif" font-size="12" fill="#666">Fecha</text>
+</svg>

@@ -1,0 +1,29 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="900" height="1160" viewBox="0 0 900 1160" role="img" aria-labelledby="title desc">
+  <title id="title">Declaracion Jurada Visa Venezolana preview</title>
+  <desc id="desc">An anonymized preview of a generated sworn declaration PDF for a Venezuela visa application.</desc>
+  <rect width="900" height="1160" fill="#f4f1ea"/>
+  <rect x="135" y="82" width="630" height="996" rx="8" fill="#fff" stroke="#d8d1c3"/>
+  <text x="180" y="154" font-family="Arial, sans-serif" font-size="25" font-weight="700" fill="#111">DECLARACION JURADA</text>
+  <g font-family="Arial, sans-serif" font-size="19" fill="#222">
+    <text x="180" y="235">Yo,</text>
+    <line x1="220" y1="235" x2="570" y2="235" stroke="#333" stroke-width="2"/>
+    <text x="585" y="235">,</text>
+    <text x="180" y="285">ciudadano de los</text>
+    <line x1="335" y1="285" x2="600" y2="285" stroke="#333" stroke-width="2"/>
+    <text x="180" y="335">titular del pasaporte No.</text>
+    <line x1="405" y1="335" x2="650" y2="335" stroke="#333" stroke-width="2"/>
+    <text x="180" y="400">declaro bajo juramento que no poseo antecedentes</text>
+    <text x="180" y="445">penales en mi pais de origen ni en ningun otro pais.</text>
+    <text x="180" y="530">La presente declaracion se realiza a los fines de cumplir</text>
+    <text x="180" y="575">con los requisitos de solicitud de visa ante las autoridades</text>
+    <text x="180" y="620">de la Republica Bolivariana de Venezuela.</text>
+    <text x="180" y="705">Declaro que la informacion aqui suministrada es verdadera</text>
+    <text x="180" y="750">y autorizo su verificacion.</text>
+  </g>
+  <line x1="180" y1="895" x2="470" y2="895" stroke="#333" stroke-width="2"/>
+  <text x="180" y="925" font-family="Arial, sans-serif" font-size="14" fill="#666">Firma</text>
+  <line x1="180" y1="990" x2="470" y2="990" stroke="#333" stroke-width="2"/>
+  <text x="180" y="1020" font-family="Arial, sans-serif" font-size="14" fill="#666">Nombre</text>
+  <line x1="540" y1="990" x2="720" y2="990" stroke="#333" stroke-width="2"/>
+  <text x="540" y="1020" font-family="Arial, sans-serif" font-size="14" fill="#666">Fecha</text>
+</svg>

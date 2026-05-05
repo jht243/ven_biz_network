@@ -71,12 +71,12 @@ SHARED_EVISA_STEPS: list[dict] = [
             "Business TR-N) and your intended dates of travel."
         ),
         "service_plug": (
-            "Want us to handle the form and filing? Our same-day Venezuela "
-            "visa application service prepares the package, submits the "
-            "application, and monitors the case."
+            "Same-Day Visa Application Service - Apply Online. We prepare "
+            "your document package, submit the application for you, and "
+            "monitor the case after filing."
         ),
         "service_url": "/get-venezuela-visa",
-        "service_label": "Get Venezuela visa help",
+        "service_label": "Same-Day Visa Application Service - Apply Online",
     },
     {
         "title": "Upload supporting documents",

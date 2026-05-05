@@ -64,10 +64,10 @@
       Confirm wording against the current official planilla if the ministry updates it.
     </p>
     <div class="actions">
-      <button type="button" class="pri" onclick="window.print()">Print / Save as PDF</button>
-      <button type="button" class="sec" onclick="document.getElementById('pform').reset(); syncSig('pl-sig','pl-sig-out');">Clear form</button>
-      <a class="back" href="/planilla-de-solicitud-de-visa">{{ planilla_hero_line }}</a>
-      <a class="back" href="/apply-for-venezuelan-visa">← Full visa guide (2026)</a>
+      <button type="button" class="pri" onclick="trackVisaFormEvent('visa_form_print_click'); window.print()">Print / Save as PDF</button>
+      <button type="button" class="sec" onclick="trackVisaFormEvent('visa_form_clear'); document.getElementById('pform').reset(); syncSig('pl-sig','pl-sig-out');">Clear form</button>
+      <a class="back" href="/planilla-de-solicitud-de-visa" onclick="trackVisaFormEvent('visa_form_back_to_guide')">{{ planilla_hero_line }}</a>
+      <a class="back" href="/apply-for-venezuelan-visa" onclick="trackVisaFormEvent('visa_form_back_to_guide')">← Full visa guide (2026)</a>
     </div>
   </div>
 
@@ -163,6 +163,15 @@
     var i = document.getElementById(a), o = document.getElementById(b);
     if (i && o) { o.textContent = i.value || ''; }
   }
+  function trackVisaFormEvent(name) {
+    if (typeof window.gtag === 'function') {
+      window.gtag('event', name, {
+        document_type: 'planilla',
+        source_page: window.location.pathname
+      });
+    }
+  }
+  trackVisaFormEvent('visa_form_tool_open');
   document.getElementById('pl-sig').addEventListener('input', function() { syncSig('pl-sig', 'pl-sig-out'); });
   syncSig('pl-sig', 'pl-sig-out');
   (function() {

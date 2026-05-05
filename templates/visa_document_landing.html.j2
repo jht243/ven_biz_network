@@ -11,10 +11,19 @@
   .vdl-cta-row { display: flex; flex-wrap: wrap; gap: 10px; margin: 18px 0 22px; }
   .vdl-cta { display: inline-block; background: var(--sr-red); color: #fff; padding: 12px 20px; border-radius: 3px; text-decoration: none; font-weight: 700; font-size: 15px; }
   .vdl-cta:hover { background: #a01d18; color: #fff; }
+  .vdl-note { background: #fff8f7; border: 1px solid #f0c8c3; border-left: 4px solid var(--sr-red); border-radius: 3px; color: var(--sr-dark-text); font-size: 13.5px; line-height: 1.55; padding: 12px 14px; margin: 16px 0 0; }
+  .vdl-preview { margin: 22px 0 8px; background: var(--sr-gray-bg); border: 1px solid var(--sr-gray-light); border-radius: 4px; padding: 12px; }
+  .vdl-preview img { display: block; width: 100%; max-height: 420px; object-fit: contain; background: #ece6da; border: 1px solid #ddd4c4; }
+  .vdl-preview figcaption { font-size: 12.5px; color: var(--sr-gray-text); line-height: 1.45; margin: 8px 2px 0; }
   .vdl-section { margin: 28px 0 0; }
   .vdl-section h2 { font-family: var(--font-serif); font-size: 22px; color: var(--sr-blue-dark); margin: 0 0 10px; }
   .vdl-section p { font-size: 15px; color: var(--sr-dark-text); line-height: 1.65; margin: 0 0 12px; }
   .vdl-section a { color: var(--sr-blue); font-weight: 600; }
+  .vdl-faq { margin: 32px 0 0; }
+  .vdl-faq h2 { font-family: var(--font-serif); font-size: 22px; color: var(--sr-blue-dark); margin: 0 0 12px; }
+  .vdl-faq-item { border: 1px solid var(--sr-gray-light); border-radius: 3px; padding: 14px 16px; margin: 0 0 10px; }
+  .vdl-faq-item h3 { font-family: var(--font-serif); font-size: 17px; line-height: 1.35; color: var(--sr-blue-dark); margin: 0 0 8px; }
+  .vdl-faq-item p { font-size: 14.5px; color: var(--sr-dark-text); line-height: 1.6; margin: 0; }
   .vdl-see { margin: 32px 0 0; padding: 16px 18px; background: var(--sr-gray-bg); border-left: 3px solid var(--sr-blue); border-radius: 3px; }
   .vdl-see h3 { font-family: var(--font-serif); font-size: 17px; color: var(--sr-blue-dark); margin: 0 0 10px; }
   .vdl-see ul { margin: 0; padding-left: 20px; font-size: 15px; line-height: 1.7; }
@@ -37,8 +46,14 @@
       <h1>{{ page.h1 }}</h1>
       <p class="lead">{{ page.lead|safe }}</p>
       <div class="vdl-cta-row">
-        <a class="vdl-cta" href="{{ page.tool_url }}">{{ page.tool_label }} &rarr;</a>
+        <a class="vdl-cta" href="{{ page.tool_url }}" data-visa-form-cta data-document="{{ 'declaracion_jurada' if 'declaracion' in page.tool_url else 'planilla' }}">{{ page.tool_label }} &rarr;</a>
       </div>
+      {% if page.preview %}
+      <figure class="vdl-preview">
+        <img src="{{ page.preview.src }}" alt="{{ page.preview.alt }}" loading="eager">
+        <figcaption>{{ page.preview.caption }}</figcaption>
+      </figure>
+      {% endif %}
     </header>
 
     {% for sec in page.sections %}
@@ -51,8 +66,22 @@
     {% endfor %}
 
     <div class="vdl-cta-row" style="margin-top: 28px;">
-      <a class="vdl-cta" href="{{ page.tool_url }}">{{ page.tool_label }} &rarr;</a>
+      <a class="vdl-cta" href="{{ page.tool_url }}" data-visa-form-cta data-document="{{ 'declaracion_jurada' if 'declaracion' in page.tool_url else 'planilla' }}">{{ page.tool_label }} &rarr;</a>
     </div>
+
+    {% if page.faq %}
+    <section class="vdl-faq" id="faq">
+      <h2>FAQ</h2>
+      {% for item in page.faq %}
+      <div class="vdl-faq-item">
+        <h3>{{ item.q }}</h3>
+        <p>{{ item.a }}</p>
+      </div>
+      {% endfor %}
+    </section>
+    {% endif %}
+
+    {% if page.disclaimer %}<div class="vdl-note">{{ page.disclaimer }}</div>{% endif %}
 
     <div class="vdl-see">
       <h3>See also</h3>
@@ -64,4 +93,21 @@
     </div>
   </div>
 </section>
+<script>
+  (function() {
+    function track(name, params) {
+      if (typeof window.gtag === 'function') {
+        window.gtag('event', name, params || {});
+      }
+    }
+    document.querySelectorAll('[data-visa-form-cta]').forEach(function(link) {
+      link.addEventListener('click', function() {
+        track('visa_form_tool_open', {
+          document_type: link.getAttribute('data-document') || 'unknown',
+          source_page: window.location.pathname
+        });
+      });
+    });
+  })();
+</script>
 {% endblock %}

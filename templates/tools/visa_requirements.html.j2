@@ -151,9 +151,15 @@
               <a class="step-cta" href="{{ step.url }}" rel="nofollow noopener" target="_blank">{% if 'usembassy' in step.url %}Embassy Application Instructions{% else %}{{ step.url_label or 'Open the e-visa portal' }}{% endif %} &rarr;</a>
             </div>
             {% endif %}
+            {% if 'supporting documents' in step.title|lower %}
+            <div class="step-cta-row">
+              <a class="step-cta" href="/apply-for-venezuelan-visa/planilla">Generate the Planilla PDF&rarr;</a>
+              <a class="step-cta" href="/apply-for-venezuelan-visa/declaracion-jurada">Generate the Declaración Jurada PDF&rarr;</a>
+            </div>
+            {% endif %}
             {% if 'electronic application form' in step.title|lower or 'complete the' in step.title|lower %}
             <div class="step-cta-row">
-              <a class="step-cta" href="/get-venezuela-visa">Same-day visa service &rarr;</a>
+              <a class="step-cta" href="/get-venezuela-visa">Same-Day Visa Application Service - Apply Online &rarr;</a>
             </div>
             {% endif %}
           </div>
@@ -176,6 +182,10 @@
       <div style="margin-top: 14px; font-size: 13.5px; color: var(--sr-dark-text);">
         Want the full English walkthrough — documents, fees, timeline, FAQs?
         <a href="{{ _apply_url }}" style="font-weight: 600;">Open our Venezuela visa application guide &rarr;</a>
+        Need the upload forms?
+        <a href="/planilla-de-solicitud-de-visa" style="font-weight: 600;">Planilla de Solicitud de Visa</a>
+        ·
+        <a href="/declaracion-jurada-visa-venezolana" style="font-weight: 600;">Declaración Jurada</a>
       </div>
     </div>
     {% endif %}
@@ -196,6 +206,8 @@
     foreign-affairs ministry sources. Policy can change quickly — always
     re-verify with the linked official source within 14 days of travel.
     See related: <a href="/apply-for-venezuelan-visa">How To Apply For A Venezuelan Visa (2026)</a> ·
+    <a href="/planilla-de-solicitud-de-visa">Planilla de Solicitud de Visa</a> ·
+    <a href="/declaracion-jurada-visa-venezolana">Declaración Jurada</a> ·
     <a href="/invest-in-venezuela">how to invest in Venezuela</a> ·
     <a href="/sectors/tourism">Venezuela tourism sector</a>.
   </p>

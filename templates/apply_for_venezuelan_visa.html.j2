@@ -87,6 +87,12 @@
   .mmpre-form-deck a:hover { border-color: var(--sr-blue); }
   .mmpre-form-deck .m-label { font-family: var(--font-serif); font-weight: 700; color: var(--sr-blue-dark); display: block; margin-bottom: 4px; }
   .mmpre-form-deck .m-sub { font-size: 14px; color: var(--sr-gray-text); line-height: 1.5; }
+  .mmpre-guide-deck { display: grid; grid-template-columns: 1fr; gap: 10px; margin: 14px 0 0; }
+  @media (min-width: 700px) { .mmpre-guide-deck { grid-template-columns: 1fr 1fr; } }
+  .mmpre-guide-deck a { display: block; background: var(--sr-gray-bg); border: 1px solid var(--sr-gray-light); border-radius: 4px; padding: 14px 16px; text-decoration: none; color: inherit; }
+  .mmpre-guide-deck a:hover { border-color: var(--sr-blue); }
+  .mmpre-guide-deck .m-label { font-weight: 700; color: var(--sr-blue-dark); display: block; margin-bottom: 3px; font-size: 14.5px; }
+  .mmpre-guide-deck .m-sub { font-size: 13.5px; color: var(--sr-gray-text); line-height: 1.45; }
 
   .needs-visa-box { background: var(--sr-gray-bg); border-left: 3px solid var(--sr-blue); padding: 14px 18px; margin: 4px 0 0; font-size: 15px; line-height: 1.6; }
   .needs-visa-box a { color: var(--sr-blue); font-weight: 600; }
@@ -164,7 +170,7 @@
           {% if s.service_plug and s.service_url %}
           <p class="step-service-plug">
             {{ s.service_plug }}
-            <a href="{{ s.service_url }}">{{ s.service_label|default("Get visa help") }} &rarr;</a>
+            <a href="{{ s.service_url }}">{{ s.service_label|default("Same-Day Visa Application Service - Apply Online") }} &rarr;</a>
           </p>
           {% endif %}
           {% if s.url %}
@@ -177,6 +183,12 @@
               {%- endif -%} &rarr;</a>
           </div>
           {% endif %}
+          {% if 'supporting documents' in s.title|lower %}
+          <div class="step-cta-row">
+            <a class="step-cta" href="/apply-for-venezuelan-visa/planilla">Generate the Planilla PDF&rarr;</a>
+            <a class="step-cta" href="/apply-for-venezuelan-visa/declaracion-jurada">Generate the Declaración Jurada PDF&rarr;</a>
+          </div>
+          {% endif %}
         </div>
       </li>
       {% endfor %}
@@ -186,11 +198,11 @@
   <div class="visa-service-callout">
     <h3>Want help filing the application?</h3>
     <p>
-      Our same-day Venezuela visa application service prepares the document
-      package, files through the application channel, and monitors the case after
-      submission. Government fees are separate.
+      Same-Day Visa Application Service - Apply Online. We prepare the document
+      package, file the application for you, and monitor the case after submission.
+      Government fees are separate.
     </p>
-    <a class="service-cta" href="/get-venezuela-visa">Get Venezuela visa help &rarr;</a>
+    <a class="service-cta" href="/get-venezuela-visa">Same-Day Visa Application Service - Apply Online &rarr;</a>
   </div>
 
   <div class="section">
@@ -221,20 +233,24 @@
     </p>
     <div class="mmpre-form-deck">
       <a href="/apply-for-venezuelan-visa/planilla">
-        <span class="m-label">{{ planilla_display_line }}</span>
+        <span class="m-label">Generate the Planilla PDF</span>
         <span class="m-sub">English labels while you type; print saves Spanish section titles and field labels. Cursive-style signature from your typed name.</span>
       </a>
       <a href="/apply-for-venezuelan-visa/declaracion-jurada">
-        <span class="m-label">Declaración jurada</span>
+        <span class="m-label">Generate the Declaración Jurada PDF</span>
         <span class="m-sub">English how-to box and placeholders; official declaration body stays Spanish on your PDF. Typed signature renders in cursive.</span>
       </a>
     </div>
-    <p class="section-intro" style="margin-top: 14px; max-width: 72ch;">
-      First time seeing these names? Read our short guides:
-      <a href="/planilla-de-solicitud-de-visa">{{ planilla_display_line }}</a>
-      ·
-      <a href="/declaracion-jurada-visa-venezolana">declaración jurada (visa venezolana)</a>.
-    </p>
+    <div class="mmpre-guide-deck" aria-label="Document guides">
+      <a href="/planilla-de-solicitud-de-visa">
+        <span class="m-label">Planilla de Solicitud de Visa Venezuela</span>
+        <span class="m-sub">What the MPPRE-style application form asks for, how to complete it, and common upload mistakes.</span>
+      </a>
+      <a href="/declaracion-jurada-visa-venezolana">
+        <span class="m-label">Declaración Jurada Visa Venezolana</span>
+        <span class="m-sub">What the sworn no-criminal-record statement means, when to sign it, and when to ask for legal help.</span>
+      </a>
+    </div>
   </div>
 
   <div class="section">
