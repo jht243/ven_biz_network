@@ -53,14 +53,14 @@ class IndexNowResult:
 
 def _host() -> str:
     """Bare host (no scheme, no path) for the IndexNow payload."""
-    base = settings.site_url.rstrip("/")
+    base = settings.canonical_site_url.rstrip("/")
     if "://" in base:
         base = base.split("://", 1)[1]
     return base.split("/", 1)[0]
 
 
 def _key_location() -> str:
-    return f"{settings.site_url.rstrip('/')}/{_key()}.txt"
+    return f"{settings.canonical_site_url.rstrip('/')}/{_key()}.txt"
 
 
 def submit_urls(urls: Iterable[str]) -> IndexNowResult:

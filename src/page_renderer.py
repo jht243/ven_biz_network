@@ -127,7 +127,7 @@ _env.filters["link_people"] = _link_people_filter
 
 
 def _base_url() -> str:
-    url = (settings.site_url or "").strip().rstrip("/")
+    url = (settings.canonical_site_url or "").strip().rstrip("/")
     if url and not url.startswith(("http://", "https://")):
         url = "https://" + url
     return url

@@ -80,7 +80,7 @@ _STATIC_URLS_TO_PING_DAILY = (
 
 
 def _site_base() -> str:
-    return settings.site_url.rstrip("/")
+    return settings.canonical_site_url.rstrip("/")
 
 
 def _blog_url(post: BlogPost) -> str:
@@ -543,7 +543,7 @@ def run_zenodo() -> dict:
         # Cooldown key = the date-stamped /tearsheet/<date>.pdf URL on
         # our own site. Stable per-day so the cooldown actually dedups
         # (Zenodo DOIs are not knowable until after publish).
-        cooldown_key = f"{settings.site_url.rstrip('/')}/tearsheet/{today.isoformat()}.pdf"
+        cooldown_key = f"{settings.canonical_site_url.rstrip('/')}/tearsheet/{today.isoformat()}.pdf"
         already = _recent_pinged_urls(db, CHANNEL_ZENODO, _REPING_COOLDOWN)
         if cooldown_key in already:
             return {"status": "ok", "uploaded": 0, "reason": "already uploaded today"}
@@ -611,7 +611,7 @@ def run_osf() -> dict:
         data, pdf_bytes = get_or_build_tearsheet()
         today = data["generated_at"].date()
 
-        cooldown_key = f"{settings.site_url.rstrip('/')}/tearsheet/{today.isoformat()}.pdf#osf"
+        cooldown_key = f"{settings.canonical_site_url.rstrip('/')}/tearsheet/{today.isoformat()}.pdf#osf"
         already = _recent_pinged_urls(db, CHANNEL_OSF, _REPING_COOLDOWN)
         if cooldown_key in already:
             return {"status": "ok", "uploaded": 0, "reason": "already uploaded today"}

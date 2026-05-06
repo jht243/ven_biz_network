@@ -125,8 +125,9 @@ class Settings(BaseSettings):
     # SEO / canonical URL — base URL of the deployed site. Used for
     # canonical <link>, sitemap entries, JSON-LD identifiers, and OG
     # share URLs. Override via SITE_URL env var when a custom domain
-    # is added (Tier 4).
-    site_url: str = "https://www.caracasresearch.com"
+    # is added (Tier 4). canonical_site_url below normalizes legacy
+    # www/Render hostnames to the live bare domain.
+    site_url: str = "https://caracasresearch.com"
     site_name: str = "Caracas Research"
     site_owner_org: str = "Caracas Research"
     site_locale: str = "en_US"
@@ -135,14 +136,21 @@ class Settings(BaseSettings):
     def canonical_site_url(self) -> str:
         """Customer-facing base URL (emails, payment redirects, intake links).
 
-        Render and other hosts may set SITE_URL to a *.onrender.com hostname;
-        we always prefer the live marketing domain for anything user-visible.
+        Render and other hosts may set SITE_URL to a *.onrender.com hostname
+        or the legacy www hostname. We always prefer the live bare domain
+        because www currently redirects there, and sitemap URLs must share the
+        final sitemap host.
         """
         u = (self.site_url or "").strip().rstrip("/")
-        if not u or "onrender.com" in u.lower():
-            return "https://www.caracasresearch.com"
         if not u.startswith(("http://", "https://")):
             u = "https://" + u
+        lower = u.lower()
+        if (
+            not u
+            or "onrender.com" in lower
+            or lower in {"https://www.caracasresearch.com", "http://www.caracasresearch.com"}
+        ):
+            return "https://caracasresearch.com"
         return u
 
     # Long-form blog post generator. Each post is roughly 700-900 words and

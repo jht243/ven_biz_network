@@ -9172,7 +9172,7 @@ def robots_txt():
     robots.txt — allow indexing of the public report and tools, point at
     the dynamic sitemap, and explicitly disallow API and health endpoints.
     """
-    base = settings.site_url.rstrip("/")
+    base = settings.canonical_site_url.rstrip("/")
     body = (
         "User-agent: *\n"
         "Allow: /\n"
@@ -9194,7 +9194,7 @@ def sitemap_xml():
     from datetime import date as _date, datetime as _datetime, timezone as _tz, timedelta as _td
     from xml.sax.saxutils import escape as _xml_escape
 
-    base = settings.site_url.rstrip("/")
+    base = settings.canonical_site_url.rstrip("/")
     today_iso = _datetime.utcnow().replace(tzinfo=_tz.utc).date().isoformat()
 
     static_urls = [
@@ -9627,7 +9627,7 @@ def briefing_og_image(slug: str):
             if not png_bytes:
                 # No per-post bytes yet — redirect to the static fallback
                 # so the share preview still renders something on-brand.
-                fallback = f"{settings.site_url.rstrip('/')}/static/og-image.png?v=3"
+                fallback = f"{settings.canonical_site_url.rstrip('/')}/static/og-image.png?v=3"
                 resp = redirect(fallback, code=302)
                 resp.headers["Cache-Control"] = "public, max-age=300"
                 return resp
@@ -9687,7 +9687,7 @@ def news_sitemap_xml():
     from datetime import datetime as _datetime, timezone as _tz, timedelta as _td
     from xml.sax.saxutils import escape as _xml_escape
 
-    base = settings.site_url.rstrip("/")
+    base = settings.canonical_site_url.rstrip("/")
     publication_name = settings.site_name
     publication_lang = (settings.site_locale or "en_US").split("_", 1)[0] or "en"
 

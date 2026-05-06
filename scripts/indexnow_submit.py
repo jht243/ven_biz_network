@@ -77,7 +77,7 @@ STATIC_PATHS: tuple[str, ...] = (
 
 
 def _site_base() -> str:
-    return settings.site_url.rstrip("/")
+    return settings.canonical_site_url.rstrip("/")
 
 
 def collect_urls() -> list[tuple[str, str, int | None]]:
