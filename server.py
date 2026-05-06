@@ -1891,6 +1891,10 @@ def subscribe():
                 "email_address": email,
                 "type": "regular",
                 "ip_address": subscriber_ip,
+                "metadata": {
+                    "site": settings.site_name,
+                    "site_url": _base_url(),
+                },
             },
             headers={
                 "Authorization": f"Token {api_key}",
@@ -1918,7 +1922,14 @@ def subscribe():
             logger.warning("Buttondown firewall blocked %s, retrying with bypass", email)
             resp2 = httpx.post(
                 BUTTONDOWN_API_URL,
-                json={"email_address": email, "type": "regular"},
+                json={
+                    "email_address": email,
+                    "type": "regular",
+                    "metadata": {
+                        "site": settings.site_name,
+                        "site_url": _base_url(),
+                    },
+                },
                 headers={
                     "Authorization": f"Token {api_key}",
                     "X-Buttondown-Bypass-Firewall": "true",
