@@ -38,6 +38,11 @@ STATIC_PATHS: tuple[str, ...] = (
     "/",
     "/briefing",
     "/sanctions-tracker",
+    "/sanctions/by-sector",
+    "/sanctions/sector/military",
+    "/sanctions/sector/economic",
+    "/sanctions/sector/diplomatic",
+    "/sanctions/sector/governance",
     "/invest-in-venezuela",
     "/tools",
     "/tools/caracas-safety-by-neighborhood",
@@ -47,15 +52,27 @@ STATIC_PATHS: tuple[str, ...] = (
     "/tools/ofac-venezuela-sanctions-checker",
     "/tools/ofac-venezuela-general-licenses",
     "/tools/public-company-venezuela-exposure-check",
+    "/tools/sec-edgar-venezuela-impairment-search",
+    "/tools/venezuela-trade-leads",
+    "/tools/venezuela-market-entry-checklist",
     "/explainers",
     "/travel",
     "/calendar",
     "/sources",
+    "/research/sdn/",
     "/sanctions/individuals",
     "/sanctions/entities",
     "/sanctions/vessels",
     "/sanctions/aircraft",
     "/companies",
+    "/tps-venezuela",
+    "/venezuela-oil",
+    "/is-venezuela-safe",
+    "/ofac-sanctions-list",
+    "/why-is-venezuela-sanctioned",
+    "/venezuela-economy",
+    "/citgo",
+    "/get-venezuela-visa",
 )
 
 
@@ -77,6 +94,25 @@ def collect_urls() -> list[tuple[str, str, int | None]]:
             out.append((f"{base}{path.rstrip('/')}", "real_estate", None))
     except Exception as exc:
         print(f"WARN: could not enumerate real estate paths for IndexNow: {exc}")
+
+    try:
+        from src.data.visa_application_content import list_variant_slugs
+
+        out.append((f"{base}/apply-for-venezuelan-visa", "static", None))
+        for slug in list_variant_slugs():
+            out.append((f"{base}/apply-for-venezuelan-visa/{slug}", "static", None))
+    except Exception as exc:
+        print(f"WARN: could not enumerate visa application pages for IndexNow: {exc}")
+
+    try:
+        from src.data.visa_document_landing import get_declaracion_landing, get_planilla_landing
+
+        for page in (get_planilla_landing(), get_declaracion_landing()):
+            path = (page.get("canonical_path") or "").strip()
+            if path.startswith("/"):
+                out.append((f"{base}{path}", "static", None))
+    except Exception as exc:
+        print(f"WARN: could not enumerate visa document pages for IndexNow: {exc}")
 
     init_db()
     db = SessionLocal()

@@ -9246,13 +9246,52 @@ def sitemap_xml():
         {"loc": f"{base}/tools/caracas-safety-by-neighborhood", "lastmod": today_iso, "changefreq": "weekly", "priority": "0.6"},
         {"loc": f"{base}/tools/venezuela-investment-roi-calculator", "lastmod": today_iso, "changefreq": "monthly", "priority": "0.6"},
         {"loc": f"{base}/tools/venezuela-visa-requirements", "lastmod": today_iso, "changefreq": "monthly", "priority": "0.6"},
-        {"loc": f"{base}/apply-for-venezuelan-visa", "lastmod": today_iso, "changefreq": "weekly", "priority": "0.85"},
-        {"loc": f"{base}/apply-for-venezuelan-visa/us-citizens", "lastmod": today_iso, "changefreq": "weekly", "priority": "0.8"},
-        {"loc": f"{base}/apply-for-venezuelan-visa/business-visa", "lastmod": today_iso, "changefreq": "weekly", "priority": "0.75"},
-        {"loc": f"{base}/apply-for-venezuelan-visa/china", "lastmod": today_iso, "changefreq": "weekly", "priority": "0.7"},
-        {"loc": f"{base}/planilla-de-solicitud-de-visa", "lastmod": today_iso, "changefreq": "weekly", "priority": "0.72"},
-        {"loc": f"{base}/declaracion-jurada-visa-venezolana", "lastmod": today_iso, "changefreq": "weekly", "priority": "0.72"},
     ]
+
+    # Visa cluster — walked from the content registries so newly-added
+    # country/category variants and document landing pages do not need a
+    # second hardcoded sitemap edit. Printable form tools under
+    # /apply-for-venezuelan-visa/planilla and /declaracion-jurada remain
+    # noindex and are intentionally omitted.
+    try:
+        from src.data.visa_application_content import list_variant_slugs as _list_visa_variant_slugs
+
+        static_urls.append({
+            "loc": f"{base}/apply-for-venezuelan-visa",
+            "lastmod": today_iso,
+            "changefreq": "weekly",
+            "priority": "0.85",
+        })
+        _visa_variant_priorities = {
+            "us-citizens": "0.8",
+            "business-visa": "0.75",
+            "china": "0.7",
+        }
+        for _slug in _list_visa_variant_slugs():
+            static_urls.append({
+                "loc": f"{base}/apply-for-venezuelan-visa/{_slug}",
+                "lastmod": today_iso,
+                "changefreq": "weekly",
+                "priority": _visa_variant_priorities.get(_slug, "0.7"),
+            })
+    except Exception as _exc:
+        logger.warning("sitemap: visa application cluster walk failed: %s", _exc)
+
+    try:
+        from src.data.visa_document_landing import get_declaracion_landing as _get_declaracion_landing
+        from src.data.visa_document_landing import get_planilla_landing as _get_planilla_landing
+
+        for _page in (_get_planilla_landing(), _get_declaracion_landing()):
+            _path = (_page.get("canonical_path") or "").strip()
+            if _path.startswith("/"):
+                static_urls.append({
+                    "loc": f"{base}{_path}",
+                    "lastmod": today_iso,
+                    "changefreq": "weekly",
+                    "priority": "0.72",
+                })
+    except Exception as _exc:
+        logger.warning("sitemap: visa document landing walk failed: %s", _exc)
 
     # People cluster — pillar + cohort hubs + every per-figure profile.
     # Walked from the registry rather than hardcoded so adding a new
@@ -9500,9 +9539,17 @@ def sitemap_xml():
                 "priority": "0.6",
             })
 
+    deduped_urls: list[dict] = []
+    seen_locs: set[str] = set()
+    for u in static_urls + dynamic_urls:
+        if u["loc"] in seen_locs:
+            continue
+        seen_locs.add(u["loc"])
+        deduped_urls.append(u)
+
     parts = ['<?xml version="1.0" encoding="UTF-8"?>']
     parts.append('<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">')
-    for u in static_urls + dynamic_urls:
+    for u in deduped_urls:
         parts.append("<url>")
         parts.append(f"<loc>{_xml_escape(u['loc'])}</loc>")
         parts.append(f"<lastmod>{u['lastmod']}</lastmod>")
