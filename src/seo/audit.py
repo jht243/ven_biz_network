@@ -46,6 +46,9 @@ class Finding:
     category: str
     message: str
 
+    def __str__(self) -> str:
+        return f"[{self.severity.value.upper():7s}] {self.category:16s} {self.path}  {self.message}"
+
     def to_dict(self) -> dict:
         return {
             "path": self.path,
