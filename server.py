@@ -9375,13 +9375,25 @@ def sitemap_xml():
                 })
 
             landing_pages = db.query(LandingPage).all()
+            _url_adapter = app.url_map.bind("")
             for lp in landing_pages:
+                _lp_path = (lp.canonical_path or "").strip()
+                if not _lp_path or not _lp_path.startswith("/"):
+                    continue
+                try:
+                    _url_adapter.match(_lp_path)
+                except Exception:
+                    logger.warning(
+                        "sitemap: LandingPage %s (canonical_path=%s) has no matching route, skipping",
+                        lp.page_key, _lp_path,
+                    )
+                    continue
                 lastmod = (lp.last_generated_at or lp.updated_at or lp.created_at)
                 lastmod_iso = lastmod.strftime("%Y-%m-%d") if lastmod else today_iso
                 priority = "0.9" if lp.page_type == "pillar" else "0.7"
                 changefreq = "weekly" if lp.page_type == "pillar" else "monthly"
                 dynamic_urls.append({
-                    "loc": f"{base}{lp.canonical_path}",
+                    "loc": f"{base}{_lp_path}",
                     "lastmod": lastmod_iso,
                     "changefreq": changefreq,
                     "priority": priority,

@@ -132,15 +132,6 @@ services:
   - type: cron
     name: vij-nightly-sitemap-sync
     runtime: python
-    # 02:00 UTC (late night, low traffic). Audits the live sitemap, adds any
-    # newly-declared routes that are missing, and pushes the fix to git so
-    # Render auto-deploys the corrected server.py. Also spot-checks 25 live
-    # URLs and logs dead links for manual cleanup.
-    #
-    # Required Render env vars (set via dashboard, not here):
-    #   GITHUB_TOKEN  — PAT with repo scope (Settings → Developer settings →
-    #                   Personal access tokens → Fine-grained, repo:contents write)
-    #   GITHUB_REPO   — owner/repo slug, e.g. jht243/ven_biz_network
     schedule: "0 2 * * *"
     plan: starter
     buildCommand: "pip install -r requirements.txt"

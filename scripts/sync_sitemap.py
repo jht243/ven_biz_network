@@ -49,7 +49,7 @@ log = logging.getLogger("sync_sitemap")
 ROOT = Path(__file__).parent.parent
 SERVER_PY = ROOT / "server.py"
 
-LIVE_SITEMAP_URL = "https://www.caracasresearch.com/sitemap.xml"
+LIVE_SITEMAP_URL = "https://caracasresearch.com/sitemap.xml"
 CANONICAL_BASE = "https://caracasresearch.com"   # no www — matches what the server emits
 
 # ---------------------------------------------------------------------------
