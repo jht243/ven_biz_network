@@ -15,8 +15,8 @@
 
   {% set _seo = seo|default({}) %}
   {% set _canonical = _seo.canonical|default(request.url if request is defined else '') %}
-  <title>{{ _seo.title|default('Caracas Research') }}</title>
-  <meta name="description" content="{{ _seo.description|default('') }}">
+  <title>{{ _seo.title|default('Caracas Research')|seo_title(70) }}</title>
+  <meta name="description" content="{{ _seo.description|default('')|seo_desc(160) }}">
   {% if _seo.keywords %}<meta name="keywords" content="{{ _seo.keywords }}">{% endif %}
   {% if _seo.news_keywords %}<meta name="news_keywords" content="{{ _seo.news_keywords }}">{% endif %}
   <meta name="author" content="{{ _seo.site_name|default('Caracas Research') }}">
@@ -29,8 +29,8 @@
   <meta property="og:site_name" content="{{ _seo.site_name|default('Caracas Research') }}">
   <meta property="og:locale" content="{{ _seo.locale|default('en_US') }}">
   <meta property="og:url" content="{{ _canonical }}">
-  <meta property="og:title" content="{{ _seo.title|default('') }}">
-  <meta property="og:description" content="{{ _seo.description|default('') }}">
+  <meta property="og:title" content="{{ _seo.title|default('')|seo_title(70) }}">
+  <meta property="og:description" content="{{ _seo.description|default('')|seo_desc(160) }}">
   <meta property="og:image" content="{{ _seo.og_image|default('') }}">
   <meta property="og:image:width" content="1200">
   <meta property="og:image:height" content="630">
@@ -41,8 +41,8 @@
   {% endfor %}
 
   <meta name="twitter:card" content="summary_large_image">
-  <meta name="twitter:title" content="{{ _seo.title|default('') }}">
-  <meta name="twitter:description" content="{{ _seo.description|default('') }}">
+  <meta name="twitter:title" content="{{ _seo.title|default('')|seo_title(70) }}">
+  <meta name="twitter:description" content="{{ _seo.description|default('')|seo_desc(160) }}">
   <meta name="twitter:image" content="{{ _seo.og_image|default('') }}">
 
   <link rel="preconnect" href="https://fonts.googleapis.com">

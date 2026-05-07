@@ -126,6 +126,40 @@ def _link_people_filter(html: str) -> str:
 _env.filters["link_people"] = _link_people_filter
 
 
+def _seo_title_filter(s: str, max_len: int = 70) -> str:
+    """Clamp a title at word boundary within max_len chars. No ellipsis
+    — Google adds its own and a clean word ending reads better."""
+    if not s:
+        return s
+    s = " ".join(str(s).split())
+    if len(s) <= max_len:
+        return s
+    return s[:max_len].rsplit(" ", 1)[0].rstrip(" ,;:—-")
+
+
+def _seo_desc_filter(s: str, max_len: int = 160) -> str:
+    """Clamp a description at sentence/word boundary within max_len
+    chars. Appends '...' if truncated to signal continuation."""
+    if not s:
+        return s
+    s = " ".join(str(s).split())
+    if len(s) <= max_len:
+        return s
+    budget = max_len - 3  # room for "..."
+    # Try to cut at a sentence boundary first
+    for sep in (". ", "— ", "; ", ", "):
+        idx = s[:budget].rfind(sep)
+        if idx > budget // 2:
+            return s[: idx + len(sep)].rstrip() + "..."
+    # Fall back to word boundary
+    cut = s[:budget].rsplit(" ", 1)[0].rstrip(" ,;:—-")
+    return cut + "..."
+
+
+_env.filters["seo_title"] = _seo_title_filter
+_env.filters["seo_desc"] = _seo_desc_filter
+
+
 def _base_url() -> str:
     url = (settings.canonical_site_url or "").strip().rstrip("/")
     if url and not url.startswith(("http://", "https://")):
