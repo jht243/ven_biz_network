@@ -196,6 +196,54 @@ def main(skip_scrape: bool, skip_email: bool, dry_run: bool, report_only: bool):
         results["distribution"] = {"error": str(e)}
         console.print(f"  [yellow]![/yellow] Distribution failed (non-fatal): {e}")
 
+    # Phase 6: SEO audit + auto-fix (evening cron only).
+    # Runs after all content generation and distribution so it never
+    # delays content going live. Non-fatal — failures are logged as
+    # warnings and never block the rest of the pipeline.
+    from src.seo.content_fixer import _should_run_seo_fixes
+
+    if _should_run_seo_fixes():
+        console.print("\n[bold cyan]Phase 6:[/bold cyan] SEO audit...")
+        try:
+            from src.seo.audit import run_audit
+            seo_report = run_audit(max_pages=200)
+            results["seo_audit"] = {
+                "pages_crawled": seo_report.pages_crawled,
+                "pages_ok": seo_report.pages_ok,
+                "errors": len(seo_report.errors),
+                "warnings": len(seo_report.warnings),
+            }
+            console.print(
+                f"  [green]✓[/green] Audited {seo_report.pages_crawled} pages: "
+                f"{len(seo_report.errors)} errors, {len(seo_report.warnings)} warnings"
+            )
+
+            # Phase 6b: Auto-fix content issues
+            if seo_report.errors or seo_report.warnings:
+                console.print("\n[bold cyan]Phase 6b:[/bold cyan] Auto-fixing content issues...")
+                try:
+                    from src.seo.content_fixer import fix_content_issues
+                    fix_result = fix_content_issues(seo_report)
+                    results["seo_fixes"] = fix_result
+                    if fix_result.get("status") == "ok":
+                        console.print(
+                            f"  [green]✓[/green] {fix_result.get('fixes_applied', 0)} fixes applied "
+                            f"(${fix_result.get('total_cost_usd', 0):.4f})"
+                        )
+                    else:
+                        console.print(f"  [yellow]·[/yellow] {fix_result}")
+                except Exception as e:
+                    logger.error("SEO auto-fix failed: %s", e, exc_info=True)
+                    results["seo_fixes"] = {"error": str(e)}
+                    console.print(f"  [yellow]![/yellow] SEO auto-fix failed (non-fatal): {e}")
+        except Exception as e:
+            logger.error("SEO audit failed: %s", e, exc_info=True)
+            results["seo_audit"] = {"error": str(e)}
+            console.print(f"  [yellow]![/yellow] SEO audit failed (non-fatal): {e}")
+    else:
+        console.print("\n[dim]Phase 6: SEO audit — SKIPPED (morning cron; runs on evening cron only)[/dim]")
+        results["seo_audit"] = {"status": "skipped", "reason": "not the evening cron"}
+
     _print_summary(results, start)
 
 
