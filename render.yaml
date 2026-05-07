@@ -80,6 +80,10 @@ services:
         sync: false
       - key: BLUESKY_APP_PASSWORD
         sync: false
+      - key: GITHUB_TOKEN
+        sync: false
+      - key: GITHUB_REPO
+        value: jht243/ven_biz_network
       - key: LOG_LEVEL
         value: INFO
 
@@ -126,24 +130,5 @@ services:
         value: 3.11.9
       - key: DATABASE_URL
         sync: false
-      - key: LOG_LEVEL
-        value: INFO
-
-  - type: cron
-    name: vij-nightly-sitemap-sync
-    runtime: python
-    schedule: "0 2 * * *"
-    plan: starter
-    buildCommand: "pip install -r requirements.txt"
-    startCommand: "python scripts/sync_sitemap.py"
-    envVars:
-      - key: PYTHON_VERSION
-        value: 3.11.9
-      - key: SITE_URL
-        value: https://caracasresearch.com
-      - key: GITHUB_TOKEN
-        sync: false
-      - key: GITHUB_REPO
-        value: jht243/ven_biz_network
       - key: LOG_LEVEL
         value: INFO

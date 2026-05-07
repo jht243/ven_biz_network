@@ -305,30 +305,38 @@ def commit_and_push(added_paths: list[str]) -> None:
 # Main
 # ---------------------------------------------------------------------------
 
-def main() -> int:
-    parser = argparse.ArgumentParser(description="Audit and sync sitemap.xml entries")
-    parser.add_argument("--dry-run", action="store_true",
-                        help="Report differences but do not modify files or push")
-    parser.add_argument("--no-spot-check", action="store_true",
-                        help="Skip live HTTP spot-check (faster, offline)")
-    args = parser.parse_args()
+def run_sync(
+    *,
+    dry_run: bool = False,
+    spot_check: bool = True,
+    spot_check_sample: int = 25,
+) -> dict:
+    """Run the sitemap audit and sync. Returns a summary dict.
+
+    Importable entry point for use from run_daily.py Phase 7 or any
+    other orchestrator. The CLI ``main()`` below is a thin wrapper.
+    """
+    result: dict = {"status": "ok"}
 
     # --- Fetch live sitemap ---
     log.info("Fetching live sitemap from %s …", LIVE_SITEMAP_URL)
     live_locs = fetch_live_sitemap()
     if not live_locs:
         log.error("Live sitemap returned 0 URLs — aborting to avoid false positives.")
-        return 1
+        return {"status": "error", "reason": "live sitemap returned 0 URLs"}
     log.info("Live sitemap: %d URLs", len(live_locs))
+    result["live_urls"] = len(live_locs)
     live_paths = normalise_locs(live_locs)
 
     # --- Parse server.py routes ---
     server_text = SERVER_PY.read_text(encoding="utf-8")
     code_routes = extract_routes_from_server(server_text)
     log.info("server.py: %d non-parametric public routes found", len(code_routes))
+    result["code_routes"] = len(code_routes)
 
     # --- Diff: in code but not in live sitemap ---
     missing = sorted(code_routes - live_paths)
+    result["missing_routes"] = missing
     if missing:
         log.warning(
             "%d route(s) are declared in server.py but absent from the live sitemap:\n  %s",
@@ -340,9 +348,9 @@ def main() -> int:
 
     # --- Spot-check live URLs ---
     dead_urls: list[str] = []
-    if not args.no_spot_check:
-        log.info("Spot-checking 25 random live sitemap URLs …")
-        dead_urls = spot_check_urls(live_locs, sample=25)
+    if spot_check:
+        log.info("Spot-checking %d random live sitemap URLs …", spot_check_sample)
+        dead_urls = spot_check_urls(live_locs, sample=spot_check_sample)
         if dead_urls:
             log.warning(
                 "%d dead URL(s) found in the live sitemap (manual fix required — "
@@ -352,35 +360,59 @@ def main() -> int:
             )
         else:
             log.info("Spot-check passed — all sampled URLs returned OK.")
+    result["dead_urls"] = dead_urls
 
     # --- Nothing to add ---
     if not missing:
         log.info("Sitemap is up to date. Done.")
-        return 0
+        return result
 
-    if args.dry_run:
-        log.info("--dry-run: skipping file edits and git push.")
-        return 0
+    if dry_run:
+        log.info("dry_run=True: skipping file edits and git push.")
+        result["status"] = "dry_run"
+        return result
 
     # --- Patch server.py ---
     updated_text = patch_server_py(server_text, missing)
     if updated_text == server_text:
-        # patch_server_py already logged the error
-        return 1
+        result["status"] = "error"
+        result["reason"] = "insertion anchor not found in server.py"
+        return result
 
     SERVER_PY.write_text(updated_text, encoding="utf-8")
     log.info(
         "Wrote %d new static_url entry/entries to server.py",
         len(missing),
     )
+    result["patched"] = len(missing)
 
     # --- Commit + push ---
     try:
         commit_and_push(missing)
+        result["pushed"] = True
     except RuntimeError as exc:
         log.error("Git operation failed: %s", exc)
-        return 1
+        result["pushed"] = False
+        result["push_error"] = str(exc)
 
+    return result
+
+
+def main() -> int:
+    parser = argparse.ArgumentParser(description="Audit and sync sitemap.xml entries")
+    parser.add_argument("--dry-run", action="store_true",
+                        help="Report differences but do not modify files or push")
+    parser.add_argument("--no-spot-check", action="store_true",
+                        help="Skip live HTTP spot-check (faster, offline)")
+    args = parser.parse_args()
+
+    result = run_sync(
+        dry_run=args.dry_run,
+        spot_check=not args.no_spot_check,
+    )
+
+    if result.get("status") == "error":
+        return 1
     return 0
 
 

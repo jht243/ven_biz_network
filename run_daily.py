@@ -3,7 +3,7 @@
 Daily orchestrator for the Caracas Research.
 
 Chains: scrape -> analyze -> generate report -> Google Indexing API
--> send newsletter -> IndexNow / social / archive
+-> send newsletter -> IndexNow / social / archive -> SEO audit -> sitemap sync
 
 Usage:
     python run_daily.py                    # Full pipeline
@@ -248,6 +248,43 @@ def main(skip_scrape: bool, skip_email: bool, dry_run: bool, report_only: bool):
             logger.error("SEO audit failed: %s", e, exc_info=True)
             results["seo_audit"] = {"error": str(e)}
             console.print(f"  [yellow]![/yellow] SEO audit failed (non-fatal): {e}")
+
+    # Phase 7: Sitemap sync — fetch the live sitemap, diff against
+    # declared routes, spot-check for dead links, auto-patch and push
+    # if anything is missing. Always non-fatal.
+    if not report_only:
+        console.print("\n[bold cyan]Phase 7:[/bold cyan] Sitemap audit & sync...")
+        try:
+            from scripts.sync_sitemap import run_sync
+            sync_result = run_sync(dry_run=dry_run)
+            results["sitemap_sync"] = sync_result
+            missing = sync_result.get("missing_routes", [])
+            dead = sync_result.get("dead_urls", [])
+            patched = sync_result.get("patched", 0)
+            pushed = sync_result.get("pushed", False)
+
+            parts = [f"{sync_result.get('live_urls', 0)} live URLs"]
+            if missing:
+                parts.append(f"{len(missing)} missing route(s)")
+            if dead:
+                parts.append(f"{len(dead)} dead link(s)")
+            if patched:
+                parts.append(f"{patched} auto-added" + (" & pushed" if pushed else " (push failed)"))
+
+            if dead:
+                console.print(f"  [yellow]![/yellow] Sitemap sync: {', '.join(parts)}")
+                for d in dead:
+                    console.print(f"        [dim]dead:[/dim] {d}")
+            elif missing:
+                console.print(f"  [green]✓[/green] Sitemap sync: {', '.join(parts)}")
+            else:
+                console.print(f"  [green]✓[/green] Sitemap sync: {', '.join(parts)} — up to date")
+        except Exception as e:
+            logger.error("Sitemap sync failed: %s", e, exc_info=True)
+            results["sitemap_sync"] = {"error": str(e)}
+            console.print(f"  [yellow]![/yellow] Sitemap sync failed (non-fatal): {e}")
+    else:
+        console.print("\n[dim]Phase 7: Sitemap sync — SKIPPED (report-only)[/dim]")
 
     _print_summary(results, start)
 

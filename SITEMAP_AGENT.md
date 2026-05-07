@@ -22,9 +22,9 @@
 
 LandingPages from the DB are validated against Flask's URL map before inclusion in the sitemap. If a `LandingPage.canonical_path` has no matching route handler, it's silently skipped with a log warning. This prevents orphaned DB records (like the old `/law` page) from advertising 404s to Google.
 
-### 3. Nightly sync script
+### 3. Sitemap sync script (Phase 7 of the daily pipeline)
 
-**`scripts/sync_sitemap.py`** — runs nightly at 02:00 UTC via Render cron.
+**`scripts/sync_sitemap.py`** — runs as Phase 7 of `run_daily.py` (twice daily at 15:00 and 22:00 UTC via `vij-daily-pipeline`). Also runnable standalone from the CLI.
 
 What it does on each run:
 1. Fetches the live sitemap at `https://caracasresearch.com/sitemap.xml`
@@ -33,13 +33,15 @@ What it does on each run:
 4. Spot-checks 25 random live sitemap URLs for HTTP 4xx/5xx (dead link detection)
 5. Commits and pushes `server.py` if anything was added
 
-### 4. Render cron job
+The script exposes `run_sync()` for import by the daily pipeline and `main()` for CLI use.
 
-**`render.yaml`** — `vij-nightly-sitemap-sync` runs daily at 02:00 UTC.
+### 4. Env vars for sitemap sync
 
-Required env vars (set via Render dashboard, not committed):
+Added to `vij-daily-pipeline` in `render.yaml` (set via Render dashboard, not committed):
 - `GITHUB_TOKEN` — GitHub fine-grained PAT with **Contents: Read & Write** on `jht243/ven_biz_network`
 - `GITHUB_REPO` — already set to `jht243/ven_biz_network` in render.yaml
+
+There is no separate cron job — the sync runs inside the existing daily pipeline to avoid an extra Render service.
 
 ### 5. Related distribution scripts
 
