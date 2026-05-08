@@ -221,9 +221,13 @@ def main(skip_scrape: bool, skip_email: bool, dry_run: bool, report_only: bool):
             for w in seo_report.warnings:
                 console.print(f"        [dim]warn:[/dim] {w}")
 
-            # Phase 6b: auto-fix clearly wrong SEO issues on LandingPage-
-            # backed pages (missing H1, thin content < 200 words). Uses
-            # web search + premium LLM. Budget-capped at 5 fixes/run.
+            # Phase 6b: auto-fix SEO issues on LandingPage-backed pages.
+            # Covers: missing H1, thin content, title too long/short,
+            # missing meta description, heading hierarchy skips, and low
+            # inbound links. Uses web search + premium LLM. Capped at
+            # 5 fixes/run. Issues not auto-fixable: missing canonical/
+            # og:image (template-derived), missing JSON-LD (always
+            # generated), cluster nav (requires template changes).
             console.print("\n[bold cyan]Phase 6b:[/bold cyan] Auto-fixing SEO content issues...")
             try:
                 from src.seo.content_fixer import fix_content_issues
