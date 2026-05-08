@@ -220,5 +220,20 @@
        heading="Latest analysis",
        intro="Recent investor briefings on SEC disclosures, impairments, and US-listed Venezuela exposure.",
   ) }}
+<script>
+(function() {
+  var form = document.querySelector('.cr-search-row');
+  if (form) form.addEventListener('submit', function() {
+    var q = (document.getElementById('edgar-company-q') || {}).value || '';
+    if (q.trim() && typeof gtag === 'function') gtag('event', 'tool_interaction', { tool_name: 'sec_edgar_search', search_term: q.trim() });
+  });
+  document.querySelectorAll('.preset-card .cta').forEach(function(a) {
+    a.addEventListener('click', function() {
+      var title = (a.closest('.preset-card').querySelector('h3') || {}).textContent || '';
+      if (typeof gtag === 'function') gtag('event', 'tool_interaction', { tool_name: 'sec_edgar_search', search_term: title.trim() });
+    });
+  });
+})();
+</script>
 </section>
 {% endblock %}

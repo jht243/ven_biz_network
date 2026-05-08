@@ -301,6 +301,8 @@
         }
 
         map.on('popupopen', function(e) {
+          var heading = e.popup.getElement() && e.popup.getElement().querySelector('h4');
+          if (heading) trackMapInteraction(heading.textContent);
           var el = e.popup.getElement();
           if (!el) return;
           var jump = el.querySelector('a[data-jump]');
@@ -318,6 +320,10 @@
       }
 
       var nbhLayerRef = null;
+      var mapTracked = false;
+      function trackMapInteraction(name) {
+        if (!mapTracked && typeof gtag === 'function') { gtag('event', 'tool_interaction', { tool_name: 'caracas_safety_map', neighborhood: name }); mapTracked = true; }
+      }
       if (document.readyState === 'loading') {
         document.addEventListener('DOMContentLoaded', initMap);
       } else {

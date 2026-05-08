@@ -114,8 +114,12 @@
           c.style.display = (matchQ && matchS) ? '' : 'none';
         });
       }
-      q.addEventListener('input', apply);
-      scope.addEventListener('change', apply);
+      var glTracked = false;
+      function trackGL() {
+        if (!glTracked && typeof gtag === 'function') { gtag('event', 'tool_interaction', { tool_name: 'ofac_general_licenses', search_term: q.value || scope.value }); glTracked = true; }
+      }
+      q.addEventListener('input', function() { apply(); trackGL(); });
+      scope.addEventListener('change', function() { apply(); trackGL(); });
     })();
   </script>
 

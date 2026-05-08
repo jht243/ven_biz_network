@@ -237,6 +237,36 @@ def _format_usd_minor_units(amount: int | None, currency: str | None) -> str:
     return f"{amount} {currency_code}"
 
 
+def _send_ga4_purchase_event(session: dict) -> None:
+    """Fire a GA4 'purchase' event via the Measurement Protocol."""
+    api_secret = (settings.ga4_api_secret or "").strip()
+    measurement_id = (settings.ga4_measurement_id or "").strip()
+    if not api_secret or not measurement_id:
+        return
+    try:
+        import urllib.request
+        session_id = session.get("id", "")
+        amount = (session.get("amount_total") or 4999) / 100
+        currency = (session.get("currency") or "usd").upper()
+        payload = json.dumps({
+            "client_id": f"stripe.{session_id}",
+            "events": [{
+                "name": "purchase",
+                "params": {
+                    "transaction_id": session_id,
+                    "value": amount,
+                    "currency": currency,
+                    "items": [{"item_name": "Venezuela Visa Application Service", "price": amount, "quantity": 1}],
+                },
+            }],
+        }).encode()
+        url = f"https://www.google-analytics.com/mp/collect?measurement_id={measurement_id}&api_secret={api_secret}"
+        req = urllib.request.Request(url, data=payload, headers={"Content-Type": "application/json"})
+        urllib.request.urlopen(req, timeout=5)
+    except Exception as exc:
+        logger.warning("GA4 Measurement Protocol purchase event failed: %s", exc)
+
+
 def _create_visa_order(session: dict) -> "str | None":
     """Persist a VisaOrder row and return the intake token, or None on error."""
     import secrets
@@ -547,6 +577,7 @@ def stripe_webhook():
 
     intake_token = _create_visa_order(session)
     _send_visa_order_notification(session, intake_token=intake_token)
+    _send_ga4_purchase_event(session)
 
     customer_details = session.get("customer_details") or {}
     customer_email = customer_details.get("email") or session.get("customer_email") or ""

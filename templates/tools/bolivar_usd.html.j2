@@ -109,8 +109,12 @@
           else if (d === 'eur_to_ves') out.textContent = rates.eur ? fmt(v * rates.eur, 'Bs. ', '') : 'EUR rate unavailable';
           else if (d === 'ves_to_eur') out.textContent = rates.eur ? fmt(v / rates.eur, '€', '') : 'EUR rate unavailable';
         }
-        amt.addEventListener('input', render);
-        dir.addEventListener('change', render);
+        var tracked = false;
+        function trackOnce() {
+          if (!tracked && typeof gtag === 'function') { gtag('event', 'tool_interaction', { tool_name: 'bolivar_usd_rate' }); tracked = true; }
+        }
+        amt.addEventListener('input', function() { render(); trackOnce(); });
+        dir.addEventListener('change', function() { render(); trackOnce(); });
         render();
       })();
     </script>

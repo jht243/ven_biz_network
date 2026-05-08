@@ -111,5 +111,11 @@
   {% from "_cluster_nav.html.j2" import cluster_nav %}
   {{ cluster_nav(cluster_ctx) }}
 
+<script>
+document.querySelector('.checker-form').addEventListener('submit', function() {
+  var q = this.querySelector('input[name="q"]').value.trim();
+  if (q && typeof gtag === 'function') gtag('event', 'tool_interaction', { tool_name: 'ofac_sanctions_checker', search_term: q });
+});
+</script>
 </section>
 {% endblock %}

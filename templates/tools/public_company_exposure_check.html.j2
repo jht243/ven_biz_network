@@ -176,5 +176,11 @@
        heading="Latest analysis",
        intro="Recent investor briefings on public-company Venezuela exposure, impairments, and sanctioned-counterparty risk.",
   ) }}
+<script>
+document.querySelector('.tool-form').addEventListener('submit', function() {
+  var q = this.querySelector('input[name="q"]').value.trim();
+  if (q && typeof gtag === 'function') gtag('event', 'tool_interaction', { tool_name: 'public_company_exposure', search_term: q });
+});
+</script>
 </section>
 {% endblock %}

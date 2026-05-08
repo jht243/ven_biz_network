@@ -299,8 +299,12 @@
 
         document.querySelector('#cf-table tbody').innerHTML = rows.join('');
       }
+      var roiTracked = false;
       ['sector','capex','rev0','years','growth','margin','tax','maintcapex','discount','exit'].forEach(function(id) {
-        document.getElementById(id).addEventListener('input', compute);
+        document.getElementById(id).addEventListener('input', function() {
+          compute();
+          if (!roiTracked && typeof gtag === 'function') { gtag('event', 'tool_interaction', { tool_name: 'roi_calculator', sector: document.getElementById('sector').value }); roiTracked = true; }
+        });
         document.getElementById(id).addEventListener('change', compute);
       });
       compute();
@@ -315,8 +319,10 @@
           headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify({ email: em, source: 'roi-calculator' })
         }).then(function(r) { return r.json(); }).then(function(j) {
-          if (j.ok) msg.textContent = "You're in. Check your inbox shortly for the model — and the next briefing.";
-          else msg.textContent = j.error || 'Something went wrong.';
+          if (j.ok) {
+            if (typeof gtag === 'function') gtag('event', 'newsletter_subscribe', { method: 'roi_calculator' });
+            msg.textContent = "You're in. Check your inbox shortly for the model — and the next briefing.";
+          } else msg.textContent = j.error || 'Something went wrong.';
         }).catch(function() { msg.textContent = 'Network error — try again.'; });
       });
     })();

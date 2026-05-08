@@ -406,4 +406,15 @@
     </p>
   </section>
 </main>
+<script>
+document.querySelectorAll('a.btn-buy').forEach(function(btn) {
+  btn.addEventListener('click', function() {
+    if (typeof gtag === 'function') gtag('event', 'begin_checkout', {
+      currency: 'USD',
+      value: 49.99,
+      items: [{ item_name: 'Venezuela Visa Application Service', price: 49.99 }]
+    });
+  });
+});
+</script>
 {% endblock %}

@@ -86,6 +86,10 @@ class Settings(BaseSettings):
     # Shared Cancillería Digital login password (shown only in admin for copy/paste).
     visa_portal_shared_password: str = "VisaVene34!"
 
+    # GA4 Measurement Protocol (server-side events, e.g. purchase)
+    ga4_measurement_id: str = "G-YQKLKXYCJB"
+    ga4_api_secret: str = ""
+
     # Google reporting (GA4 + Search Console)
     google_reporting_sa_json: str = ""
     google_reporting_sa_file: str = ""

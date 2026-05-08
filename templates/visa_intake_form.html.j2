@@ -719,9 +719,13 @@
 
   btnSave.addEventListener('click', autoSave);
 
+  var stepNames = ['personal_info', 'passport', 'residence', 'travel', 'documents', 'review'];
   btnNext.addEventListener('click', function() {
     autoSave();
-    if (currentStep < totalSteps - 1) showStep(currentStep + 1);
+    if (currentStep < totalSteps - 1) {
+      if (typeof gtag === 'function') gtag('event', 'visa_intake_progress', { step: stepNames[currentStep + 1], step_number: currentStep + 1 });
+      showStep(currentStep + 1);
+    }
   });
 
   btnPrev.addEventListener('click', function() {
@@ -738,6 +742,7 @@
     var data = gatherData();
     btnSubmit.disabled = true;
     btnSubmit.textContent = 'Submitting...';
+    if (typeof gtag === 'function') gtag('event', 'visa_intake_progress', { step: 'submit', step_number: 6 });
     fetch(SUBMIT_URL, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },

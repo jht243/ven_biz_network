@@ -139,5 +139,12 @@
        heading="Latest Venezuela business analysis",
        intro="Recent briefings on sanctions, market access, trade flows, and operating risk.",
   ) }}
+<script>
+document.querySelector('.tool-form').addEventListener('submit', function() {
+  var q = this.querySelector('input[name="q"]').value.trim();
+  var sector = this.querySelector('select[name="sector"]').value;
+  if (typeof gtag === 'function') gtag('event', 'tool_interaction', { tool_name: 'trade_leads', search_term: q || sector || 'browse' });
+});
+</script>
 </section>
 {% endblock %}

@@ -247,5 +247,8 @@
   {% from "_cluster_nav.html.j2" import cluster_nav %}
   {{ cluster_nav(cluster_ctx) }}
 
+<script>
+if (typeof gtag === 'function') gtag('event', 'tool_interaction', { tool_name: 'ofac_sdn_name_check', search_term: '{{ slug }}' });
+</script>
 </section>
 {% endblock %}

@@ -692,6 +692,7 @@ function handleSignup(e) {
   .then(r => r.json())
   .then(data => {
     if (data.ok) {
+      if (typeof gtag === 'function') gtag('event', 'newsletter_subscribe', { method: 'homepage' });
       form.innerHTML = '<div style="color: white; font-size: 1.1rem; padding: 14px 0;">\u2713 You\'re in. Watch your inbox.</div>';
     } else {
       btn.disabled = false;
@@ -705,6 +706,15 @@ function handleSignup(e) {
     alert('Network error. Please try again.');
   });
 }
+
+document.querySelectorAll('div[style*="grid-template-columns"] > a[href]').forEach(function(card) {
+  card.addEventListener('click', function() {
+    if (typeof gtag === 'function') {
+      var label = (card.querySelector('div[style*="font-weight:700"]') || {}).textContent || card.getAttribute('href');
+      gtag('event', 'pillar_card_click', { destination: label.trim() });
+    }
+  });
+});
 
 const climateObserver = new IntersectionObserver((entries) => {
   entries.forEach(entry => {

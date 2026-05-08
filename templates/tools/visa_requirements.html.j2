@@ -224,6 +224,7 @@
             t.classList.add('active');
             t.scrollIntoView({ behavior: 'smooth', block: 'start' });
           }
+          if (typeof gtag === 'function') gtag('event', 'tool_interaction', { tool_name: 'visa_requirements', search_term: sel.options[sel.selectedIndex].text });
         }
       });
       var hash = (location.hash || '').replace('#', '');
