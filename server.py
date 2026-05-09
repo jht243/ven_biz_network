@@ -112,6 +112,138 @@ _GOOGLE_TAG_HTML = f"""<!-- Google tag (gtag.js) -->
 
   gtag('config', '{_GOOGLE_TAG_ID}');
 </script>"""
+_FEEDBACK_WIDGET_HTML = r"""
+<style>
+  .tearsheet-fab { display: none !important; }
+  .feedback-pill { position: fixed; right: 20px; bottom: 20px; z-index: 9998; display: inline-flex; align-items: center; gap: 8px; padding: 10px 16px; border: 1px solid rgba(0,43,94,0.18); border-radius: 999px; background: var(--white, #fff); color: var(--sr-blue, #002b5e); box-shadow: 0 8px 24px rgba(0,31,68,0.14); font-family: var(--font-sans, sans-serif); font-size: 13px; font-weight: 700; cursor: pointer; }
+  .feedback-pill:hover { color: var(--sr-red, #cc0000); box-shadow: 0 10px 28px rgba(0,31,68,0.18); }
+  .feedback-backdrop { position: fixed; inset: 0; z-index: 10000; display: flex; align-items: flex-end; justify-content: flex-end; padding: 0 20px 72px; background: rgba(10,24,40,0.16); }
+  .feedback-backdrop[hidden] { display: none; }
+  .feedback-modal { position: relative; width: min(440px, calc(100vw - 40px)); background: #fff; border: 1px solid #e2e8f0; border-radius: 8px; box-shadow: 0 18px 50px rgba(0,31,68,0.24); padding: 32px 36px 36px; text-align: left; }
+  .feedback-modal-header { display: flex; align-items: flex-start; justify-content: space-between; gap: 16px; margin-bottom: 22px; }
+  .feedback-modal-heading { flex: 1; min-width: 0; padding-right: 4px; }
+  .feedback-modal h2 { font-family: var(--font-serif, serif); font-size: 1.35rem; font-weight: 700; font-style: italic; line-height: 1.25; color: #001f3f; margin: 0 0 12px; }
+  .feedback-modal-intro { font-family: var(--font-sans, sans-serif); font-size: 13.5px; font-weight: 700; font-style: italic; color: #666; line-height: 1.5; margin: 0; }
+  .feedback-close { flex: 0 0 auto; border: 0; background: transparent; color: #888; cursor: pointer; font-size: 22px; line-height: 1; padding: 2px 4px; margin: -4px -4px 0 0; }
+  .feedback-close:hover { color: #001f3f; }
+  .feedback-honeypot { position: absolute; left: -10000px; width: 1px; height: 1px; overflow: hidden; }
+  .feedback-field { margin-bottom: 18px; }
+  .feedback-label { display: block; font-family: var(--font-sans, sans-serif); font-size: 13px; font-weight: 700; font-style: italic; color: #001f3f; margin: 0 0 8px; }
+  .feedback-modal textarea { width: 100%; min-height: 120px; resize: vertical; box-sizing: border-box; padding: 12px 14px; border: 1px solid #a0b0c0; border-radius: 4px; font-family: var(--font-sans, sans-serif); font-size: 14px; line-height: 1.5; color: var(--sr-dark-text, #212529); }
+  .feedback-modal textarea::placeholder { color: #999; }
+  .feedback-modal textarea:focus { outline: 2px solid rgba(0, 31, 63, 0.2); outline-offset: 0; border-color: #001f3f; }
+  .feedback-email-input { width: 100%; box-sizing: border-box; padding: 12px 14px; border: 1px solid #dde1e8; border-radius: 4px; font-family: var(--font-sans, sans-serif); font-size: 14px; line-height: 1.5; color: var(--sr-dark-text, #212529); }
+  .feedback-email-input::placeholder { color: #999; }
+  .feedback-email-input:focus { outline: 2px solid rgba(0, 31, 63, 0.15); outline-offset: 0; border-color: #a8b0bc; }
+  .feedback-actions { margin-top: 4px; }
+  .feedback-submit { width: 100%; border-radius: 4px; padding: 14px 16px; font-family: var(--font-sans, sans-serif); font-size: 13px; font-weight: 700; letter-spacing: 0.06em; text-transform: uppercase; cursor: pointer; background: #c02c1b; color: #fff; border: 1px solid #c02c1b; }
+  .feedback-submit:hover { background: #a82616; border-color: #a82616; }
+  .feedback-submit:disabled { opacity: 0.72; cursor: wait; }
+  .feedback-status { min-height: 20px; margin-top: 12px; font-size: 13px; color: #666; }
+  .feedback-status.is-error { color: #b42318; }
+  .feedback-status.is-success { color: #166534; }
+  @media (max-width: 768px) { .feedback-pill, .feedback-backdrop { display: none !important; } }
+</style>
+<button type="button" class="feedback-pill" aria-haspopup="dialog" aria-controls="feedback-modal">
+  <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M21 15a4 4 0 0 1-4 4H8l-5 3V7a4 4 0 0 1 4-4h10a4 4 0 0 1 4 4z"/></svg>
+  <span>Share Your Ideas</span>
+</button>
+<div class="feedback-backdrop" hidden>
+  <section class="feedback-modal" id="feedback-modal" role="dialog" aria-modal="true" aria-labelledby="feedback-title">
+    <div class="feedback-modal-header">
+      <div class="feedback-modal-heading">
+        <h2 id="feedback-title">Help us build what you need.</h2>
+        <p class="feedback-modal-intro">Tell us what tools, data, checklists, or workflow would make your experience better.</p>
+      </div>
+      <button type="button" class="feedback-close" aria-label="Close feedback form">&times;</button>
+    </div>
+    <form class="feedback-form">
+      <label class="feedback-honeypot" for="feedback-company">Company</label>
+      <input class="feedback-honeypot" id="feedback-company" name="company" type="text" tabindex="-1" autocomplete="off">
+      <div class="feedback-field">
+        <label class="feedback-label" for="feedback-idea">Your idea</label>
+        <textarea id="feedback-idea" name="feedback" maxlength="4000" required placeholder="What would make your work easier?"></textarea>
+      </div>
+      <div class="feedback-field">
+        <label class="feedback-label" for="feedback-email">(Optional) Email, if you want us to follow up.</label>
+        <input class="feedback-email-input" type="email" id="feedback-email" name="email" placeholder="you@example.com" autocomplete="email" maxlength="254">
+      </div>
+      <div class="feedback-actions">
+        <button type="submit" class="feedback-submit">SEND FEEDBACK</button>
+      </div>
+      <div class="feedback-status" role="status" aria-live="polite"></div>
+    </form>
+  </section>
+</div>
+<script>
+(function initFeedbackWidget() {
+  var pill = document.querySelector('.feedback-pill');
+  var backdrop = document.querySelector('.feedback-backdrop');
+  if (!pill || !backdrop) return;
+  var form = backdrop.querySelector('.feedback-form');
+  var closeBtn = backdrop.querySelector('.feedback-close');
+  var textarea = backdrop.querySelector('textarea[name="feedback"]');
+  var emailInput = backdrop.querySelector('input[name="email"]');
+  var submitBtn = backdrop.querySelector('.feedback-submit');
+  var status = backdrop.querySelector('.feedback-status');
+  var previousFocus = null;
+  var defaultSubmit = 'SEND FEEDBACK';
+  function setStatus(message, kind) {
+    status.textContent = message || '';
+    status.classList.toggle('is-error', kind === 'error');
+    status.classList.toggle('is-success', kind === 'success');
+  }
+  function closeFeedback() {
+    backdrop.hidden = true;
+    form.reset();
+    submitBtn.disabled = false;
+    submitBtn.textContent = defaultSubmit;
+    setStatus('', '');
+    if (previousFocus && previousFocus.focus) previousFocus.focus();
+  }
+  pill.addEventListener('click', function() {
+    previousFocus = document.activeElement;
+    backdrop.hidden = false;
+    setStatus('', '');
+    requestAnimationFrame(function() { textarea.focus(); });
+  });
+  closeBtn.addEventListener('click', closeFeedback);
+  backdrop.addEventListener('click', function(e) { if (e.target === backdrop) closeFeedback(); });
+  document.addEventListener('keydown', function(e) { if (e.key === 'Escape' && !backdrop.hidden) closeFeedback(); });
+  form.addEventListener('submit', function(e) {
+    e.preventDefault();
+    var feedback = textarea.value.trim();
+    if (!feedback) { setStatus('Please enter a note before sending.', 'error'); textarea.focus(); return; }
+    submitBtn.disabled = true;
+    submitBtn.textContent = 'Sending...';
+    setStatus('', '');
+    fetch('/api/feedback', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        feedback: feedback,
+        email: emailInput ? emailInput.value.trim() : '',
+        company: (form.querySelector('input[name="company"]') || {}).value || '',
+        page_url: window.location.href,
+        page_title: document.title || 'Caracas Research'
+      })
+    }).then(function(r) {
+      return r.json().then(function(data) { return { ok: r.ok, data: data }; });
+    }).then(function(result) {
+      if (!result.ok || !result.data.ok) throw new Error(result.data.error || 'Feedback could not be sent.');
+      setStatus('Thank you. Your feedback was sent.', 'success');
+      form.reset();
+      submitBtn.textContent = 'Sent';
+      setTimeout(closeFeedback, 1300);
+    }).catch(function(err) {
+      submitBtn.disabled = false;
+      submitBtn.textContent = defaultSubmit;
+      setStatus(err.message || 'Something went wrong. Please try again.', 'error');
+    });
+  });
+})();
+</script>
+"""
 
 # Small in-memory cache for top-nav pages that are expensive to re-render on
 # every click (DB reads + template render). This keeps header navigation
@@ -140,23 +272,32 @@ def _ensure_google_tag(html: str) -> str:
     return html
 
 
+def _ensure_feedback_widget(html: str) -> str:
+    """Add the feedback widget to generated homepage HTML that predates this feature."""
+    if "feedback-pill" in html or "/api/feedback" in html:
+        return html
+    if "</body>" in html:
+        return html.replace("</body>", f"{_FEEDBACK_WIDGET_HTML}\n</body>", 1)
+    return html + _FEEDBACK_WIDGET_HTML
+
+
 def _get_report_html() -> str | None:
     """Return rendered report HTML from Supabase Storage (cached) or local disk."""
     if supabase_storage_read_enabled():
         now = time.time()
         if _REPORT_CACHE["html"] and now - _REPORT_CACHE["fetched_at"] < _REPORT_CACHE_TTL_SECONDS:
-            return _ensure_google_tag(_REPORT_CACHE["html"])
+            return _ensure_feedback_widget(_ensure_google_tag(_REPORT_CACHE["html"]))
         html = fetch_report_html()
         if html:
             _REPORT_CACHE["html"] = html
             _REPORT_CACHE["fetched_at"] = now
-            return _ensure_google_tag(html)
+            return _ensure_feedback_widget(_ensure_google_tag(html))
         if _REPORT_CACHE["html"]:
-            return _ensure_google_tag(_REPORT_CACHE["html"])
+            return _ensure_feedback_widget(_ensure_google_tag(_REPORT_CACHE["html"]))
 
     report = OUTPUT_DIR / "report.html"
     if report.exists():
-        return _ensure_google_tag(report.read_text(encoding="utf-8"))
+        return _ensure_feedback_widget(_ensure_google_tag(report.read_text(encoding="utf-8")))
     return None
 
 
@@ -1982,6 +2123,63 @@ def subscribe():
     except Exception as e:
         logger.error("Buttondown request failed: %s", e)
         return jsonify({"ok": False, "error": "Service unavailable"}), 503
+
+
+@app.post("/api/feedback")
+def feedback():
+    from datetime import datetime, timezone
+    from src.newsletter import send_email
+
+    data = request.get_json(silent=True) or {}
+    honeypot = str(data.get("company") or data.get("website") or "").strip()
+    if honeypot:
+        logger.warning("Feedback rejected: honeypot field populated")
+        return jsonify({"ok": False, "error": "Invalid submission"}), 400
+
+    feedback_text = str(data.get("feedback") or "").strip()
+    if not feedback_text:
+        return jsonify({"ok": False, "error": "Feedback is required"}), 400
+    if len(feedback_text) > 4000:
+        return jsonify({"ok": False, "error": "Feedback is too long"}), 400
+
+    email_raw = str(data.get("email") or "").strip()
+    reply_email = ""
+    if email_raw:
+        if len(email_raw) > 254:
+            return jsonify({"ok": False, "error": "Email is too long"}), 400
+        if not re.match(r"^[^\s@]+@[^\s@]+\.[^\s@]+$", email_raw):
+            return jsonify({"ok": False, "error": "Please enter a valid email or leave it blank"}), 400
+        reply_email = email_raw
+
+    site_name = "Caracas Research"
+    submitted_at = datetime.now(timezone.utc)
+    submitted_at_label = submitted_at.strftime("%Y-%m-%d %H:%M:%S UTC")
+    page_url = str(data.get("page_url") or request.referrer or "").strip()
+    page_title = str(data.get("page_title") or "").strip()
+
+    html_body = f"""
+    <h2>New {site_name} feedback</h2>
+    <table cellpadding="6" cellspacing="0" style="border-collapse:collapse;font-family:Arial,sans-serif;font-size:14px;">
+      <tr><td><strong>Date</strong></td><td>{_xml_escape(submitted_at_label)}</td></tr>
+      <tr><td><strong>Site</strong></td><td>{_xml_escape(site_name)}</td></tr>
+      <tr><td><strong>Reply email</strong></td><td>{_xml_escape(reply_email or '(not provided)')}</td></tr>
+      <tr><td><strong>Page title</strong></td><td>{_xml_escape(page_title or 'Unknown')}</td></tr>
+      <tr><td><strong>Page URL</strong></td><td>{_xml_escape(page_url or 'Unknown')}</td></tr>
+    </table>
+    <h3>Feedback</h3>
+    <p style="white-space:pre-wrap;font-family:Arial,sans-serif;font-size:15px;line-height:1.5;">{_xml_escape(feedback_text)}</p>
+    """
+
+    result = send_email(
+        to="jonathan@pipelinemarketing.io",
+        subject="New Caracas Research feedback",
+        html_body=html_body,
+    )
+    if not result.get("success"):
+        logger.error("Feedback email failed: %s", result)
+        return jsonify({"ok": False, "error": "Feedback could not be sent"}), 502
+
+    return jsonify({"ok": True})
 
 
 def _fetch_recent_briefings(limit: int = 5):
