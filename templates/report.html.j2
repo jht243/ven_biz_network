@@ -231,6 +231,35 @@
     .signup-note { color: rgba(255,255,255,0.4); font-size: 0.72rem; margin-top: 12px; }
     .footer { background-color: var(--sr-blue-dark); color: var(--white); padding: 40px 20px; text-align: center; font-family: var(--font-sans); font-size: 0.85rem; line-height: 1.8; }
     .footer p { opacity: 0.8; max-width: 800px; margin: 0 auto; }
+    .feedback-pill { position: fixed; right: 20px; bottom: 20px; z-index: 9998; display: inline-flex; align-items: center; gap: 8px; padding: 10px 16px; border: 1px solid rgba(0,43,94,0.18); border-radius: 999px; background: var(--white); color: var(--sr-blue); box-shadow: 0 8px 24px rgba(0,31,68,0.14); font-family: var(--font-sans); font-size: 13px; font-weight: 700; cursor: pointer; transition: transform 0.12s ease, box-shadow 0.15s ease, color 0.15s ease; }
+    .feedback-pill:hover { color: var(--sr-red); box-shadow: 0 10px 28px rgba(0,31,68,0.18); }
+    .feedback-pill:active { transform: scale(0.97); }
+    .feedback-pill svg { flex: 0 0 auto; }
+    .feedback-backdrop { position: fixed; inset: 0; z-index: 10000; display: flex; align-items: flex-end; justify-content: flex-end; padding: 0 20px 72px; background: rgba(10,24,40,0.16); }
+    .feedback-backdrop[hidden] { display: none; }
+    .feedback-modal { position: relative; width: min(440px, calc(100vw - 40px)); background: #fff; border: 1px solid #e2e8f0; border-radius: 8px; box-shadow: 0 18px 50px rgba(0,31,68,0.24); padding: 32px 36px 36px; text-align: left; }
+    .feedback-modal-header { display: flex; align-items: flex-start; justify-content: space-between; gap: 16px; margin-bottom: 22px; }
+    .feedback-modal-heading { flex: 1; min-width: 0; padding-right: 4px; }
+    .feedback-modal h2 { font-family: var(--font-serif); font-size: 1.35rem; font-weight: 700; font-style: italic; line-height: 1.25; color: #001f3f; margin: 0 0 12px; }
+    .feedback-modal-intro { font-family: var(--font-sans); font-size: 13.5px; font-weight: 700; font-style: italic; color: #666; line-height: 1.5; margin: 0; }
+    .feedback-close { flex: 0 0 auto; border: 0; background: transparent; color: #888; cursor: pointer; font-size: 22px; line-height: 1; padding: 2px 4px; margin: -4px -4px 0 0; }
+    .feedback-close:hover { color: #001f3f; }
+    .feedback-honeypot { position: absolute; left: -10000px; width: 1px; height: 1px; overflow: hidden; }
+    .feedback-field { margin-bottom: 18px; }
+    .feedback-label { display: block; font-family: var(--font-sans); font-size: 13px; font-weight: 700; font-style: italic; color: #001f3f; margin: 0 0 8px; }
+    .feedback-modal textarea { width: 100%; min-height: 120px; resize: vertical; box-sizing: border-box; padding: 12px 14px; border: 1px solid #a0b0c0; border-radius: 4px; font-family: var(--font-sans); font-size: 14px; line-height: 1.5; color: var(--sr-dark-text); }
+    .feedback-modal textarea::placeholder { color: #999; }
+    .feedback-modal textarea:focus { outline: 2px solid rgba(0, 31, 63, 0.2); outline-offset: 0; border-color: #001f3f; }
+    .feedback-email-input { width: 100%; box-sizing: border-box; padding: 12px 14px; border: 1px solid #dde1e8; border-radius: 4px; font-family: var(--font-sans); font-size: 14px; line-height: 1.5; color: var(--sr-dark-text); }
+    .feedback-email-input::placeholder { color: #999; }
+    .feedback-email-input:focus { outline: 2px solid rgba(0, 31, 63, 0.15); outline-offset: 0; border-color: #a8b0bc; }
+    .feedback-actions { margin-top: 4px; }
+    .feedback-submit { width: 100%; border-radius: 4px; padding: 14px 16px; font-family: var(--font-sans); font-size: 13px; font-weight: 700; letter-spacing: 0.06em; text-transform: uppercase; cursor: pointer; background: #c02c1b; color: #fff; border: 1px solid #c02c1b; }
+    .feedback-submit:hover { background: #a82616; border-color: #a82616; }
+    .feedback-submit:disabled { opacity: 0.72; cursor: wait; }
+    .feedback-status { min-height: 20px; margin-top: 12px; font-size: 13px; color: #666; }
+    .feedback-status.is-error { color: #b42318; }
+    .feedback-status.is-success { color: #166534; }
     @media (max-width: 768px) {
       .hero h1 { font-size: 2.2rem; }
       .panel-box { padding: 20px; }
@@ -247,6 +276,8 @@
       .signup-form { flex-direction: column; }
       .signup-form input { border-radius: 3px; }
       .signup-form button { border-radius: 3px; }
+      .feedback-pill,
+      .feedback-backdrop { display: none !important; }
     }
   </style>
 
@@ -299,42 +330,6 @@
   <h1>Venezuelan Research for International Investors</h1>
   <div class="subtitle">The definitive guide to navigating Venezuela's political and economic transition. Focusing on business opportunities in Real Estate, Mining, and more.</div>
 </div>
-
-<a href="/tearsheet/latest.pdf" class="tearsheet-fab" rel="nofollow" download aria-label="Download Investor Tearsheet ({{ tearsheet_date_label }})">
-  <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>
-  <span>Download Investor Tearsheet ({{ tearsheet_date_label }})</span>
-</a>
-<style>
-  .tearsheet-fab {
-    position: fixed;
-    right: 20px;
-    bottom: 20px;
-    z-index: 9999;
-    display: inline-flex;
-    align-items: center;
-    gap: 8px;
-    padding: 10px 14px;
-    background: var(--sr-blue, #1e3a8a);
-    color: #fff;
-    border-radius: 999px;
-    text-decoration: none;
-    font-size: 12px;
-    font-weight: 600;
-    line-height: 1;
-    box-shadow: 0 4px 12px rgba(15, 23, 42, .18);
-    transition: background .15s, transform .1s, box-shadow .15s;
-  }
-  .tearsheet-fab:hover { background: #16307a; box-shadow: 0 6px 16px rgba(15, 23, 42, .24); }
-  .tearsheet-fab:active { transform: scale(.97); }
-  .tearsheet-fab svg { flex: 0 0 auto; }
-  @media (max-width: 480px) {
-    .tearsheet-fab { right: 12px; bottom: 12px; padding: 9px 12px; font-size: 11px; }
-    .tearsheet-fab svg { width: 12px; height: 12px; }
-  }
-  @media print {
-    .tearsheet-fab { display: none !important; }
-  }
-</style>
 
 <!-- INVESTMENT CLIMATE TRACKER -->
 <div class="climate-panel">
@@ -525,6 +520,40 @@
   <p style="margin-top: 10px; font-size: 0.75rem;">This publication is for informational purposes only and does not constitute investment advice. Data sourced from BCV (live scrape), OFAC Federal Register API, OFAC SDN List, GDELT global news monitor, US State Department travel advisories, Coface, Trading Economics, UNCTAD, and PDVSA. Always consult qualified legal and financial advisors before making investment decisions in sanctioned jurisdictions.</p>
 </div>
 
+<button type="button" class="feedback-pill" aria-haspopup="dialog" aria-controls="feedback-modal">
+  <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+    <path d="M21 15a4 4 0 0 1-4 4H8l-5 3V7a4 4 0 0 1 4-4h10a4 4 0 0 1 4 4z"/>
+  </svg>
+  <span>Share Your Ideas</span>
+</button>
+<div class="feedback-backdrop" hidden>
+  <section class="feedback-modal" id="feedback-modal" role="dialog" aria-modal="true" aria-labelledby="feedback-title">
+    <div class="feedback-modal-header">
+      <div class="feedback-modal-heading">
+        <h2 id="feedback-title">Help us build what you need.</h2>
+        <p class="feedback-modal-intro">Tell us what tools, data, checklists, or workflow would make your experience better.</p>
+      </div>
+      <button type="button" class="feedback-close" aria-label="Close feedback form">&times;</button>
+    </div>
+    <form class="feedback-form">
+      <label class="feedback-honeypot" for="feedback-company">Company</label>
+      <input class="feedback-honeypot" id="feedback-company" name="company" type="text" tabindex="-1" autocomplete="off">
+      <div class="feedback-field">
+        <label class="feedback-label" for="feedback-idea">Your idea</label>
+        <textarea id="feedback-idea" name="feedback" maxlength="4000" required placeholder="What would make your work easier?"></textarea>
+      </div>
+      <div class="feedback-field">
+        <label class="feedback-label" for="feedback-email">(Optional) Email, if you want us to follow up.</label>
+        <input class="feedback-email-input" type="email" id="feedback-email" name="email" placeholder="you@example.com" autocomplete="email" maxlength="254">
+      </div>
+      <div class="feedback-actions">
+        <button type="submit" class="feedback-submit">SEND FEEDBACK</button>
+      </div>
+      <div class="feedback-status" role="status" aria-live="polite"></div>
+    </form>
+  </section>
+</div>
+
 <script>
 // Mobile nav toggle. The hamburger button is the only way to reach the
 // nav links on screens <=768px, so this script is required, not nice-to-have.
@@ -625,6 +654,86 @@ document.querySelectorAll('.full-analysis-link a').forEach(function(a) {
       }).catch(function() {
         showToast('Could not copy link');
       });
+    });
+  });
+})();
+
+(function initFeedbackWidget() {
+  var pill = document.querySelector('.feedback-pill');
+  var backdrop = document.querySelector('.feedback-backdrop');
+  if (!pill || !backdrop) return;
+  var form = backdrop.querySelector('.feedback-form');
+  var closeBtn = backdrop.querySelector('.feedback-close');
+  var textarea = backdrop.querySelector('textarea[name="feedback"]');
+  var emailInput = backdrop.querySelector('input[name="email"]');
+  var submitBtn = backdrop.querySelector('.feedback-submit');
+  var status = backdrop.querySelector('.feedback-status');
+  var previousFocus = null;
+  var defaultSubmit = 'SEND FEEDBACK';
+
+  function setStatus(message, kind) {
+    status.textContent = message || '';
+    status.classList.toggle('is-error', kind === 'error');
+    status.classList.toggle('is-success', kind === 'success');
+  }
+  function closeFeedback() {
+    backdrop.hidden = true;
+    form.reset();
+    submitBtn.disabled = false;
+    submitBtn.textContent = defaultSubmit;
+    setStatus('', '');
+    if (previousFocus && previousFocus.focus) previousFocus.focus();
+  }
+
+  pill.addEventListener('click', function() {
+    previousFocus = document.activeElement;
+    backdrop.hidden = false;
+    setStatus('', '');
+    requestAnimationFrame(function() { textarea.focus(); });
+  });
+  closeBtn.addEventListener('click', closeFeedback);
+  backdrop.addEventListener('click', function(e) {
+    if (e.target === backdrop) closeFeedback();
+  });
+  document.addEventListener('keydown', function(e) {
+    if (e.key === 'Escape' && !backdrop.hidden) closeFeedback();
+  });
+  form.addEventListener('submit', function(e) {
+    e.preventDefault();
+    var feedback = textarea.value.trim();
+    if (!feedback) {
+      setStatus('Please enter a note before sending.', 'error');
+      textarea.focus();
+      return;
+    }
+    submitBtn.disabled = true;
+    submitBtn.textContent = 'Sending...';
+    setStatus('', '');
+    fetch('/api/feedback', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        feedback: feedback,
+        email: emailInput ? emailInput.value.trim() : '',
+        company: (form.querySelector('input[name="company"]') || {}).value || '',
+        page_url: window.location.href,
+        page_title: document.title || 'Caracas Research'
+      })
+    })
+    .then(function(r) {
+      return r.json().then(function(data) { return { ok: r.ok, data: data }; });
+    })
+    .then(function(result) {
+      if (!result.ok || !result.data.ok) throw new Error(result.data.error || 'Feedback could not be sent.');
+      setStatus('Thank you. Your feedback was sent.', 'success');
+      form.reset();
+      submitBtn.textContent = 'Sent';
+      setTimeout(closeFeedback, 1300);
+    })
+    .catch(function(err) {
+      submitBtn.disabled = false;
+      submitBtn.textContent = defaultSubmit;
+      setStatus(err.message || 'Something went wrong. Please try again.', 'error');
     });
   });
 })();
