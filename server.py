@@ -2174,6 +2174,8 @@ def feedback():
         to="jonathan@pipelinemarketing.io",
         subject="New Caracas Research feedback",
         html_body=html_body,
+        from_override="Caracas Research Feedback <jonathan@intake.layer3labs.io>",
+        reply_to=reply_email or None,
     )
     if not result.get("success"):
         logger.error("Feedback email failed: %s", result)
