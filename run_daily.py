@@ -227,6 +227,35 @@ def main(skip_scrape: bool, skip_email: bool, dry_run: bool, report_only: bool):
         results["distribution"] = {"error": str(e)}
         console.print(f"  [yellow]![/yellow] Distribution failed (non-fatal): {e}")
 
+    # Phase 5b: Backlink outreach — send queued initial emails up to
+    # the warmup daily limit (5 → 15 → 30 → 50 based on OUTREACH_START_DATE).
+    # Always non-fatal; a failure here must never block the rest of the pipeline.
+    if not report_only:
+        console.print("\n[bold cyan]Phase 5b:[/bold cyan] Sending backlink outreach emails...")
+        try:
+            from src.outreach.pipeline import send_pending_emails
+            outreach_result = send_pending_emails(dry_run=dry_run)
+            results["outreach_send"] = outreach_result
+            sent = outreach_result.get("sent", 0)
+            failed = outreach_result.get("failed", 0)
+            cap = outreach_result.get("daily_limit", "?")
+            today = outreach_result.get("sent_today", 0)
+            if sent or failed:
+                console.print(
+                    f"  [green]✓[/green] Outreach: sent {sent}, failed {failed} "
+                    f"(daily {today}/{cap})"
+                )
+            else:
+                console.print(
+                    f"  [dim]·[/dim] Outreach: nothing to send (daily {today}/{cap})"
+                )
+        except Exception as e:
+            logger.error("Outreach send failed: %s", e, exc_info=True)
+            results["outreach_send"] = {"error": str(e)}
+            console.print(f"  [yellow]![/yellow] Outreach send failed (non-fatal): {e}")
+    else:
+        console.print("\n[dim]Phase 5b: Outreach send — SKIPPED (report-only)[/dim]")
+
     # Phase 6: SEO audit. Runs last so distribution is never delayed.
     # Crawls the local Flask app via test_client and checks meta tags,
     # structured data, headings, cluster-nav coverage, internal linking,
