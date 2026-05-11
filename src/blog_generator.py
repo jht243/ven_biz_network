@@ -168,6 +168,141 @@ def _existing_blog_keys(db) -> set[tuple[str, int]]:
     }
 
 
+# ---------------------------------------------------------------------------
+# Topic-level deduplication
+# ---------------------------------------------------------------------------
+# Source-level dedup (above) prevents the same article from generating two
+# posts. But *different* articles about the same event (e.g. four outlets
+# covering the same Chevron CEO speech) each generate their own post,
+# creating near-duplicate content that Google deprioritises via
+# "Discovered — currently not indexed."
+#
+# We use Jaccard similarity on headline word-sets: cheap, no extra
+# dependencies, and effective for the most common duplicate pattern
+# (rewording the same noun phrases).
+# ---------------------------------------------------------------------------
+
+_STOP_WORDS = frozenset(
+    "a an and are as at be by for from has have in is it its of on or that"
+    " the this to was were will with".split()
+)
+
+
+def _rough_stem(word: str) -> str:
+    """Strip common English suffixes for fuzzy matching — not a real stemmer."""
+    if word.endswith("ies") and len(word) > 4:
+        return word[:-3] + "y"
+    for suffix in ("ing", "tion", "sion", "ment", "ness", "ous", "ive", "ful"):
+        if word.endswith(suffix) and len(word) > len(suffix) + 2:
+            return word[: -len(suffix)]
+        if suffix == "ing" and word.endswith("ing") and len(word) > 5:
+            return word[:-3]
+    if word.endswith("es") and len(word) > 3:
+        return word[:-2]
+    if word.endswith("ed") and len(word) > 3:
+        return word[:-2]
+    if word.endswith("s") and not word.endswith("ss") and len(word) > 3:
+        return word[:-1]
+    return word
+
+
+def _headline_tokens(text: str) -> set[str]:
+    words = re.sub(r"[^a-z0-9\s]", "", (text or "").lower()).split()
+    return {_rough_stem(w) for w in words if w and w not in _STOP_WORDS and len(w) > 1}
+
+
+def _topic_similarity(a: set[str], b: set[str]) -> float:
+    """Overlap coefficient: fraction of the smaller set found in the larger."""
+    if not a or not b:
+        return 0.0
+    return len(a & b) / min(len(a), len(b))
+
+
+def _recent_blog_headlines(db, *, days: int = 7) -> list[tuple[str, set[str]]]:
+    cutoff = date.today() - timedelta(days=days)
+    rows = (
+        db.query(BlogPost.title)
+        .filter(BlogPost.published_date >= cutoff)
+        .all()
+    )
+    return [(r.title, _headline_tokens(r.title)) for r in rows]
+
+
+_DEDUP_HARD_THRESHOLD = 0.75
+_DEDUP_SOFT_THRESHOLD = 0.55
+
+_DEDUP_JUDGE_PROMPT = """You are a deduplication judge for an investor-focused Venezuela news site.
+
+Two headlines are shown below. Decide whether CANDIDATE covers substantially the same event, policy action, or corporate development as EXISTING — meaning a reader who read EXISTING would learn nothing new from CANDIDATE.
+
+If they cover the same underlying event (even with different framing), answer DUPLICATE.
+If they cover genuinely different events, deals, or actors that happen to share some keywords, answer UNIQUE.
+
+EXISTING: {existing}
+CANDIDATE: {candidate}
+
+Reply with a single word: DUPLICATE or UNIQUE."""
+
+
+def _llm_dedup_judge(
+    client: OpenAI,
+    candidate: str,
+    existing: str,
+) -> bool:
+    """Ask a cheap LLM whether two headlines are topically duplicate."""
+    try:
+        resp = client.chat.completions.create(
+            model=settings.openai_narrative_model,
+            messages=[{
+                "role": "user",
+                "content": _DEDUP_JUDGE_PROMPT.format(
+                    existing=existing, candidate=candidate,
+                ),
+            }],
+            temperature=0,
+            max_tokens=4,
+        )
+        answer = (resp.choices[0].message.content or "").strip().upper()
+        is_dup = "DUPLICATE" in answer
+        usage = getattr(resp, "usage", None)
+        if usage is not None:
+            _LLM_USAGE["calls"] += 1
+            _LLM_USAGE["input_tokens"] += getattr(usage, "prompt_tokens", 0)
+            _LLM_USAGE["output_tokens"] += getattr(usage, "completion_tokens", 0)
+        logger.info(
+            "blog_generator: dedup judge %r vs %r → %s",
+            candidate[:60], existing[:60], answer,
+        )
+        return is_dup
+    except Exception as exc:
+        logger.warning("blog_generator: dedup judge failed, treating as unique: %s", exc)
+        return False
+
+
+def _is_topic_duplicate(
+    headline: str,
+    recent: list[tuple[str, set[str]]],
+    *,
+    client: OpenAI | None = None,
+) -> str | None:
+    """Return the existing title if `headline` is too similar, else None.
+
+    Three-tier check:
+      >= 0.75 overlap  →  auto-duplicate (no LLM call)
+      0.55–0.75        →  borderline, ask LLM to decide
+      < 0.55           →  auto-unique
+    """
+    tokens = _headline_tokens(headline)
+    for existing_title, existing_tokens in recent:
+        score = _topic_similarity(tokens, existing_tokens)
+        if score >= _DEDUP_HARD_THRESHOLD:
+            return existing_title
+        if score >= _DEDUP_SOFT_THRESHOLD and client is not None:
+            if _llm_dedup_judge(client, headline, existing_title):
+                return existing_title
+    return None
+
+
 def _build_post_payload(
     client: OpenAI,
     *,
@@ -393,6 +528,7 @@ def run_blog_generation(*, budget: int | None = None) -> dict:
             return {"generated": 0, "skipped": "budget_zero"}
 
         existing = _existing_blog_keys(db)
+        recent_headlines = _recent_blog_headlines(db, days=7)
 
         ext_candidates = [
             r for r in _candidate_external(db) if ("external_articles", r.id) not in existing
@@ -420,10 +556,24 @@ def run_blog_generation(*, budget: int | None = None) -> dict:
 
         generated = 0
         failed = 0
+        skipped_dupes = 0
         total_cost = 0.0
         slugs: list[str] = []
 
-        for relevance, source_table, item in ranked[:budget]:
+        for relevance, source_table, item in ranked[:budget + 20]:
+            if generated >= budget:
+                break
+
+            headline = (item.analysis_json or {}).get("headline_short") or item.headline or ""
+            dup_of = _is_topic_duplicate(headline, recent_headlines, client=client)
+            if dup_of:
+                logger.info(
+                    "blog_generator: skipping %s/%d — topic duplicate of %r",
+                    source_table, item.id, dup_of,
+                )
+                skipped_dupes += 1
+                continue
+
             meta = _entry_metadata(item, source_table)
             try:
                 payload, usage = _build_post_payload(
@@ -451,6 +601,7 @@ def run_blog_generation(*, budget: int | None = None) -> dict:
                 generated += 1
                 total_cost += usage.get("cost_usd") or 0.0
                 slugs.append(post.slug)
+                recent_headlines.append((post.title, _headline_tokens(post.title)))
                 logger.info(
                     "blog_generator: wrote %s (relevance=%d, %d words, $%.4f)",
                     post.slug, relevance, post.word_count, usage.get("cost_usd") or 0.0,
@@ -463,6 +614,7 @@ def run_blog_generation(*, budget: int | None = None) -> dict:
         return {
             "generated": generated,
             "failed": failed,
+            "skipped_topic_dupes": skipped_dupes,
             "candidates": len(ranked),
             "budget": budget,
             "estimated_cost_usd": round(total_cost, 4),
