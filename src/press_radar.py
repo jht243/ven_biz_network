@@ -38,7 +38,7 @@ logger = logging.getLogger(__name__)
 
 MIN_RELEVANCE_FOR_RADAR = 6      # Only evaluate articles the pipeline already scored 6+
 MIN_PRESS_SCORE_TO_EMAIL = 7     # Only email if the press-radar LLM scores 7+
-LOOKBACK_DAYS = 2                # Rolling window: today + yesterday
+LOOKBACK_DAYS = 1                # Only today — press releases must be about something new
 
 # Sources accepted as primary / near-primary intelligence
 PRIMARY_SOURCES: frozenset[SourceType] = frozenset({
@@ -161,6 +161,10 @@ def _as_article_dict(row, source_type: SourceType) -> dict:
         "source_url": getattr(row, "source_url", "") or "",
         "body_text": (getattr(row, "body_text", None) or getattr(row, "ocr_text", None) or "")[:2000],
         "analysis_json": analysis,
+        # Carry extra_metadata so mutable-page sources can be filtered on
+        # whether they actually have new structured content (e.g. new trade leads).
+        "extra_metadata": getattr(row, "extra_metadata", None) or {},
+        "article_type": getattr(row, "article_type", None) or "",
     }
 
 
@@ -494,6 +498,17 @@ def run_press_radar(dry_run: bool = False) -> dict:
 
         if relevance < MIN_RELEVANCE_FOR_RADAR:
             continue
+
+        # ITA trade pages (FAQ, hub, contacts) are static reference documents
+        # whose published_date is always today because the scraper stamps them
+        # with the run date. Only treat an ITA article as a radar candidate if
+        # it has confirmed new trade leads. An empty new_trade_leads list means
+        # the upsert found a content change but no new structured lead rows —
+        # not press-release material.
+        if art["source"] == SourceType.ITA_TRADE:
+            new_leads = art["extra_metadata"].get("new_trade_leads")
+            if not new_leads:
+                continue
 
         summary["evaluated"] += 1
         try:

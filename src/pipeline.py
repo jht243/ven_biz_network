@@ -426,6 +426,19 @@ def _upsert_mutable_article(
         logger.debug("Mutable-page article unchanged, skipping update: %s", a.source_url)
         return
 
+    # For ITA pages that carry no trade leads at all (FAQ, hub, contacts),
+    # a body-text change is cosmetic — a nav-menu tweak or copy edit. There
+    # is no structured investment signal to re-analyze, so skip the upsert
+    # entirely rather than flooding the analysis queue with noise.
+    has_fresh_leads = bool(fresh_leads)
+    has_stored_leads = bool(stored_leads)
+    if not has_fresh_leads and not has_stored_leads:
+        logger.debug(
+            "Mutable-page article body changed but no trade leads present — skipping upsert: %s",
+            a.source_url,
+        )
+        return
+
     # Compute the lead-level diff so downstream consumers (analyzer, press
     # radar) see exactly what is new rather than the full page.
     fresh_leads: list[dict] = (a.extra_metadata or {}).get("trade_leads", [])
