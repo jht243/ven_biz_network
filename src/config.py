@@ -181,6 +181,14 @@ class Settings(BaseSettings):
     semrush_api_key: str = ""
     semrush_database: str = "us"
 
+    # ── Press-Release Radar ───────────────────────────────────────────
+    # Recipient for the daily press-radar digest (qualifying findings only).
+    # Override via PRESS_RADAR_RECIPIENT_EMAIL env var.
+    press_radar_recipient_email: str = "jonathan@pipelinemarketing.io"
+    # From-address for press radar emails. Must use a verified Resend domain.
+    # Override via PRESS_RADAR_FROM_EMAIL env var.
+    press_radar_from_email: str = "Press Radar <press@intake.layer3labs.io>"
+
     # ── Backlink outreach MVP ─────────────────────────────────────────
     resend_outreach_from: str = "Jonathan <jonathan@intake.layer3labs.io>"
     resend_outreach_reply_to: str = "jonathan@layer3labs.io"

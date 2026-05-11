@@ -65,6 +65,8 @@ def _email_candidates(text: str, domain: str) -> list[str]:
             continue
         if _is_disallowed_registry_or_privacy_email(email):
             continue
+        if _is_bogus_scraped_email(email):
+            continue
         if "." not in host:
             continue
         emails.append(email)
@@ -151,6 +153,29 @@ def _is_disallowed_registry_or_privacy_email(email: str) -> bool:
     if any(local_l.startswith(p) for p in WHOIS_SKIP_LOCAL_PREFIX):
         return True
     if any(host_l == d or host_l.endswith("." + d) for d in WHOIS_SKIP_DOMAINS):
+        return True
+    return False
+
+
+# TLDs that are almost never real email hosts (asset extensions mistaken for domains).
+_BOGUS_EMAIL_TLDS = frozenset({
+    "png", "jpg", "jpeg", "gif", "svg", "webp", "ico", "pdf", "avif", "mp4",
+    "css", "js", "json", "xml", "html", "woff", "woff2", "ttf",
+})
+
+
+def _is_bogus_scraped_email(email: str) -> bool:
+    """Reject filenames, sentry DSN-shaped locals, and other junk as 'emails'."""
+    if not email or "@" not in email:
+        return True
+    local, _, host = email.partition("@")
+    if "." in host:
+        tld = host.rsplit(".", 1)[-1].lower()
+        if tld in _BOGUS_EMAIL_TLDS:
+            return True
+    if host.lower() == "sentry.io" and re.fullmatch(r"[a-f0-9]{20,}", local, re.I):
+        return True
+    if re.search(r"\.(png|jpg|jpeg|gif|svg|webp|avif|ico|pdf)$", local, re.I):
         return True
     return False
 

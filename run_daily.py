@@ -97,6 +97,37 @@ def main(skip_scrape: bool, skip_email: bool, dry_run: bool, report_only: bool):
     else:
         console.print("\n[dim]Phase 2b: Blog generation — SKIPPED (report-only)[/dim]")
 
+    # Phase 2c: Press-Release Radar. Scans primary-source articles analyzed in
+    # Phase 2 for original, reporter-worthy findings. Only fires if at least one
+    # article scores >= 7/10 on press-release potential. Always non-fatal.
+    if not report_only:
+        console.print("\n[bold cyan]Phase 2c:[/bold cyan] Scanning for press-release candidates...")
+        try:
+            from src.press_radar import run_press_radar
+            radar_result = run_press_radar(dry_run=dry_run)
+            results["press_radar"] = radar_result
+            scanned   = radar_result.get("scanned", 0)
+            evaluated = radar_result.get("evaluated", 0)
+            candidates = radar_result.get("candidates", 0)
+            emailed   = radar_result.get("emailed", 0)
+            if candidates:
+                console.print(
+                    f"  [green]✓[/green] Press radar: {candidates} candidate(s) found "
+                    f"(scanned {scanned}, evaluated {evaluated}) — "
+                    f"{'email sent' if emailed else 'dry-run / send skipped'}"
+                )
+            else:
+                console.print(
+                    f"  [dim]·[/dim] Press radar: no qualifying candidates "
+                    f"(scanned {scanned}, evaluated {evaluated})"
+                )
+        except Exception as e:
+            logger.error("Press radar failed: %s", e, exc_info=True)
+            results["press_radar"] = {"error": str(e)}
+            console.print(f"  [yellow]![/yellow] Press radar failed (non-fatal): {e}")
+    else:
+        console.print("\n[dim]Phase 2c: Press radar — SKIPPED (report-only)[/dim]")
+
     # Phase 3: Generate Report
     console.print("\n[bold cyan]Phase 3:[/bold cyan] Generating report...")
     try:

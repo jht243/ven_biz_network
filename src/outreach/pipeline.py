@@ -353,19 +353,29 @@ def _sent_today_count(db) -> int:
     )
 
 
-def send_pending_emails(*, limit: int | None = None, dry_run: bool = False) -> dict:
+def send_pending_emails(
+    *,
+    limit: int | None = None,
+    dry_run: bool = False,
+    ignore_daily_limit: bool = False,
+) -> dict:
     """Send initial emails for queued qualified prospects."""
     init_db()
     db = SessionLocal()
     try:
         daily_cap = _daily_limit()
         already_sent = _sent_today_count(db)
-        remaining = max(0, daily_cap - already_sent)
-        if remaining == 0 and not dry_run:
-            logger.info("Daily send limit reached (%d/%d). Skipping.", already_sent, daily_cap)
-            return {"attempted": 0, "sent": 0, "failed": 0, "daily_limit": daily_cap, "sent_today": already_sent}
+        if ignore_daily_limit:
+            if limit is None:
+                raise ValueError("limit is required when ignore_daily_limit is true")
+            effective_limit = limit
+        else:
+            remaining = max(0, daily_cap - already_sent)
+            if remaining == 0 and not dry_run:
+                logger.info("Daily send limit reached (%d/%d). Skipping.", already_sent, daily_cap)
+                return {"attempted": 0, "sent": 0, "failed": 0, "daily_limit": daily_cap, "sent_today": already_sent}
 
-        effective_limit = min(remaining, limit) if limit else remaining
+            effective_limit = min(remaining, limit) if limit else remaining
         query = (
             db.query(Prospect)
             .filter(Prospect.outreach_status == OutreachStatus.QUEUED)
@@ -377,7 +387,14 @@ def send_pending_emails(*, limit: int | None = None, dry_run: bool = False) -> d
     finally:
         db.close()
 
-    summary = {"attempted": 0, "sent": 0, "failed": 0, "daily_limit": daily_cap, "sent_today": already_sent}
+    summary = {
+        "attempted": 0,
+        "sent": 0,
+        "failed": 0,
+        "daily_limit": daily_cap,
+        "sent_today": already_sent,
+        "ignore_daily_limit": ignore_daily_limit,
+    }
     for prospect_id in prospect_ids:
         summary["attempted"] += 1
         ok = send_email(prospect_id, 1, dry_run=dry_run)

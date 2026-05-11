@@ -283,7 +283,22 @@ def _persist_articles(articles: list[ScrapedArticle]) -> list[int]:
          same wire story landing via different URLs (e.g. a Reuters
          piece we already have via GDELT, or the same MSN syndication
          surfaced through two different RSS queries).
+
+    Special case — mutable-page sources (ITA_TRADE):
+      These sources publish a single stable URL whose page content changes
+      over time (e.g. trade.gov/venezuela-trade-leads adds new leads in
+      place rather than publishing a new URL per lead). On a URL collision
+      we compare a lightweight content fingerprint; if the fingerprint
+      differs we update body_text, extra_metadata, published_date, and
+      reset status to SCRAPED so the analysis pipeline re-evaluates the
+      refreshed content.
     """
+    # Sources whose page content changes in-place. On a URL collision,
+    # upsert instead of silently skipping.
+    MUTABLE_PAGE_SOURCES: frozenset[SourceType] = frozenset({
+        SourceType.ITA_TRADE,
+    })
+
     new_ids = []
     db = SessionLocal()
 
@@ -345,13 +360,118 @@ def _persist_articles(articles: list[ScrapedArticle]) -> list[int]:
                 _index_headline(a.headline, recent_headlines)
             except IntegrityError:
                 nested.rollback()
-                logger.debug("Duplicate article skipped: %s", a.source_url)
+                # For mutable-page sources, check whether content has changed
+                # and upsert if it has.
+                if source_type in MUTABLE_PAGE_SOURCES:
+                    _upsert_mutable_article(db, a, source_type, cred, new_ids)
+                else:
+                    logger.debug("Duplicate article skipped: %s", a.source_url)
 
         db.commit()
     finally:
         db.close()
 
     return new_ids
+
+
+def _upsert_mutable_article(
+    db,
+    a: "ScrapedArticle",
+    source_type: "SourceType",
+    cred: "CredibilityTier",
+    new_ids: list[int],
+) -> None:
+    """
+    Update an existing mutable-page article row when its content has changed.
+
+    Computes a full-content fingerprint (entire body_text + entire trade_leads
+    list) to detect any addition anywhere on the page. When the fingerprint
+    differs, computes the exact lead-level diff so the LLM analyzer and press
+    radar receive precisely which rows are new rather than re-reading the whole
+    page and guessing. The diff is stored in extra_metadata["new_trade_leads"]
+    and the headline is updated to surface the count of new leads.
+    """
+    import hashlib, json as _json
+
+    existing = (
+        db.query(ExternalArticleEntry)
+        .filter(
+            ExternalArticleEntry.source == source_type,
+            ExternalArticleEntry.source_url == a.source_url,
+        )
+        .first()
+    )
+    if existing is None:
+        return
+
+    def _lead_key(lead: dict) -> tuple:
+        return (lead.get("equipment", ""), lead.get("hs_code", ""), lead.get("units_requested"))
+
+    def _fp(body: str | None, meta: dict | None) -> str:
+        # Hash the ENTIRE body text and the full trade-leads list so a new
+        # row appended anywhere — including the bottom of a 30-row table —
+        # changes the digest. Stable sort so harmless reordering is ignored.
+        leads_key = ""
+        if meta and "trade_leads" in meta:
+            leads_key = _json.dumps(
+                sorted(meta["trade_leads"], key=_lead_key),
+                sort_keys=True,
+            )
+        return hashlib.md5(((body or "") + leads_key).encode()).hexdigest()
+
+    fresh_fp = _fp(a.body_text, a.extra_metadata)
+    stored_fp = _fp(existing.body_text, existing.extra_metadata or {})
+
+    if fresh_fp == stored_fp:
+        logger.debug("Mutable-page article unchanged, skipping update: %s", a.source_url)
+        return
+
+    # Compute the lead-level diff so downstream consumers (analyzer, press
+    # radar) see exactly what is new rather than the full page.
+    fresh_leads: list[dict] = (a.extra_metadata or {}).get("trade_leads", [])
+    stored_leads: list[dict] = (existing.extra_metadata or {}).get("trade_leads", [])
+    stored_keys: set[tuple] = {_lead_key(l) for l in stored_leads}
+    new_leads: list[dict] = [l for l in fresh_leads if _lead_key(l) not in stored_keys]
+
+    removed_keys: set[tuple] = {_lead_key(l) for l in fresh_leads}
+    removed_leads: list[dict] = [l for l in stored_leads if _lead_key(l) not in removed_keys]
+
+    # Annotate the article so the LLM sees a focused change summary.
+    updated_meta = dict(a.extra_metadata or {})
+    updated_meta["new_trade_leads"] = new_leads
+    updated_meta["removed_trade_leads"] = removed_leads
+    updated_meta["previous_lead_count"] = len(stored_leads)
+    updated_meta["current_lead_count"] = len(fresh_leads)
+
+    # Build a headline that makes the delta immediately legible to the LLM.
+    if new_leads:
+        sectors = sorted({l.get("sector", "General") for l in new_leads})
+        sector_str = ", ".join(sectors)
+        headline = (
+            f"trade.gov Venezuela Trade Leads — {len(new_leads)} new lead"
+            f"{'s' if len(new_leads) != 1 else ''} added"
+            f" ({sector_str}): {len(fresh_leads)} total"
+        )
+    else:
+        headline = (
+            f"trade.gov Venezuela Trade Leads — content updated "
+            f"({len(fresh_leads)} leads; {len(removed_leads)} removed)"
+        )
+
+    existing.body_text = a.body_text
+    existing.extra_metadata = updated_meta
+    existing.headline = headline
+    existing.published_date = a.published_date
+    existing.status = GazetteStatus.SCRAPED
+    db.flush()
+    new_ids.append(existing.id)
+    logger.info(
+        "ITA trade leads updated: +%d new, -%d removed, %d total [%s]",
+        len(new_leads),
+        len(removed_leads),
+        len(fresh_leads),
+        source_type,
+    )
 
 
 # ── headline dedup ─────────────────────────────────────────────────────

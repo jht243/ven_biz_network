@@ -85,9 +85,16 @@ def email_cmd(limit: int | None) -> None:
 @cli.command("send")
 @click.option("--limit", default=None, type=int, help="Max initial emails to send")
 @click.option("--dry-run", is_flag=True, help="Log emails without sending through Resend")
-def send_cmd(limit: int | None, dry_run: bool) -> None:
+@click.option(
+    "--ignore-daily-limit",
+    is_flag=True,
+    help="Send up to --limit regardless of warmup daily cap (use with --limit)",
+)
+def send_cmd(limit: int | None, dry_run: bool, ignore_daily_limit: bool) -> None:
     """Send queued initial outreach emails through Resend."""
-    _print_summary(send_pending_emails(limit=limit, dry_run=dry_run))
+    _print_summary(
+        send_pending_emails(limit=limit, dry_run=dry_run, ignore_daily_limit=ignore_daily_limit)
+    )
 
 
 @cli.command("check")
