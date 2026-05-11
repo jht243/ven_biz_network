@@ -260,6 +260,34 @@
         {% endif %}
       </ul>
 
+      {% if designation_notices %}
+      <h2>Federal Register designation notices</h2>
+      <p>
+        OFAC publishes a Federal Register notice for each sanctions action.
+        The following
+        {{ 'notice was' if designation_notices|length == 1 else 'notices were' }}
+        published around the time {{ profile.display_name }} was designated:
+      </p>
+      {% for notice in designation_notices %}
+      <div style="border:1px solid #d8dde6; border-left:3px solid {% if notice.name_match %}#002b5e{% else %}#aab4c2{% endif %}; border-radius:3px; padding:12px 16px; margin-bottom:8px; background:#fff;">
+        <div style="font-family:var(--font-serif); font-weight:700; color:#002b5e; font-size:15px;">
+          {% if notice.url %}<a href="{{ notice.url }}" rel="nofollow">{{ notice.headline }}</a>{% else %}{{ notice.headline }}{% endif %}
+        </div>
+        <div style="font-size:12px; color:#666; margin-top:4px;">
+          Federal Register
+          {% if notice.document_number %}· Doc. {{ notice.document_number }}{% endif %}
+          {% if notice.date %}· Published {{ notice.date }}{% endif %}
+          {% if notice.name_match %}<span style="display:inline-block; background:#002b5e; color:#fff; font-size:10px; font-weight:700; padding:1px 6px; border-radius:2px; margin-left:6px; text-transform:uppercase; letter-spacing:0.5px;">Names this {{ profile.category_singular }}</span>{% endif %}
+        </div>
+        {% if notice.pdf_url %}
+        <div style="margin-top:6px;">
+          <a href="{{ notice.pdf_url }}" rel="nofollow" style="font-size:13px;">View official PDF</a>
+        </div>
+        {% endif %}
+      </div>
+      {% endfor %}
+      {% endif %}
+
       <h2>Useful tools and explainers</h2>
       <ul>
         <li><a href="/tools/ofac-venezuela-sanctions-checker">Search the full Venezuela SDN list</a> — paste any name to see if it's currently designated.</li>

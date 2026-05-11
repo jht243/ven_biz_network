@@ -780,6 +780,94 @@ def sector_stats() -> dict[str, int]:
     return counts
 
 
+def find_designation_notices(profile: SDNProfile, *, limit: int = 3) -> list[dict]:
+    """Find Federal Register notices related to this entity's designation.
+
+    Two-tier matching:
+      1. Name match — FR notice headline or abstract mentions the entity
+         name. High confidence: the notice specifically references this
+         SDN entry.
+      2. Date match — FR notice published within ±7 days of when our
+         scraper first detected the SDN entry. Good confidence: OFAC
+         publishes the FR notice within a few days of the designation
+         action, and Venezuela-specific actions are infrequent enough
+         that collisions are rare.
+
+    Returns dicts ready for template rendering, sorted newest first.
+    """
+    from datetime import timedelta
+    from src.models import ExternalArticleEntry, SessionLocal, SourceType, init_db
+    from sqlalchemy import and_, func as _func
+
+    if not profile.designation_date:
+        return []
+
+    init_db()
+    db = SessionLocal()
+    try:
+        from datetime import date as _date
+        try:
+            desig_date = _date.fromisoformat(profile.designation_date)
+        except (ValueError, TypeError):
+            return []
+
+        date_lo = desig_date - timedelta(days=7)
+        date_hi = desig_date + timedelta(days=7)
+
+        # All FR notices in the date window
+        q = (
+            db.query(ExternalArticleEntry)
+            .filter(
+                ExternalArticleEntry.source == SourceType.FEDERAL_REGISTER,
+                ExternalArticleEntry.published_date >= date_lo,
+                ExternalArticleEntry.published_date <= date_hi,
+            )
+            .order_by(ExternalArticleEntry.published_date.desc())
+            .limit(20)
+        )
+        candidates = q.all()
+        if not candidates:
+            return []
+
+        # Build name needles for confidence scoring
+        needles: list[str] = []
+        if profile.bucket == "individuals":
+            surname = _surname(profile.raw_name)
+            if surname and len(surname) >= 4:
+                needles.append(surname.lower())
+        if len(profile.raw_name) >= 4:
+            needles.append(profile.raw_name.lower())
+        if profile.display_name and len(profile.display_name) >= 4:
+            needles.append(profile.display_name.lower())
+
+        results: list[dict] = []
+        for row in candidates:
+            haystack = (
+                (row.headline or "") + " " + (row.body_text or "")
+            ).lower()
+
+            name_match = any(n in haystack for n in needles)
+
+            meta = row.extra_metadata or {}
+            results.append({
+                "headline": row.headline,
+                "url": row.source_url,
+                "pdf_url": meta.get("pdf_url"),
+                "document_number": meta.get("document_number"),
+                "date": row.published_date.isoformat() if row.published_date else None,
+                "name_match": name_match,
+            })
+
+        # Name matches first, then date-only matches; newest first within
+        # each tier.
+        results.sort(key=lambda r: (not r["name_match"], r["date"] or ""), reverse=False)
+        results.sort(key=lambda r: r["name_match"], reverse=True)
+
+        return results[:limit]
+    finally:
+        db.close()
+
+
 def find_related_news(profile: SDNProfile, *, limit: int = 5) -> list[dict]:
     """Find recent analyzed news articles that mention this entity by name.
 

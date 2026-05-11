@@ -5586,7 +5586,8 @@ def sanctions_index_page(bucket: str):
 def sanctions_profile_page(bucket: str, slug: str):
     """One OFAC SDN entry's permanent, indexable profile page."""
     from src.data.sdn_profiles import (
-        ENTITY_BUCKETS, family_members, find_related_news, get_profile,
+        ENTITY_BUCKETS, family_members, find_designation_notices,
+        find_related_news, get_profile,
         list_profiles, resolve_linked_to, stats as sdn_stats,
     )
     from src.page_renderer import _env, _base_url, _iso, settings as _s
@@ -5603,6 +5604,7 @@ def sanctions_profile_page(bucket: str, slug: str):
         family = family_members(profile)
         linked_to = resolve_linked_to(profile)
         related_news = find_related_news(profile)
+        designation_notices = find_designation_notices(profile)
         s = sdn_stats()
 
         # Up to 6 alphabetical neighbors of the same bucket — gives Googlebot
@@ -5967,6 +5969,7 @@ def sanctions_profile_page(bucket: str, slug: str):
             faq_block=faq_block,
             dossier_url=dossier_url,
             designation_context=designation_context,
+            designation_notices=designation_notices,
         )
         return Response(html, mimetype="text/html")
     except HTTPException:
