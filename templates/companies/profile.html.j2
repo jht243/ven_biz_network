@@ -141,6 +141,12 @@
 
     <div class="body">
 
+      {# ── Sector context ────────────────────────────────────────── #}
+      {% if sector_context %}
+      <h2 id="sector-context">{{ report.company.sector }} sector: Venezuela compliance landscape</h2>
+      <p>{{ sector_context }}</p>
+      {% endif %}
+
       {# ── SDN matches ─────────────────────────────────────────── #}
       <h2 id="ofac-matches">OFAC Venezuela SDN matches</h2>
       {% if report.sdn_matches %}

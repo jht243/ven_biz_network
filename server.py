@@ -5848,6 +5848,107 @@ def sanctions_profile_page(bucket: str, slug: str):
         except Exception:
             dossier_url = None
 
+        # ── Contextual designation summary ───────────────────────────
+        # A unique paragraph per entity explaining the significance of
+        # the designation, assembled from sector, program, linked
+        # entities, and parsed fields. Adds substantive content that
+        # differentiates this page from template boilerplate.
+        _eo_context = {
+            "VENEZUELA-EO13692": (
+                "Executive Order 13692, signed in 2015, targets individuals involved in "
+                "the erosion of human rights guarantees, persecution of political opponents, "
+                "curtailment of press freedoms, use of violence against antigovernment "
+                "protests, and significant public corruption in Venezuela."
+            ),
+            "VENEZUELA-EO13850": (
+                "Executive Order 13850, signed in 2018, targets persons operating in the "
+                "gold sector of the Venezuelan economy and those responsible for Venezuela's "
+                "deepening humanitarian crisis, including misuse of government programs and "
+                "corruption in the public sector."
+            ),
+            "VENEZUELA-EO13884": (
+                "Executive Order 13884, signed in 2019, blocks all property and interests "
+                "in property of the Government of Venezuela that are within US jurisdiction. "
+                "It is the broadest Venezuela sanctions instrument, covering any entity in "
+                "which the Government of Venezuela owns a 50% or greater interest."
+            ),
+            "VENEZUELA": (
+                "The omnibus Venezuela sanctions program consolidates designations under "
+                "multiple executive orders targeting the Maduro government, state-owned "
+                "enterprises, and individuals enabling the regime's activities."
+            ),
+        }
+        _sector_context = {
+            "military": (
+                "is classified within the military and security sector of Venezuela's "
+                "sanctioned apparatus. Designations in this sector typically target senior "
+                "officers of the Bolivarian National Armed Forces (FANB), the Bolivarian "
+                "National Guard (GNB), the Directorate of Military Counterintelligence "
+                "(DGCIM), or the Bolivarian Intelligence Service (SEBIN) — institutions "
+                "that the US Treasury identifies as enabling regime repression."
+            ),
+            "economic": (
+                "falls within the economic and financial sector of Venezuela's sanctions "
+                "landscape. This sector encompasses PDVSA and its subsidiaries, the Central "
+                "Bank of Venezuela (BCV), state mining operations, and the financial "
+                "intermediaries that facilitate transactions for the Maduro government's "
+                "oil, gold, and sovereign debt operations."
+            ),
+            "diplomatic": (
+                "is associated with Venezuela's diplomatic corps. Designations in this "
+                "sector target ambassadors, foreign-ministry officials, and diplomatic "
+                "representatives whom the US Treasury identifies as advancing the Maduro "
+                "government's interests abroad or undermining democratic processes."
+            ),
+            "governance": (
+                "falls within the governance and political sector of Venezuela's sanctions "
+                "framework. This sector covers officials of the Asamblea Nacional "
+                "Constituyente, Supreme Tribunal of Justice (TSJ) magistrates, electoral "
+                "council (CNE) officials, governors, mayors, and ministers designated for "
+                "their role in undermining democratic governance and the rule of law."
+            ),
+        }
+
+        ctx_parts = []
+        ctx_parts.append(
+            f"{profile.display_name} "
+            + _sector_context.get(profile.sector, "is designated under Venezuela-related OFAC sanctions.")
+        )
+        eo_text = _eo_context.get(profile.program)
+        if eo_text:
+            ctx_parts.append(eo_text)
+        if linked_to:
+            linked_names = [raw for raw, _ in linked_to[:3]]
+            if len(linked_names) == 1:
+                ctx_parts.append(
+                    f"OFAC's listing explicitly links {profile.display_name} to "
+                    f"{linked_names[0]}, indicating a documented relationship of "
+                    f"ownership, control, or beneficial interest."
+                )
+            else:
+                ctx_parts.append(
+                    f"OFAC's listing explicitly links {profile.display_name} to "
+                    f"{', '.join(linked_names[:-1])} and {linked_names[-1]}, "
+                    f"indicating documented relationships of ownership, control, "
+                    f"or beneficial interest."
+                )
+        if profile.bucket == "vessels":
+            ctx_parts.append(
+                f"As a designated vessel, {profile.display_name} is blocked property "
+                f"under US sanctions law. Any port, refinery, or shipping insurer under "
+                f"US jurisdiction is prohibited from servicing this vessel, and the "
+                f"designation effectively restricts its ability to carry Venezuelan crude "
+                f"or refined products in international commerce."
+            )
+        elif profile.bucket == "aircraft":
+            ctx_parts.append(
+                f"As a designated aircraft, {profile.display_name} is blocked property "
+                f"under US sanctions law. Aviation service providers, lessors, and "
+                f"insurers under US jurisdiction are prohibited from servicing this "
+                f"aircraft, and the designation restricts its operational capacity."
+            )
+        designation_context = " ".join(ctx_parts)
+
         template = _env.get_template("sanctions/profile.html.j2")
         html = template.render(
             profile=profile,
@@ -5865,6 +5966,7 @@ def sanctions_profile_page(bucket: str, slug: str):
             today_iso=today_iso,
             faq_block=faq_block,
             dossier_url=dossier_url,
+            designation_context=designation_context,
         )
         return Response(html, mimetype="text/html")
     except HTTPException:
@@ -6989,6 +7091,115 @@ def companies_profile_page(slug: str):
             },
         ]
 
+        # ── Sector context paragraph ────────────────────────────────
+        # Adds unique, sector-specific analysis for every company page —
+        # especially valuable for "no exposure" companies where the page
+        # would otherwise be almost entirely template boilerplate.
+        _sector_venezuela_context = {
+            "Information Technology": (
+                "Technology companies generally face low direct Venezuela exposure. "
+                "However, cloud-services providers, enterprise-software vendors, and "
+                "semiconductor companies should evaluate whether their products reach "
+                "Venezuelan end-users through distributors or resellers, which may "
+                "require OFAC general-license coverage. Software licensing to "
+                "Venezuelan government entities is broadly prohibited under EO 13884."
+            ),
+            "Health Care": (
+                "Healthcare and pharmaceutical companies operate under a partial "
+                "humanitarian carve-out: OFAC General License 4 authorizes exports of "
+                "food, medicine, and medical devices to Venezuela, provided the "
+                "transaction does not involve a blocked person or entity beyond the "
+                "Government of Venezuela itself. Companies in this sector should "
+                "verify that payment channels comply with OFAC guidance on "
+                "humanitarian trade and that no SDN-listed intermediary is involved."
+            ),
+            "Financials": (
+                "Financial-sector companies carry elevated Venezuela compliance risk. "
+                "US banks must block transactions involving SDN-listed Venezuelan "
+                "persons and entities, and correspondent banking relationships with "
+                "Venezuelan financial institutions are subject to heightened due "
+                "diligence. The Central Bank of Venezuela (BCV) and Banco de Venezuela "
+                "are themselves SDN-designated, meaning any dollar-clearing activity "
+                "involving these institutions is prohibited."
+            ),
+            "Energy": (
+                "Energy companies have the most direct Venezuela exposure profile "
+                "among S&P 500 sectors. Venezuela holds the world's largest proved "
+                "crude reserves, and PDVSA — the state oil company — is SDN-designated. "
+                "OFAC General License 41 (Chevron) and GL 44 authorize limited "
+                "oil-sector operations, but any new investment, drilling, or joint "
+                "venture requires specific OFAC licensing. Crude imports from Venezuela "
+                "are subject to secondary-sanctions risk for non-US parties."
+            ),
+            "Materials": (
+                "Materials companies may encounter Venezuela exposure through gold, "
+                "bauxite, coltan, and other mineral supply chains. EO 13850 specifically "
+                "targets persons operating in Venezuela's gold sector, and OFAC has "
+                "designated several Venezuelan mining entities. Companies sourcing raw "
+                "materials from Latin American supply chains should screen for Venezuelan "
+                "origin and intermediaries connected to state mining operations."
+            ),
+            "Industrials": (
+                "Industrial companies face Venezuela exposure primarily through "
+                "equipment exports, infrastructure contracts, and aftermarket services. "
+                "The EO 13884 government-block means that contracts with Venezuelan "
+                "state agencies, state-owned enterprises, or entities 50%-or-more owned "
+                "by the Government of Venezuela require OFAC licensing. Companies with "
+                "Latin American operations should monitor whether subcontractors or "
+                "joint-venture partners have Venezuelan government ties."
+            ),
+            "Consumer Discretionary": (
+                "Consumer discretionary companies typically have limited direct Venezuela "
+                "exposure, though companies with Latin American retail, e-commerce, or "
+                "automotive distribution networks should evaluate whether goods or "
+                "services reach Venezuelan consumers through third-country channels. "
+                "Franchise agreements and brand-licensing arrangements with Venezuelan "
+                "counterparties may implicate EO 13884 if the local partner has "
+                "government ownership."
+            ),
+            "Consumer Staples": (
+                "Consumer staples companies benefit from OFAC's humanitarian carve-outs "
+                "for food and agricultural products, but the exemption does not extend "
+                "to transactions with SDN-listed persons beyond the Government of "
+                "Venezuela designation. Companies with bottling, distribution, or "
+                "franchise operations in Venezuela — such as Coca-Cola FEMSA or "
+                "PepsiCo's Frito-Lay — should verify that local operating entities "
+                "and payment channels remain OFAC-compliant."
+            ),
+            "Utilities": (
+                "Utilities companies generally have minimal direct Venezuela exposure, "
+                "but those with Latin American power-generation or gas-pipeline assets "
+                "should monitor cross-border energy flows. Venezuela's electricity "
+                "grid and gas infrastructure involve state-owned entities that fall "
+                "under the EO 13884 government block, meaning any joint operations "
+                "or interconnection agreements may require OFAC licensing."
+            ),
+            "Real Estate": (
+                "Real estate companies face Venezuela exposure primarily through "
+                "blocked-property obligations. Under OFAC regulations, any US real "
+                "property interest owned by an SDN-listed Venezuelan person or entity "
+                "must be blocked and reported. REITs and property managers with "
+                "commercial or residential holdings should screen tenant and investor "
+                "lists against the Venezuela SDN designations."
+            ),
+            "Communication Services": (
+                "Communications companies may encounter Venezuela compliance "
+                "considerations around telecommunications services, content licensing, "
+                "and advertising revenue. While basic telecommunications to Venezuela "
+                "are generally authorized, providing specialized services to "
+                "SDN-listed media outlets, government broadcasters, or state-controlled "
+                "telecommunications entities may require OFAC licensing under EO 13884."
+            ),
+        }
+        sector_context = _sector_venezuela_context.get(company.sector, (
+            f"Companies in the {company.sector} sector should evaluate their "
+            f"Venezuela compliance posture by screening counterparties, supply "
+            f"chains, and distribution channels against OFAC's Venezuela SDN "
+            f"list. Even where a company has no direct Venezuela operations, "
+            f"indirect exposure through subsidiaries, joint ventures, or "
+            f"third-country intermediaries can create compliance obligations."
+        ))
+
         template = _env.get_template("companies/profile.html.j2")
         html = template.render(
             report=report,
@@ -7001,6 +7212,7 @@ def companies_profile_page(slug: str):
             today_iso=today_iso,
             faq_block=faq_block,
             trade_screening_links=trade_screening_links,
+            sector_context=sector_context,
         )
         return Response(html, mimetype="text/html")
     except HTTPException:

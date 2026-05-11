@@ -159,6 +159,11 @@
       </p>
       {% endif %}
 
+      {% if designation_context %}
+      <h2>Why this designation matters</h2>
+      <p>{{ designation_context }}</p>
+      {% endif %}
+
       {% if profile.raw_remarks %}
       <h2>OFAC remarks (full text)</h2>
       <div class="source-citation">
