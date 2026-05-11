@@ -342,14 +342,21 @@ def render_blog_post(post, *, related: list | None = None) -> str:
     )
 
 
-def render_blog_index(posts: Iterable) -> str:
+def render_blog_index(
+    posts: Iterable,
+    *,
+    page: int = 1,
+    total_pages: int = 1,
+) -> str:
     base = _base_url()
-    canonical = f"{base}/briefing"
+    canonical_base = f"{base}/briefing"
+    canonical = canonical_base if page == 1 else f"{canonical_base}?page={page}"
 
     posts_list = list(posts)
 
+    page_suffix = f" — Page {page}" if page > 1 else ""
     seo = {
-        "title": "Venezuela News Today: Sanctions & Economy (2026)",
+        "title": f"Venezuela News Today: Sanctions & Economy (2026){page_suffix}",
         "description": (
             "Venezuela news — OFAC sanctions, Asamblea Nacional, Gaceta "
             "Oficial decrees, economic data, and capital flows. Published "
@@ -371,6 +378,13 @@ def render_blog_index(posts: Iterable) -> str:
         "modified_iso": _iso(datetime.utcnow()),
     }
 
+    rel_links: list[str] = []
+    if page > 1:
+        prev_url = canonical_base if page == 2 else f"{canonical_base}?page={page - 1}"
+        rel_links.append(f'<link rel="prev" href="{prev_url}">')
+    if page < total_pages:
+        rel_links.append(f'<link rel="next" href="{canonical_base}?page={page + 1}">')
+
     item_list = {
         "@type": "ItemList",
         "name": "Venezuelan investment briefings",
@@ -383,14 +397,14 @@ def render_blog_index(posts: Iterable) -> str:
                 "name": p.title,
                 "url": f"{base}/briefing/{p.slug}",
             }
-            for idx, p in enumerate(posts_list[:50], start=1)
+            for idx, p in enumerate(posts_list, start=1)
         ],
     }
     breadcrumbs = {
         "@type": "BreadcrumbList",
         "itemListElement": [
             {"@type": "ListItem", "position": 1, "name": "Home", "item": f"{base}/"},
-            {"@type": "ListItem", "position": 2, "name": "Analysis", "item": canonical},
+            {"@type": "ListItem", "position": 2, "name": "Analysis", "item": canonical_base},
         ],
     }
     jsonld = json.dumps(
@@ -403,6 +417,9 @@ def render_blog_index(posts: Iterable) -> str:
         posts=posts_list,
         seo=seo,
         jsonld=jsonld,
+        rel_links="\n    ".join(rel_links),
+        page=page,
+        total_pages=total_pages,
         current_year=date.today().year,
     )
 

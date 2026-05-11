@@ -49,6 +49,10 @@
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Libre+Baskerville:ital,wght@0,400;0,700;1,400&family=Open+Sans:ital,wght@0,300..800;1,300..800&display=swap" rel="stylesheet">
 
+  {% if rel_links is defined and rel_links %}
+    {{ rel_links | safe }}
+  {% endif %}
+
   {% if jsonld %}
   <script type="application/ld+json">{{ jsonld | safe }}</script>
   {% endif %}
@@ -181,6 +185,12 @@
     .cr-search-row button:hover { background: var(--sr-blue-dark); }
     .cr-search-help { margin: 8px 0 0; font-size: 13px; color: var(--sr-gray-text); line-height: 1.5; }
     .cr-empty-filter { display: none; padding: 18px 20px; margin: 16px 0; background: var(--sr-gray-bg); border-left: 3px solid var(--sr-red); color: var(--sr-gray-text); font-size: 14px; }
+
+    .pagination { display: flex; align-items: center; justify-content: center; gap: 16px; margin: 36px 0 48px; padding: 16px 0; border-top: 1px solid var(--sr-gray-light); }
+    .pagination-link { font-family: var(--font-sans); font-size: 14px; font-weight: 600; color: var(--sr-blue); text-decoration: none; padding: 8px 16px; border: 1px solid var(--sr-blue); border-radius: 3px; transition: background 0.15s, color 0.15s; }
+    .pagination-link:hover { background: var(--sr-blue); color: var(--white); }
+    .pagination-link.disabled { color: var(--sr-gray-text); border-color: var(--sr-gray-light); pointer-events: none; }
+    .pagination-info { font-family: var(--font-sans); font-size: 13px; color: var(--sr-gray-text); }
 
     .footer-cta { background: var(--sr-gray-bg); border-top: 1px solid var(--sr-gray-light); padding: 32px 24px; text-align: center; margin-top: 64px; }
     .footer-cta h3 { font-family: var(--font-serif); color: var(--sr-blue-dark); margin-bottom: 8px; font-size: 22px; }

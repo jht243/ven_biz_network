@@ -9483,24 +9483,42 @@ def pillar_invest_in_venezuela():
         abort(500)
 
 
+_BRIEFING_PER_PAGE = 20
+
+
 @app.route("/briefing")
 @app.route("/briefing/")
 def briefing_index():
-    """List all long-form blog posts, newest first."""
+    """List long-form blog posts, newest first, with pagination."""
     try:
         from src.models import BlogPost, SessionLocal, init_db
         from src.page_renderer import render_blog_index
 
+        page = request.args.get("page", 1, type=int)
+        if page < 1:
+            page = 1
+
         init_db()
         db = SessionLocal()
         try:
+            total = db.query(BlogPost).count()
+            total_pages = max(1, (total + _BRIEFING_PER_PAGE - 1) // _BRIEFING_PER_PAGE)
+            if page > total_pages:
+                page = total_pages
+
+            offset = (page - 1) * _BRIEFING_PER_PAGE
             posts = (
                 db.query(BlogPost)
                 .order_by(BlogPost.published_date.desc(), BlogPost.id.desc())
-                .limit(200)
+                .offset(offset)
+                .limit(_BRIEFING_PER_PAGE)
                 .all()
             )
-            html = render_blog_index(posts)
+            html = render_blog_index(
+                posts,
+                page=page,
+                total_pages=total_pages,
+            )
             return Response(html, mimetype="text/html")
         finally:
             db.close()
@@ -9818,6 +9836,16 @@ def sitemap_xml():
                     "lastmod": lastmod,
                     "changefreq": "monthly",
                     "priority": "0.7",
+                })
+
+            total_posts = db.query(BlogPost).count()
+            _total_pages = max(1, (total_posts + _BRIEFING_PER_PAGE - 1) // _BRIEFING_PER_PAGE)
+            for pg in range(2, _total_pages + 1):
+                dynamic_urls.append({
+                    "loc": f"{base}/briefing?page={pg}",
+                    "lastmod": today_iso,
+                    "changefreq": "daily",
+                    "priority": "0.6",
                 })
 
             landing_pages = db.query(LandingPage).all()

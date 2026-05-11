@@ -45,6 +45,25 @@
     </article>
     {% endfor %}
   </div>
+
+  {% if total_pages is defined and total_pages > 1 %}
+  <nav class="pagination" aria-label="Briefing pages">
+    {% if page > 1 %}
+      <a href="/briefing{{ '?page=%d' % (page - 1) if page > 2 else '' }}" class="pagination-link" rel="prev">&larr; Newer</a>
+    {% else %}
+      <span class="pagination-link disabled">&larr; Newer</span>
+    {% endif %}
+
+    <span class="pagination-info">Page {{ page }} of {{ total_pages }}</span>
+
+    {% if page < total_pages %}
+      <a href="/briefing?page={{ page + 1 }}" class="pagination-link" rel="next">Older &rarr;</a>
+    {% else %}
+      <span class="pagination-link disabled">Older &rarr;</span>
+    {% endif %}
+  </nav>
+  {% endif %}
+
   {% else %}
   <p style="color: var(--sr-gray-text); padding: 32px 0;">
     No analysis posts published yet — the next batch will appear after the
