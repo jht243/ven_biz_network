@@ -9808,7 +9808,7 @@ def sitemap_xml():
             blog_posts = (
                 db.query(BlogPost)
                 .order_by(BlogPost.published_date.desc())
-                .limit(500)
+                .limit(200)
                 .all()
             )
             for p in blog_posts:
