@@ -357,6 +357,8 @@ _TOPIC_TAGS: list[tuple[str, tuple[str, ...]]] = [
     # Diplomatic ties (specific bilaterals)
     ("eu_dialogue", ("grupo de amistad venezuela-ue", "venezuela-eu friendship group", "european parliament delegation")),
     ("us_relations_specific", ("us senate resolution", "us state department releases", "us-venezuela bilateral")),
+    # ITA / trade.gov Venezuela pages (hub + trade leads share content)
+    ("ita_trade_leads", ("trade.gov venezuela trade leads", "venezuela trade leads", "ita venezuela business information", "trade leads updated", "trade leads — content updated")),
     # Sector-broad (lowest priority — only catch if nothing more specific matched)
     ("foreign_investment_general", ("inversion extranjera directa", "foreign direct investment")),
     ("real_estate_reform", ("reformara leyes vinculadas al sector inmobiliario", "real estate sector reform", "leyes inmobiliarias")),
@@ -437,6 +439,7 @@ _EXCLUSIVE_TOPIC_TAGS = frozenset({
     "constitutional_court_minas",
     "travel_advisory",
     "anti_sanctions_protest",
+    "ita_trade_leads",
 })
 
 # Calendar-specific dedup threshold. Lower than the news Jaccard floor
