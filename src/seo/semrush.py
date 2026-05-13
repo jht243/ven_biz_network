@@ -356,16 +356,40 @@ def run_keyword_research(
     """
     if seed_keywords is None:
         seed_keywords = [
+            # Core investment / business
             "venezuela investment",
-            "venezuela sanctions",
             "invest in venezuela",
-            "venezuela bonds",
-            "caracas real estate",
-            "venezuela visa",
-            "PDVSA",
-            "venezuela oil",
-            "OFAC sanctions venezuela",
             "venezuela business",
+            "venezuela foreign investment",
+            # Oil & energy (post-reform)
+            "venezuela oil",
+            "PDVSA",
+            "venezuela oil investment 2026",
+            "venezuela hydrocarbons law",
+            "venezuela oil production",
+            "chevron venezuela",
+            # Sanctions & compliance
+            "venezuela sanctions",
+            "OFAC sanctions venezuela",
+            "general license 46 venezuela",
+            "venezuela sanctions lifted 2026",
+            # Debt & financial markets
+            "venezuela bonds",
+            "venezuela bond restructuring",
+            "venezuela etf",
+            "PDVSA bonds",
+            "venezuela sovereign debt",
+            # Real estate
+            "caracas real estate",
+            "venezuela real estate investment",
+            # Visa & travel
+            "venezuela visa",
+            "is venezuela safe",
+            "venezuela travel advisory",
+            # Economic reform
+            "venezuela economic reform 2026",
+            "venezuela gdp growth 2026",
+            "venezuela open for business",
         ]
 
     client = SemrushClient()

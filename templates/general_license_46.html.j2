@@ -1,0 +1,240 @@
+{% extends "_base.html.j2" %}
+{% from "_base.html.j2" import share_button %}
+{% from "_cluster_nav.html.j2" import cluster_nav %}
+
+{% block head_extra %}
+<style>
+  .gl-hero { background: linear-gradient(180deg, #f6f8fa 0%, var(--white) 100%); padding: 28px 0 16px; margin-bottom: 16px; }
+  .gl-hero .kicker { font-size: 12px; text-transform: uppercase; letter-spacing: 1.4px; color: #cc0000; font-weight: 700; }
+  .gl-hero h1 { font-family: var(--font-serif); font-size: 32px; color: var(--sr-blue-dark); margin: 8px 0 8px; line-height: 1.2; }
+  .gl-hero p.lead { font-family: var(--font-serif); font-style: italic; color: var(--sr-gray-text); font-size: 16px; max-width: 720px; margin: 0; }
+
+  .toc { background: var(--sr-gray-bg); border-left: 3px solid var(--sr-blue); padding: 18px 22px; margin: 0 0 32px; font-size: 14px; }
+  .toc h3 { font-family: var(--font-serif); font-size: 14px; text-transform: uppercase; letter-spacing: 1px; color: var(--sr-blue-dark); margin-bottom: 10px; }
+  .toc ol { margin-left: 20px; }
+  .toc li { margin-bottom: 6px; }
+
+  .sec { margin: 40px 0 24px; padding-top: 8px; }
+  .sec h2 { font-family: var(--font-serif); font-size: 26px; color: var(--sr-blue-dark); margin-bottom: 8px; }
+
+  .license-card { background: var(--sr-gray-bg); border: 1px solid var(--sr-gray-light); border-left: 4px solid var(--sr-blue); border-radius: 4px; padding: 20px 22px; margin: 18px 0 24px; }
+  .license-card h3 { font-family: var(--font-serif); font-size: 18px; color: var(--sr-blue-dark); margin-bottom: 10px; }
+  .license-card .lc-meta { font-size: 12px; text-transform: uppercase; letter-spacing: 0.5px; color: var(--sr-gray-text); margin-bottom: 12px; }
+
+  .do-dont { display: grid; grid-template-columns: 1fr; gap: 16px; margin: 18px 0 24px; }
+  @media (min-width: 640px) { .do-dont { grid-template-columns: 1fr 1fr; } }
+  .do-card, .dont-card { border-radius: 6px; padding: 18px 20px; }
+  .do-card { background: #f0fdf4; border: 1px solid #bbf7d0; }
+  .dont-card { background: #fef2f2; border: 1px solid #fecaca; }
+  .do-card h3 { color: #166534; font-family: var(--font-serif); font-size: 16px; margin-bottom: 10px; }
+  .dont-card h3 { color: #991b1b; font-family: var(--font-serif); font-size: 16px; margin-bottom: 10px; }
+  .do-card li, .dont-card li { font-size: 14px; margin-bottom: 6px; line-height: 1.55; }
+
+  .disclaimer { background: #fff8e1; border-left: 4px solid #f5b041; padding: 14px 18px; border-radius: 3px; margin: 20px 0; font-size: 13.5px; line-height: 1.65; color: var(--sr-dark-text); }
+
+  .faq-list { margin: 18px 0 28px; }
+  .faq-item { border: 1px solid var(--sr-gray-light); border-radius: 4px; margin-bottom: 10px; overflow: hidden; }
+  .faq-q { display: flex; align-items: center; gap: 12px; padding: 16px 18px; cursor: pointer; background: var(--white); font-family: var(--font-serif); font-size: 16px; font-weight: 700; color: var(--sr-blue-dark); transition: background 0.15s; border: 0; width: 100%; text-align: left; }
+  .faq-q:hover { background: var(--sr-gray-bg); }
+  .faq-q .faq-icon { flex-shrink: 0; width: 24px; height: 24px; border-radius: 50%; background: var(--sr-blue); color: var(--white); display: flex; align-items: center; justify-content: center; font-size: 14px; font-weight: 700; transition: transform 0.2s; font-family: var(--font-sans); }
+  .faq-q[aria-expanded="true"] .faq-icon { transform: rotate(45deg); }
+  .faq-a { padding: 0 18px 18px 54px; font-size: 15px; line-height: 1.7; color: var(--sr-dark-text); display: none; }
+  .faq-q[aria-expanded="true"] + .faq-a { display: block; }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="gl-hero">
+  <div class="container">
+    <nav class="breadcrumbs">
+      <a href="/">Home</a> <span>›</span>
+      <a href="/sanctions-tracker">Sanctions</a> <span>›</span>
+      General License 46
+    </nav>
+    <span class="kicker">OFAC · Sanctions Relief</span>
+    <h1>OFAC General License 46: What U.S. Companies Can Now Do in Venezuela's Oil Sector</h1>
+    <p class="lead">On January 29, 2026, the U.S. Treasury authorized established U.S. entities to engage in previously prohibited transactions involving Venezuelan-origin oil. Here's exactly what GL 46 permits — and what it doesn't.</p>
+  </div>
+</div>
+
+<div class="container">
+  <article>
+    <header>
+      <div class="meta">
+        <span>By <strong>Caracas Research</strong></span>
+        <span>Updated <strong>{{ today }}</strong></span>
+        <span>8 min read</span>
+      </div>
+    </header>
+
+    <div class="takeaways">
+      <h3>Key Takeaways</h3>
+      <ul>
+        <li>GL 46 authorizes <strong>established U.S. entities</strong> to lift, export, sell, transport, store, and refine Venezuelan-origin oil</li>
+        <li>Eligibility: Must be organized under U.S. law <strong>on or before January 29, 2025</strong>, and not owned/controlled by Chinese, Russian, Iranian, North Korean, or Cuban persons</li>
+        <li>All payments to Venezuela/PDVSA must go into <strong>Foreign Government Deposit Funds</strong> controlled by the U.S. government</li>
+        <li>Contracts must be governed by <strong>U.S. law</strong> with dispute resolution in the United States</li>
+        <li>Followed by <strong>GL 47</strong> (diluent exports, Feb 3) and <strong>GL 48A</strong> (electricity/petrochemicals, Mar 13)</li>
+      </ul>
+    </div>
+
+    <div class="toc">
+      <h3>Contents</h3>
+      <ol>
+        <li><a href="#what-is">What Is General License 46?</a></li>
+        <li><a href="#scope">Scope of Authorized Activities</a></li>
+        <li><a href="#eligibility">Eligibility Requirements</a></li>
+        <li><a href="#payment">Payment Conditions & Fund Controls</a></li>
+        <li><a href="#reporting">Reporting Requirements</a></li>
+        <li><a href="#do-dont">What You Can and Cannot Do</a></li>
+        <li><a href="#subsequent">Subsequent Licenses (GL 47, GL 48A)</a></li>
+        <li><a href="#faq">Frequently Asked Questions</a></li>
+      </ol>
+    </div>
+
+    <div class="body">
+      <section class="sec" id="what-is">
+        <h2>What Is General License 46?</h2>
+        <p>General License 46, titled <em>"Authorizing Certain Activities Involving Venezuelan-Origin Oil,"</em> was issued by the U.S. Department of the Treasury's Office of Foreign Assets Control (OFAC) on January 29, 2026. It authorizes transactions that were previously prohibited under the Venezuela sanctions program (Executive Order 13850 and related orders).</p>
+        <p>The license was issued on the same day Venezuela's National Assembly approved the <a href="/venezuela-hydrocarbons-law">Hydrocarbons Law Reform</a>, signaling coordinated U.S.-Venezuelan policy alignment on reopening the oil sector.</p>
+        <p class="source-citation">Source: <a href="https://ofac.treasury.gov/recent-actions/20260129" target="_blank" rel="noopener">OFAC Recent Actions (Jan 29, 2026)</a></p>
+      </section>
+
+      <section class="sec" id="scope">
+        <h2>Scope of Authorized Activities</h2>
+        <p>GL 46 authorizes established U.S. entities to engage in transactions that are <strong>"ordinarily incident and necessary"</strong> to the following activities involving Venezuelan-origin oil:</p>
+        <ul>
+          <li>Lifting and extraction of crude oil</li>
+          <li>Exportation and re-exportation of Venezuelan-origin crude</li>
+          <li>Sale and purchase of Venezuelan crude and petroleum products</li>
+          <li>Transportation and storage</li>
+          <li>Refining of Venezuelan-origin crude</li>
+          <li>Arranging shipping and logistics services</li>
+          <li>Chartering vessels for oil transport</li>
+          <li>Obtaining marine insurance</li>
+          <li>Arranging port and terminal services</li>
+        </ul>
+        <p class="source-citation">Source: <a href="https://www.morganlewis.com/de/pubs/2026/02/venezuela-oil-sector-sanctions-update-analyzing-ofac-general-license-46" target="_blank" rel="noopener">Morgan Lewis (Feb 2026)</a></p>
+      </section>
+
+      <section class="sec" id="eligibility">
+        <h2>Eligibility Requirements</h2>
+        <p>Not every U.S. company qualifies. GL 46 defines an <strong>"established U.S. entity"</strong> with specific requirements:</p>
+        <ul>
+          <li>Must be organized under the laws of the United States <strong>on or before January 29, 2025</strong> (one year before the license date)</li>
+          <li>Cannot be <strong>owned or controlled</strong> by persons from China, Russia, Iran, North Korea, or Cuba</li>
+          <li>Must be engaged in lawful commercial activities in the United States</li>
+        </ul>
+        <p class="disclaimer"><strong>Compliance note:</strong> The January 29, 2025 cutoff date means newly formed SPVs or shell companies created specifically to exploit GL 46 are ineligible. OFAC designed this to limit the license to established market participants.</p>
+        <p class="source-citation">Source: <a href="https://www.sullcrom.com/insights/memo/2026/January/OFAC-Issues-Venezuelan-Oil-Related-General-License" target="_blank" rel="noopener">Sullivan & Cromwell</a></p>
+      </section>
+
+      <section class="sec" id="payment">
+        <h2>Payment Conditions & Fund Controls</h2>
+        <p>GL 46 imposes strict payment controls to prevent Venezuelan government misuse of oil revenues:</p>
+        <ul>
+          <li>All payments to the Government of Venezuela or PDVSA must be deposited into <strong>Foreign Government Deposit Funds</strong></li>
+          <li>The <strong>U.S. government retains control</strong> over these funds</li>
+          <li>Payment terms must be <strong>"commercially reasonable"</strong></li>
+          <li>Prohibited payment methods: debt swaps, gold payments, Venezuelan state digital currency</li>
+        </ul>
+        <p>Contracts with Venezuelan entities must be governed by <strong>U.S. law</strong> with dispute resolution in the United States — providing legal certainty absent in Venezuela's domestic courts.</p>
+        <p class="source-citation">Source: <a href="https://www.morganlewis.com/de/pubs/2026/02/venezuela-oil-sector-sanctions-update-analyzing-ofac-general-license-46" target="_blank" rel="noopener">Morgan Lewis</a></p>
+      </section>
+
+      <section class="sec" id="reporting">
+        <h2>Reporting Requirements</h2>
+        <p>Entities exporting or reselling Venezuelan oil to countries other than the United States must report transactions to both the <strong>U.S. Department of State</strong> and the <strong>Department of Energy</strong>. Required details include:</p>
+        <ul>
+          <li>All parties involved in the transaction</li>
+          <li>Quantities and grade of crude</li>
+          <li>Transaction values</li>
+          <li>Final destinations</li>
+          <li>Dates of lifting, shipping, and delivery</li>
+          <li>Any payments made to the Venezuelan government or PDVSA</li>
+        </ul>
+        <p class="source-citation">Source: <a href="https://www.foleyhoag.com/news-and-insights/publications/alerts-and-updates/2026/february/new-ofac-general-license-opens-door-to-venezuelan-oil-for-u-s-entities/" target="_blank" rel="noopener">Foley Hoag (Feb 2026)</a></p>
+      </section>
+
+      <section class="sec" id="do-dont">
+        <h2>What You Can and Cannot Do</h2>
+        <div class="do-dont">
+          <div class="do-card">
+            <h3>Authorized Under GL 46</h3>
+            <ul>
+              <li>Purchase and import Venezuelan crude to the U.S.</li>
+              <li>Export Venezuelan crude to third countries (with reporting)</li>
+              <li>Charter vessels and obtain marine insurance</li>
+              <li>Arrange port/terminal services</li>
+              <li>Refine Venezuelan crude in U.S. facilities</li>
+              <li>Contract with PDVSA under U.S.-law-governed agreements</li>
+            </ul>
+          </div>
+          <div class="dont-card">
+            <h3>Still Prohibited</h3>
+            <ul>
+              <li>Transactions with persons from China, Russia, Iran, North Korea, Cuba</li>
+              <li>Forming new joint ventures in Venezuela</li>
+              <li>Debt swaps or payments in gold/digital currency</li>
+              <li>Activities by entities formed after January 29, 2025</li>
+              <li>Transactions with SDN-listed individuals or entities (unless specifically licensed)</li>
+              <li>Non-oil sector activities (see GL 48A for electricity/petrochemicals)</li>
+            </ul>
+          </div>
+        </div>
+      </section>
+
+      <section class="sec" id="subsequent">
+        <h2>Subsequent Licenses: GL 47 & GL 48A</h2>
+        <div class="license-card">
+          <div class="lc-meta">February 3, 2026</div>
+          <h3>General License 47 — U.S.-Origin Diluent Exports</h3>
+          <p>Authorizes exports of U.S.-origin diluent (naphtha and other light hydrocarbons) to Venezuela, critical for blending with Venezuela's heavy Orinoco Belt crude to make it pipeline-transportable and exportable.</p>
+        </div>
+        <div class="license-card">
+          <div class="lc-meta">March 13, 2026</div>
+          <h3>General License 48A — Electricity & Petrochemicals</h3>
+          <p>Expanded authorized activities to include Venezuela's <strong>electricity sector</strong> — generation, transmission, storage, and distribution. CORPOELEC (state electricity monopoly) is now an authorized counterparty. Also covers petrochemical products and fertilizers.</p>
+        </div>
+        <p>For real-time tracking of all Venezuela-related OFAC actions, see our <a href="/sanctions-tracker">OFAC Sanctions Tracker</a> and <a href="/tools/ofac-general-licenses">General Licenses Directory</a>.</p>
+        <p class="source-citation">Sources: <a href="https://www.hklaw.com/en/insights/publications/2026/02/ofac-authorizes-certain-venezuelan-oil-sector-activities" target="_blank" rel="noopener">Holland & Knight</a> · <a href="https://sanctionsnews.bakermckenzie.com/ofac-issues-amended-and-new-general-licenses-tied-to-the-venezuelan-energy-sector/" target="_blank" rel="noopener">Baker McKenzie</a> · <a href="https://www.clearytradewatch.com/2026/03/ofac-expands-venezuela-sanctions-relief-to-fertilizers-and-petrochemical-products-investment-in-petrochemical-and-electricity-sectors/" target="_blank" rel="noopener">Cleary Gottlieb</a></p>
+      </section>
+
+      <section class="sec" id="faq">
+        <h2>Frequently Asked Questions</h2>
+        <div class="faq-list">
+          {% for item in faq %}
+          <div class="faq-item">
+            <button class="faq-q" aria-expanded="false"><span class="faq-icon">+</span> {{ item.q }}</button>
+            <div class="faq-a">{{ item.a }}</div>
+          </div>
+          {% endfor %}
+        </div>
+      </section>
+
+      {{ cluster_nav("sanctions", request.path) }}
+
+    </div>
+  </article>
+
+  <div class="related">
+    <h3>Related Analysis</h3>
+    <ul>
+      <li><a href="/venezuela-hydrocarbons-law">Venezuela Hydrocarbons Law Reform: What Investors Need to Know</a> <small>Reform</small></li>
+      <li><a href="/sanctions-tracker">OFAC Venezuela Sanctions Tracker</a> <small>Tool</small></li>
+      <li><a href="/tools/ofac-general-licenses">All OFAC General Licenses for Venezuela</a> <small>Reference</small></li>
+      <li><a href="/why-is-venezuela-sanctioned">Why Is Venezuela Sanctioned?</a> <small>Explainer</small></li>
+      <li><a href="/invest-in-venezuela">How to Invest in Venezuela</a> <small>Pillar</small></li>
+    </ul>
+  </div>
+</div>
+
+<script>
+document.querySelectorAll('.faq-q').forEach(function(btn) {
+  btn.addEventListener('click', function() {
+    var expanded = btn.getAttribute('aria-expanded') === 'true';
+    btn.setAttribute('aria-expanded', expanded ? 'false' : 'true');
+  });
+});
+</script>
+{% endblock %}

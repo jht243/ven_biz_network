@@ -1,0 +1,203 @@
+{% extends "_base.html.j2" %}
+{% from "_base.html.j2" import share_button %}
+{% from "_cluster_nav.html.j2" import cluster_nav %}
+
+{% block head_extra %}
+<style>
+  .etf-hero { background: linear-gradient(180deg, #f6f8fa 0%, var(--white) 100%); padding: 28px 0 16px; margin-bottom: 16px; }
+  .etf-hero .kicker { font-size: 12px; text-transform: uppercase; letter-spacing: 1.4px; color: #cc0000; font-weight: 700; }
+  .etf-hero h1 { font-family: var(--font-serif); font-size: 32px; color: var(--sr-blue-dark); margin: 8px 0 8px; line-height: 1.2; }
+  .etf-hero p.lead { font-family: var(--font-serif); font-style: italic; color: var(--sr-gray-text); font-size: 16px; max-width: 720px; margin: 0; }
+
+  .sec { margin: 40px 0 24px; padding-top: 8px; }
+  .sec h2 { font-family: var(--font-serif); font-size: 26px; color: var(--sr-blue-dark); margin-bottom: 8px; }
+
+  .toc { background: var(--sr-gray-bg); border-left: 3px solid var(--sr-blue); padding: 18px 22px; margin: 0 0 32px; font-size: 14px; }
+  .toc h3 { font-family: var(--font-serif); font-size: 14px; text-transform: uppercase; letter-spacing: 1px; color: var(--sr-blue-dark); margin-bottom: 10px; }
+  .toc ol { margin-left: 20px; }
+  .toc li { margin-bottom: 6px; }
+
+  .info-card { background: var(--sr-gray-bg); border: 1px solid var(--sr-gray-light); border-left: 4px solid var(--sr-blue); border-radius: 4px; padding: 20px 22px; margin: 18px 0 24px; }
+  .info-card h3 { font-family: var(--font-serif); font-size: 18px; color: var(--sr-blue-dark); margin-bottom: 10px; }
+  .info-card .info-row { display: flex; gap: 8px; font-size: 14px; margin: 6px 0; }
+  .info-card .info-row strong { min-width: 140px; color: var(--sr-blue-dark); }
+
+  .alt-grid { display: grid; grid-template-columns: 1fr; gap: 14px; margin: 18px 0 24px; }
+  @media (min-width: 640px) { .alt-grid { grid-template-columns: 1fr 1fr; } }
+  .alt-card { border: 1px solid var(--sr-gray-light); border-radius: 6px; padding: 18px 20px; }
+  .alt-card h3 { font-family: var(--font-serif); font-size: 17px; color: var(--sr-blue-dark); margin-bottom: 8px; }
+  .alt-card p { font-size: 14px; line-height: 1.6; margin-bottom: 6px; }
+
+  .disclaimer { background: #fff8e1; border-left: 4px solid #f5b041; padding: 14px 18px; border-radius: 3px; margin: 20px 0; font-size: 13.5px; line-height: 1.65; color: var(--sr-dark-text); }
+
+  .faq-list { margin: 18px 0 28px; }
+  .faq-item { border: 1px solid var(--sr-gray-light); border-radius: 4px; margin-bottom: 10px; overflow: hidden; }
+  .faq-q { display: flex; align-items: center; gap: 12px; padding: 16px 18px; cursor: pointer; background: var(--white); font-family: var(--font-serif); font-size: 16px; font-weight: 700; color: var(--sr-blue-dark); transition: background 0.15s; border: 0; width: 100%; text-align: left; }
+  .faq-q:hover { background: var(--sr-gray-bg); }
+  .faq-q .faq-icon { flex-shrink: 0; width: 24px; height: 24px; border-radius: 50%; background: var(--sr-blue); color: var(--white); display: flex; align-items: center; justify-content: center; font-size: 14px; font-weight: 700; transition: transform 0.2s; font-family: var(--font-sans); }
+  .faq-q[aria-expanded="true"] .faq-icon { transform: rotate(45deg); }
+  .faq-a { padding: 0 18px 18px 54px; font-size: 15px; line-height: 1.7; color: var(--sr-dark-text); display: none; }
+  .faq-q[aria-expanded="true"] + .faq-a { display: block; }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="etf-hero">
+  <div class="container">
+    <nav class="breadcrumbs">
+      <a href="/">Home</a> <span>›</span>
+      <a href="/invest-in-venezuela">Invest</a> <span>›</span>
+      Venezuela ETF
+    </nav>
+    <span class="kicker">Capital Markets · ETF</span>
+    <h1>Venezuela ETF: What Investors Need to Know in 2026</h1>
+    <p class="lead">Teucrium Trading filed for the first-ever "Venezuela Exposure" ETF in January 2026. Here's what it would hold, why the SEC faces a complex decision, and what alternatives exist today.</p>
+  </div>
+</div>
+
+<div class="container">
+  <article>
+    <header>
+      <div class="meta">
+        <span>By <strong>Caracas Research</strong></span>
+        <span>Updated <strong>{{ today }}</strong></span>
+        <span>7 min read</span>
+      </div>
+    </header>
+
+    <div class="takeaways">
+      <h3>Key Takeaways</h3>
+      <ul>
+        <li><strong>Teucrium Trading LLC</strong> filed for a "Venezuela Exposure" ETF with the SEC in January 2026 — the first of its kind</li>
+        <li>The fund would track an index of <strong>Venezuela-based companies</strong> and firms deriving &gt;50% of revenue/assets from Venezuela</li>
+        <li>Currently <strong>no Venezuelan ADRs</strong> trade on U.S. exchanges, no Venezuela-focused ETFs exist, and the Caracas Stock Exchange has minimal liquidity</li>
+        <li>The most practical current exposure for U.S. investors is through <strong>oil majors</strong> (Chevron, Repsol) with Venezuelan operations</li>
+        <li>SEC approval faces hurdles including <strong>sanctions compliance</strong>, liquidity concerns, and political sensitivity</li>
+      </ul>
+    </div>
+
+    <div class="toc">
+      <h3>Contents</h3>
+      <ol>
+        <li><a href="#filing">The Teucrium Filing</a></li>
+        <li><a href="#why-now">Why Now?</a></li>
+        <li><a href="#challenges">SEC Challenges & Hurdles</a></li>
+        <li><a href="#caracas-exchange">The Caracas Stock Exchange</a></li>
+        <li><a href="#alternatives">Current Alternatives for Investors</a></li>
+        <li><a href="#faq">Frequently Asked Questions</a></li>
+      </ol>
+    </div>
+
+    <div class="body">
+      <section class="sec" id="filing">
+        <h2>The Teucrium Filing</h2>
+        <div class="info-card">
+          <h3>Teucrium Venezuela Exposure ETF — Filing Details</h3>
+          <div class="info-row"><strong>Sponsor:</strong> Teucrium Trading LLC (Vermont)</div>
+          <div class="info-row"><strong>Filing Type:</strong> Form N-1A Post-Effective Amendment</div>
+          <div class="info-row"><strong>Trust:</strong> Listed Funds Trust</div>
+          <div class="info-row"><strong>Filing Date:</strong> January 6, 2026</div>
+          <div class="info-row"><strong>Strategy:</strong> Track index of Venezuela-exposed companies</div>
+          <div class="info-row"><strong>Status:</strong> Under SEC review</div>
+        </div>
+        <p>The proposed fund would track an index comprising Venezuela-based companies as well as firms that derive more than half their assets or revenue from Venezuela. This would likely include international oil companies with significant Venezuelan operations, Venezuelan-domiciled firms with any accessible equity, and potentially companies involved in Venezuelan reconstruction.</p>
+        <p class="source-citation">Sources: <a href="https://www.bloomberg.com/news/articles/2026-01-06/-venezuela-exposure-etf-lands-with-sec-in-rare-industry-gap" target="_blank" rel="noopener">Bloomberg (Jan 2026)</a> · <a href="https://exchangetradedfunds.com/secnewslink.php?artic=71999" target="_blank" rel="noopener">ExchangeTradedFunds.com</a></p>
+      </section>
+
+      <section class="sec" id="why-now">
+        <h2>Why Now?</h2>
+        <p>The filing came just days after the January 3, 2026 political transition in Venezuela, which prompted renewed investor interest in a country that had been largely uninvestable for a decade:</p>
+        <ul>
+          <li>The ETF industry manages <strong>$13.6 trillion</strong> across nearly 5,000 products, yet no vehicle specifically targets Venezuelan equities</li>
+          <li>Venezuela's opposition has proposed a <strong>$1.7 trillion 15-year recovery plan</strong>, suggesting massive long-term investment opportunity</li>
+          <li>The <a href="/venezuela-hydrocarbons-law">Hydrocarbons Law reform</a> and <a href="/general-license-46-venezuela">General License 46</a> opened the oil sector to private participation</li>
+          <li>Bond markets are pricing in restructuring, with sovereign bonds rallying to 53.8 cents on the dollar</li>
+        </ul>
+      </section>
+
+      <section class="sec" id="challenges">
+        <h2>SEC Challenges & Hurdles</h2>
+        <p>The SEC faces a complex decision on the Teucrium filing:</p>
+        <ul>
+          <li><strong>Sanctions compliance:</strong> Many Venezuelan entities remain on the SDN list. The fund would need robust compliance mechanisms to avoid holding sanctioned securities</li>
+          <li><strong>Liquidity:</strong> The Caracas Stock Exchange trades under $100,000/day. Any meaningful ETF inflows could overwhelm the local market</li>
+          <li><strong>Custody:</strong> Secure custody of Venezuelan-domiciled securities is challenging given the country's institutional instability</li>
+          <li><strong>Pricing:</strong> Reliable daily NAV calculations require transparent pricing of underlying holdings — difficult in Venezuela's opaque markets</li>
+          <li><strong>Political sensitivity:</strong> Approving a Venezuela-focused fund while sanctions remain partially in effect raises policy questions</li>
+        </ul>
+        <p class="source-citation">Source: <a href="https://news.bloomberglaw.com/securities-law/venezuela-linked-etf-application-poses-thorny-choice-for-sec" target="_blank" rel="noopener">Bloomberg Law</a></p>
+      </section>
+
+      <section class="sec" id="caracas-exchange">
+        <h2>The Caracas Stock Exchange (BVC)</h2>
+        <p>Understanding the BVC is essential context for any Venezuela equity product:</p>
+        <ul>
+          <li>Approximately <strong>30–40 listed companies</strong> (down from hundreds pre-crisis)</li>
+          <li>Daily trading volume often <strong>under $100,000</strong></li>
+          <li>Total market capitalization has collapsed from billions to millions of dollars</li>
+          <li><strong>No international brokerage access</strong> — requires a Venezuelan brokerage account, local bank account, and bolivar settlement</li>
+          <li>Poor corporate disclosure and transparency standards</li>
+        </ul>
+        <p>For more on direct BVC access, see <a href="/invest-in-venezuela">our investment guide</a>.</p>
+      </section>
+
+      <section class="sec" id="alternatives">
+        <h2>Current Alternatives for Investors</h2>
+        <p>Until a Venezuela-specific ETF is approved, these are the practical options for getting exposure:</p>
+        <div class="alt-grid">
+          <div class="alt-card">
+            <h3>Oil Majors with Venezuela Operations</h3>
+            <p><strong>Chevron (CVX)</strong> produces ~260,000 bpd in Venezuela and recently executed a strategic asset swap with PDVSA. <strong>Repsol, ENI</strong>, and Chinese companies also maintain JV operations.</p>
+          </div>
+          <div class="alt-card">
+            <h3>Venezuelan Sovereign Bonds</h3>
+            <p>Defaulted sovereign bonds trade OTC and have rallied significantly. Requires institutional access and sanctions compliance review. See our <a href="/venezuela-bonds-restructuring">bond restructuring guide</a>.</p>
+          </div>
+          <div class="alt-card">
+            <h3>EM/Frontier Market Funds</h3>
+            <p>Some emerging-market debt funds hold Venezuelan sovereign positions. Check fund disclosures for "Venezuela" or "PDVSA" exposure in top-10 holdings.</p>
+          </div>
+          <div class="alt-card">
+            <h3>Colombia as a Proxy</h3>
+            <p>Colombia trades at attractive valuations (&lt;9x P/E, ~7% dividend yield) and stands to benefit from Venezuela normalization, with estimated export gains of 0.5% GDP annually. The <strong>GXG ETF</strong> provides Colombia equity exposure.</p>
+          </div>
+        </div>
+        <p class="disclaimer"><strong>Disclaimer:</strong> This is informational content, not investment advice. Venezuelan investments carry extreme risk including total loss of capital. Consult a qualified financial advisor and sanctions counsel before investing.</p>
+      </section>
+
+      <section class="sec" id="faq">
+        <h2>Frequently Asked Questions</h2>
+        <div class="faq-list">
+          {% for item in faq %}
+          <div class="faq-item">
+            <button class="faq-q" aria-expanded="false"><span class="faq-icon">+</span> {{ item.q }}</button>
+            <div class="faq-a">{{ item.a }}</div>
+          </div>
+          {% endfor %}
+        </div>
+      </section>
+
+      {{ cluster_nav("invest", request.path) }}
+    </div>
+  </article>
+
+  <div class="related">
+    <h3>Related Analysis</h3>
+    <ul>
+      <li><a href="/venezuela-bonds-restructuring">Venezuela Bond Market & Debt Restructuring</a> <small>Finance</small></li>
+      <li><a href="/invest-in-venezuela">How to Invest in Venezuela: Complete Guide</a> <small>Pillar</small></li>
+      <li><a href="/venezuela-hydrocarbons-law">Hydrocarbons Law Reform Explained</a> <small>Reform</small></li>
+      <li><a href="/companies">Public Companies with Venezuela Exposure</a> <small>Tool</small></li>
+    </ul>
+  </div>
+</div>
+
+<script>
+document.querySelectorAll('.faq-q').forEach(function(btn) {
+  btn.addEventListener('click', function() {
+    var expanded = btn.getAttribute('aria-expanded') === 'true';
+    btn.setAttribute('aria-expanded', expanded ? 'false' : 'true');
+  });
+});
+</script>
+{% endblock %}

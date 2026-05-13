@@ -51,12 +51,11 @@ There is no separate cron job — the sync runs inside the existing daily pipeli
 
 ### 6. GSC / Bing status
 
-Both sitemaps are already submitted to Google Search Console:
+Both sitemaps are submitted to Google Search Console:
 - `https://caracasresearch.com/sitemap.xml` — 313 URLs, 0 errors
-- `https://caracasresearch.com/news-sitemap.xml` — 12 URLs, 0 errors
-- `https://www.caracasresearch.com/sitemap.xml` — 160 URLs, 160 errors (stale www submission)
+- `https://caracasresearch.com/news-sitemap.xml` — 8 URLs, 0 errors
 
-The `www.` sitemap should be deleted from GSC — the canonical is non-www.
+The stale `www.` sitemap was deleted on 2026-05-13.
 
 ---
 
@@ -78,14 +77,8 @@ If `server.py` changes and this line moves, update `INSERTION_ANCHOR` in the scr
 ### 1. ✅ `/law` dead link — FIXED
 Stale `LandingPage` DB record (`pillar:law-and-policy`, canonical_path `/law`) with no matching route. Fixed by adding URL adapter validation in `sitemap_xml()` that skips LandingPages whose `canonical_path` doesn't resolve to a Flask route.
 
-### 2. More dead links from DB (runtime 404s)
-The spot-check also found:
-- `/psychedelic-research-landscape` — another orphaned LandingPage (no route, now filtered by URL adapter guard)
-- `/sectors/realestate` — matches the `sector_page` route pattern but 404s at runtime because no sector content exists for slug `realestate`. This is a **data issue** in the sector slug generation (analysis JSON produces "Real Estate" → slugified to "realestate" but no sector page content exists). The URL adapter guard does NOT catch this — it only checks route pattern matching, not content existence.
-
-**Fix options for `/sectors/realestate`**:
-- Add a sector redirect from `/sectors/realestate` → `/real-estate`
-- Or clean up the analysis_json sector names to produce consistent slugs
+### 2. ✅ `/sectors/realestate` dead link — FIXED
+The analysis_json sector name "Real Estate" slugified to "realestate" but no LandingPage content existed for that slug. Fixed by adding a 301 redirect from `/sectors/realestate` → `/real-estate` and filtering the slug out of the sitemap's dynamic sector walk so the redirect URL is not advertised to Google.
 
 ### 3. `/travel/emergency-card` missing from sitemap
 Route exists in server.py but isn't in the live sitemap. The nightly sync script will auto-add it on the next full run.
@@ -99,8 +92,8 @@ The Render cron job is configured in render.yaml but the `GITHUB_TOKEN` env var 
 3. Permissions: Contents → Read & Write
 4. Copy the token and paste it as `GITHUB_TOKEN` in Render dashboard for the `vij-nightly-sitemap-sync` cron job
 
-### 5. Stale `www.` sitemap in GSC
-`https://www.caracasresearch.com/sitemap.xml` has 160 errors in GSC. It should be deleted since the canonical domain is `caracasresearch.com` (no www). Use GSC → Sitemaps → select the www version → Remove.
+### 5. ✅ Stale `www.` sitemap in GSC — FIXED
+`https://www.caracasresearch.com/sitemap.xml` had 160 errors in GSC. Deleted on 2026-05-13 via the GSC MCP `delete_sitemap` tool. Only the canonical non-www sitemaps remain.
 
 ---
 

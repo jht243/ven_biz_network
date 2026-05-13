@@ -1,0 +1,302 @@
+{% extends "_base.html.j2" %}
+{% from "_base.html.j2" import share_button %}
+{% from "_cluster_nav.html.j2" import cluster_nav %}
+
+{% block head_extra %}
+<style>
+  .reform-hero { background: linear-gradient(180deg, #f6f8fa 0%, var(--white) 100%); padding: 28px 0 16px; margin-bottom: 16px; }
+  .reform-hero .kicker { font-size: 12px; text-transform: uppercase; letter-spacing: 1.4px; color: #cc0000; font-weight: 700; }
+  .reform-hero h1 { font-family: var(--font-serif); font-size: 32px; color: var(--sr-blue-dark); margin: 8px 0 8px; line-height: 1.2; }
+  .reform-hero p.lead { font-family: var(--font-serif); font-style: italic; color: var(--sr-gray-text); font-size: 16px; max-width: 720px; margin: 0; }
+
+  .toc { background: var(--sr-gray-bg); border-left: 3px solid var(--sr-blue); padding: 18px 22px; margin: 0 0 32px; font-size: 14px; }
+  .toc h3 { font-family: var(--font-serif); font-size: 14px; text-transform: uppercase; letter-spacing: 1px; color: var(--sr-blue-dark); margin-bottom: 10px; }
+  .toc ol { margin-left: 20px; columns: 2; column-gap: 24px; }
+  .toc li { margin-bottom: 6px; }
+  @media (max-width: 640px) { .toc ol { columns: 1; } }
+
+  .sec { margin: 40px 0 24px; padding-top: 8px; }
+  .sec h2 { font-family: var(--font-serif); font-size: 26px; color: var(--sr-blue-dark); margin-bottom: 8px; }
+  .sec .sec-lead { color: var(--sr-gray-text); margin-bottom: 18px; font-size: 15px; }
+
+  .stat-grid { display: grid; grid-template-columns: 1fr; gap: 14px; margin: 18px 0 24px; }
+  @media (min-width: 640px) { .stat-grid { grid-template-columns: 1fr 1fr 1fr; } }
+  .stat-card { background: var(--sr-gray-bg); border: 1px solid var(--sr-gray-light); border-radius: 6px; padding: 18px 20px; text-align: center; }
+  .stat-card .stat-num { font-family: var(--font-serif); font-size: 32px; font-weight: 700; color: var(--sr-blue-dark); line-height: 1.1; }
+  .stat-card .stat-label { font-size: 13px; color: var(--sr-gray-text); margin-top: 6px; text-transform: uppercase; letter-spacing: 0.5px; }
+
+  .comparison-table { width: 100%; border-collapse: collapse; margin: 18px 0 24px; font-size: 14px; }
+  .comparison-table th, .comparison-table td { text-align: left; padding: 12px 14px; border-bottom: 1px solid var(--sr-gray-light); }
+  .comparison-table th { background: var(--sr-gray-bg); font-size: 12px; text-transform: uppercase; letter-spacing: 0.5px; color: var(--sr-gray-text); font-weight: 600; }
+  .comparison-table td:first-child { font-weight: 600; color: var(--sr-blue-dark); }
+
+  .disclaimer { background: #fff8e1; border-left: 4px solid #f5b041; padding: 14px 18px; border-radius: 3px; margin: 20px 0; font-size: 13.5px; line-height: 1.65; color: var(--sr-dark-text); }
+
+  .timeline { position: relative; padding: 0 0 0 32px; margin: 24px 0 28px; }
+  .timeline::before { content: ""; position: absolute; top: 0; bottom: 0; left: 14px; width: 3px; background: var(--sr-gray-light); border-radius: 2px; }
+  .tl-item { position: relative; margin-bottom: 24px; }
+  .tl-item:last-child { margin-bottom: 0; }
+  .tl-dot { position: absolute; left: -25px; top: 3px; width: 14px; height: 14px; border-radius: 50%; border: 3px solid var(--sr-blue); background: var(--white); z-index: 1; }
+  .tl-item.positive .tl-dot { border-color: #2e7d32; }
+  .tl-item.negative .tl-dot { border-color: #cc0000; }
+  .tl-item.pending .tl-dot { border-color: #f5b041; }
+  .tl-date { font-size: 12px; text-transform: uppercase; letter-spacing: 0.8px; color: var(--sr-gray-text); font-weight: 700; margin-bottom: 3px; }
+  .tl-title { font-family: var(--font-serif); font-size: 15px; color: var(--sr-blue-dark); font-weight: 700; margin-bottom: 4px; }
+  .tl-desc { font-size: 14px; color: var(--sr-dark-text); line-height: 1.6; }
+
+  .faq-list { margin: 18px 0 28px; }
+  .faq-item { border: 1px solid var(--sr-gray-light); border-radius: 4px; margin-bottom: 10px; overflow: hidden; }
+  .faq-q { display: flex; align-items: center; gap: 12px; padding: 16px 18px; cursor: pointer; background: var(--white); font-family: var(--font-serif); font-size: 16px; font-weight: 700; color: var(--sr-blue-dark); transition: background 0.15s; border: 0; width: 100%; text-align: left; }
+  .faq-q:hover { background: var(--sr-gray-bg); }
+  .faq-q .faq-icon { flex-shrink: 0; width: 24px; height: 24px; border-radius: 50%; background: var(--sr-blue); color: var(--white); display: flex; align-items: center; justify-content: center; font-size: 14px; font-weight: 700; transition: transform 0.2s; font-family: var(--font-sans); }
+  .faq-q[aria-expanded="true"] .faq-icon { transform: rotate(45deg); }
+  .faq-a { padding: 0 18px 18px 54px; font-size: 15px; line-height: 1.7; color: var(--sr-dark-text); display: none; }
+  .faq-q[aria-expanded="true"] + .faq-a { display: block; }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="reform-hero">
+  <div class="container">
+    <nav class="breadcrumbs">
+      <a href="/">Home</a> <span>›</span>
+      <a href="/explainers">Explainers</a> <span>›</span>
+      Venezuela Hydrocarbons Law
+    </nav>
+    <span class="kicker">Legislative Reform · Oil & Gas</span>
+    <h1>Venezuela's Hydrocarbons Law Reform: What Investors Need to Know</h1>
+    <p class="lead">On January 29, 2026, Venezuela's National Assembly reformed the Organic Hydrocarbons Law, opening the oil sector to full private foreign participation for the first time since nationalization in 1976.</p>
+  </div>
+</div>
+
+<div class="container">
+  <article>
+    <header>
+      <div class="meta">
+        <span>By <strong>Caracas Research</strong></span>
+        <span>Updated <strong>{{ today }}</strong></span>
+        <span>10 min read</span>
+      </div>
+    </header>
+
+    <div class="takeaways">
+      <h3>Key Takeaways</h3>
+      <ul>
+        <li>The reformed law creates <strong>Productive Participation Contracts (CPPs)</strong> allowing private companies to operate upstream oil activities at their own cost and risk</li>
+        <li>Foreign investors can now hold <strong>minority stakes with operational control</strong> in joint ventures with PDVSA</li>
+        <li>Royalties capped at <strong>30%</strong> of extracted volumes; integrated hydrocarbons tax up to <strong>15%</strong></li>
+        <li>International <strong>arbitration</strong> and dispute resolution mechanisms now available</li>
+        <li>Paired with <strong>OFAC General License 46</strong>, enabling U.S. entities to transact in Venezuelan oil</li>
+      </ul>
+    </div>
+
+    <div class="stat-grid">
+      <div class="stat-card">
+        <div class="stat-num">304B</div>
+        <div class="stat-label">Barrels Proven Reserves</div>
+      </div>
+      <div class="stat-card">
+        <div class="stat-num">~1.1M</div>
+        <div class="stat-label">Barrels/Day Current Output</div>
+      </div>
+      <div class="stat-card">
+        <div class="stat-num">$1.4B</div>
+        <div class="stat-label">2026 Investment Forecast</div>
+      </div>
+    </div>
+
+    <div class="toc">
+      <h3>Contents</h3>
+      <ol>
+        <li><a href="#background">Background: Why Reform Was Needed</a></li>
+        <li><a href="#key-changes">Key Changes in the Reformed Law</a></li>
+        <li><a href="#cpps">Productive Participation Contracts (CPPs)</a></li>
+        <li><a href="#jv-reform">Joint Venture Reforms</a></li>
+        <li><a href="#fiscal">Fiscal Framework: Royalties & Taxes</a></li>
+        <li><a href="#arbitration">Dispute Resolution & Arbitration</a></li>
+        <li><a href="#us-sanctions">Interaction with U.S. Sanctions</a></li>
+        <li><a href="#timeline">Reform Timeline</a></li>
+        <li><a href="#risks">Risks & Caveats for Investors</a></li>
+        <li><a href="#faq">Frequently Asked Questions</a></li>
+      </ol>
+    </div>
+
+    <div class="body">
+      <section class="sec" id="background">
+        <h2>Background: Why Reform Was Needed</h2>
+        <p>Venezuela holds the world's largest proven oil reserves — 304 billion barrels — yet production had collapsed from 3.4 million barrels per day (bpd) in 1998 to roughly 800,000 bpd by late 2025. The 2001 Organic Hydrocarbons Law, enacted under President Hugo Chávez, required PDVSA to maintain at least 50% ownership in all upstream joint ventures, severely limiting foreign capital and operational autonomy.</p>
+        <p>Years of underinvestment, U.S. sanctions, managerial decay at PDVSA, and the broader economic crisis combined to devastate the sector. Revitalizing production to even 2 million bpd would require hundreds of billions of dollars over a decade — capital that Venezuela cannot raise without international private-sector participation.</p>
+        <p class="source-citation">Sources: <a href="https://www.kslaw.com/news-and-insights/foreign-investment-in-venezuela-assessing-gaps-in-investor-protections-amid-emerging-opportunities" target="_blank" rel="noopener">King & Spalding</a> · <a href="https://foreignpolicy.com/2026/02/06/venezuela-oil-law-reform-production-pdvsa-trump/" target="_blank" rel="noopener">Foreign Policy (Feb 2026)</a></p>
+      </section>
+
+      <section class="sec" id="key-changes">
+        <h2>Key Changes in the Reformed Law</h2>
+        <p>The partial reform of the Organic Hydrocarbons Law (OHL), published in the Special Official Gazette on January 29, 2026, introduces the most sweeping changes to Venezuela's oil sector since the 1976 nationalization:</p>
+
+        <table class="comparison-table">
+          <thead>
+            <tr><th>Aspect</th><th>Before (2001 OHL)</th><th>After (2026 Reform)</th></tr>
+          </thead>
+          <tbody>
+            <tr><td>Private Participation</td><td>PDVSA must hold ≥50% in upstream JVs</td><td>Private companies can operate independently via CPPs</td></tr>
+            <tr><td>Operational Control</td><td>PDVSA retains operational authority</td><td>Minority shareholders can assume technical control</td></tr>
+            <tr><td>Oil Sales</td><td>PDVSA holds export monopoly</td><td>CPP holders can export and sell oil directly</td></tr>
+            <tr><td>Dispute Resolution</td><td>Venezuelan courts only</td><td>International arbitration available</td></tr>
+            <tr><td>Royalty Rate</td><td>Up to 33⅓%</td><td>Up to 30%, set project-by-project</td></tr>
+            <tr><td>Tax Regime</td><td>Income tax up to 50%</td><td>Integrated hydrocarbons tax up to 15% on gross revenue; exempt from wealth taxes</td></tr>
+          </tbody>
+        </table>
+
+        <p class="source-citation">Source: <a href="https://www.bakermckenzie.com/en/insight/publications/2026/03/reform-organic-hydrocarbons-law-venezuela" target="_blank" rel="noopener">Baker McKenzie (Mar 2026)</a> · <a href="https://www.nortonrosefulbright.com/en/knowledge/publications/7c688821/50-days-in-a-new-chapter-for-venezuelas-oil-sector" target="_blank" rel="noopener">Norton Rose Fulbright</a></p>
+      </section>
+
+      <section class="sec" id="cpps">
+        <h2>Productive Participation Contracts (CPPs)</h2>
+        <p>The new flagship mechanism is the <strong>Contrato de Participación Productiva (CPP)</strong> — a contract that allows private companies domiciled in Venezuela to undertake primary oil activities (exploration, extraction, collection, initial transportation and storage) at their own cost, account, and risk.</p>
+        <p>CPP holders can contract directly with state-owned entities or PDVSA to carry out upstream operations. Critically, they gain <strong>commercial autonomy</strong> — the ability to export and sell the oil they produce, ending PDVSA's long-standing export monopoly.</p>
+        <p>This represents a fundamental shift from the joint-venture-only model that prevailed since 2001, where every major oil project required PDVSA to hold a majority stake.</p>
+        <p class="source-citation">Source: <a href="https://www.jdsupra.com/legalnews/venezuela-reforms-hydrocarbons-law-a-3724654/" target="_blank" rel="noopener">King & Spalding via JD Supra</a></p>
+      </section>
+
+      <section class="sec" id="jv-reform">
+        <h2>Joint Venture Reforms</h2>
+        <p>For investors who prefer the joint venture route, the reform significantly improves the terms. Private minority shareholders in mixed companies can now:</p>
+        <ul>
+          <li>Assume <strong>technical operational control</strong> over the project</li>
+          <li>Undertake primary activities directly</li>
+          <li>Access <strong>proceeds from oil sales more directly</strong></li>
+          <li>Negotiate contractual provisions to maintain economic balance</li>
+        </ul>
+        <p>Current partners like Chevron (which produced ~260,000 bpd in March 2026), Repsol, ENI, and Chinese and Russian companies already operate under the JV framework and stand to benefit from expanded operational rights.</p>
+        <p class="source-citation">Source: <a href="https://www.bbc.com/news/articles/cp80r4rdp3yo" target="_blank" rel="noopener">BBC News</a> · <a href="https://energynewsbeat.com/big-oil-companies/chevron-strategic-asset-swap-in-venezuela/" target="_blank" rel="noopener">Energy News Beat (Apr 2026)</a></p>
+      </section>
+
+      <section class="sec" id="fiscal">
+        <h2>Fiscal Framework: Royalties & Taxes</h2>
+        <p>The reformed fiscal framework is designed to make Venezuelan upstream competitive with other frontier basins:</p>
+        <ul>
+          <li><strong>Royalties:</strong> Capped at 30% of extracted volumes, set on a project-by-project basis (down from up to 33⅓%)</li>
+          <li><strong>Integrated Hydrocarbons Tax:</strong> Up to 15% on gross revenues (replacing the prior income tax structure of up to 50%)</li>
+          <li><strong>Exemptions:</strong> Companies are exempt from wealth taxes and several special contributions that previously burdened operators</li>
+        </ul>
+        <p class="source-citation">Source: <a href="https://www.nortonrosefulbright.com/en/knowledge/publications/7c688821/50-days-in-a-new-chapter-for-venezuelas-oil-sector" target="_blank" rel="noopener">Norton Rose Fulbright</a></p>
+      </section>
+
+      <section class="sec" id="arbitration">
+        <h2>Dispute Resolution & Arbitration</h2>
+        <p>One of the most investor-significant changes: the reform introduces <strong>alternative dispute resolution mechanisms</strong> including mediation and international arbitration. This addresses decades of concern stemming from Venezuela's withdrawal from the ICSID Convention and Chávez-era expropriations.</p>
+        <p>Several restrictive Chávez-era laws were also repealed, and contracts must now include mandatory provisions to maintain economic balance for investors.</p>
+        <p class="disclaimer"><strong>Caveat:</strong> While arbitration provisions are now available on paper, enforcement of awards against a sovereign with Venezuela's track record of expropriations remains a legitimate concern. Investors should negotiate robust contractual protections and consider bilateral investment treaty coverage (25 remain in effect). — <a href="https://www.bnamericas.com/en/interviews/venezuela-the-risks-for-investors" target="_blank" rel="noopener">BNamericas</a></p>
+      </section>
+
+      <section class="sec" id="us-sanctions">
+        <h2>Interaction with U.S. Sanctions</h2>
+        <p>The law reform was coordinated with U.S. sanctions relief. On the same day the National Assembly approved the OHL reform (January 29, 2026), OFAC issued <strong>General License 46</strong>, authorizing established U.S. entities to engage in transactions involving Venezuelan-origin oil exports.</p>
+        <p>Subsequent licenses expanded the authorized activities:</p>
+        <ul>
+          <li><strong>GL 47 (Feb 3, 2026):</strong> Authorized U.S.-origin diluent exports to Venezuela</li>
+          <li><strong>GL 48A (Mar 13, 2026):</strong> Extended authorization to Venezuela's <strong>electricity sector</strong> (CORPOELEC), petrochemicals, and related infrastructure</li>
+        </ul>
+        <p>For a detailed breakdown of each license, see our <a href="/general-license-46-venezuela">General License 46 Explainer</a> and <a href="/sanctions-tracker">OFAC Venezuela Sanctions Tracker</a>.</p>
+        <p class="source-citation">Source: <a href="https://ofac.treasury.gov/recent-actions/20260129" target="_blank" rel="noopener">OFAC (Jan 29, 2026)</a> · <a href="https://ofac.treasury.gov/recent-actions/20260313_33" target="_blank" rel="noopener">OFAC (Mar 13, 2026)</a></p>
+      </section>
+
+      <section class="sec" id="timeline">
+        <h2>Reform Timeline</h2>
+        <div class="timeline">
+          <div class="tl-item positive">
+            <div class="tl-dot"></div>
+            <div class="tl-date">January 3, 2026</div>
+            <div class="tl-title">Political Transition</div>
+            <div class="tl-desc">Removal of Maduro government; interim leadership signals openness to foreign investment and economic reform.</div>
+          </div>
+          <div class="tl-item positive">
+            <div class="tl-dot"></div>
+            <div class="tl-date">January 29, 2026</div>
+            <div class="tl-title">Hydrocarbons Law Reform Approved</div>
+            <div class="tl-desc">National Assembly approves partial reform of the OHL. Published in Special Official Gazette same day. OFAC issues GL 46 in parallel.</div>
+          </div>
+          <div class="tl-item positive">
+            <div class="tl-dot"></div>
+            <div class="tl-date">February 3, 2026</div>
+            <div class="tl-title">General License 47 — Diluent Exports</div>
+            <div class="tl-desc">OFAC authorizes U.S.-origin diluent exports to Venezuela, critical for blending heavy Orinoco crude.</div>
+          </div>
+          <div class="tl-item positive">
+            <div class="tl-dot"></div>
+            <div class="tl-date">February 2026</div>
+            <div class="tl-title">Gas Law Reform</div>
+            <div class="tl-desc">National Assembly reforms the Gas Law, permitting complete foreign participation and operational control in natural gas sector.</div>
+          </div>
+          <div class="tl-item positive">
+            <div class="tl-dot"></div>
+            <div class="tl-date">March 13, 2026</div>
+            <div class="tl-title">GL 48A — Electricity & Petrochemicals</div>
+            <div class="tl-desc">OFAC expands authorized activities to include Venezuela's electricity sector (CORPOELEC), petrochemicals, and fertilizers.</div>
+          </div>
+          <div class="tl-item positive">
+            <div class="tl-dot"></div>
+            <div class="tl-date">April 2026</div>
+            <div class="tl-title">Chevron Asset Swap</div>
+            <div class="tl-desc">Chevron executes strategic asset swap with PDVSA, gaining increased working interests. Venezuelan exports hit 1.23M bpd — highest since 2018.</div>
+          </div>
+          <div class="tl-item pending">
+            <div class="tl-dot"></div>
+            <div class="tl-date">2026–2027</div>
+            <div class="tl-title">29 Additional Law Reforms Announced</div>
+            <div class="tl-desc">National Assembly has announced reforms covering infrastructure, mining, labor legislation, telecommunications, and other critical areas.</div>
+          </div>
+        </div>
+      </section>
+
+      <section class="sec" id="risks">
+        <h2>Risks & Caveats for Investors</h2>
+        <p>Despite the legislative improvements, significant risks remain:</p>
+        <ul>
+          <li><strong>Implementation uncertainty:</strong> Foreign Policy notes the reforms are "hurriedly drafted" and mostly exist "on paper for now." Regulatory implementation and bureaucratic capacity are untested.</li>
+          <li><strong>Expropriation history:</strong> Venezuela has expropriated international oil assets repeatedly since the 1970s. Investors must evaluate whether the political environment has fundamentally changed.</li>
+          <li><strong>Sanctions complexity:</strong> GL 46 applies only to "established U.S. entities" organized before January 29, 2025, and excludes entities owned/controlled by Chinese, Russian, Iranian, North Korean, or Cuban persons. Compliance monitoring is ongoing.</li>
+          <li><strong>Infrastructure decay:</strong> Decades of underinvestment mean significant capital is required just to maintain current production levels (~$50B over 15 years for upstream + infrastructure).</li>
+          <li><strong>Macroeconomic instability:</strong> Despite 6.5%+ GDP growth projections, inflation is expected at ~272% for 2026 and over 70% of the population faces poverty.</li>
+        </ul>
+        <p class="source-citation">Sources: <a href="https://foreignpolicy.com/2026/02/06/venezuela-oil-law-reform-production-pdvsa-trump/" target="_blank" rel="noopener">Foreign Policy</a> · <a href="https://en.cibercuba.com/noticias/2026-04-28-u1-e197721-s27061-nid327518-cepal-venezuela-estara-economias-creceran-sudamerica" target="_blank" rel="noopener">CEPAL/CiberCuba</a></p>
+      </section>
+
+      <section class="sec" id="faq">
+        <h2>Frequently Asked Questions</h2>
+        <div class="faq-list">
+          {% for item in faq %}
+          <div class="faq-item">
+            <button class="faq-q" aria-expanded="false"><span class="faq-icon">+</span> {{ item.q }}</button>
+            <div class="faq-a">{{ item.a }}</div>
+          </div>
+          {% endfor %}
+        </div>
+      </section>
+
+      {{ cluster_nav("oil-energy", request.path) }}
+
+    </div>
+  </article>
+
+  <div class="related">
+    <h3>Related Analysis</h3>
+    <ul>
+      <li><a href="/general-license-46-venezuela">OFAC General License 46: What U.S. Companies Can Now Do</a> <small>Sanctions</small></li>
+      <li><a href="/venezuela-oil">Venezuela Oil Sector Overview</a> <small>Sector</small></li>
+      <li><a href="/sanctions-tracker">OFAC Venezuela Sanctions Tracker ({{ active_designations }} active designations)</a> <small>Tool</small></li>
+      <li><a href="/venezuela-bonds-restructuring">Venezuela Bond Market & Debt Restructuring Tracker</a> <small>Finance</small></li>
+      <li><a href="/invest-in-venezuela">How to Invest in Venezuela: Complete Guide</a> <small>Pillar</small></li>
+    </ul>
+  </div>
+</div>
+
+<script>
+document.querySelectorAll('.faq-q').forEach(function(btn) {
+  btn.addEventListener('click', function() {
+    var expanded = btn.getAttribute('aria-expanded') === 'true';
+    btn.setAttribute('aria-expanded', expanded ? 'false' : 'true');
+  });
+});
+</script>
+{% endblock %}

@@ -1,0 +1,324 @@
+{% extends "_base.html.j2" %}
+{% from "_base.html.j2" import share_button %}
+{% from "_cluster_nav.html.j2" import cluster_nav %}
+
+{% block head_extra %}
+<style>
+  .oil-hero { background: linear-gradient(180deg, #f6f8fa 0%, var(--white) 100%); padding: 28px 0 16px; margin-bottom: 16px; }
+  .oil-hero .kicker { font-size: 12px; text-transform: uppercase; letter-spacing: 1.4px; color: #cc0000; font-weight: 700; }
+  .oil-hero h1 { font-family: var(--font-serif); font-size: 32px; color: var(--sr-blue-dark); margin: 8px 0 8px; line-height: 1.2; }
+  .oil-hero p.lead { font-family: var(--font-serif); font-style: italic; color: var(--sr-gray-text); font-size: 16px; max-width: 720px; margin: 0; }
+
+  .toc { background: var(--sr-gray-bg); border-left: 3px solid var(--sr-blue); padding: 18px 22px; margin: 0 0 32px; font-size: 14px; }
+  .toc h3 { font-family: var(--font-serif); font-size: 14px; text-transform: uppercase; letter-spacing: 1px; color: var(--sr-blue-dark); margin-bottom: 10px; }
+  .toc ol { margin-left: 20px; }
+  .toc li { margin-bottom: 6px; }
+
+  .sec { margin: 40px 0 24px; padding-top: 8px; }
+  .sec h2 { font-family: var(--font-serif); font-size: 26px; color: var(--sr-blue-dark); margin-bottom: 8px; }
+
+  .stat-grid { display: grid; grid-template-columns: 1fr; gap: 14px; margin: 18px 0 24px; }
+  @media (min-width: 640px) { .stat-grid { grid-template-columns: repeat(4, 1fr); } }
+  .stat-card { background: var(--sr-gray-bg); border: 1px solid var(--sr-gray-light); border-radius: 6px; padding: 18px 20px; text-align: center; }
+  .stat-card .stat-num { font-family: var(--font-serif); font-size: 28px; font-weight: 700; color: var(--sr-blue-dark); line-height: 1.1; }
+  .stat-card .stat-label { font-size: 12px; color: var(--sr-gray-text); margin-top: 6px; text-transform: uppercase; letter-spacing: 0.5px; }
+
+  .company-card { border: 1px solid var(--sr-gray-light); border-radius: 6px; padding: 20px 22px; margin-bottom: 16px; }
+  .company-card h3 { font-family: var(--font-serif); font-size: 18px; color: var(--sr-blue-dark); margin-bottom: 4px; }
+  .company-card .cc-meta { font-size: 12px; text-transform: uppercase; letter-spacing: 0.5px; color: var(--sr-gray-text); margin-bottom: 10px; }
+  .company-card .cc-stats { display: flex; gap: 18px; flex-wrap: wrap; margin-bottom: 10px; font-size: 14px; }
+  .company-card .cc-stats strong { color: var(--sr-blue-dark); }
+  .company-card p { font-size: 14px; line-height: 1.6; margin-bottom: 6px; }
+
+  .pathway-grid { display: grid; grid-template-columns: 1fr; gap: 16px; margin: 18px 0 24px; }
+  @media (min-width: 640px) { .pathway-grid { grid-template-columns: 1fr 1fr; } }
+  .pathway-card { border: 1px solid var(--sr-gray-light); border-left: 4px solid var(--sr-blue); border-radius: 4px; padding: 18px 20px; }
+  .pathway-card h3 { font-family: var(--font-serif); font-size: 17px; color: var(--sr-blue-dark); margin-bottom: 8px; }
+  .pathway-card p { font-size: 14px; line-height: 1.6; }
+
+  .oil-table { width: 100%; border-collapse: collapse; margin: 18px 0 24px; font-size: 14px; }
+  .oil-table th, .oil-table td { text-align: left; padding: 12px 14px; border-bottom: 1px solid var(--sr-gray-light); }
+  .oil-table th { background: var(--sr-gray-bg); font-size: 12px; text-transform: uppercase; letter-spacing: 0.5px; color: var(--sr-gray-text); font-weight: 600; }
+
+  .disclaimer { background: #fff8e1; border-left: 4px solid #f5b041; padding: 14px 18px; border-radius: 3px; margin: 20px 0; font-size: 13.5px; line-height: 1.65; color: var(--sr-dark-text); }
+
+  .faq-list { margin: 18px 0 28px; }
+  .faq-item { border: 1px solid var(--sr-gray-light); border-radius: 4px; margin-bottom: 10px; overflow: hidden; }
+  .faq-q { display: flex; align-items: center; gap: 12px; padding: 16px 18px; cursor: pointer; background: var(--white); font-family: var(--font-serif); font-size: 16px; font-weight: 700; color: var(--sr-blue-dark); transition: background 0.15s; border: 0; width: 100%; text-align: left; }
+  .faq-q:hover { background: var(--sr-gray-bg); }
+  .faq-q .faq-icon { flex-shrink: 0; width: 24px; height: 24px; border-radius: 50%; background: var(--sr-blue); color: var(--white); display: flex; align-items: center; justify-content: center; font-size: 14px; font-weight: 700; transition: transform 0.2s; font-family: var(--font-sans); }
+  .faq-q[aria-expanded="true"] .faq-icon { transform: rotate(45deg); }
+  .faq-a { padding: 0 18px 18px 54px; font-size: 15px; line-height: 1.7; color: var(--sr-dark-text); display: none; }
+  .faq-q[aria-expanded="true"] + .faq-a { display: block; }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="oil-hero">
+  <div class="container">
+    <nav class="breadcrumbs">
+      <a href="/">Home</a> <span>›</span>
+      <a href="/invest-in-venezuela">Invest</a> <span>›</span>
+      Oil Investment Guide
+    </nav>
+    <span class="kicker">Oil & Gas · Foreign Investment</span>
+    <h1>Investing in Venezuelan Oil: What Foreigners Need to Know (2026)</h1>
+    <p class="lead">Venezuela holds 304 billion barrels of proven oil reserves — the world's largest. After January 2026 reforms, foreign investors can participate directly for the first time in 50 years. Here's how.</p>
+  </div>
+</div>
+
+<div class="container">
+  <article>
+    <header>
+      <div class="meta">
+        <span>By <strong>Caracas Research</strong></span>
+        <span>Updated <strong>{{ today }}</strong></span>
+        <span>12 min read</span>
+      </div>
+    </header>
+
+    <div class="takeaways">
+      <h3>Key Takeaways</h3>
+      <ul>
+        <li>Venezuela's <a href="/venezuela-hydrocarbons-law">Hydrocarbons Law reform</a> (Jan 2026) allows private foreign companies to operate upstream oil activities independently via <strong>Productive Participation Contracts (CPPs)</strong></li>
+        <li><strong>Six majors</strong> are authorized under OFAC GL 50A: BP, Chevron, ENI, Maurel & Prom, Repsol, and Shell</li>
+        <li>Production reached <strong>~1.1M bpd</strong> in March 2026; exports hit <strong>1.23M bpd</strong> in April — highest since 2018</li>
+        <li>Reaching 3M bpd would require ~<strong>$180 billion</strong> in investment over a decade+</li>
+        <li>Orinoco Belt crude is extra-heavy (9.5–12 API) requiring <strong>diluent blending</strong> and specialized refining</li>
+      </ul>
+    </div>
+
+    <div class="stat-grid">
+      <div class="stat-card">
+        <div class="stat-num">304B</div>
+        <div class="stat-label">Barrels Proven Reserves</div>
+      </div>
+      <div class="stat-card">
+        <div class="stat-num">1.23M</div>
+        <div class="stat-label">Exports (Apr 2026, bpd)</div>
+      </div>
+      <div class="stat-card">
+        <div class="stat-num">$180B</div>
+        <div class="stat-label">Investment Needed (3M bpd)</div>
+      </div>
+      <div class="stat-card">
+        <div class="stat-num">6</div>
+        <div class="stat-label">Majors Authorized (GL 50A)</div>
+      </div>
+    </div>
+
+    <div class="toc">
+      <h3>Contents</h3>
+      <ol>
+        <li><a href="#reserves">The Reserves: Why Venezuela Matters</a></li>
+        <li><a href="#operators">Current Operators & Joint Ventures</a></li>
+        <li><a href="#pathways">Investment Pathways for Foreigners</a></li>
+        <li><a href="#ofac">OFAC Licenses: What's Authorized</a></li>
+        <li><a href="#orinoco">The Orinoco Belt: Geology & Economics</a></li>
+        <li><a href="#infrastructure">Infrastructure: The $180B Challenge</a></li>
+        <li><a href="#indirect">Indirect Oil Exposure</a></li>
+        <li><a href="#risks">Risks</a></li>
+        <li><a href="#faq">Frequently Asked Questions</a></li>
+      </ol>
+    </div>
+
+    <div class="body">
+      <section class="sec" id="reserves">
+        <h2>The Reserves: Why Venezuela Matters</h2>
+        <p>Venezuela holds approximately <strong>304 billion barrels</strong> of proven oil reserves — more than Saudi Arabia, Canada, or Iran. The vast majority sits in the <strong>Orinoco Oil Belt (Faja Petrolífera del Orinoco)</strong>, a 55,000 km² formation in eastern Venezuela containing an estimated <strong>1.36 trillion barrels</strong> of original oil in place.</p>
+        <p>Yet production has collapsed from a peak of 3.4 million bpd (1998) to roughly 800,000 bpd by late 2025. The gap between reserves and production represents one of the most compelling — and riskiest — investment propositions in global energy.</p>
+        <p>As of April 2026, production has recovered to ~1.1M bpd, with exports reaching 1.23M bpd — a seven-year high — driven by sanctions relief and renewed foreign operator activity.</p>
+        <p class="source-citation">Sources: <a href="https://www.cnbc.com/2026/01/28/venezuela-crude-oil-production-investment.html" target="_blank" rel="noopener">CNBC (Jan 2026)</a> · <a href="https://energy-analytics-institute.org/2026/01/13/eai-analysis-venezuelas-55000-km2-orinoco-belt-of-faja/" target="_blank" rel="noopener">Energy Analytics Institute</a> · <a href="https://www.oilandgasadvancement.com/news/venezuela-oil-exports-surge-to-seven-year-high-in-april-2026/" target="_blank" rel="noopener">Oil & Gas Advancement (Apr 2026)</a></p>
+      </section>
+
+      <section class="sec" id="operators">
+        <h2>Current Operators & Joint Ventures</h2>
+
+        <div class="company-card">
+          <h3>Chevron Corporation (CVX)</h3>
+          <div class="cc-meta">United States · NYSE: CVX</div>
+          <div class="cc-stats">
+            <span><strong>Production:</strong> ~260,000 bpd</span>
+            <span><strong>Share of Venezuela total:</strong> ~25%</span>
+          </div>
+          <p>Operates four joint ventures with PDVSA. In April 2026, executed a strategic asset swap gaining increased working interests in Petroindependencia (49%) and development rights to Ayacucho 8 in the Orinoco Belt via Petropiar (30%). Targets ~390,000 bpd within two years — a ~50% increase.</p>
+          <p class="source-citation">Source: <a href="https://www.chevron.com/newsroom/2026/q2/chevron-consolidates-venezuela-heavy-oil-position-in-asset-swap" target="_blank" rel="noopener">Chevron Newsroom (Apr 2026)</a></p>
+        </div>
+
+        <div class="company-card">
+          <h3>Repsol S.A.</h3>
+          <div class="cc-meta">Spain · BME: REP</div>
+          <div class="cc-stats">
+            <span><strong>Production:</strong> ~45,000 bpd</span>
+            <span><strong>Target:</strong> +50% within 12 months</span>
+          </div>
+          <p>Signed agreement in April 2026 to regain operational control of Petroquiriquire (60% PDVSA / 40% Repsol). Plans to triple production over three years. Also partners with ENI on the Cardón IV offshore gas project.</p>
+          <p class="source-citation">Source: <a href="https://www.repsol.com/en/press-room/press-releases/2026/repsol-agrees-conditions-increase-oil-production-venezuela/index.cshtml" target="_blank" rel="noopener">Repsol Press Release (Apr 2026)</a></p>
+        </div>
+
+        <div class="company-card">
+          <h3>Eni S.p.A.</h3>
+          <div class="cc-meta">Italy · BIT: ENI</div>
+          <div class="cc-stats">
+            <span><strong>Production:</strong> ~64,000 boepd (2025)</span>
+            <span><strong>Key asset:</strong> Junín 5 (35B barrels certified)</span>
+          </div>
+          <p>Signed agreement in April 2026 to relaunch Junín 5 (heavy crude, Orinoco Belt) and Petrosucre projects. Also holds 50% of the Cardón IV offshore gas project with Repsol.</p>
+          <p class="source-citation">Source: <a href="https://finance.yahoo.com/sectors/energy/articles/eni-signs-agreement-relaunch-heavy-195728000.html" target="_blank" rel="noopener">Yahoo Finance / ENI (Apr 2026)</a></p>
+        </div>
+
+        <div class="company-card">
+          <h3>Shell PLC</h3>
+          <div class="cc-meta">UK/Netherlands · NYSE: SHEL</div>
+          <div class="cc-stats">
+            <span><strong>Focus:</strong> Monagas North</span>
+            <span><strong>Status:</strong> Closing deal (Q1 2026)</span>
+          </div>
+          <p>Closing in on first major production deal since U.S. captured Maduro, working in Monagas North areas. One of six entities authorized under GL 50A.</p>
+          <p class="source-citation">Source: <a href="https://today.reuters.com/business/energy/chevron-shell-closing-first-big-oil-production-deals-venezuela-since-us-captured-2026-03-10/" target="_blank" rel="noopener">Reuters (Mar 2026)</a></p>
+        </div>
+
+        <table class="oil-table">
+          <thead><tr><th>Company</th><th>Country</th><th>Production (bpd)</th><th>Key Assets</th><th>GL 50A</th></tr></thead>
+          <tbody>
+            <tr><td>Chevron</td><td>U.S.</td><td>~260,000</td><td>Petroindependencia, Petropiar, Petroboscán</td><td>Yes</td></tr>
+            <tr><td>Repsol</td><td>Spain</td><td>~45,000</td><td>Petroquiriquire, Cardón IV (gas)</td><td>Yes</td></tr>
+            <tr><td>ENI</td><td>Italy</td><td>~64,000</td><td>Junín 5, Petrosucre, Cardón IV (gas)</td><td>Yes</td></tr>
+            <tr><td>Shell</td><td>UK/NL</td><td>TBD</td><td>Monagas North (negotiating)</td><td>Yes</td></tr>
+            <tr><td>BP</td><td>UK</td><td>TBD</td><td>TBD</td><td>Yes</td></tr>
+            <tr><td>Maurel & Prom</td><td>France</td><td>TBD</td><td>TBD</td><td>Yes</td></tr>
+          </tbody>
+        </table>
+      </section>
+
+      <section class="sec" id="pathways">
+        <h2>Investment Pathways for Foreigners</h2>
+        <div class="pathway-grid">
+          <div class="pathway-card">
+            <h3>1. Productive Participation Contracts (CPPs)</h3>
+            <p>The new flagship mechanism. Private companies can operate upstream at their own cost and risk, export oil directly, and negotiate project-specific fiscal terms. <a href="/venezuela-hydrocarbons-law">Full CPP details →</a></p>
+          </div>
+          <div class="pathway-card">
+            <h3>2. Reformed Joint Ventures</h3>
+            <p>Traditional JV with PDVSA majority (≥51%), but private minority shareholders can now assume operational control and access sales proceeds directly.</p>
+          </div>
+          <div class="pathway-card">
+            <h3>3. Oilfield Services</h3>
+            <p>GL 48 authorizes oilfield services companies to provide goods, technology, and services for E&P operations — no direct production stake required.</p>
+          </div>
+          <div class="pathway-card">
+            <h3>4. Contingent Contracts (GL 49)</h3>
+            <p>GL 49 authorizes negotiation and entry into contingent contracts for new investments, conditional on separate OFAC authorization before performance begins. Ideal for <a href="https://www.bakerbotts.com/thought-leadership/publications/2026/february/the-e-p-playbook-for-unlocking-venezuela-navigating-the-new-ofac-sanctions-landscape" target="_blank" rel="noopener">dual-track strategy</a>.</p>
+          </div>
+        </div>
+      </section>
+
+      <section class="sec" id="ofac">
+        <h2>OFAC Licenses: What's Authorized</h2>
+        <table class="oil-table">
+          <thead><tr><th>License</th><th>Date</th><th>Authorizes</th></tr></thead>
+          <tbody>
+            <tr><td><a href="/general-license-46-venezuela">GL 46</a></td><td>Jan 29, 2026</td><td>Established U.S. entities: lift, export, sell, transport, refine Venezuelan oil</td></tr>
+            <tr><td>GL 47</td><td>Feb 3, 2026</td><td>U.S.-origin diluent exports to Venezuela</td></tr>
+            <tr><td>GL 48</td><td>Feb 13, 2026</td><td>Oilfield services: goods, technology, services for E&P</td></tr>
+            <tr><td>GL 48A</td><td>Mar 13, 2026</td><td>Electricity (CORPOELEC), petrochemicals, fertilizers</td></tr>
+            <tr><td>GL 49</td><td>Feb 13, 2026</td><td>Negotiation of contingent investment contracts (performance requires separate OFAC auth)</td></tr>
+            <tr><td>GL 50A</td><td>Feb 18, 2026</td><td>Full operations for 6 named entities: BP, Chevron, ENI, Maurel & Prom, Repsol, Shell</td></tr>
+          </tbody>
+        </table>
+        <p class="disclaimer"><strong>Compliance note:</strong> Baker Botts recommends a <strong>dual-track strategy</strong>: conduct in-country negotiations under GL 49 while simultaneously pursuing entity-specific OFAC authorization. All contracts must specify U.S. governing law and U.S.-based dispute resolution. Payments to blocked persons must go into Foreign Government Deposit Funds.</p>
+        <p class="source-citation">Sources: <a href="https://ofac.treasury.gov/recent-actions/20260129" target="_blank" rel="noopener">OFAC</a> · <a href="https://www.bakerbotts.com/thought-leadership/publications/2026/february/the-e-p-playbook-for-unlocking-venezuela-navigating-the-new-ofac-sanctions-landscape" target="_blank" rel="noopener">Baker Botts (Feb 2026)</a> · <a href="https://www.clearygottlieb.com/news-and-insights/publication-listing/ofac-issues-general-licenses-49-and-50a" target="_blank" rel="noopener">Cleary Gottlieb</a></p>
+      </section>
+
+      <section class="sec" id="orinoco">
+        <h2>The Orinoco Belt: Geology & Economics</h2>
+        <p>The Orinoco Oil Belt is divided into four blocks spanning ~55,000 km²:</p>
+        <table class="oil-table">
+          <thead><tr><th>Block</th><th>Operator(s)</th><th>Crude Quality</th><th>Notes</th></tr></thead>
+          <tbody>
+            <tr><td>Boyacá</td><td>Various</td><td>Extra-heavy (8–10° API)</td><td>Western block; less developed</td></tr>
+            <tr><td>Junín</td><td>ENI (Junín 5), Chinese companies</td><td>Extra-heavy (8–10° API)</td><td>Junín 5: 35B barrels certified oil</td></tr>
+            <tr><td>Ayacucho</td><td>Chevron (Petroindependencia, Petropiar)</td><td>Heavy (10–12° API)</td><td>Most active; Chevron expanding here</td></tr>
+            <tr><td>Carabobo</td><td>Chevron (Petropiar 30%)</td><td>Extra-heavy (8–10° API)</td><td>Large untapped reserves</td></tr>
+          </tbody>
+        </table>
+        <p>Orinoco crude is <strong>extra-heavy and high-sulfur</strong> (API gravity 9.5–12°, sulfur 4–5%), comparable to Canadian oil sands bitumen. It requires blending with light diluent (naphtha) to become pipeline-transportable and specialized refining equipment (cokers). This results in a <strong>$7–10/barrel discount</strong> versus international benchmarks, with breakeven costs exceeding <strong>$80/barrel Brent</strong> for many projects.</p>
+        <p class="source-citation">Sources: <a href="https://about.bnef.com/insights/commodities/venezuelas-oil-renaissance-faces-several-high-hurdles" target="_blank" rel="noopener">BloombergNEF</a> · <a href="https://energy-analytics-institute.org/2026/01/13/eai-analysis-venezuelas-55000-km2-orinoco-belt-of-faja/" target="_blank" rel="noopener">Energy Analytics Institute</a></p>
+      </section>
+
+      <section class="sec" id="infrastructure">
+        <h2>Infrastructure: The $180 Billion Challenge</h2>
+        <p>The gap between Venezuela's reserves and its production is fundamentally an infrastructure and investment story:</p>
+        <ul>
+          <li><strong>Refining collapse:</strong> Domestic refining capacity has fallen 75% since 2010 — from ~1M bpd to ~250,000 bpd</li>
+          <li><strong>Pipeline decay:</strong> Major pipeline networks require rehabilitation after years of deferred maintenance</li>
+          <li><strong>Diluent supply:</strong> GL 47 opened U.S. diluent exports to Venezuela — critical for Orinoco heavy crude</li>
+          <li><strong>Near-term:</strong> 200,000–300,000 bpd recovery is achievable within months through basic workovers of dormant wells funded from export cash flows</li>
+          <li><strong>Medium-term:</strong> Returning to 2M bpd (2016 level) requires multi-billion-dollar capital deployment</li>
+          <li><strong>Long-term:</strong> 3M bpd would take ~$180 billion and at least a decade under best-case conditions</li>
+        </ul>
+        <p class="source-citation">Sources: <a href="https://www.cnbc.com/2026/01/28/venezuela-crude-oil-production-investment.html" target="_blank" rel="noopener">CNBC</a> · <a href="https://www.oilfieldtechnology.com/drilling-and-production/07012026/wood-mackenzie-what-the-venezuela-regime-change-means-for-oil-production-crude-and-product-markets/" target="_blank" rel="noopener">Wood Mackenzie via Oilfield Technology</a> · <a href="https://emag.directindustry.com/2026/01/12/venezuela-oil-gas-reserves-infrastructure-recovery/" target="_blank" rel="noopener">DirectIndustry</a></p>
+      </section>
+
+      <section class="sec" id="indirect">
+        <h2>Indirect Oil Exposure</h2>
+        <p>For investors who can't or prefer not to operate directly in Venezuela:</p>
+        <ul>
+          <li><strong>Chevron (CVX):</strong> ~25% of Venezuela's total production; actively expanding. Venezuelan upside is material to company-level returns</li>
+          <li><strong>Repsol (REP.MC):</strong> Regaining operational control; planning to triple production over 3 years</li>
+          <li><strong>ENI (ENI.MI):</strong> Relaunching Junín 5 and Petrosucre; Cardón IV gas partnership with Repsol</li>
+          <li><strong>Oilfield services:</strong> Halliburton, SLB (Schlumberger), and Baker Hughes would benefit from increased Venezuelan upstream activity</li>
+          <li><strong>Venezuelan bonds:</strong> Oil revenue is the primary source of debt repayment capacity. See <a href="/venezuela-bonds-restructuring">bond restructuring guide</a></li>
+        </ul>
+      </section>
+
+      <section class="sec" id="risks">
+        <h2>Risks</h2>
+        <ul>
+          <li><strong>Sanctions reversal:</strong> U.S. policy could reimpose restrictions if political conditions deteriorate</li>
+          <li><strong>Expropriation history:</strong> Venezuela has seized foreign oil assets repeatedly since the 1970s</li>
+          <li><strong>Operational environment:</strong> Security concerns, supply chain limitations, skilled labor shortages</li>
+          <li><strong>Breakeven costs:</strong> Orinoco Belt projects exceed $80/bbl Brent — vulnerable to oil price downturns</li>
+          <li><strong>PDVSA institutional risk:</strong> State oil company is deeply indebted and institutionally weakened after decades of mismanagement</li>
+          <li><strong>China/Russia claims:</strong> Bilateral loan agreements may encumber future oil revenues</li>
+        </ul>
+        <p class="disclaimer"><strong>Risk warning:</strong> Venezuelan oil investment is speculative and suitable only for investors with high risk tolerance, relevant sector expertise, and the resources to navigate complex sanctions compliance requirements. This is informational content, not investment advice.</p>
+      </section>
+
+      <section class="sec" id="faq">
+        <h2>Frequently Asked Questions</h2>
+        <div class="faq-list">
+          {% for item in faq %}
+          <div class="faq-item">
+            <button class="faq-q" aria-expanded="false"><span class="faq-icon">+</span> {{ item.q }}</button>
+            <div class="faq-a">{{ item.a }}</div>
+          </div>
+          {% endfor %}
+        </div>
+      </section>
+
+      {{ cluster_nav("oil-energy", request.path) }}
+    </div>
+  </article>
+
+  <div class="related">
+    <h3>Related Analysis</h3>
+    <ul>
+      <li><a href="/venezuela-hydrocarbons-law">Hydrocarbons Law Reform: Full Breakdown</a> <small>Reform</small></li>
+      <li><a href="/general-license-46-venezuela">OFAC General License 46 Explained</a> <small>Sanctions</small></li>
+      <li><a href="/venezuela-oil">Venezuela Oil Sector Overview</a> <small>Sector</small></li>
+      <li><a href="/sanctions-tracker">OFAC Sanctions Tracker</a> <small>Tool</small></li>
+      <li><a href="/venezuela-vs-colombia">Venezuela vs. Colombia: Where to Invest</a> <small>Comparison</small></li>
+    </ul>
+  </div>
+</div>
+
+<script>
+document.querySelectorAll('.faq-q').forEach(function(btn) {
+  btn.addEventListener('click', function() {
+    var expanded = btn.getAttribute('aria-expanded') === 'true';
+    btn.setAttribute('aria-expanded', expanded ? 'false' : 'true');
+  });
+});
+</script>
+{% endblock %}

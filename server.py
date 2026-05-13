@@ -9183,6 +9183,949 @@ def venezuela_economy_page():
         abort(500)
 
 
+@app.route("/venezuela-vs-colombia")
+@app.route("/venezuela-vs-colombia/")
+def venezuela_vs_colombia_page():
+    """
+    Venezuela vs. Colombia investment comparison.
+    Targets "Venezuela vs Colombia investment" "where to invest Latin America"
+    "Colombia vs Venezuela" "invest Latin America 2026".
+    Sources: BBVA Research, CEPAL, Ecoanalítica, Global X ETFs,
+    U.S. State Dept., King & Spalding, OECD.
+    """
+    try:
+        from src.page_renderer import _env, _base_url, _iso, settings as _s
+        from datetime import date as _date, datetime as _dt
+        import json as _json
+
+        base = _base_url()
+        canonical = f"{base}/venezuela-vs-colombia"
+        title = "Venezuela vs. Colombia: Where to Invest in Latin America (2026)"
+        description = (
+            "Data-driven comparison of Venezuela and Colombia for investors. "
+            "GDP, stock markets, FDI, sectors, risk profiles, market access, "
+            "and the Colombia–Venezuela spillover effect."
+        )
+        seo = {
+            "title": title,
+            "description": description,
+            "keywords": (
+                "Venezuela vs Colombia investment, where to invest Latin America, "
+                "Colombia vs Venezuela, invest Latin America 2026, "
+                "Colombia investment, Venezuela investment comparison, "
+                "GXG ETF Colombia, Colcap, Latin America frontier market, "
+                "Colombia economy 2026, Venezuela economy 2026, "
+                "emerging market Latin America, Colombia Venezuela trade"
+            ),
+            "canonical": canonical,
+            "site_name": _s.site_name,
+            "site_url": base,
+            "locale": _s.site_locale,
+            "og_image": f"{base}/static/og-image.png?v=3",
+            "og_type": "article",
+            "published_iso": _iso(_dt.utcnow()),
+            "modified_iso": _iso(_dt.utcnow()),
+            "section": "Investment",
+            "article_tags": [
+                "Venezuela", "Colombia", "Investment", "Latin America",
+                "Comparison", "Emerging Market", "GXG", "Colcap",
+            ],
+        }
+
+        faq = [
+            {
+                "q": "Is Colombia or Venezuela a better investment in 2026?",
+                "a": (
+                    "It depends on risk tolerance. Colombia offers stability, "
+                    "accessible markets (GXG ETF, NYSE-listed ADRs), and moderate "
+                    "returns with <9x P/E and ~7% dividend yield. Venezuela offers "
+                    "extreme valuations and recovery potential but with very high "
+                    "risk — sanctions complexity, inflation at ~272%, and minimal "
+                    "market access. Many investors allocate to both."
+                ),
+            },
+            {
+                "q": "Can I invest in Venezuela through Colombia?",
+                "a": (
+                    "Indirectly, yes. Colombia benefits from Venezuela's recovery — "
+                    "Global X estimates 0.5% GDP annual export gains from trade "
+                    "normalization. Colombian banks, infrastructure companies, and "
+                    "border-city real estate stand to benefit. The GXG ETF provides "
+                    "broad Colombian equity exposure."
+                ),
+            },
+            {
+                "q": "Is there a Venezuela ETF?",
+                "a": (
+                    "Not yet. Teucrium Trading filed for a 'Venezuela Exposure' ETF "
+                    "in January 2026, but it is pending SEC review. Colombia has the "
+                    "GXG ETF (Global X MSCI Colombia) as an accessible alternative."
+                ),
+            },
+            {
+                "q": "What is Colombia's stock market P/E ratio?",
+                "a": (
+                    "The Colombian Colcap index trades below 9x price-to-earnings "
+                    "with approximately 7% dividend yield as of 2026 — considered "
+                    "attractive relative to both developed and other EM markets."
+                ),
+            },
+            {
+                "q": "How does Venezuela normalization affect Colombia?",
+                "a": (
+                    "Significantly. Before the crisis, bilateral trade exceeded $7B "
+                    "annually; it collapsed to under $1B. Normalization would boost "
+                    "Colombian exports (est. 0.5% GDP/year), benefit border cities "
+                    "like Cúcuta, and allow Colombian banks to expand into Venezuela's "
+                    "dollarized economy."
+                ),
+            },
+            {
+                "q": "What are the main risks of investing in Colombia?",
+                "a": (
+                    "Regulatory uncertainty under President Petro (term ends Aug 2026), "
+                    "high corporate taxes (35%, 50% for oil/mining), frequent labor "
+                    "and tax reforms, elevated interest rates (~10%), and FDI that "
+                    "declined 15.2% between 2023-2024."
+                ),
+            },
+        ]
+
+        jsonld = _json.dumps({
+            "@context": "https://schema.org",
+            "@graph": [
+                {
+                    "@type": "Article",
+                    "headline": title,
+                    "description": description,
+                    "url": canonical,
+                    "datePublished": _iso(_dt.utcnow()),
+                    "dateModified": _iso(_dt.utcnow()),
+                    "author": {"@type": "Organization", "name": "Caracas Research", "url": base},
+                    "publisher": {"@type": "Organization", "name": "Caracas Research", "url": base, "logo": {"@type": "ImageObject", "url": f"{base}/static/og-image.png"}},
+                    "mainEntityOfPage": canonical,
+                    "image": f"{base}/static/og-image.png?v=3",
+                    "articleSection": "Investment",
+                    "keywords": "Venezuela, Colombia, investment, Latin America, comparison",
+                },
+                {
+                    "@type": "BreadcrumbList",
+                    "itemListElement": [
+                        {"@type": "ListItem", "position": 1, "name": "Home", "item": base},
+                        {"@type": "ListItem", "position": 2, "name": "Invest", "item": f"{base}/invest-in-venezuela"},
+                        {"@type": "ListItem", "position": 3, "name": "Venezuela vs. Colombia"},
+                    ],
+                },
+                {
+                    "@type": "FAQPage",
+                    "mainEntity": [
+                        {"@type": "Question", "name": item["q"], "acceptedAnswer": {"@type": "Answer", "text": item["a"]}}
+                        for item in faq
+                    ],
+                },
+            ],
+        })
+
+        template = _env().get_template("venezuela_vs_colombia.html.j2")
+        html = template.render(
+            seo=seo,
+            jsonld=jsonld,
+            faq=faq,
+            today=_date.today().strftime("%B %-d, %Y"),
+            current_year=_date.today().year,
+        )
+        return Response(html, mimetype="text/html")
+    except HTTPException:
+        raise
+    except Exception as exc:
+        logger.exception("Venezuela vs Colombia page render failed: %s", exc)
+        abort(500)
+
+
+@app.route("/investing-in-venezuelan-oil")
+@app.route("/investing-in-venezuelan-oil/")
+def investing_in_venezuelan_oil_page():
+    """
+    Comprehensive guide to investing in Venezuela's oil sector as a foreigner.
+    Targets "investing in Venezuelan oil" "Venezuela oil investment"
+    "how to invest in Venezuela oil" "PDVSA foreign investment"
+    "Chevron Venezuela" "Orinoco Belt investment".
+    Sources: CNBC, Reuters, Chevron, Repsol, ENI, Baker Botts, OFAC,
+    Cleary Gottlieb, BloombergNEF, Energy Analytics Institute, Wood Mackenzie.
+    """
+    try:
+        from src.page_renderer import _env, _base_url, _iso, settings as _s
+        from datetime import date as _date, datetime as _dt
+        import json as _json
+
+        base = _base_url()
+        canonical = f"{base}/investing-in-venezuelan-oil"
+        title = "Investing in Venezuelan Oil: What Foreigners Need to Know (2026)"
+        description = (
+            "How to invest in Venezuela's oil sector in 2026. 304B barrels of "
+            "reserves, 6 authorized majors (GL 50A), CPP contracts, Orinoco Belt "
+            "geology, OFAC licenses, and indirect exposure routes."
+        )
+        seo = {
+            "title": title,
+            "description": description,
+            "keywords": (
+                "investing in Venezuelan oil, Venezuela oil investment, "
+                "how to invest in Venezuela oil, PDVSA foreign investment, "
+                "Chevron Venezuela, Orinoco Belt investment, Venezuela oil reserves, "
+                "Venezuela oil production 2026, OFAC general license oil, "
+                "Venezuela oil companies, Repsol Venezuela, ENI Venezuela, "
+                "Shell Venezuela, Venezuela oil sector, Venezuela upstream investment, "
+                "PDVSA joint venture, Venezuela oil stocks"
+            ),
+            "canonical": canonical,
+            "site_name": _s.site_name,
+            "site_url": base,
+            "locale": _s.site_locale,
+            "og_image": f"{base}/static/og-image.png?v=3",
+            "og_type": "article",
+            "published_iso": _iso(_dt.utcnow()),
+            "modified_iso": _iso(_dt.utcnow()),
+            "section": "Oil & Energy",
+            "article_tags": [
+                "Venezuela Oil", "PDVSA", "Chevron", "Repsol", "ENI", "Shell",
+                "Orinoco Belt", "GL 50A", "Foreign Investment", "Upstream",
+            ],
+        }
+
+        faq = [
+            {
+                "q": "Can foreigners invest in Venezuela's oil sector?",
+                "a": (
+                    "Yes. Since January 2026, the reformed Hydrocarbons Law allows "
+                    "private foreign companies to operate upstream oil activities "
+                    "independently via Productive Participation Contracts (CPPs). "
+                    "Six major companies — BP, Chevron, ENI, Maurel & Prom, Repsol, "
+                    "and Shell — are specifically authorized under OFAC GL 50A. "
+                    "Other U.S. entities can negotiate contingent contracts under GL 49."
+                ),
+            },
+            {
+                "q": "How much oil does Venezuela produce?",
+                "a": (
+                    "As of April 2026, Venezuela produces approximately 1.1 million "
+                    "barrels per day, with exports reaching 1.23 million bpd — the "
+                    "highest since 2018. Key export destinations: U.S. (445,000 bpd), "
+                    "India (374,000 bpd), Europe (165,000 bpd)."
+                ),
+            },
+            {
+                "q": "Which companies operate in Venezuela's oil sector?",
+                "a": (
+                    "Chevron (~260,000 bpd, largest foreign producer), Repsol "
+                    "(~45,000 bpd, expanding), ENI (~64,000 boepd), and Shell "
+                    "(negotiating Monagas North). All four plus BP and Maurel & Prom "
+                    "are authorized under OFAC GL 50A."
+                ),
+            },
+            {
+                "q": "What is the Orinoco Belt?",
+                "a": (
+                    "The Orinoco Oil Belt (Faja Petrolífera del Orinoco) is a "
+                    "55,000 km² formation in eastern Venezuela containing an "
+                    "estimated 1.36 trillion barrels of original oil in place — the "
+                    "world's largest accumulation. It produces extra-heavy crude "
+                    "(9.5–12° API) that requires diluent blending and specialized refining."
+                ),
+            },
+            {
+                "q": "How can I invest in Venezuelan oil without operating directly?",
+                "a": (
+                    "Through shares in oil majors with Venezuelan operations: Chevron "
+                    "(CVX), Repsol (REP.MC), ENI (ENI.MI). Oilfield services companies "
+                    "like Halliburton, SLB, and Baker Hughes also benefit. Venezuelan "
+                    "sovereign bonds are another indirect route, since oil revenue "
+                    "drives debt repayment capacity."
+                ),
+            },
+            {
+                "q": "What OFAC licenses are needed for Venezuelan oil investment?",
+                "a": (
+                    "Key licenses: GL 46 (oil trade for established U.S. entities), "
+                    "GL 47 (diluent exports), GL 48 (oilfield services), GL 49 "
+                    "(contingent investment contracts), and GL 50A (full operations "
+                    "for 6 named entities). Baker Botts recommends a dual-track "
+                    "strategy: negotiate under GL 49 while pursuing specific OFAC auth."
+                ),
+            },
+            {
+                "q": "How much investment does Venezuela's oil sector need?",
+                "a": (
+                    "CNBC reports reaching 3 million bpd would require ~$180 billion "
+                    "and at least a decade. Near-term recovery of 200,000–300,000 bpd "
+                    "is achievable through basic workovers of dormant wells. Medium-term "
+                    "return to 2M bpd requires multi-billion-dollar deployment."
+                ),
+            },
+        ]
+
+        jsonld = _json.dumps({
+            "@context": "https://schema.org",
+            "@graph": [
+                {
+                    "@type": "Article",
+                    "headline": title,
+                    "description": description,
+                    "url": canonical,
+                    "datePublished": _iso(_dt.utcnow()),
+                    "dateModified": _iso(_dt.utcnow()),
+                    "author": {"@type": "Organization", "name": "Caracas Research", "url": base},
+                    "publisher": {"@type": "Organization", "name": "Caracas Research", "url": base, "logo": {"@type": "ImageObject", "url": f"{base}/static/og-image.png"}},
+                    "mainEntityOfPage": canonical,
+                    "image": f"{base}/static/og-image.png?v=3",
+                    "articleSection": "Oil & Energy",
+                    "keywords": "Venezuela oil, investment, PDVSA, Chevron, Orinoco Belt, OFAC",
+                },
+                {
+                    "@type": "BreadcrumbList",
+                    "itemListElement": [
+                        {"@type": "ListItem", "position": 1, "name": "Home", "item": base},
+                        {"@type": "ListItem", "position": 2, "name": "Invest", "item": f"{base}/invest-in-venezuela"},
+                        {"@type": "ListItem", "position": 3, "name": "Oil Investment Guide"},
+                    ],
+                },
+                {
+                    "@type": "FAQPage",
+                    "mainEntity": [
+                        {"@type": "Question", "name": item["q"], "acceptedAnswer": {"@type": "Answer", "text": item["a"]}}
+                        for item in faq
+                    ],
+                },
+            ],
+        })
+
+        template = _env().get_template("investing_in_venezuelan_oil.html.j2")
+        html = template.render(
+            seo=seo,
+            jsonld=jsonld,
+            faq=faq,
+            today=_date.today().strftime("%B %-d, %Y"),
+            current_year=_date.today().year,
+        )
+        return Response(html, mimetype="text/html")
+    except HTTPException:
+        raise
+    except Exception as exc:
+        logger.exception("Investing in Venezuelan oil page render failed: %s", exc)
+        abort(500)
+
+
+@app.route("/venezuela-hydrocarbons-law")
+@app.route("/venezuela-hydrocarbons-law/")
+def venezuela_hydrocarbons_law_page():
+    """
+    Explainer on Venezuela's January 2026 Hydrocarbons Law reform.
+    Targets "venezuela hydrocarbons law" "venezuela oil reform"
+    "venezuela oil investment 2026" "PDVSA joint venture reform".
+    Sources: Baker McKenzie, Norton Rose Fulbright, Foreign Policy,
+    BBC, King & Spalding, OFAC.
+    """
+    try:
+        from src.page_renderer import _env, _base_url, _iso, settings as _s
+        from datetime import date as _date, datetime as _dt
+        import json as _json
+
+        base = _base_url()
+        canonical = f"{base}/venezuela-hydrocarbons-law"
+        title = "Venezuela Hydrocarbons Law Reform 2026: What Investors Need to Know"
+        description = (
+            "Venezuela reformed its Hydrocarbons Law in January 2026, allowing "
+            "full private foreign participation in upstream oil for the first "
+            "time since 1976. CPPs, fiscal terms, arbitration, and risks explained."
+        )
+        seo = {
+            "title": title,
+            "description": description,
+            "keywords": (
+                "Venezuela hydrocarbons law, Venezuela oil reform 2026, "
+                "Venezuela oil investment, PDVSA joint venture, productive participation contracts, "
+                "Venezuela oil sector reform, CPP Venezuela, Venezuela upstream investment, "
+                "Venezuela oil royalties, foreign investment Venezuela oil, "
+                "hydrocarbons law reform Venezuela, Venezuela National Assembly oil"
+            ),
+            "canonical": canonical,
+            "site_name": _s.site_name,
+            "site_url": base,
+            "locale": _s.site_locale,
+            "og_image": f"{base}/static/og-image.png?v=3",
+            "og_type": "article",
+            "published_iso": "2026-01-29T00:00:00Z",
+            "modified_iso": _iso(_dt.utcnow()),
+            "section": "Oil & Energy",
+            "article_tags": [
+                "Hydrocarbons Law", "Oil Reform", "Venezuela", "PDVSA",
+                "Foreign Investment", "CPP", "Upstream", "Arbitration",
+            ],
+        }
+
+        faq = [
+            {
+                "q": "What is the Venezuela Hydrocarbons Law reform?",
+                "a": (
+                    "On January 29, 2026, Venezuela's National Assembly approved a "
+                    "partial reform of the Organic Hydrocarbons Law (OHL), allowing "
+                    "private companies to operate upstream oil activities independently "
+                    "through Productive Participation Contracts (CPPs), ending the "
+                    "requirement that PDVSA hold a majority stake in all upstream ventures."
+                ),
+            },
+            {
+                "q": "Can foreign companies now invest in Venezuela's oil sector?",
+                "a": (
+                    "Yes. The reform permits full private foreign participation in "
+                    "upstream oil (exploration, extraction, transportation, storage). "
+                    "Companies can operate at their own cost and risk under CPPs, or "
+                    "hold minority stakes with operational control in reformed joint "
+                    "ventures with PDVSA. U.S. companies must also comply with OFAC "
+                    "General License 46."
+                ),
+            },
+            {
+                "q": "What are Productive Participation Contracts (CPPs)?",
+                "a": (
+                    "CPPs are the new contract type introduced by the reform. They "
+                    "allow private companies domiciled in Venezuela to carry out primary "
+                    "oil activities at their own cost, account, and risk — including "
+                    "the right to export and sell oil directly, ending PDVSA's export "
+                    "monopoly."
+                ),
+            },
+            {
+                "q": "What are the royalty and tax rates under the reformed law?",
+                "a": (
+                    "Royalties are capped at 30% of extracted volumes, set on a "
+                    "project-by-project basis. An integrated hydrocarbons tax of up to "
+                    "15% on gross revenues replaces the prior income tax structure. "
+                    "Companies are exempt from wealth taxes and several special "
+                    "contributions."
+                ),
+            },
+            {
+                "q": "Is international arbitration available for oil investors?",
+                "a": (
+                    "Yes. The reform introduces alternative dispute resolution "
+                    "mechanisms including mediation and international arbitration. "
+                    "Under OFAC GL 46, contracts with Venezuelan entities must also be "
+                    "governed by U.S. law with dispute resolution in the United States."
+                ),
+            },
+            {
+                "q": "How much oil does Venezuela produce currently?",
+                "a": (
+                    "As of April 2026, Venezuela produces approximately 1.1 million "
+                    "barrels per day, with exports reaching 1.23 million bpd — the "
+                    "highest since 2018. Chevron alone produces about 260,000 bpd "
+                    "through its joint ventures with PDVSA."
+                ),
+            },
+        ]
+
+        jsonld = _json.dumps({
+            "@context": "https://schema.org",
+            "@graph": [
+                {
+                    "@type": "Article",
+                    "headline": title,
+                    "description": description,
+                    "url": canonical,
+                    "datePublished": "2026-01-29T00:00:00Z",
+                    "dateModified": _iso(_dt.utcnow()),
+                    "author": {"@type": "Organization", "name": "Caracas Research", "url": base},
+                    "publisher": {"@type": "Organization", "name": "Caracas Research", "url": base, "logo": {"@type": "ImageObject", "url": f"{base}/static/og-image.png"}},
+                    "mainEntityOfPage": canonical,
+                    "image": f"{base}/static/og-image.png?v=3",
+                    "articleSection": "Oil & Energy",
+                    "keywords": "Venezuela hydrocarbons law, oil reform, PDVSA, CPP, foreign investment",
+                },
+                {
+                    "@type": "BreadcrumbList",
+                    "itemListElement": [
+                        {"@type": "ListItem", "position": 1, "name": "Home", "item": base},
+                        {"@type": "ListItem", "position": 2, "name": "Explainers", "item": f"{base}/explainers"},
+                        {"@type": "ListItem", "position": 3, "name": "Hydrocarbons Law Reform"},
+                    ],
+                },
+                {
+                    "@type": "FAQPage",
+                    "mainEntity": [
+                        {"@type": "Question", "name": item["q"], "acceptedAnswer": {"@type": "Answer", "text": item["a"]}}
+                        for item in faq
+                    ],
+                },
+            ],
+        })
+
+        template = _env().get_template("venezuela_hydrocarbons_law.html.j2")
+        html = template.render(
+            seo=seo,
+            jsonld=jsonld,
+            faq=faq,
+            today=_date.today().strftime("%B %-d, %Y"),
+            active_designations="410+",
+            current_year=_date.today().year,
+        )
+        return Response(html, mimetype="text/html")
+    except HTTPException:
+        raise
+    except Exception as exc:
+        logger.exception("Hydrocarbons law page render failed: %s", exc)
+        abort(500)
+
+
+@app.route("/general-license-46-venezuela")
+@app.route("/general-license-46-venezuela/")
+def general_license_46_page():
+    """
+    Explainer on OFAC General License 46 (Jan 29, 2026).
+    Targets "general license 46 venezuela" "OFAC GL 46"
+    "Venezuela oil sanctions relief" "OFAC Venezuela oil".
+    Sources: OFAC, Morgan Lewis, Sullivan & Cromwell, Baker McKenzie,
+    Foley Hoag, Holland & Knight, Cleary Gottlieb.
+    """
+    try:
+        from src.page_renderer import _env, _base_url, _iso, settings as _s
+        from datetime import date as _date, datetime as _dt
+        import json as _json
+
+        base = _base_url()
+        canonical = f"{base}/general-license-46-venezuela"
+        title = "OFAC General License 46: Venezuela Oil Sanctions Relief Explained"
+        description = (
+            "OFAC General License 46 authorizes U.S. entities to trade "
+            "Venezuelan oil. Eligibility, scope, payment rules, reporting "
+            "requirements, and subsequent licenses (GL 47, GL 48A) explained."
+        )
+        seo = {
+            "title": title,
+            "description": description,
+            "keywords": (
+                "general license 46 Venezuela, OFAC GL 46, Venezuela oil sanctions relief, "
+                "OFAC Venezuela oil, Venezuela sanctions lifted, GL 46 Venezuela, "
+                "OFAC general license Venezuela, Venezuela oil exports authorized, "
+                "Venezuela sanctions 2026, PDVSA sanctions relief, "
+                "general license 47, general license 48A Venezuela"
+            ),
+            "canonical": canonical,
+            "site_name": _s.site_name,
+            "site_url": base,
+            "locale": _s.site_locale,
+            "og_image": f"{base}/static/og-image.png?v=3",
+            "og_type": "article",
+            "published_iso": "2026-01-29T00:00:00Z",
+            "modified_iso": _iso(_dt.utcnow()),
+            "section": "Sanctions",
+            "article_tags": [
+                "OFAC", "General License 46", "Venezuela", "Sanctions",
+                "Oil", "GL 47", "GL 48A", "PDVSA", "CORPOELEC",
+            ],
+        }
+
+        faq = [
+            {
+                "q": "What is OFAC General License 46?",
+                "a": (
+                    "GL 46, issued January 29, 2026, authorizes established U.S. "
+                    "entities to engage in transactions involving Venezuelan-origin "
+                    "oil that were previously prohibited — including lifting, export, "
+                    "sale, transportation, storage, and refining."
+                ),
+            },
+            {
+                "q": "Who qualifies as an 'established U.S. entity' under GL 46?",
+                "a": (
+                    "An entity organized under U.S. law on or before January 29, 2025 "
+                    "(one year before the license date), that is not owned or controlled "
+                    "by persons from China, Russia, Iran, North Korea, or Cuba."
+                ),
+            },
+            {
+                "q": "Can U.S. companies form new joint ventures in Venezuela under GL 46?",
+                "a": (
+                    "No. GL 46 does not authorize the formation of new joint ventures "
+                    "in Venezuela. It covers oil trade and export-related activities. "
+                    "GL 48A (March 2026) expanded authorizations to electricity and "
+                    "petrochemicals but also prohibits new JV formation."
+                ),
+            },
+            {
+                "q": "Where do payments to Venezuela go under GL 46?",
+                "a": (
+                    "All payments to the Government of Venezuela or PDVSA must be "
+                    "deposited into Foreign Government Deposit Funds, with the U.S. "
+                    "government retaining control over these funds. Debt swaps, gold "
+                    "payments, and Venezuelan digital currency are prohibited."
+                ),
+            },
+            {
+                "q": "What are General Licenses 47 and 48A?",
+                "a": (
+                    "GL 47 (Feb 3, 2026) authorizes exports of U.S.-origin diluent to "
+                    "Venezuela. GL 48A (Mar 13, 2026) extends authorization to "
+                    "Venezuela's electricity sector (CORPOELEC) and petrochemical "
+                    "products, including fertilizers."
+                ),
+            },
+            {
+                "q": "Are Venezuela sanctions fully lifted?",
+                "a": (
+                    "No. Core SDN designations remain in place. GL 46 and subsequent "
+                    "licenses authorize specific activities — primarily oil trade and "
+                    "energy sector services. Non-oil sanctions in telecommunications "
+                    "and mining remain, and all transactions require ongoing sanctions "
+                    "compliance monitoring."
+                ),
+            },
+        ]
+
+        jsonld = _json.dumps({
+            "@context": "https://schema.org",
+            "@graph": [
+                {
+                    "@type": "Article",
+                    "headline": title,
+                    "description": description,
+                    "url": canonical,
+                    "datePublished": "2026-01-29T00:00:00Z",
+                    "dateModified": _iso(_dt.utcnow()),
+                    "author": {"@type": "Organization", "name": "Caracas Research", "url": base},
+                    "publisher": {"@type": "Organization", "name": "Caracas Research", "url": base, "logo": {"@type": "ImageObject", "url": f"{base}/static/og-image.png"}},
+                    "mainEntityOfPage": canonical,
+                    "image": f"{base}/static/og-image.png?v=3",
+                    "articleSection": "Sanctions",
+                    "keywords": "OFAC, General License 46, Venezuela, sanctions, oil exports",
+                },
+                {
+                    "@type": "BreadcrumbList",
+                    "itemListElement": [
+                        {"@type": "ListItem", "position": 1, "name": "Home", "item": base},
+                        {"@type": "ListItem", "position": 2, "name": "Sanctions", "item": f"{base}/sanctions-tracker"},
+                        {"@type": "ListItem", "position": 3, "name": "General License 46"},
+                    ],
+                },
+                {
+                    "@type": "FAQPage",
+                    "mainEntity": [
+                        {"@type": "Question", "name": item["q"], "acceptedAnswer": {"@type": "Answer", "text": item["a"]}}
+                        for item in faq
+                    ],
+                },
+            ],
+        })
+
+        template = _env().get_template("general_license_46.html.j2")
+        html = template.render(
+            seo=seo,
+            jsonld=jsonld,
+            faq=faq,
+            today=_date.today().strftime("%B %-d, %Y"),
+            current_year=_date.today().year,
+        )
+        return Response(html, mimetype="text/html")
+    except HTTPException:
+        raise
+    except Exception as exc:
+        logger.exception("General License 46 page render failed: %s", exc)
+        abort(500)
+
+
+@app.route("/venezuela-bonds-restructuring")
+@app.route("/venezuela-bonds-restructuring/")
+def venezuela_bonds_restructuring_page():
+    """
+    Venezuela bond market and debt restructuring tracker/guide.
+    Targets "venezuela bonds" "venezuela bond restructuring"
+    "PDVSA bonds" "venezuela sovereign debt" "venezuela debt default".
+    Sources: Bloomberg, Reuters, Bloomberg Law.
+    """
+    try:
+        from src.page_renderer import _env, _base_url, _iso, settings as _s
+        from datetime import date as _date, datetime as _dt
+        import json as _json
+
+        base = _base_url()
+        canonical = f"{base}/venezuela-bonds-restructuring"
+        title = "Venezuela Bond Restructuring 2026: $60B Debt Guide for Investors"
+        description = (
+            "Venezuela's $60B+ bond restructuring could be the largest ever. "
+            "Sovereign vs. PDVSA debt, bond prices, creditor dynamics, "
+            "sanctions impact, and investment access explained."
+        )
+        seo = {
+            "title": title,
+            "description": description,
+            "keywords": (
+                "Venezuela bonds, Venezuela bond restructuring, PDVSA bonds, "
+                "Venezuela sovereign debt, Venezuela debt default, Venezuela bond prices, "
+                "Venezuela debt restructuring 2026, buy Venezuela bonds, "
+                "PDVSA debt, Venezuela bond rally, Venezuela creditors, "
+                "CITGO bonds, Venezuela bond market"
+            ),
+            "canonical": canonical,
+            "site_name": _s.site_name,
+            "site_url": base,
+            "locale": _s.site_locale,
+            "og_image": f"{base}/static/og-image.png?v=3",
+            "og_type": "article",
+            "published_iso": "2026-01-09T00:00:00Z",
+            "modified_iso": _iso(_dt.utcnow()),
+            "section": "Finance",
+            "article_tags": [
+                "Venezuela Bonds", "Debt Restructuring", "PDVSA", "Sovereign Debt",
+                "CITGO", "Creditors", "Default", "Bond Market",
+            ],
+        }
+
+        faq = [
+            {
+                "q": "How much does Venezuela owe in total?",
+                "a": (
+                    "Venezuela owes an estimated $150–170 billion across sovereign "
+                    "bonds (~$74B with interest), PDVSA bonds (~$28B), bilateral debt "
+                    "to China ($13–15B), arbitration awards, and other creditor claims."
+                ),
+            },
+            {
+                "q": "Can U.S. investors buy Venezuelan bonds?",
+                "a": (
+                    "Sovereign bond secondary-market trading is generally permitted for "
+                    "U.S. persons. PDVSA bond trading is restricted under Executive "
+                    "Order 13835. Treasury has issued limited waivers for restructuring "
+                    "services. Always consult sanctions counsel before transacting."
+                ),
+            },
+            {
+                "q": "What are Venezuelan bonds trading at?",
+                "a": (
+                    "As of early 2026, sovereign bonds due 2027 reached 53.8 cents on "
+                    "the dollar — the highest in nine years. PDVSA notes hit 46.3 "
+                    "cents. Prices fluctuate based on political developments and "
+                    "restructuring expectations."
+                ),
+            },
+            {
+                "q": "How long will the Venezuela debt restructuring take?",
+                "a": (
+                    "Experts estimate 2+ years minimum. RBC BlueBay Asset Management "
+                    "said they 'can't see anything happening inside a couple of years.' "
+                    "The complexity — multiple creditor classes, bilateral Chinese debt, "
+                    "CITGO disputes — exceeds most historical precedents."
+                ),
+            },
+            {
+                "q": "What is the CITGO connection to PDVSA bonds?",
+                "a": (
+                    "PDVSA's 2020 bonds are backed by a pledge of 50.1% of CITGO "
+                    "Holding shares. In 2023, a U.S. court authorized the sale of "
+                    "CITGO to satisfy creditor claims, but the process was halted. "
+                    "CITGO's fate is a key variable in any PDVSA restructuring."
+                ),
+            },
+        ]
+
+        jsonld = _json.dumps({
+            "@context": "https://schema.org",
+            "@graph": [
+                {
+                    "@type": "Article",
+                    "headline": title,
+                    "description": description,
+                    "url": canonical,
+                    "datePublished": "2026-01-09T00:00:00Z",
+                    "dateModified": _iso(_dt.utcnow()),
+                    "author": {"@type": "Organization", "name": "Caracas Research", "url": base},
+                    "publisher": {"@type": "Organization", "name": "Caracas Research", "url": base, "logo": {"@type": "ImageObject", "url": f"{base}/static/og-image.png"}},
+                    "mainEntityOfPage": canonical,
+                    "image": f"{base}/static/og-image.png?v=3",
+                    "articleSection": "Finance",
+                    "keywords": "Venezuela bonds, debt restructuring, PDVSA, sovereign debt",
+                },
+                {
+                    "@type": "BreadcrumbList",
+                    "itemListElement": [
+                        {"@type": "ListItem", "position": 1, "name": "Home", "item": base},
+                        {"@type": "ListItem", "position": 2, "name": "Invest", "item": f"{base}/invest-in-venezuela"},
+                        {"@type": "ListItem", "position": 3, "name": "Bond Restructuring"},
+                    ],
+                },
+                {
+                    "@type": "FAQPage",
+                    "mainEntity": [
+                        {"@type": "Question", "name": item["q"], "acceptedAnswer": {"@type": "Answer", "text": item["a"]}}
+                        for item in faq
+                    ],
+                },
+            ],
+        })
+
+        template = _env().get_template("venezuela_bonds_restructuring.html.j2")
+        html = template.render(
+            seo=seo,
+            jsonld=jsonld,
+            faq=faq,
+            today=_date.today().strftime("%B %-d, %Y"),
+            current_year=_date.today().year,
+        )
+        return Response(html, mimetype="text/html")
+    except HTTPException:
+        raise
+    except Exception as exc:
+        logger.exception("Venezuela bonds page render failed: %s", exc)
+        abort(500)
+
+
+@app.route("/venezuela-etf")
+@app.route("/venezuela-etf/")
+def venezuela_etf_page():
+    """
+    Venezuela ETF explainer — Teucrium filing, SEC challenges,
+    Caracas Stock Exchange, and current alternatives.
+    Targets "venezuela etf" "venezuela etf 2026" "teucrium venezuela"
+    "invest venezuela stock market".
+    Sources: Bloomberg, Bloomberg Law, ExchangeTradedFunds.com.
+    """
+    try:
+        from src.page_renderer import _env, _base_url, _iso, settings as _s
+        from datetime import date as _date, datetime as _dt
+        import json as _json
+
+        base = _base_url()
+        canonical = f"{base}/venezuela-etf"
+        title = "Venezuela ETF 2026: Teucrium Filing, SEC Status & Alternatives"
+        description = (
+            "The first Venezuela Exposure ETF was filed in January 2026. "
+            "Fund details, SEC hurdles, Caracas Stock Exchange overview, "
+            "and current alternative ways to invest in Venezuela."
+        )
+        seo = {
+            "title": title,
+            "description": description,
+            "keywords": (
+                "Venezuela ETF, Venezuela ETF 2026, Teucrium Venezuela ETF, "
+                "Venezuela stock market, invest Venezuela stocks, "
+                "Caracas Stock Exchange, Venezuela exchange traded fund, "
+                "Venezuela investment fund, buy Venezuela stocks, "
+                "Venezuela equity, frontier market ETF Venezuela"
+            ),
+            "canonical": canonical,
+            "site_name": _s.site_name,
+            "site_url": base,
+            "locale": _s.site_locale,
+            "og_image": f"{base}/static/og-image.png?v=3",
+            "og_type": "article",
+            "published_iso": "2026-01-06T00:00:00Z",
+            "modified_iso": _iso(_dt.utcnow()),
+            "section": "Finance",
+            "article_tags": [
+                "Venezuela ETF", "Teucrium", "SEC", "Caracas Stock Exchange",
+                "Investment", "Frontier Market", "Equity",
+            ],
+        }
+
+        faq = [
+            {
+                "q": "Is there a Venezuela ETF?",
+                "a": (
+                    "Not yet. Teucrium Trading LLC filed for a 'Venezuela Exposure' "
+                    "ETF with the SEC in January 2026 — the first such filing. It is "
+                    "currently under SEC review. No Venezuela-focused ETF trades on "
+                    "U.S. exchanges as of May 2026."
+                ),
+            },
+            {
+                "q": "What would a Venezuela ETF hold?",
+                "a": (
+                    "The proposed Teucrium fund would track an index of Venezuela-based "
+                    "companies and firms deriving more than half their assets or revenue "
+                    "from Venezuela — likely including international oil companies with "
+                    "Venezuelan operations and Venezuelan-domiciled equities."
+                ),
+            },
+            {
+                "q": "Can foreigners invest in the Caracas Stock Exchange?",
+                "a": (
+                    "Legally, yes. Practically, it's very difficult. The BVC has ~30-40 "
+                    "listings, daily volume often under $100,000, no international "
+                    "brokerage access, and requires a local Venezuelan brokerage and "
+                    "bank account with bolivar settlement."
+                ),
+            },
+            {
+                "q": "How can U.S. investors get Venezuela exposure today?",
+                "a": (
+                    "The most practical routes are: (1) Oil majors like Chevron with "
+                    "Venezuelan operations, (2) Venezuelan sovereign bonds on the OTC "
+                    "market (with sanctions compliance), (3) EM/frontier debt funds "
+                    "with Venezuelan holdings, (4) Colombia as a proxy play via the "
+                    "GXG ETF."
+                ),
+            },
+            {
+                "q": "Will the SEC approve a Venezuela ETF?",
+                "a": (
+                    "Uncertain. The SEC faces challenges including sanctions compliance, "
+                    "extreme liquidity constraints on the Caracas exchange, custody and "
+                    "pricing difficulties, and political sensitivity. Approval is not "
+                    "guaranteed and could take significant time."
+                ),
+            },
+        ]
+
+        jsonld = _json.dumps({
+            "@context": "https://schema.org",
+            "@graph": [
+                {
+                    "@type": "Article",
+                    "headline": title,
+                    "description": description,
+                    "url": canonical,
+                    "datePublished": "2026-01-06T00:00:00Z",
+                    "dateModified": _iso(_dt.utcnow()),
+                    "author": {"@type": "Organization", "name": "Caracas Research", "url": base},
+                    "publisher": {"@type": "Organization", "name": "Caracas Research", "url": base, "logo": {"@type": "ImageObject", "url": f"{base}/static/og-image.png"}},
+                    "mainEntityOfPage": canonical,
+                    "image": f"{base}/static/og-image.png?v=3",
+                    "articleSection": "Finance",
+                    "keywords": "Venezuela ETF, Teucrium, SEC, Caracas Stock Exchange, frontier market",
+                },
+                {
+                    "@type": "BreadcrumbList",
+                    "itemListElement": [
+                        {"@type": "ListItem", "position": 1, "name": "Home", "item": base},
+                        {"@type": "ListItem", "position": 2, "name": "Invest", "item": f"{base}/invest-in-venezuela"},
+                        {"@type": "ListItem", "position": 3, "name": "Venezuela ETF"},
+                    ],
+                },
+                {
+                    "@type": "FAQPage",
+                    "mainEntity": [
+                        {"@type": "Question", "name": item["q"], "acceptedAnswer": {"@type": "Answer", "text": item["a"]}}
+                        for item in faq
+                    ],
+                },
+            ],
+        })
+
+        template = _env().get_template("venezuela_etf.html.j2")
+        html = template.render(
+            seo=seo,
+            jsonld=jsonld,
+            faq=faq,
+            today=_date.today().strftime("%B %-d, %Y"),
+            current_year=_date.today().year,
+        )
+        return Response(html, mimetype="text/html")
+    except HTTPException:
+        raise
+    except Exception as exc:
+        logger.exception("Venezuela ETF page render failed: %s", exc)
+        abort(500)
+
+
 @app.route("/citgo")
 @app.route("/citgo/")
 def citgo_page():
@@ -9406,6 +10349,11 @@ def citgo_page():
     except Exception as exc:
         logger.exception("Citgo page render failed: %s", exc)
         abort(500)
+
+
+@app.route("/sectors/realestate")
+def sector_realestate_redirect():
+    return redirect("/real-estate", code=301)
 
 
 @app.route("/sectors/<slug>")
@@ -9697,6 +10645,12 @@ def sitemap_xml():
         {"loc": f"{base}/is-venezuela-safe", "lastmod": today_iso, "changefreq": "weekly", "priority": "0.85"},
         {"loc": f"{base}/ofac-sanctions-list", "lastmod": today_iso, "changefreq": "weekly", "priority": "0.85"},
         {"loc": f"{base}/why-is-venezuela-sanctioned", "lastmod": today_iso, "changefreq": "weekly", "priority": "0.8"},
+        {"loc": f"{base}/venezuela-hydrocarbons-law", "lastmod": today_iso, "changefreq": "weekly", "priority": "0.9"},
+        {"loc": f"{base}/general-license-46-venezuela", "lastmod": today_iso, "changefreq": "weekly", "priority": "0.9"},
+        {"loc": f"{base}/venezuela-bonds-restructuring", "lastmod": today_iso, "changefreq": "weekly", "priority": "0.85"},
+        {"loc": f"{base}/venezuela-etf", "lastmod": today_iso, "changefreq": "weekly", "priority": "0.85"},
+        {"loc": f"{base}/venezuela-vs-colombia", "lastmod": today_iso, "changefreq": "weekly", "priority": "0.85"},
+        {"loc": f"{base}/investing-in-venezuelan-oil", "lastmod": today_iso, "changefreq": "weekly", "priority": "0.9"},
         {"loc": f"{base}/venezuela-economy", "lastmod": today_iso, "changefreq": "weekly", "priority": "0.85"},
         {"loc": f"{base}/citgo", "lastmod": today_iso, "changefreq": "weekly", "priority": "0.85"},
         {"loc": f"{base}/get-venezuela-visa", "lastmod": today_iso, "changefreq": "weekly", "priority": "0.85"},
@@ -10026,7 +10980,8 @@ def sitemap_xml():
         logger.warning("sitemap dynamic generation failed, using static only: %s", exc)
 
     existing_urls = {u["loc"] for u in static_urls + dynamic_urls}
-    for sector_slug in sorted(sector_set):
+    _REDIRECT_SECTOR_SLUGS = {"realestate"}
+    for sector_slug in sorted(sector_set - _REDIRECT_SECTOR_SLUGS):
         url = f"{base}/sectors/{sector_slug}"
         if url not in existing_urls:
             static_urls.append({

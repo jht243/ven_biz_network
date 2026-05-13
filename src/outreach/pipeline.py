@@ -34,6 +34,7 @@ from src.seo.semrush import SemrushClient
 logger = logging.getLogger(__name__)
 
 DEFAULT_COMPETITORS = [
+    # Legacy news/analysis competitors
     "venezuelaanalysis.com",
     "caracaschronicles.com",
     "venezuelanews.com",
@@ -41,11 +42,21 @@ DEFAULT_COMPETITORS = [
     "americasquarterly.org",
     "thedialogue.org",
     "csis.org",
+    # Compliance / sanctions
     "controlrisks.com",
     "globalcompliancenews.com",
     "sanctions.io",
+    # Travel
     "worldnomads.com",
     "travel.state.gov",
+    # 2026 entrants: investment-focused competitors
+    "invest.com.ve",
+    "latamfdi.com",
+    "guacamayave.com",
+    "ecosistemag.com",
+    "buildsandbuys.com",
+    "expatlife.ai",
+    "latinamericainvestments.com",
 ]
 
 

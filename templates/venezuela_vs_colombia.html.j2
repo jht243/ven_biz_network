@@ -1,0 +1,293 @@
+{% extends "_base.html.j2" %}
+{% from "_base.html.j2" import share_button %}
+{% from "_cluster_nav.html.j2" import cluster_nav %}
+
+{% block head_extra %}
+<style>
+  .comp-hero { background: linear-gradient(180deg, #f6f8fa 0%, var(--white) 100%); padding: 28px 0 16px; margin-bottom: 16px; }
+  .comp-hero .kicker { font-size: 12px; text-transform: uppercase; letter-spacing: 1.4px; color: #cc0000; font-weight: 700; }
+  .comp-hero h1 { font-family: var(--font-serif); font-size: 32px; color: var(--sr-blue-dark); margin: 8px 0 8px; line-height: 1.2; }
+  .comp-hero p.lead { font-family: var(--font-serif); font-style: italic; color: var(--sr-gray-text); font-size: 16px; max-width: 720px; margin: 0; }
+
+  .toc { background: var(--sr-gray-bg); border-left: 3px solid var(--sr-blue); padding: 18px 22px; margin: 0 0 32px; font-size: 14px; }
+  .toc h3 { font-family: var(--font-serif); font-size: 14px; text-transform: uppercase; letter-spacing: 1px; color: var(--sr-blue-dark); margin-bottom: 10px; }
+  .toc ol { margin-left: 20px; }
+  .toc li { margin-bottom: 6px; }
+
+  .sec { margin: 40px 0 24px; padding-top: 8px; }
+  .sec h2 { font-family: var(--font-serif); font-size: 26px; color: var(--sr-blue-dark); margin-bottom: 8px; }
+
+  .comp-table { width: 100%; border-collapse: collapse; margin: 18px 0 24px; font-size: 14px; }
+  .comp-table th, .comp-table td { text-align: left; padding: 12px 14px; border-bottom: 1px solid var(--sr-gray-light); }
+  .comp-table th { background: var(--sr-gray-bg); font-size: 12px; text-transform: uppercase; letter-spacing: 0.5px; color: var(--sr-gray-text); font-weight: 600; }
+  .comp-table td:first-child { font-weight: 600; color: var(--sr-blue-dark); min-width: 160px; }
+  .comp-table .col-ven { background: #f0f8ff; }
+  .comp-table .col-col { background: #fffff0; }
+
+  .verdict-grid { display: grid; grid-template-columns: 1fr; gap: 16px; margin: 24px 0; }
+  @media (min-width: 640px) { .verdict-grid { grid-template-columns: 1fr 1fr; } }
+  .verdict-card { border: 1px solid var(--sr-gray-light); border-radius: 6px; padding: 20px 22px; }
+  .verdict-card h3 { font-family: var(--font-serif); font-size: 18px; margin-bottom: 10px; }
+  .verdict-card.ven { border-left: 4px solid var(--sr-blue); }
+  .verdict-card.ven h3 { color: var(--sr-blue-dark); }
+  .verdict-card.col { border-left: 4px solid #c09300; }
+  .verdict-card.col h3 { color: #7a5e00; }
+  .verdict-card p { font-size: 14px; line-height: 1.6; margin-bottom: 8px; }
+  .verdict-card ul { margin-left: 18px; font-size: 14px; }
+  .verdict-card li { margin-bottom: 4px; }
+
+  .stat-row { display: grid; grid-template-columns: 1fr; gap: 14px; margin: 18px 0 24px; }
+  @media (min-width: 640px) { .stat-row { grid-template-columns: repeat(3, 1fr); } }
+  .stat-card { background: var(--sr-gray-bg); border: 1px solid var(--sr-gray-light); border-radius: 6px; padding: 18px 20px; text-align: center; }
+  .stat-card .stat-num { font-family: var(--font-serif); font-size: 28px; font-weight: 700; color: var(--sr-blue-dark); line-height: 1.1; }
+  .stat-card .stat-label { font-size: 12px; color: var(--sr-gray-text); margin-top: 6px; text-transform: uppercase; letter-spacing: 0.5px; }
+
+  .disclaimer { background: #fff8e1; border-left: 4px solid #f5b041; padding: 14px 18px; border-radius: 3px; margin: 20px 0; font-size: 13.5px; line-height: 1.65; color: var(--sr-dark-text); }
+
+  .faq-list { margin: 18px 0 28px; }
+  .faq-item { border: 1px solid var(--sr-gray-light); border-radius: 4px; margin-bottom: 10px; overflow: hidden; }
+  .faq-q { display: flex; align-items: center; gap: 12px; padding: 16px 18px; cursor: pointer; background: var(--white); font-family: var(--font-serif); font-size: 16px; font-weight: 700; color: var(--sr-blue-dark); transition: background 0.15s; border: 0; width: 100%; text-align: left; }
+  .faq-q:hover { background: var(--sr-gray-bg); }
+  .faq-q .faq-icon { flex-shrink: 0; width: 24px; height: 24px; border-radius: 50%; background: var(--sr-blue); color: var(--white); display: flex; align-items: center; justify-content: center; font-size: 14px; font-weight: 700; transition: transform 0.2s; font-family: var(--font-sans); }
+  .faq-q[aria-expanded="true"] .faq-icon { transform: rotate(45deg); }
+  .faq-a { padding: 0 18px 18px 54px; font-size: 15px; line-height: 1.7; color: var(--sr-dark-text); display: none; }
+  .faq-q[aria-expanded="true"] + .faq-a { display: block; }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="comp-hero">
+  <div class="container">
+    <nav class="breadcrumbs">
+      <a href="/">Home</a> <span>›</span>
+      <a href="/invest-in-venezuela">Invest</a> <span>›</span>
+      Venezuela vs. Colombia
+    </nav>
+    <span class="kicker">Market Comparison · Latin America</span>
+    <h1>Venezuela vs. Colombia: Where to Invest in Latin America (2026)</h1>
+    <p class="lead">Two neighboring economies at opposite stages — Colombia offers stability with modest returns, Venezuela offers extreme valuations with extreme risk. A data-driven comparison for investors weighing both markets.</p>
+  </div>
+</div>
+
+<div class="container">
+  <article>
+    <header>
+      <div class="meta">
+        <span>By <strong>Caracas Research</strong></span>
+        <span>Updated <strong>{{ today }}</strong></span>
+        <span>10 min read</span>
+      </div>
+    </header>
+
+    <div class="takeaways">
+      <h3>Key Takeaways</h3>
+      <ul>
+        <li><strong>Colombia</strong>: ~$350B GDP, 2.6–2.9% growth, established legal framework, accessible stock market (Colcap), FDI-friendly but slowing under current administration</li>
+        <li><strong>Venezuela</strong>: ~$100B GDP, 6.5–15% growth projections, world's largest oil reserves, but extreme risk — sanctions, inflation (~272%), 70%+ poverty</li>
+        <li>Colombia benefits directly from Venezuela recovery: estimated <strong>0.5% GDP</strong> annual export gains from normalization</li>
+        <li>Colombia's stock market trades below <strong>9x P/E</strong> with ~7% dividend yield — accessible via GXG ETF</li>
+        <li>Venezuela has <strong>no ETFs, no ADRs</strong>, and the Caracas Stock Exchange trades under $100K/day</li>
+      </ul>
+    </div>
+
+    <div class="toc">
+      <h3>Contents</h3>
+      <ol>
+        <li><a href="#snapshot">At-a-Glance Comparison</a></li>
+        <li><a href="#economy">Economic Outlook</a></li>
+        <li><a href="#investment-climate">Investment Climate & Legal Framework</a></li>
+        <li><a href="#sectors">Sector Opportunities</a></li>
+        <li><a href="#access">Market Access for Foreign Investors</a></li>
+        <li><a href="#risks">Risk Comparison</a></li>
+        <li><a href="#spillover">The Colombia–Venezuela Spillover Effect</a></li>
+        <li><a href="#verdict">The Verdict: Who Should Invest Where</a></li>
+        <li><a href="#faq">Frequently Asked Questions</a></li>
+      </ol>
+    </div>
+
+    <div class="body">
+      <section class="sec" id="snapshot">
+        <h2>At-a-Glance Comparison</h2>
+        <table class="comp-table">
+          <thead>
+            <tr><th>Metric</th><th class="col-col">Colombia 🇨🇴</th><th class="col-ven">Venezuela 🇻🇪</th></tr>
+          </thead>
+          <tbody>
+            <tr><td>GDP (est.)</td><td class="col-col">~$350 billion</td><td class="col-ven">~$100 billion</td></tr>
+            <tr><td>GDP Growth (2026)</td><td class="col-col">2.6–2.9%</td><td class="col-ven">6.5–15.2%</td></tr>
+            <tr><td>Inflation (2026)</td><td class="col-col">~4.7%</td><td class="col-ven">~272%</td></tr>
+            <tr><td>Population</td><td class="col-col">52 million</td><td class="col-ven">28 million</td></tr>
+            <tr><td>Oil Reserves</td><td class="col-col">~2B barrels</td><td class="col-ven">~304B barrels (world's largest)</td></tr>
+            <tr><td>Oil Production</td><td class="col-col">~780,000 bpd</td><td class="col-ven">~1.1M bpd (recovering)</td></tr>
+            <tr><td>Stock Exchange</td><td class="col-col">BVC (Colcap) — liquid, accessible</td><td class="col-ven">BVC Caracas — minimal liquidity</td></tr>
+            <tr><td>P/E Ratio</td><td class="col-col">&lt;9x</td><td class="col-ven">N/A (no reliable data)</td></tr>
+            <tr><td>Dividend Yield</td><td class="col-col">~7%</td><td class="col-ven">N/A</td></tr>
+            <tr><td>U.S. Sanctions</td><td class="col-col">None</td><td class="col-ven">Partial (SDN list + sector-specific GLs)</td></tr>
+            <tr><td>Corporate Tax</td><td class="col-col">35% (50% for oil/mining)</td><td class="col-ven">Hydrocarbons tax up to 15% + royalties up to 30%</td></tr>
+            <tr><td>ETF Access</td><td class="col-col">GXG (Global X MSCI Colombia)</td><td class="col-ven">None (Teucrium filed, pending SEC)</td></tr>
+            <tr><td>ICSID Member</td><td class="col-col">Yes</td><td class="col-ven">Withdrew (2012)</td></tr>
+            <tr><td>Investor Risk Profile</td><td class="col-col">Moderate</td><td class="col-ven">Very High / Speculative</td></tr>
+          </tbody>
+        </table>
+        <p class="source-citation">Sources: <a href="https://www.bbvaresearch.com/en/publicaciones/colombia-economic-outlook-march-2026/" target="_blank" rel="noopener">BBVA Research (Mar 2026)</a> · <a href="https://en.cibercuba.com/noticias/2026-04-28-u1-e197721-s27061-nid327518-cepal-venezuela-estara-economias-creceran-sudamerica" target="_blank" rel="noopener">CEPAL</a> · <a href="https://ecosistemag.com/en/what-to-expect-from-the-venezuelan-economy-in-2026-key-takeaways-from-the-ecoanalitica-forum/" target="_blank" rel="noopener">Ecoanalítica</a> · <a href="https://www.globalxetfs.com/articles/colombia-value-votes-and-a-venezuelan-tailwind" target="_blank" rel="noopener">Global X ETFs</a></p>
+      </section>
+
+      <section class="sec" id="economy">
+        <h2>Economic Outlook</h2>
+        <h3>Colombia</h3>
+        <p>Colombia's economy is in a slow-but-steady recovery. After a sharp deceleration to 0.6% in 2023, growth rebounded to 1.7% in 2024 and is projected at 2.6–2.9% for 2026. The Banco de la República has navigated inflation down from its peak, but at ~4.7% it remains above the 3% target — interest rates could reach 10% in 2026. FDI declined 15.2% between 2023-2024, though non-extractive investment grew 3.4%.</p>
+        <p class="source-citation">Sources: <a href="https://www.bbvaresearch.com/en/publicaciones/colombia-economic-outlook-march-2026/" target="_blank" rel="noopener">BBVA Research</a> · <a href="https://www.oecd.org/en/publications/oecd-economic-outlook-volume-2025-issue-1_83363382-en/full-report/colombia_742ba6d2.html" target="_blank" rel="noopener">OECD</a></p>
+
+        <h3>Venezuela</h3>
+        <p>Venezuela's numbers are eye-popping by comparison but carry significant caveats. CEPAL projects 6.5% growth for 2026 — the fastest in South America. The local firm Ecoanalítica forecasts 15.2%, with an average of 12% annually through 2029. But this recovery comes off a catastrophic base: GDP contracted by over 75% between 2013 and 2020. Inflation remains in triple digits (~272%), and over 70% of the population lives in poverty.</p>
+        <p class="source-citation">Sources: <a href="https://en.cibercuba.com/noticias/2026-04-28-u1-e197721-s27061-nid327518-cepal-venezuela-estara-economias-creceran-sudamerica" target="_blank" rel="noopener">CEPAL/CiberCuba</a> · <a href="https://ecosistemag.com/en/what-to-expect-from-the-venezuelan-economy-in-2026-key-takeaways-from-the-ecoanalitica-forum/" target="_blank" rel="noopener">Ecoanalítica</a></p>
+      </section>
+
+      <section class="sec" id="investment-climate">
+        <h2>Investment Climate & Legal Framework</h2>
+        <table class="comp-table">
+          <thead>
+            <tr><th>Factor</th><th class="col-col">Colombia</th><th class="col-ven">Venezuela</th></tr>
+          </thead>
+          <tbody>
+            <tr><td>Legal Protections</td><td class="col-col">Established framework; equal treatment for foreign/domestic investors; ICSID member</td><td class="col-ven">Withdrew from ICSID (2012); 25 BITs remain; new arbitration provisions in reformed Hydrocarbons Law</td></tr>
+            <tr><td>Property Rights</td><td class="col-col">Generally respected; some concerns under current administration</td><td class="col-ven">History of expropriations; reforms underway but untested</td></tr>
+            <tr><td>Regulatory Stability</td><td class="col-col">Frequent changes under Petro; labor reform, tax reform, pension reform</td><td class="col-ven">29 law reforms announced; fast-moving regulatory environment</td></tr>
+            <tr><td>Currency</td><td class="col-col">Colombian Peso (COP) — freely convertible</td><td class="col-ven">Bolívar — de facto dollarized; history of 14 zeros removed</td></tr>
+            <tr><td>Corruption Index</td><td class="col-col">Rank 91/180 (Transparency Intl.)</td><td class="col-ven">Rank 177/180 (among world's worst)</td></tr>
+          </tbody>
+        </table>
+        <p class="source-citation">Sources: <a href="https://www.state.gov/wp-content/uploads/2025/09/638719_2025-Colombia-Investment-Climate-Statement.pdf" target="_blank" rel="noopener">U.S. State Dept. Colombia ICS 2025</a> · <a href="https://www.jdsupra.com/legalnews/foreign-investment-in-venezuela-4387116/" target="_blank" rel="noopener">King & Spalding</a></p>
+      </section>
+
+      <section class="sec" id="sectors">
+        <h2>Sector Opportunities</h2>
+        <h3>Colombia</h3>
+        <ul>
+          <li><strong>Financial services:</strong> Bancolombia, Grupo Aval, Davivienda — leading growth sector (37% growth projected)</li>
+          <li><strong>Energy:</strong> Ecopetrol (state oil company, NYSE-listed), renewable energy growth</li>
+          <li><strong>Agriculture:</strong> 5.3% sector growth; coffee, flowers, fruit exports</li>
+          <li><strong>Tech/Services:</strong> BPO and nearshoring hub for U.S. companies</li>
+          <li><strong>Consumer/Retail:</strong> 4.8% growth; growing middle class</li>
+        </ul>
+        <h3>Venezuela</h3>
+        <ul>
+          <li><strong>Oil & Gas:</strong> Dominant opportunity — 304B barrels, production recovering under new Hydrocarbons Law and GLs 46/49/50A. See our <a href="/venezuela-hydrocarbons-law">Hydrocarbons Law Reform guide</a></li>
+          <li><strong>Mining:</strong> Gold, iron, bauxite, diamonds — largely undeveloped; Arco Minero del Orinoco</li>
+          <li><strong>Real estate:</strong> 70–90% undervalued; Caracas apartments at ~$50K; 10–20% rental yields. See our <a href="/real-estate/">Venezuela real estate guide</a></li>
+          <li><strong>Infrastructure:</strong> Roads, electricity, water — decades of deferred maintenance</li>
+          <li><strong>Telecommunications:</strong> 18.7% growth sector; mobile, fiber, fintech</li>
+        </ul>
+      </section>
+
+      <section class="sec" id="access">
+        <h2>Market Access for Foreign Investors</h2>
+        <table class="comp-table">
+          <thead>
+            <tr><th>Access Method</th><th class="col-col">Colombia</th><th class="col-ven">Venezuela</th></tr>
+          </thead>
+          <tbody>
+            <tr><td>Stock Market ETF</td><td class="col-col"><strong>GXG</strong> (Global X MSCI Colombia) — liquid, accessible</td><td class="col-ven">None (Teucrium filed Jan 2026, pending SEC). See <a href="/venezuela-etf">ETF guide</a></td></tr>
+            <tr><td>ADRs / Direct Equity</td><td class="col-col">Ecopetrol (EC), Bancolombia (CIB) on NYSE</td><td class="col-ven">No Venezuelan ADRs on U.S. exchanges</td></tr>
+            <tr><td>Bonds</td><td class="col-col">Investment-grade (BB+); accessible through standard channels</td><td class="col-ven">Defaulted; OTC trading; sanctions restrictions on PDVSA debt. See <a href="/venezuela-bonds-restructuring">bond guide</a></td></tr>
+            <tr><td>Direct FDI</td><td class="col-col">Open; equal treatment; no minimum investment</td><td class="col-ven">Possible via CPPs or reformed JVs; requires sanctions compliance; OFAC GL 49/50A for oil</td></tr>
+            <tr><td>Real Estate</td><td class="col-col">Open to foreigners; strong legal framework; popular in Medellín, Bogotá, Cartagena</td><td class="col-ven">Open but complex; requires local presence, SIEX registration, CADIVI approval</td></tr>
+            <tr><td>Sanctions Complications</td><td class="col-col">None</td><td class="col-ven">SDN list, sector restrictions, OFAC GLs required for most activities</td></tr>
+          </tbody>
+        </table>
+      </section>
+
+      <section class="sec" id="risks">
+        <h2>Risk Comparison</h2>
+        <table class="comp-table">
+          <thead>
+            <tr><th>Risk Factor</th><th class="col-col">Colombia</th><th class="col-ven">Venezuela</th></tr>
+          </thead>
+          <tbody>
+            <tr><td>Political Risk</td><td class="col-col">Moderate — Petro term ends Aug 2026; election uncertainty</td><td class="col-ven">Very High — transitional government, contested legitimacy</td></tr>
+            <tr><td>Expropriation Risk</td><td class="col-col">Low — isolated nationalization rhetoric in healthcare/pensions</td><td class="col-ven">High — decades of precedent; reforms untested</td></tr>
+            <tr><td>Currency Risk</td><td class="col-col">Moderate — COP volatile but convertible</td><td class="col-ven">Extreme — bolivar unstable; de facto dollarization mitigates somewhat</td></tr>
+            <tr><td>Sanctions Risk</td><td class="col-col">None</td><td class="col-ven">High — policy reversals possible; ongoing OFAC monitoring required</td></tr>
+            <tr><td>Liquidity Risk</td><td class="col-col">Low — Colcap is functional; institutional investors active</td><td class="col-ven">Extreme — BVC trades &lt;$100K/day</td></tr>
+            <tr><td>Security Risk</td><td class="col-col">Moderate — improving; urban safety concerns persist</td><td class="col-ven">High — elevated crime rates, institutional weakness</td></tr>
+          </tbody>
+        </table>
+      </section>
+
+      <section class="sec" id="spillover">
+        <h2>The Colombia–Venezuela Spillover Effect</h2>
+        <p>Colombia is one of the biggest indirect beneficiaries of Venezuela's recovery. Global X ETFs estimates that normalization of Venezuela trade could add <strong>0.5% of GDP annually</strong> in Colombian exports. The logic:</p>
+        <ul>
+          <li><strong>Trade normalization:</strong> Colombia and Venezuela shared a $7B+ annual trade relationship before the crisis; bilateral trade has collapsed to under $1B</li>
+          <li><strong>Supply chain hub:</strong> Cúcuta and other border cities would become staging points for reconstruction materials and services flowing into Venezuela</li>
+          <li><strong>Financial services:</strong> Colombian banks (Bancolombia, Davivienda) are positioned to expand into a dollarized Venezuela</li>
+          <li><strong>Migrant remittances:</strong> ~2.5 million Venezuelan migrants in Colombia would increase remittance flows as both economies stabilize</li>
+        </ul>
+        <p class="disclaimer"><strong>Strategy implication:</strong> Investors who want Venezuela exposure but can't stomach the direct risk may consider Colombia as a "proxy play" — particularly financial and infrastructure sectors that benefit from normalization without requiring direct Venezuelan market access.</p>
+        <p class="source-citation">Source: <a href="https://www.globalxetfs.com/articles/colombia-value-votes-and-a-venezuelan-tailwind" target="_blank" rel="noopener">Global X ETFs — "Colombia: Value, Votes, and a Venezuelan Tailwind"</a></p>
+      </section>
+
+      <section class="sec" id="verdict">
+        <h2>The Verdict: Who Should Invest Where</h2>
+        <div class="verdict-grid">
+          <div class="verdict-card col">
+            <h3>Colombia Is Better For…</h3>
+            <ul>
+              <li>Risk-averse investors seeking emerging-market yield</li>
+              <li>Passive investors (GXG ETF, NYSE-listed ADRs)</li>
+              <li>Real estate investors wanting transparent legal frameworks</li>
+              <li>Those who want indirect Venezuela recovery upside</li>
+              <li>Pension funds and institutional allocators</li>
+            </ul>
+          </div>
+          <div class="verdict-card ven">
+            <h3>Venezuela Is Better For…</h3>
+            <ul>
+              <li>High-risk-tolerance investors seeking asymmetric returns</li>
+              <li>Oil & gas companies with operational capabilities</li>
+              <li>Distressed-debt specialists (sovereign bond restructuring)</li>
+              <li>Real estate contrarians (70–90% undervaluation)</li>
+              <li>Service providers positioned for reconstruction</li>
+            </ul>
+          </div>
+        </div>
+        <p>Many sophisticated investors are doing both: a stable Colombia allocation for yield plus a small, speculative Venezuela position for outsized upside. The two markets are increasingly linked — as Venezuela stabilizes, both benefit.</p>
+      </section>
+
+      <section class="sec" id="faq">
+        <h2>Frequently Asked Questions</h2>
+        <div class="faq-list">
+          {% for item in faq %}
+          <div class="faq-item">
+            <button class="faq-q" aria-expanded="false"><span class="faq-icon">+</span> {{ item.q }}</button>
+            <div class="faq-a">{{ item.a }}</div>
+          </div>
+          {% endfor %}
+        </div>
+      </section>
+
+      {{ cluster_nav("invest", request.path) }}
+    </div>
+  </article>
+
+  <div class="related">
+    <h3>Related Analysis</h3>
+    <ul>
+      <li><a href="/invest-in-venezuela">How to Invest in Venezuela: Complete Guide</a> <small>Pillar</small></li>
+      <li><a href="/investing-in-venezuelan-oil">Investing in Venezuelan Oil: What Foreigners Need to Know</a> <small>Sector</small></li>
+      <li><a href="/venezuela-bonds-restructuring">Venezuela Bond Restructuring Guide</a> <small>Finance</small></li>
+      <li><a href="/venezuela-etf">Venezuela ETF: Status & Alternatives</a> <small>Finance</small></li>
+      <li><a href="/real-estate/">Venezuela Real Estate Investment</a> <small>Sector</small></li>
+    </ul>
+  </div>
+</div>
+
+<script>
+document.querySelectorAll('.faq-q').forEach(function(btn) {
+  btn.addEventListener('click', function() {
+    var expanded = btn.getAttribute('aria-expanded') === 'true';
+    btn.setAttribute('aria-expanded', expanded ? 'false' : 'true');
+  });
+});
+</script>
+{% endblock %}
