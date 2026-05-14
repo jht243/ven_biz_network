@@ -1,0 +1,164 @@
+{% extends "_base.html.j2" %}
+
+{% block head_extra %}
+<style>
+  .bond-hero { margin: 16px 0 22px; }
+  .tracker-kicker { font-size: 12px; text-transform: uppercase; letter-spacing: 1.4px; color: var(--sr-red); font-weight: 700; }
+  .bond-hero h1 { font-family: var(--font-serif); font-size: 36px; line-height: 1.15; color: var(--sr-blue-dark); margin: 8px 0 12px; }
+  .bond-hero p { font-family: var(--font-serif); font-style: italic; color: var(--sr-gray-text); font-size: 18px; max-width: 820px; }
+  .tracker-section { margin: 34px 0; }
+  .tracker-section h2 { font-family: var(--font-serif); color: var(--sr-blue-dark); font-size: 24px; margin: 0 0 12px; }
+  .bond-table-wrap { overflow-x: auto; border: 1px solid var(--sr-gray-light); }
+  .bond-table { width: 100%; border-collapse: collapse; font-size: 14px; }
+  .bond-table th { background: var(--sr-blue); color: var(--white); padding: 10px 12px; text-align: left; font-size: 12px; text-transform: uppercase; letter-spacing: 0.5px; white-space: nowrap; }
+  .bond-table td { padding: 12px; border-bottom: 1px solid var(--sr-gray-light); vertical-align: top; }
+  .bond-table tr:nth-child(even) td { background: var(--sr-gray-bg); }
+  .bond-name { font-weight: 700; color: var(--sr-blue-dark); }
+  .tag { display: inline-block; padding: 2px 8px; border-radius: 999px; font-size: 11px; text-transform: uppercase; letter-spacing: 0.4px; background: #e9eef6; color: var(--sr-blue-dark); white-space: nowrap; }
+  .price { font-family: var(--font-serif); font-size: 22px; font-weight: 700; color: var(--sr-blue-dark); white-space: nowrap; }
+  .muted { color: var(--sr-gray-text); font-size: 13px; }
+  .news-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(260px, 1fr)); gap: 12px; }
+  .news-card { border: 1px solid var(--sr-gray-light); border-radius: 4px; padding: 14px 16px; background: var(--white); }
+  .news-card a { display: block; font-weight: 700; color: var(--sr-blue-dark); text-decoration: none; line-height: 1.35; }
+  .news-card a:hover { color: var(--sr-red); }
+  .timeline { border-left: 3px solid var(--sr-blue); margin: 18px 0 0 6px; padding-left: 18px; }
+  .milestone { margin: 0 0 18px; position: relative; }
+  .milestone:before { content: ""; position: absolute; left: -27px; top: 6px; width: 12px; height: 12px; background: var(--sr-red); border-radius: 50%; border: 2px solid var(--white); box-shadow: 0 0 0 1px var(--sr-red); }
+  .milestone .date { font-size: 12px; text-transform: uppercase; letter-spacing: 0.7px; color: var(--sr-gray-text); font-weight: 700; }
+  .milestone h3 { font-family: var(--font-serif); color: var(--sr-blue-dark); font-size: 17px; margin: 2px 0 4px; }
+  .note-box { background: #fff8e1; border-left: 3px solid #f5b041; padding: 14px 18px; margin: 22px 0; font-size: 14px; color: var(--sr-dark-text); }
+  .two-col { display: grid; grid-template-columns: minmax(0, 1fr) minmax(260px, 0.55fr); gap: 22px; align-items: start; }
+  @media (max-width: 820px) {
+    .bond-hero h1 { font-size: 30px; }
+    .two-col { grid-template-columns: 1fr; }
+  }
+</style>
+{% endblock %}
+
+{% block content %}
+<section class="container-wide">
+  <nav class="breadcrumbs" aria-label="Breadcrumb">
+    <a href="/">Home</a><span>/</span>
+    <a href="/invest-in-venezuela">Invest in Venezuela</a><span>/</span>
+    <span>Venezuela Bonds Tracker</span>
+  </nav>
+
+  <header class="bond-hero">
+    <div class="tracker-kicker">Live tracker · Bond-market news and public price references</div>
+    <h1>Venezuela Bonds Tracker</h1>
+    <p>
+      Sovereign and PDVSA bond watchlist, restructuring milestones, sanctions
+      signals, and recent market news for analysts following Venezuela's
+      defaulted external debt.
+    </p>
+  </header>
+
+  <section class="tracker-section">
+    <h2>Bond Watchlist</h2>
+    <div class="bond-table-wrap">
+      <table class="bond-table">
+        <thead>
+          <tr>
+            <th>Instrument</th>
+            <th>Issuer</th>
+            <th>Type</th>
+            <th>Public reference</th>
+            <th>Sanctions note</th>
+            <th>Signal</th>
+          </tr>
+        </thead>
+        <tbody>
+          {% for instrument in instruments %}
+          <tr>
+            <td>
+              <div class="bond-name">{{ instrument.short_name }}</div>
+              <div class="muted">{{ instrument.name }}</div>
+            </td>
+            <td>{{ instrument.issuer }}</td>
+            <td><span class="tag">{{ instrument.instrument_type }}</span><div class="muted">{{ instrument.status }}</div></td>
+            <td>
+              {% if instrument.price_reference_cents %}
+                <div class="price">{{ "%.2f"|format(instrument.price_reference_cents) }}</div>
+                <div class="muted">cents · {{ instrument.price_reference_date }}</div>
+              {% else %}
+                <div class="price">—</div>
+                <div class="muted">{{ instrument.price_reference_date }}</div>
+              {% endif %}
+              <a class="muted" href="{{ instrument.price_reference_url }}" rel="nofollow noopener" target="_blank">{{ instrument.price_reference_label }}</a>
+            </td>
+            <td class="muted">{{ instrument.sanctions_note }}</td>
+            <td>{{ instrument.trend_note }}</td>
+          </tr>
+          {% endfor %}
+        </tbody>
+      </table>
+    </div>
+  </section>
+
+  <div class="two-col">
+    <section class="tracker-section">
+      <h2>Restructuring Timeline</h2>
+      <div class="timeline">
+        {% for milestone in milestones %}
+        <div class="milestone">
+          <div class="date">{{ milestone.date }} · {{ milestone.category }}</div>
+          <h3>{{ milestone.title }}</h3>
+          <p>{{ milestone.summary }}</p>
+          {% if milestone.source_url %}
+          <a class="muted" href="{{ milestone.source_url }}" rel="nofollow noopener" target="_blank">Source reference</a>
+          {% endif %}
+        </div>
+        {% endfor %}
+      </div>
+    </section>
+
+    <aside class="tracker-section">
+      <h2>What To Watch</h2>
+      <ul>
+        <li>New OFAC general licenses for restructuring, debt trading, or PDVSA transactions.</li>
+        <li>Appointment of financial and legal advisers by the government or creditor committees.</li>
+        <li>IMF/World Bank engagement and any macro framework that supports debt sustainability.</li>
+        <li>CITGO court-sale milestones and treatment of PDVSA 2020-related claims.</li>
+        <li>Oil cash-flow recovery, because repayment capacity depends on exports and sanctions relief.</li>
+      </ul>
+      <p class="muted">
+        Related: <a href="/venezuela-bonds-restructuring">bond restructuring guide</a>,
+        <a href="/sanctions-tracker">OFAC tracker</a>, and
+        <a href="/tools/ofac-venezuela-general-licenses">general license lookup</a>.
+      </p>
+    </aside>
+  </div>
+
+  <section class="tracker-section">
+    <h2>Recent Bond-Market News</h2>
+    <div class="news-grid">
+      {% for item in bond_news %}
+      <article class="news-card">
+        <div class="muted">{{ item.published_date }}{% if item.publisher %} · {{ item.publisher }}{% endif %}</div>
+        <a href="{{ item.source_url }}" rel="nofollow noopener" target="_blank">{{ item.headline }}</a>
+        {% if item.snippet %}<p class="muted" style="margin-top:8px;">{{ item.snippet }}</p>{% endif %}
+      </article>
+      {% else %}
+      <article class="news-card">
+        <div class="muted">No bond-market RSS items have been stored yet.</div>
+        <a href="/briefing">Browse the latest Venezuela briefings</a>
+      </article>
+      {% endfor %}
+    </div>
+  </section>
+
+  {% from "_recent_briefings.html.j2" import recent_briefings_rail %}
+  {{ recent_briefings_rail(
+       recent_briefings,
+       heading="Latest related briefings",
+       intro="Recent analysis on sanctions relief, PDVSA, creditor talks, and macro conditions that affect bond recovery values.",
+  ) }}
+
+  <div class="note-box">
+    Professional bond prices for defaulted Venezuelan and PDVSA instruments are
+    usually terminal data. This page tracks public price references and the
+    legal/political signals that move recoveries. Verify any trade with your
+    broker, Bloomberg/LSEG screen, and sanctions counsel.
+  </div>
+</section>
+{% endblock %}

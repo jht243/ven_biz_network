@@ -38,6 +38,7 @@ from src.scraper.google_news import GoogleNewsScraper
 from src.scraper.ansa_latina import AnsaLatinaScraper
 from src.scraper.bcv import BCVScraper
 from src.scraper.ita import ITATradeScraper
+from src.scraper.bonds import VenezuelaBondsScraper
 from src.scraper.travel_advisory import TravelAdvisoryScraper
 from src.ocr.engine import ocr_pdf
 
@@ -94,6 +95,7 @@ def run_daily_scrape(target_date: Optional[date] = None) -> dict:
         GoogleNewsScraper(),
         BCVScraper(),
         ITATradeScraper(),
+        VenezuelaBondsScraper(),
         TravelAdvisoryScraper(),
     ]
 
@@ -1092,6 +1094,7 @@ def _resolve_source_type(source_name: str) -> SourceType:
         "international trade administration": SourceType.ITA_TRADE,
         "ita": SourceType.ITA_TRADE,
         "trade.gov": SourceType.ITA_TRADE,
+        "venezuela bond market": SourceType.VENEZUELA_BONDS,
         "state department": SourceType.TRAVEL_ADVISORY,
         "us state department": SourceType.TRAVEL_ADVISORY,
         "newsdata": SourceType.NEWSDATA,

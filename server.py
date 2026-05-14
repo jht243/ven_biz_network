@@ -4535,6 +4535,12 @@ def tools_index():
                 "summary": "Live BCV USD/VES rate, EUR cross-rate, and a free converter pulled from the Banco Central de Venezuela homepage. Falls back to cached values when the BCV site is unreachable.",
             },
             {
+                "url": "/venezuela-bonds-tracker",
+                "name": "Venezuela Bonds Tracker",
+                "category": "Markets",
+                "summary": "Sovereign and PDVSA bond watchlist with public price references, restructuring milestones, sanctions signals, CITGO risk notes, and recent bond-market news from the daily pipeline.",
+            },
+            {
                 "url": "/tools/venezuela-investment-roi-calculator",
                 "name": "Venezuela Investment ROI Calculator",
                 "category": "Modelling",
@@ -9962,11 +9968,15 @@ def venezuela_bonds_restructuring_page():
             ],
         })
 
-        template = _env().get_template("venezuela_bonds_restructuring.html.j2")
+        from src.seo.cluster_topology import build_cluster_ctx
+        cluster_ctx = build_cluster_ctx("/venezuela-bonds-restructuring")
+
+        template = _env.get_template("venezuela_bonds_restructuring.html.j2")
         html = template.render(
             seo=seo,
             jsonld=jsonld,
             faq=faq,
+            cluster_ctx=cluster_ctx,
             today=_date.today().strftime("%B %-d, %Y"),
             current_year=_date.today().year,
         )
@@ -9975,6 +9985,182 @@ def venezuela_bonds_restructuring_page():
         raise
     except Exception as exc:
         logger.exception("Venezuela bonds page render failed: %s", exc)
+        abort(500)
+
+
+@app.route("/venezuela-bonds-tracker")
+@app.route("/venezuela-bonds-tracker/")
+def venezuela_bonds_tracker_page():
+    """Live Venezuela sovereign/PDVSA bond tracker."""
+    try:
+        from datetime import date as _date, datetime as _dt
+        import json as _json
+
+        from src.data.venezuela_bonds import INSTRUMENTS, MILESTONES
+        from src.models import BlogPost, ExternalArticleEntry, SessionLocal, SourceType, init_db
+        from src.page_renderer import _base_url, _env, _iso, settings as _s
+
+        snapshot = None
+        news_rows = []
+        recent_briefings = []
+        db = None
+        try:
+            init_db()
+            db = SessionLocal()
+            try:
+                snapshot = (
+                    db.query(ExternalArticleEntry)
+                    .filter(
+                        ExternalArticleEntry.source == SourceType.VENEZUELA_BONDS,
+                        ExternalArticleEntry.article_type == "bond_market_snapshot",
+                    )
+                    .order_by(ExternalArticleEntry.published_date.desc(), ExternalArticleEntry.id.desc())
+                    .first()
+                )
+                news_rows = (
+                    db.query(ExternalArticleEntry)
+                    .filter(
+                        ExternalArticleEntry.source == SourceType.VENEZUELA_BONDS,
+                        ExternalArticleEntry.article_type == "bond_market_news",
+                    )
+                    .order_by(ExternalArticleEntry.published_date.desc(), ExternalArticleEntry.id.desc())
+                    .limit(9)
+                    .all()
+                )
+
+                recent_briefings = (
+                    db.query(BlogPost)
+                    .filter(
+                        (BlogPost.title.ilike("%bond%"))
+                        | (BlogPost.title.ilike("%PDVSA%"))
+                        | (BlogPost.title.ilike("%debt%"))
+                        | (BlogPost.title.ilike("%CITGO%"))
+                        | (BlogPost.title.ilike("%sanction%"))
+                        | (BlogPost.primary_sector == "economic")
+                        | (BlogPost.primary_sector == "banking")
+                    )
+                    .order_by(BlogPost.published_date.desc(), BlogPost.id.desc())
+                    .limit(5)
+                    .all()
+                )
+            finally:
+                if db is not None:
+                    db.close()
+        except Exception as exc:
+            logger.warning("Venezuela bonds tracker DB unavailable; rendering curated fallback: %s", exc)
+
+        snapshot_meta = snapshot.extra_metadata if snapshot and snapshot.extra_metadata else {}
+        instruments = snapshot_meta.get("instruments") or INSTRUMENTS
+        milestones = snapshot_meta.get("milestones") or MILESTONES
+        priced = [i for i in instruments if i.get("price_reference_cents") is not None]
+        latest_price = max((float(i["price_reference_cents"]) for i in priced), default=None)
+
+        bond_news = []
+        for row in news_rows:
+            meta = row.extra_metadata or {}
+            bond_news.append({
+                "headline": row.headline,
+                "source_url": row.source_url,
+                "published_date": row.published_date.strftime("%b %-d, %Y"),
+                "publisher": meta.get("publisher") or row.source_name,
+                "snippet": meta.get("snippet") or (row.body_text or "")[:220],
+            })
+
+        last_snapshot_label = (
+            snapshot.published_date.strftime("%B %-d, %Y")
+            if snapshot is not None
+            else "pending first daily pipeline run"
+        )
+
+        stats = {
+            "instrument_count": len(instruments),
+            "priced_count": len(priced),
+            "latest_price": f"{latest_price:.2f}" if latest_price is not None else None,
+            "news_count": len(bond_news),
+            "milestone_count": len(milestones),
+        }
+
+        base = _base_url()
+        canonical = f"{base}/venezuela-bonds-tracker"
+        title = "Venezuela Bonds Tracker: PDVSA, Sovereign Debt & Restructuring"
+        description = (
+            "Live Venezuela bonds tracker for sovereign and PDVSA debt: public "
+            "price references, restructuring milestones, sanctions signals, "
+            "CITGO risks, and recent bond-market news."
+        )
+        seo = {
+            "title": title,
+            "description": description,
+            "keywords": (
+                "Venezuela bonds tracker, Venezuela bonds, PDVSA bonds, "
+                "Venezuela sovereign debt, Venezuela bond restructuring, "
+                "Venezuela bond prices, PDVSA debt, CITGO bonds"
+            ),
+            "canonical": canonical,
+            "site_name": _s.site_name,
+            "site_url": base,
+            "locale": _s.site_locale,
+            "og_image": f"{base}/static/og-image.png?v=3",
+            "og_type": "website",
+            "published_iso": "2026-05-13T00:00:00Z",
+            "modified_iso": _iso(_dt.utcnow()),
+        }
+
+        jsonld = _json.dumps({
+            "@context": "https://schema.org",
+            "@graph": [
+                {
+                    "@type": "BreadcrumbList",
+                    "itemListElement": [
+                        {"@type": "ListItem", "position": 1, "name": "Home", "item": f"{base}/"},
+                        {"@type": "ListItem", "position": 2, "name": "Invest in Venezuela", "item": f"{base}/invest-in-venezuela"},
+                        {"@type": "ListItem", "position": 3, "name": "Venezuela Bonds Tracker", "item": canonical},
+                    ],
+                },
+                {
+                    "@type": "Dataset",
+                    "@id": f"{canonical}#dataset",
+                    "name": "Venezuela Bonds Tracker",
+                    "description": description,
+                    "url": canonical,
+                    "creator": {"@type": "Organization", "name": _s.site_name, "url": f"{base}/"},
+                    "isAccessibleForFree": True,
+                    "variableMeasured": ["issuer", "instrument", "public price reference", "milestone", "sanctions signal"],
+                    "temporalCoverage": "2017/2026",
+                },
+                {
+                    "@type": "ItemList",
+                    "@id": f"{canonical}#watchlist",
+                    "name": "Venezuela sovereign and PDVSA bond watchlist",
+                    "itemListElement": [
+                        {
+                            "@type": "ListItem",
+                            "position": idx + 1,
+                            "name": item.get("short_name") or item.get("name"),
+                        }
+                        for idx, item in enumerate(instruments)
+                    ],
+                },
+            ],
+        }, ensure_ascii=False)
+
+        template = _env.get_template("venezuela_bonds_tracker.html.j2")
+        html = template.render(
+            seo=seo,
+            jsonld=jsonld,
+            instruments=instruments,
+            milestones=sorted(milestones, key=lambda m: m["date"], reverse=True),
+            bond_news=bond_news,
+            stats=stats,
+            last_snapshot_label=last_snapshot_label,
+            recent_briefings=recent_briefings,
+            current_year=_date.today().year,
+        )
+        return Response(html, mimetype="text/html")
+    except HTTPException:
+        raise
+    except Exception as exc:
+        logger.exception("Venezuela bonds tracker render failed: %s", exc)
         abort(500)
 
 
@@ -10647,6 +10833,7 @@ def sitemap_xml():
         {"loc": f"{base}/why-is-venezuela-sanctioned", "lastmod": today_iso, "changefreq": "weekly", "priority": "0.8"},
         {"loc": f"{base}/venezuela-hydrocarbons-law", "lastmod": today_iso, "changefreq": "weekly", "priority": "0.9"},
         {"loc": f"{base}/general-license-46-venezuela", "lastmod": today_iso, "changefreq": "weekly", "priority": "0.9"},
+        {"loc": f"{base}/venezuela-bonds-tracker", "lastmod": today_iso, "changefreq": "daily", "priority": "0.9"},
         {"loc": f"{base}/venezuela-bonds-restructuring", "lastmod": today_iso, "changefreq": "weekly", "priority": "0.85"},
         {"loc": f"{base}/venezuela-etf", "lastmod": today_iso, "changefreq": "weekly", "priority": "0.85"},
         {"loc": f"{base}/venezuela-vs-colombia", "lastmod": today_iso, "changefreq": "weekly", "priority": "0.85"},

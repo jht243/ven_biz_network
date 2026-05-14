@@ -89,6 +89,7 @@ SOURCE_DISPLAY_MAP = {
     SourceType.GOOGLE_NEWS: None,
     SourceType.ANSA_LATINA: "ANSA Latina",
     SourceType.BCV_RATES: "BCV",
+    SourceType.VENEZUELA_BONDS: "Bond Market",
     SourceType.TRAVEL_ADVISORY: "State Dept",
     SourceType.ASAMBLEA_NACIONAL: "Asamblea Nacional",
 }

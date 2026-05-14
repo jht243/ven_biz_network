@@ -409,6 +409,7 @@ def _llm_priority(article) -> tuple:
         SourceType.GDELT: 2,
         SourceType.GOOGLE_NEWS: 2,
         SourceType.ANSA_LATINA: 2,
+        SourceType.VENEZUELA_BONDS: 3,
     }.get(article.source, 1)
     tone_magnitude = abs(article.tone_score) if article.tone_score is not None else 0
     return (source_rank, tone_magnitude)
