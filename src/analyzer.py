@@ -339,6 +339,9 @@ def _partition_articles(articles: list) -> tuple[list, list]:
         if a.source == SourceType.OFAC_SDN:
             rule_based.append(a)
             continue
+        if a.source == SourceType.INVESTMENT_FACTS:
+            rule_based.append(a)
+            continue
 
         if not _passes_prefilter(a):
             rule_based.append(a)
@@ -444,6 +447,23 @@ def _rule_based_analysis(article) -> dict:
             ),
             "is_breaking": False,
             "source_trust": "official",
+            "_rule_based": True,
+        }
+
+    if article.source == SourceType.INVESTMENT_FACTS:
+        meta = article.extra_metadata or {}
+        topic = (meta.get("topic") or "investment fact").replace("_", " ")
+        return {
+            "relevance_score": 3,
+            "sectors": ["finance"],
+            "sentiment": "mixed",
+            "status": "monitoring",
+            "status_label": "Investment Fact Signal",
+            "category_label": "Investment Data",
+            "headline_short": (article.headline or "")[:80],
+            "takeaway": f"Monitored source for {topic}; used by the structured investment fact refresh layer.",
+            "is_breaking": False,
+            "source_trust": "tier1" if article.credibility == CredibilityTier.TIER1 else "tier2",
             "_rule_based": True,
         }
 

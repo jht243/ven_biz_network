@@ -9206,11 +9206,11 @@ def venezuela_vs_colombia_page():
 
         base = _base_url()
         canonical = f"{base}/venezuela-vs-colombia"
-        title = "Venezuela vs. Colombia: Where to Invest in Latin America (2026)"
+        title = "Venezuela vs. Colombia Investment Guide (2026)"
         description = (
-            "Data-driven comparison of Venezuela and Colombia for investors. "
-            "GDP, stock markets, FDI, sectors, risk profiles, market access, "
-            "and the Colombia–Venezuela spillover effect."
+            "Compare Venezuela and Colombia for investors: GDP, FDI, stock "
+            "market access, sector opportunities, risk profiles, and trade "
+            "normalization upside."
         )
         seo = {
             "title": title,
@@ -9229,7 +9229,7 @@ def venezuela_vs_colombia_page():
             "locale": _s.site_locale,
             "og_image": f"{base}/static/og-image.png?v=3",
             "og_type": "article",
-            "published_iso": _iso(_dt.utcnow()),
+            "published_iso": "2026-01-08T00:00:00Z",
             "modified_iso": _iso(_dt.utcnow()),
             "section": "Investment",
             "article_tags": [
@@ -9305,7 +9305,7 @@ def venezuela_vs_colombia_page():
                     "headline": title,
                     "description": description,
                     "url": canonical,
-                    "datePublished": _iso(_dt.utcnow()),
+                    "datePublished": "2026-01-08T00:00:00Z",
                     "dateModified": _iso(_dt.utcnow()),
                     "author": {"@type": "Organization", "name": "Caracas Research", "url": base},
                     "publisher": {"@type": "Organization", "name": "Caracas Research", "url": base, "logo": {"@type": "ImageObject", "url": f"{base}/static/og-image.png"}},
@@ -9332,11 +9332,19 @@ def venezuela_vs_colombia_page():
             ],
         })
 
-        template = _env().get_template("venezuela_vs_colombia.html.j2")
+        from src.seo.cluster_topology import build_cluster_ctx
+        from src.investment_facts import load_investment_fact_map
+        cluster_ctx = build_cluster_ctx("/venezuela-vs-colombia")
+        investment_facts = load_investment_fact_map()
+
+        template = _env.get_template("venezuela_vs_colombia.html.j2")
         html = template.render(
             seo=seo,
             jsonld=jsonld,
             faq=faq,
+            cluster_ctx=cluster_ctx,
+            investment_facts=investment_facts,
+            request=request,
             today=_date.today().strftime("%B %-d, %Y"),
             current_year=_date.today().year,
         )
@@ -9366,11 +9374,11 @@ def investing_in_venezuelan_oil_page():
 
         base = _base_url()
         canonical = f"{base}/investing-in-venezuelan-oil"
-        title = "Investing in Venezuelan Oil: What Foreigners Need to Know (2026)"
+        title = "Investing in Venezuelan Oil: 2026 Investor Guide"
         description = (
-            "How to invest in Venezuela's oil sector in 2026. 304B barrels of "
-            "reserves, 6 authorized majors (GL 50A), CPP contracts, Orinoco Belt "
-            "geology, OFAC licenses, and indirect exposure routes."
+            "How investors assess Venezuela oil exposure in 2026: OFAC "
+            "licenses, CPP contracts, PDVSA partners, Orinoco Belt reserves, "
+            "and indirect routes."
         )
         seo = {
             "title": title,
@@ -9390,7 +9398,7 @@ def investing_in_venezuelan_oil_page():
             "locale": _s.site_locale,
             "og_image": f"{base}/static/og-image.png?v=3",
             "og_type": "article",
-            "published_iso": _iso(_dt.utcnow()),
+            "published_iso": "2026-01-29T00:00:00Z",
             "modified_iso": _iso(_dt.utcnow()),
             "section": "Oil & Energy",
             "article_tags": [
@@ -9478,7 +9486,7 @@ def investing_in_venezuelan_oil_page():
                     "headline": title,
                     "description": description,
                     "url": canonical,
-                    "datePublished": _iso(_dt.utcnow()),
+                    "datePublished": "2026-01-29T00:00:00Z",
                     "dateModified": _iso(_dt.utcnow()),
                     "author": {"@type": "Organization", "name": "Caracas Research", "url": base},
                     "publisher": {"@type": "Organization", "name": "Caracas Research", "url": base, "logo": {"@type": "ImageObject", "url": f"{base}/static/og-image.png"}},
@@ -9505,11 +9513,19 @@ def investing_in_venezuelan_oil_page():
             ],
         })
 
-        template = _env().get_template("investing_in_venezuelan_oil.html.j2")
+        from src.seo.cluster_topology import build_cluster_ctx
+        from src.investment_facts import load_investment_fact_map
+        cluster_ctx = build_cluster_ctx("/investing-in-venezuelan-oil")
+        investment_facts = load_investment_fact_map()
+
+        template = _env.get_template("investing_in_venezuelan_oil.html.j2")
         html = template.render(
             seo=seo,
             jsonld=jsonld,
             faq=faq,
+            cluster_ctx=cluster_ctx,
+            investment_facts=investment_facts,
+            request=request,
             today=_date.today().strftime("%B %-d, %Y"),
             current_year=_date.today().year,
         )
@@ -9538,11 +9554,11 @@ def venezuela_hydrocarbons_law_page():
 
         base = _base_url()
         canonical = f"{base}/venezuela-hydrocarbons-law"
-        title = "Venezuela Hydrocarbons Law Reform 2026: What Investors Need to Know"
+        title = "Venezuela Hydrocarbons Law Reform: 2026 Guide"
         description = (
-            "Venezuela reformed its Hydrocarbons Law in January 2026, allowing "
-            "full private foreign participation in upstream oil for the first "
-            "time since 1976. CPPs, fiscal terms, arbitration, and risks explained."
+            "Venezuela's 2026 hydrocarbons reform changed CPP contracts, PDVSA "
+            "participation, royalties, taxes, arbitration, and foreign oil "
+            "investment rules."
         )
         seo = {
             "title": title,
@@ -9666,11 +9682,19 @@ def venezuela_hydrocarbons_law_page():
             ],
         })
 
-        template = _env().get_template("venezuela_hydrocarbons_law.html.j2")
+        from src.seo.cluster_topology import build_cluster_ctx
+        from src.investment_facts import load_investment_fact_map
+        cluster_ctx = build_cluster_ctx("/venezuela-hydrocarbons-law")
+        investment_facts = load_investment_fact_map()
+
+        template = _env.get_template("venezuela_hydrocarbons_law.html.j2")
         html = template.render(
             seo=seo,
             jsonld=jsonld,
             faq=faq,
+            cluster_ctx=cluster_ctx,
+            investment_facts=investment_facts,
+            request=request,
             today=_date.today().strftime("%B %-d, %Y"),
             active_designations="410+",
             current_year=_date.today().year,
@@ -9700,11 +9724,11 @@ def general_license_46_page():
 
         base = _base_url()
         canonical = f"{base}/general-license-46-venezuela"
-        title = "OFAC General License 46: Venezuela Oil Sanctions Relief Explained"
+        title = "OFAC GL 46: Venezuela Oil Sanctions Relief Guide"
         description = (
-            "OFAC General License 46 authorizes U.S. entities to trade "
-            "Venezuelan oil. Eligibility, scope, payment rules, reporting "
-            "requirements, and subsequent licenses (GL 47, GL 48A) explained."
+            "OFAC GL 46 authorizes certain Venezuela oil transactions. Review "
+            "eligibility, payment rules, reporting duties, GL 47, GL 48A, and "
+            "limits."
         )
         seo = {
             "title": title,
@@ -9823,11 +9847,19 @@ def general_license_46_page():
             ],
         })
 
-        template = _env().get_template("general_license_46.html.j2")
+        from src.seo.cluster_topology import build_cluster_ctx
+        from src.investment_facts import load_investment_fact_map
+        cluster_ctx = build_cluster_ctx("/general-license-46-venezuela")
+        investment_facts = load_investment_fact_map()
+
+        template = _env.get_template("general_license_46.html.j2")
         html = template.render(
             seo=seo,
             jsonld=jsonld,
             faq=faq,
+            cluster_ctx=cluster_ctx,
+            investment_facts=investment_facts,
+            request=request,
             today=_date.today().strftime("%B %-d, %Y"),
             current_year=_date.today().year,
         )
@@ -9855,11 +9887,11 @@ def venezuela_bonds_restructuring_page():
 
         base = _base_url()
         canonical = f"{base}/venezuela-bonds-restructuring"
-        title = "Venezuela Bond Restructuring 2026: $60B Debt Guide for Investors"
+        title = "Venezuela Bond Restructuring: 2026 Investor Guide"
         description = (
-            "Venezuela's $60B+ bond restructuring could be the largest ever. "
-            "Sovereign vs. PDVSA debt, bond prices, creditor dynamics, "
-            "sanctions impact, and investment access explained."
+            "Guide to Venezuela sovereign and PDVSA bond restructuring: debt "
+            "size, public price references, creditors, CITGO risk, sanctions, "
+            "and access."
         )
         seo = {
             "title": title,
@@ -9969,7 +10001,9 @@ def venezuela_bonds_restructuring_page():
         })
 
         from src.seo.cluster_topology import build_cluster_ctx
+        from src.investment_facts import load_investment_fact_map
         cluster_ctx = build_cluster_ctx("/venezuela-bonds-restructuring")
+        investment_facts = load_investment_fact_map()
 
         template = _env.get_template("venezuela_bonds_restructuring.html.j2")
         html = template.render(
@@ -9977,6 +10011,7 @@ def venezuela_bonds_restructuring_page():
             jsonld=jsonld,
             faq=faq,
             cluster_ctx=cluster_ctx,
+            investment_facts=investment_facts,
             today=_date.today().strftime("%B %-d, %Y"),
             current_year=_date.today().year,
         )
@@ -9997,6 +10032,7 @@ def venezuela_bonds_tracker_page():
         import json as _json
 
         from src.data.venezuela_bonds import INSTRUMENTS, MILESTONES
+        from src.investment_facts import load_investment_fact_map
         from src.models import BlogPost, ExternalArticleEntry, SessionLocal, SourceType, init_db
         from src.page_renderer import _base_url, _env, _iso, settings as _s
 
@@ -10079,14 +10115,15 @@ def venezuela_bonds_tracker_page():
             "news_count": len(bond_news),
             "milestone_count": len(milestones),
         }
+        investment_facts = load_investment_fact_map()
 
         base = _base_url()
         canonical = f"{base}/venezuela-bonds-tracker"
-        title = "Venezuela Bonds Tracker: PDVSA, Sovereign Debt & Restructuring"
+        title = "Venezuela Bonds Tracker: Prices, PDVSA Debt & News"
         description = (
-            "Live Venezuela bonds tracker for sovereign and PDVSA debt: public "
-            "price references, restructuring milestones, sanctions signals, "
-            "CITGO risks, and recent bond-market news."
+            "Track Venezuela sovereign and PDVSA bonds with public price "
+            "references, restructuring milestones, sanctions signals, CITGO "
+            "risk, and market news."
         )
         seo = {
             "title": title,
@@ -10105,6 +10142,41 @@ def venezuela_bonds_tracker_page():
             "published_iso": "2026-05-13T00:00:00Z",
             "modified_iso": _iso(_dt.utcnow()),
         }
+
+        faq = [
+            {
+                "q": "Does this tracker show executable Venezuela bond prices?",
+                "a": (
+                    "No. Most executable quotes for defaulted Venezuelan and PDVSA "
+                    "bonds sit behind professional terminals. This tracker separates "
+                    "public price references from live tradable quotes."
+                ),
+            },
+            {
+                "q": "Which Venezuela bonds are tracked?",
+                "a": (
+                    "The watchlist covers representative Republic of Venezuela and "
+                    "PDVSA instruments, including sovereign Global bonds, PDVSA 2027, "
+                    "and the litigation-sensitive PDVSA 2020/CITGO-linked claim."
+                ),
+            },
+            {
+                "q": "Why do sanctions matter for Venezuela bonds?",
+                "a": (
+                    "OFAC rules affect who can trade, provide restructuring services, "
+                    "or transact with PDVSA-linked securities. Investors should verify "
+                    "any trade with sanctions counsel and their broker."
+                ),
+            },
+            {
+                "q": "How often is the Venezuela bonds tracker updated?",
+                "a": (
+                    "The tracker is designed to refresh through the daily pipeline "
+                    "when database access and source feeds are available. It falls "
+                    "back to curated public references when live data is unavailable."
+                ),
+            },
+        ]
 
         jsonld = _json.dumps({
             "@context": "https://schema.org",
@@ -10141,6 +10213,13 @@ def venezuela_bonds_tracker_page():
                         for idx, item in enumerate(instruments)
                     ],
                 },
+                {
+                    "@type": "FAQPage",
+                    "mainEntity": [
+                        {"@type": "Question", "name": item["q"], "acceptedAnswer": {"@type": "Answer", "text": item["a"]}}
+                        for item in faq
+                    ],
+                },
             ],
         }, ensure_ascii=False)
 
@@ -10152,6 +10231,8 @@ def venezuela_bonds_tracker_page():
             milestones=sorted(milestones, key=lambda m: m["date"], reverse=True),
             bond_news=bond_news,
             stats=stats,
+            faq=faq,
+            investment_facts=investment_facts,
             last_snapshot_label=last_snapshot_label,
             recent_briefings=recent_briefings,
             current_year=_date.today().year,
@@ -10181,11 +10262,11 @@ def venezuela_etf_page():
 
         base = _base_url()
         canonical = f"{base}/venezuela-etf"
-        title = "Venezuela ETF 2026: Teucrium Filing, SEC Status & Alternatives"
+        title = "Venezuela ETF: Teucrium Filing, Status & Alternatives"
         description = (
-            "The first Venezuela Exposure ETF was filed in January 2026. "
-            "Fund details, SEC hurdles, Caracas Stock Exchange overview, "
-            "and current alternative ways to invest in Venezuela."
+            "Teucrium filed the first Venezuela Exposure ETF in 2026. Review "
+            "fund details, SEC hurdles, Caracas exchange limits, and current "
+            "alternatives."
         )
         seo = {
             "title": title,
@@ -10296,11 +10377,19 @@ def venezuela_etf_page():
             ],
         })
 
-        template = _env().get_template("venezuela_etf.html.j2")
+        from src.seo.cluster_topology import build_cluster_ctx
+        from src.investment_facts import load_investment_fact_map
+        cluster_ctx = build_cluster_ctx("/venezuela-etf")
+        investment_facts = load_investment_fact_map()
+
+        template = _env.get_template("venezuela_etf.html.j2")
         html = template.render(
             seo=seo,
             jsonld=jsonld,
             faq=faq,
+            cluster_ctx=cluster_ctx,
+            investment_facts=investment_facts,
+            request=request,
             today=_date.today().strftime("%B %-d, %Y"),
             current_year=_date.today().year,
         )

@@ -1,6 +1,7 @@
 {% extends "_base.html.j2" %}
 {% from "_base.html.j2" import share_button %}
 {% from "_cluster_nav.html.j2" import cluster_nav %}
+{% from "_investment_fact.html.j2" import fact_value, fact_source %}
 
 {% block head_extra %}
 <style>
@@ -82,7 +83,7 @@
       <ul>
         <li>Venezuela's <a href="/venezuela-hydrocarbons-law">Hydrocarbons Law reform</a> (Jan 2026) allows private foreign companies to operate upstream oil activities independently via <strong>Productive Participation Contracts (CPPs)</strong></li>
         <li><strong>Six majors</strong> are authorized under OFAC GL 50A: BP, Chevron, ENI, Maurel & Prom, Repsol, and Shell</li>
-        <li>Production reached <strong>~1.1M bpd</strong> in March 2026; exports hit <strong>1.23M bpd</strong> in April — highest since 2018</li>
+        <li>Production reached <strong>{{ fact_value(investment_facts, "venezuela_oil_production_current", "~1.1M bpd") }}</strong>; exports hit <strong>{{ fact_value(investment_facts, "venezuela_oil_exports_current", "1.23M bpd") }}</strong> {{ fact_source(investment_facts, "venezuela_oil_exports_current") }}</li>
         <li>Reaching 3M bpd would require ~<strong>$180 billion</strong> in investment over a decade+</li>
         <li>Orinoco Belt crude is extra-heavy (9.5–12 API) requiring <strong>diluent blending</strong> and specialized refining</li>
       </ul>
@@ -94,7 +95,7 @@
         <div class="stat-label">Barrels Proven Reserves</div>
       </div>
       <div class="stat-card">
-        <div class="stat-num">1.23M</div>
+        <div class="stat-num">{{ fact_value(investment_facts, "venezuela_oil_exports_current", "1.23M bpd") }}</div>
         <div class="stat-label">Exports (Apr 2026, bpd)</div>
       </div>
       <div class="stat-card">
@@ -127,7 +128,7 @@
         <h2>The Reserves: Why Venezuela Matters</h2>
         <p>Venezuela holds approximately <strong>304 billion barrels</strong> of proven oil reserves — more than Saudi Arabia, Canada, or Iran. The vast majority sits in the <strong>Orinoco Oil Belt (Faja Petrolífera del Orinoco)</strong>, a 55,000 km² formation in eastern Venezuela containing an estimated <strong>1.36 trillion barrels</strong> of original oil in place.</p>
         <p>Yet production has collapsed from a peak of 3.4 million bpd (1998) to roughly 800,000 bpd by late 2025. The gap between reserves and production represents one of the most compelling — and riskiest — investment propositions in global energy.</p>
-        <p>As of April 2026, production has recovered to ~1.1M bpd, with exports reaching 1.23M bpd — a seven-year high — driven by sanctions relief and renewed foreign operator activity.</p>
+        <p>Tracked public references put production at {{ fact_value(investment_facts, "venezuela_oil_production_current", "~1.1M bpd") }}, with exports at {{ fact_value(investment_facts, "venezuela_oil_exports_current", "1.23M bpd") }} — driven by sanctions relief and renewed foreign operator activity. {{ fact_source(investment_facts, "venezuela_oil_exports_current") }}</p>
         <p class="source-citation">Sources: <a href="https://www.cnbc.com/2026/01/28/venezuela-crude-oil-production-investment.html" target="_blank" rel="noopener">CNBC (Jan 2026)</a> · <a href="https://energy-analytics-institute.org/2026/01/13/eai-analysis-venezuelas-55000-km2-orinoco-belt-of-faja/" target="_blank" rel="noopener">Energy Analytics Institute</a> · <a href="https://www.oilandgasadvancement.com/news/venezuela-oil-exports-surge-to-seven-year-high-in-april-2026/" target="_blank" rel="noopener">Oil & Gas Advancement (Apr 2026)</a></p>
       </section>
 
@@ -138,7 +139,7 @@
           <h3>Chevron Corporation (CVX)</h3>
           <div class="cc-meta">United States · NYSE: CVX</div>
           <div class="cc-stats">
-            <span><strong>Production:</strong> ~260,000 bpd</span>
+            <span><strong>Production:</strong> {{ fact_value(investment_facts, "chevron_venezuela_production", "~260,000 bpd") }} {{ fact_source(investment_facts, "chevron_venezuela_production") }}</span>
             <span><strong>Share of Venezuela total:</strong> ~25%</span>
           </div>
           <p>Operates four joint ventures with PDVSA. In April 2026, executed a strategic asset swap gaining increased working interests in Petroindependencia (49%) and development rights to Ayacucho 8 in the Orinoco Belt via Petropiar (30%). Targets ~390,000 bpd within two years — a ~50% increase.</p>
@@ -181,7 +182,7 @@
         <table class="oil-table">
           <thead><tr><th>Company</th><th>Country</th><th>Production (bpd)</th><th>Key Assets</th><th>GL 50A</th></tr></thead>
           <tbody>
-            <tr><td>Chevron</td><td>U.S.</td><td>~260,000</td><td>Petroindependencia, Petropiar, Petroboscán</td><td>Yes</td></tr>
+            <tr><td>Chevron</td><td>U.S.</td><td>{{ fact_value(investment_facts, "chevron_venezuela_production", "~260,000 bpd") }}</td><td>Petroindependencia, Petropiar, Petroboscán</td><td>Yes</td></tr>
             <tr><td>Repsol</td><td>Spain</td><td>~45,000</td><td>Petroquiriquire, Cardón IV (gas)</td><td>Yes</td></tr>
             <tr><td>ENI</td><td>Italy</td><td>~64,000</td><td>Junín 5, Petrosucre, Cardón IV (gas)</td><td>Yes</td></tr>
             <tr><td>Shell</td><td>UK/NL</td><td>TBD</td><td>Monagas North (negotiating)</td><td>Yes</td></tr>
@@ -218,7 +219,7 @@
         <table class="oil-table">
           <thead><tr><th>License</th><th>Date</th><th>Authorizes</th></tr></thead>
           <tbody>
-            <tr><td><a href="/general-license-46-venezuela">GL 46</a></td><td>Jan 29, 2026</td><td>Established U.S. entities: lift, export, sell, transport, refine Venezuelan oil</td></tr>
+            <tr><td><a href="/general-license-46-venezuela">GL 46</a></td><td>Jan 29, 2026</td><td>{{ fact_value(investment_facts, "ofac_gl46_status", "Established U.S. entities: lift, export, sell, transport, refine Venezuelan oil") }} {{ fact_source(investment_facts, "ofac_gl46_status") }}</td></tr>
             <tr><td>GL 47</td><td>Feb 3, 2026</td><td>U.S.-origin diluent exports to Venezuela</td></tr>
             <tr><td>GL 48</td><td>Feb 13, 2026</td><td>Oilfield services: goods, technology, services for E&P</td></tr>
             <tr><td>GL 48A</td><td>Mar 13, 2026</td><td>Electricity (CORPOELEC), petrochemicals, fertilizers</td></tr>
@@ -297,7 +298,7 @@
         </div>
       </section>
 
-      {{ cluster_nav("oil-energy", request.path) }}
+      {{ cluster_nav(cluster_ctx) }}
     </div>
   </article>
 
@@ -307,6 +308,7 @@
       <li><a href="/venezuela-hydrocarbons-law">Hydrocarbons Law Reform: Full Breakdown</a> <small>Reform</small></li>
       <li><a href="/general-license-46-venezuela">OFAC General License 46 Explained</a> <small>Sanctions</small></li>
       <li><a href="/venezuela-oil">Venezuela Oil Sector Overview</a> <small>Sector</small></li>
+      <li><a href="/venezuela-bonds-tracker">Venezuela Bonds Tracker</a> <small>Markets</small></li>
       <li><a href="/sanctions-tracker">OFAC Sanctions Tracker</a> <small>Tool</small></li>
       <li><a href="/venezuela-vs-colombia">Venezuela vs. Colombia: Where to Invest</a> <small>Comparison</small></li>
     </ul>

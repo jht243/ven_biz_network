@@ -67,6 +67,7 @@ class SourceType(str, enum.Enum):
     ITA_TRADE = "ita_trade"
     ANSA_LATINA = "ansa_latina"
     VENEZUELA_BONDS = "venezuela_bonds"
+    INVESTMENT_FACTS = "investment_facts"
     # Cross-project pollution recovery (April 2026): the shared
     # Postgres enum had `openalex` added by a sister project that
     # was misconfigured to point at this database. We declare it
@@ -207,6 +208,31 @@ class ExternalArticleEntry(Base):
 
     analysis_json = Column(JSON, nullable=True)
     status = Column(_enum_values(GazetteStatus), default=GazetteStatus.SCRAPED)
+
+    created_at = Column(DateTime, default=datetime.utcnow)
+    updated_at = Column(DateTime, default=datetime.utcnow, onupdate=datetime.utcnow)
+
+
+class InvestmentFact(Base):
+    """Structured, source-backed volatile facts used by investment pages."""
+
+    __tablename__ = "investment_facts"
+    __table_args__ = (UniqueConstraint("fact_key", name="uq_investment_fact_key"),)
+
+    id = Column(Integer, primary_key=True, autoincrement=True)
+    fact_key = Column(String(120), nullable=False, index=True)
+    category = Column(String(80), nullable=False, index=True)
+    value_json = Column(JSON, nullable=True)
+    display_text = Column(Text, nullable=False)
+    source_url = Column(String(1000), nullable=True)
+    source_name = Column(String(200), nullable=True)
+    source_date = Column(Date, nullable=True)
+    last_checked_at = Column(DateTime, default=datetime.utcnow, nullable=False)
+    confidence = Column(Float, default=0.5)
+    status = Column(String(40), default="seeded", index=True)
+    previous_value_json = Column(JSON, nullable=True)
+    affected_pages = Column(JSON, nullable=True)
+    notes = Column(Text, nullable=True)
 
     created_at = Column(DateTime, default=datetime.utcnow)
     updated_at = Column(DateTime, default=datetime.utcnow, onupdate=datetime.utcnow)
@@ -627,6 +653,7 @@ _SOURCE_TYPE_ENUM_ADDITIONS: tuple[tuple[str, str], ...] = (
     ("source_type", "ita_trade"),
     ("source_type", "ansa_latina"),
     ("source_type", "venezuela_bonds"),
+    ("source_type", "investment_facts"),
 )
 
 

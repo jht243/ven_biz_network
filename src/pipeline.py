@@ -39,6 +39,7 @@ from src.scraper.ansa_latina import AnsaLatinaScraper
 from src.scraper.bcv import BCVScraper
 from src.scraper.ita import ITATradeScraper
 from src.scraper.bonds import VenezuelaBondsScraper
+from src.scraper.investment_topics import InvestmentTopicsScraper
 from src.scraper.travel_advisory import TravelAdvisoryScraper
 from src.ocr.engine import ocr_pdf
 
@@ -96,6 +97,7 @@ def run_daily_scrape(target_date: Optional[date] = None) -> dict:
         BCVScraper(),
         ITATradeScraper(),
         VenezuelaBondsScraper(),
+        InvestmentTopicsScraper(),
         TravelAdvisoryScraper(),
     ]
 
@@ -148,6 +150,17 @@ def run_daily_scrape(target_date: Optional[date] = None) -> dict:
 
     new_articles = _persist_articles(all_articles)
     summary["articles_new"] = len(new_articles)
+
+    # --- Phase 3c: Refresh structured investment-page facts ---
+    try:
+        from src.investment_facts import refresh_investment_facts
+
+        fact_summary = refresh_investment_facts(target_date)
+        summary["investment_facts"] = fact_summary
+        logger.info("Investment fact refresh complete: %s", fact_summary)
+    except Exception as exc:
+        logger.warning("Investment fact refresh failed (non-fatal): %s", exc, exc_info=True)
+        summary["errors"].append(f"investment_facts: {exc}")
 
     # --- Phase 4: Download PDFs and run OCR ---
     for gazette_id, pdf_url in new_gazettes:
@@ -1095,6 +1108,7 @@ def _resolve_source_type(source_name: str) -> SourceType:
         "ita": SourceType.ITA_TRADE,
         "trade.gov": SourceType.ITA_TRADE,
         "venezuela bond market": SourceType.VENEZUELA_BONDS,
+        "investment facts": SourceType.INVESTMENT_FACTS,
         "state department": SourceType.TRAVEL_ADVISORY,
         "us state department": SourceType.TRAVEL_ADVISORY,
         "newsdata": SourceType.NEWSDATA,

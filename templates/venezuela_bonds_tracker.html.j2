@@ -1,4 +1,5 @@
 {% extends "_base.html.j2" %}
+{% from "_investment_fact.html.j2" import fact_source %}
 
 {% block head_extra %}
 <style>
@@ -26,6 +27,14 @@
   .milestone:before { content: ""; position: absolute; left: -27px; top: 6px; width: 12px; height: 12px; background: var(--sr-red); border-radius: 50%; border: 2px solid var(--white); box-shadow: 0 0 0 1px var(--sr-red); }
   .milestone .date { font-size: 12px; text-transform: uppercase; letter-spacing: 0.7px; color: var(--sr-gray-text); font-weight: 700; }
   .milestone h3 { font-family: var(--font-serif); color: var(--sr-blue-dark); font-size: 17px; margin: 2px 0 4px; }
+  .journey-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(180px, 1fr)); gap: 10px; }
+  .journey-card { border: 1px solid var(--sr-gray-light); padding: 12px 14px; background: var(--white); }
+  .journey-card a { display: block; font-weight: 700; color: var(--sr-blue-dark); text-decoration: none; margin-bottom: 5px; }
+  .journey-card a:hover { color: var(--sr-red); }
+  .tracker-faq { border-top: 1px solid var(--sr-gray-light); }
+  .tracker-faq-item { padding: 14px 0; border-bottom: 1px solid var(--sr-gray-light); }
+  .tracker-faq-item h3 { font-family: var(--font-serif); color: var(--sr-blue-dark); font-size: 17px; line-height: 1.35; margin: 0 0 6px; }
+  .tracker-faq-item p { margin: 0; color: var(--sr-gray-text); }
   .note-box { background: #fff8e1; border-left: 3px solid #f5b041; padding: 14px 18px; margin: 22px 0; font-size: 14px; color: var(--sr-dark-text); }
   .two-col { display: grid; grid-template-columns: minmax(0, 1fr) minmax(260px, 0.55fr); gap: 22px; align-items: start; }
   @media (max-width: 820px) {
@@ -53,8 +62,43 @@
     </p>
   </header>
 
+  <section class="tracker-section" aria-labelledby="investor-journey">
+    <h2 id="investor-journey">Investor Journey</h2>
+    <div class="journey-grid">
+      <div class="journey-card">
+        <a href="/general-license-46-venezuela">OFAC General License 46</a>
+        <div class="muted">What U.S. sanctions relief allows for Venezuela oil activity.</div>
+      </div>
+      <div class="journey-card">
+        <a href="/venezuela-hydrocarbons-law">Hydrocarbons Law Reform</a>
+        <div class="muted">How Venezuela changed oil contracts, taxes, and PDVSA participation.</div>
+      </div>
+      <div class="journey-card">
+        <a href="/investing-in-venezuelan-oil">Investing in Venezuelan Oil</a>
+        <div class="muted">How foreign investors evaluate licenses, partners, and operating risk.</div>
+      </div>
+      <div class="journey-card">
+        <a href="/venezuela-bonds-restructuring">Bond Restructuring Guide</a>
+        <div class="muted">Sovereign and PDVSA debt, creditor talks, recovery values, and CITGO risk.</div>
+      </div>
+      <div class="journey-card">
+        <a href="/venezuela-etf">Venezuela ETF Status</a>
+        <div class="muted">The proposed ETF and other public-market ways to get exposure.</div>
+      </div>
+      <div class="journey-card">
+        <a href="/venezuela-vs-colombia">Venezuela vs. Colombia</a>
+        <div class="muted">How Venezuela compares with Colombia for LatAm allocation decisions.</div>
+      </div>
+    </div>
+  </section>
+
   <section class="tracker-section">
     <h2>Bond Watchlist</h2>
+    <p class="muted">
+      Public bond references are refreshed from structured fact records where available.
+      VENZ 2031 reference: {{ fact_source(investment_facts, "bond_price_venz_2031_reference") }}
+      PDVSA 2027 reference: {{ fact_source(investment_facts, "bond_price_pdvsa_2027_reference") }}
+    </p>
     <div class="bond-table-wrap">
       <table class="bond-table">
         <thead>
@@ -143,6 +187,18 @@
         <div class="muted">No bond-market RSS items have been stored yet.</div>
         <a href="/briefing">Browse the latest Venezuela briefings</a>
       </article>
+      {% endfor %}
+    </div>
+  </section>
+
+  <section class="tracker-section">
+    <h2>Frequently Asked Questions</h2>
+    <div class="tracker-faq">
+      {% for item in faq %}
+      <div class="tracker-faq-item">
+        <h3>{{ item.q }}</h3>
+        <p>{{ item.a }}</p>
+      </div>
       {% endfor %}
     </div>
   </section>

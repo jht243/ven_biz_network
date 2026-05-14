@@ -1,6 +1,7 @@
 {% extends "_base.html.j2" %}
 {% from "_base.html.j2" import share_button %}
 {% from "_cluster_nav.html.j2" import cluster_nav %}
+{% from "_investment_fact.html.j2" import fact_value, fact_source %}
 
 {% block head_extra %}
 <style>
@@ -65,7 +66,7 @@
     </nav>
     <span class="kicker">Legislative Reform · Oil & Gas</span>
     <h1>Venezuela's Hydrocarbons Law Reform: What Investors Need to Know</h1>
-    <p class="lead">On January 29, 2026, Venezuela's National Assembly reformed the Organic Hydrocarbons Law, opening the oil sector to full private foreign participation for the first time since nationalization in 1976.</p>
+    <p class="lead">Venezuela's Hydrocarbons Law status is tracked as {{ fact_value(investment_facts, "hydrocarbons_law_status", "2026 reform approved") }}, opening the oil sector to broader private foreign participation. {{ fact_source(investment_facts, "hydrocarbons_law_status") }}</p>
   </div>
 </div>
 
@@ -86,7 +87,7 @@
         <li>Foreign investors can now hold <strong>minority stakes with operational control</strong> in joint ventures with PDVSA</li>
         <li>Royalties capped at <strong>30%</strong> of extracted volumes; integrated hydrocarbons tax up to <strong>15%</strong></li>
         <li>International <strong>arbitration</strong> and dispute resolution mechanisms now available</li>
-        <li>Paired with <strong>OFAC General License 46</strong>, enabling U.S. entities to transact in Venezuelan oil</li>
+        <li>Paired with <strong>OFAC General License 46</strong>, which {{ fact_value(investment_facts, "ofac_gl46_status", "authorizes certain Venezuela oil transactions") }} {{ fact_source(investment_facts, "ofac_gl46_status") }}</li>
       </ul>
     </div>
 
@@ -96,7 +97,7 @@
         <div class="stat-label">Barrels Proven Reserves</div>
       </div>
       <div class="stat-card">
-        <div class="stat-num">~1.1M</div>
+        <div class="stat-num">{{ fact_value(investment_facts, "venezuela_oil_production_current", "~1.1M bpd") }}</div>
         <div class="stat-label">Barrels/Day Current Output</div>
       </div>
       <div class="stat-card">
@@ -274,7 +275,7 @@
         </div>
       </section>
 
-      {{ cluster_nav("oil-energy", request.path) }}
+      {{ cluster_nav(cluster_ctx) }}
 
     </div>
   </article>
@@ -285,7 +286,8 @@
       <li><a href="/general-license-46-venezuela">OFAC General License 46: What U.S. Companies Can Now Do</a> <small>Sanctions</small></li>
       <li><a href="/venezuela-oil">Venezuela Oil Sector Overview</a> <small>Sector</small></li>
       <li><a href="/sanctions-tracker">OFAC Venezuela Sanctions Tracker ({{ active_designations }} active designations)</a> <small>Tool</small></li>
-      <li><a href="/venezuela-bonds-restructuring">Venezuela Bond Market & Debt Restructuring Tracker</a> <small>Finance</small></li>
+      <li><a href="/venezuela-bonds-restructuring">Venezuela Bond Market & Debt Restructuring Guide</a> <small>Finance</small></li>
+      <li><a href="/venezuela-bonds-tracker">Venezuela Bonds Tracker</a> <small>Markets</small></li>
       <li><a href="/invest-in-venezuela">How to Invest in Venezuela: Complete Guide</a> <small>Pillar</small></li>
     </ul>
   </div>

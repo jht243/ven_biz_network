@@ -1,6 +1,7 @@
 {% extends "_base.html.j2" %}
 {% from "_base.html.j2" import share_button %}
 {% from "_cluster_nav.html.j2" import cluster_nav %}
+{% from "_investment_fact.html.j2" import fact_value, fact_source %}
 
 {% block head_extra %}
 <style>
@@ -84,7 +85,7 @@
       <ul>
         <li><strong>Colombia</strong>: ~$350B GDP, 2.6–2.9% growth, established legal framework, accessible stock market (Colcap), FDI-friendly but slowing under current administration</li>
         <li><strong>Venezuela</strong>: ~$100B GDP, 6.5–15% growth projections, world's largest oil reserves, but extreme risk — sanctions, inflation (~272%), 70%+ poverty</li>
-        <li>Colombia benefits directly from Venezuela recovery: estimated <strong>0.5% GDP</strong> annual export gains from normalization</li>
+        <li>Colombia benefits directly from Venezuela recovery: estimated <strong>{{ fact_value(investment_facts, "colombia_export_gdp_upside", "0.5% of GDP annually") }}</strong> export gains from normalization {{ fact_source(investment_facts, "colombia_export_gdp_upside") }}</li>
         <li>Colombia's stock market trades below <strong>9x P/E</strong> with ~7% dividend yield — accessible via GXG ETF</li>
         <li>Venezuela has <strong>no ETFs, no ADRs</strong>, and the Caracas Stock Exchange trades under $100K/day</li>
       </ul>
@@ -187,7 +188,7 @@
             <tr><th>Access Method</th><th class="col-col">Colombia</th><th class="col-ven">Venezuela</th></tr>
           </thead>
           <tbody>
-            <tr><td>Stock Market ETF</td><td class="col-col"><strong>GXG</strong> (Global X MSCI Colombia) — liquid, accessible</td><td class="col-ven">None (Teucrium filed Jan 2026, pending SEC). See <a href="/venezuela-etf">ETF guide</a></td></tr>
+            <tr><td>Stock Market ETF</td><td class="col-col"><strong>GXG</strong> (Global X MSCI Colombia) — liquid, accessible</td><td class="col-ven">No approved U.S.-listed Venezuela ETF; tracked status: {{ fact_value(investment_facts, "venez_etf_status", "under SEC review") }}. See <a href="/venezuela-etf">ETF guide</a> {{ fact_source(investment_facts, "venez_etf_status") }}</td></tr>
             <tr><td>ADRs / Direct Equity</td><td class="col-col">Ecopetrol (EC), Bancolombia (CIB) on NYSE</td><td class="col-ven">No Venezuelan ADRs on U.S. exchanges</td></tr>
             <tr><td>Bonds</td><td class="col-col">Investment-grade (BB+); accessible through standard channels</td><td class="col-ven">Defaulted; OTC trading; sanctions restrictions on PDVSA debt. See <a href="/venezuela-bonds-restructuring">bond guide</a></td></tr>
             <tr><td>Direct FDI</td><td class="col-col">Open; equal treatment; no minimum investment</td><td class="col-ven">Possible via CPPs or reformed JVs; requires sanctions compliance; OFAC GL 49/50A for oil</td></tr>
@@ -216,7 +217,7 @@
 
       <section class="sec" id="spillover">
         <h2>The Colombia–Venezuela Spillover Effect</h2>
-        <p>Colombia is one of the biggest indirect beneficiaries of Venezuela's recovery. Global X ETFs estimates that normalization of Venezuela trade could add <strong>0.5% of GDP annually</strong> in Colombian exports. The logic:</p>
+        <p>Colombia is one of the biggest indirect beneficiaries of Venezuela's recovery. Public market commentary estimates that normalization of Venezuela trade could add <strong>{{ fact_value(investment_facts, "colombia_export_gdp_upside", "0.5% of GDP annually") }}</strong> in Colombian exports. {{ fact_source(investment_facts, "colombia_export_gdp_upside") }} The logic:</p>
         <ul>
           <li><strong>Trade normalization:</strong> Colombia and Venezuela shared a $7B+ annual trade relationship before the crisis; bilateral trade has collapsed to under $1B</li>
           <li><strong>Supply chain hub:</strong> Cúcuta and other border cities would become staging points for reconstruction materials and services flowing into Venezuela</li>
@@ -266,7 +267,7 @@
         </div>
       </section>
 
-      {{ cluster_nav("invest", request.path) }}
+      {{ cluster_nav(cluster_ctx) }}
     </div>
   </article>
 
@@ -276,6 +277,7 @@
       <li><a href="/invest-in-venezuela">How to Invest in Venezuela: Complete Guide</a> <small>Pillar</small></li>
       <li><a href="/investing-in-venezuelan-oil">Investing in Venezuelan Oil: What Foreigners Need to Know</a> <small>Sector</small></li>
       <li><a href="/venezuela-bonds-restructuring">Venezuela Bond Restructuring Guide</a> <small>Finance</small></li>
+      <li><a href="/venezuela-bonds-tracker">Venezuela Bonds Tracker</a> <small>Markets</small></li>
       <li><a href="/venezuela-etf">Venezuela ETF: Status & Alternatives</a> <small>Finance</small></li>
       <li><a href="/real-estate/">Venezuela Real Estate Investment</a> <small>Sector</small></li>
     </ul>

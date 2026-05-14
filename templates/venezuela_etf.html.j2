@@ -1,6 +1,7 @@
 {% extends "_base.html.j2" %}
 {% from "_base.html.j2" import share_button %}
 {% from "_cluster_nav.html.j2" import cluster_nav %}
+{% from "_investment_fact.html.j2" import fact_value, fact_source %}
 
 {% block head_extra %}
 <style>
@@ -51,7 +52,7 @@
     </nav>
     <span class="kicker">Capital Markets · ETF</span>
     <h1>Venezuela ETF: What Investors Need to Know in 2026</h1>
-    <p class="lead">Teucrium Trading filed for the first-ever "Venezuela Exposure" ETF in January 2026. Here's what it would hold, why the SEC faces a complex decision, and what alternatives exist today.</p>
+    <p class="lead">Teucrium Trading filed for the first-ever "Venezuela Exposure" ETF in January 2026. Current status: {{ fact_value(investment_facts, "venez_etf_status", "under SEC review") }}. Here's what it would hold, why the SEC faces a complex decision, and what alternatives exist today.</p>
   </div>
 </div>
 
@@ -68,7 +69,7 @@
     <div class="takeaways">
       <h3>Key Takeaways</h3>
       <ul>
-        <li><strong>Teucrium Trading LLC</strong> filed for a "Venezuela Exposure" ETF with the SEC in January 2026 — the first of its kind</li>
+        <li><strong>Teucrium Trading LLC</strong> filed for a "Venezuela Exposure" ETF with the SEC in January 2026; current tracked status is <strong>{{ fact_value(investment_facts, "venez_etf_status", "under SEC review") }}</strong> {{ fact_source(investment_facts, "venez_etf_status") }}</li>
         <li>The fund would track an index of <strong>Venezuela-based companies</strong> and firms deriving &gt;50% of revenue/assets from Venezuela</li>
         <li>Currently <strong>no Venezuelan ADRs</strong> trade on U.S. exchanges, no Venezuela-focused ETFs exist, and the Caracas Stock Exchange has minimal liquidity</li>
         <li>The most practical current exposure for U.S. investors is through <strong>oil majors</strong> (Chevron, Repsol) with Venezuelan operations</li>
@@ -98,7 +99,7 @@
           <div class="info-row"><strong>Trust:</strong> Listed Funds Trust</div>
           <div class="info-row"><strong>Filing Date:</strong> January 6, 2026</div>
           <div class="info-row"><strong>Strategy:</strong> Track index of Venezuela-exposed companies</div>
-          <div class="info-row"><strong>Status:</strong> Under SEC review</div>
+          <div class="info-row"><strong>Status:</strong> {{ fact_value(investment_facts, "venez_etf_status", "Under SEC review") }} {{ fact_source(investment_facts, "venez_etf_status") }}</div>
         </div>
         <p>The proposed fund would track an index comprising Venezuela-based companies as well as firms that derive more than half their assets or revenue from Venezuela. This would likely include international oil companies with significant Venezuelan operations, Venezuelan-domiciled firms with any accessible equity, and potentially companies involved in Venezuelan reconstruction.</p>
         <p class="source-citation">Sources: <a href="https://www.bloomberg.com/news/articles/2026-01-06/-venezuela-exposure-etf-lands-with-sec-in-rare-industry-gap" target="_blank" rel="noopener">Bloomberg (Jan 2026)</a> · <a href="https://exchangetradedfunds.com/secnewslink.php?artic=71999" target="_blank" rel="noopener">ExchangeTradedFunds.com</a></p>
@@ -111,7 +112,7 @@
           <li>The ETF industry manages <strong>$13.6 trillion</strong> across nearly 5,000 products, yet no vehicle specifically targets Venezuelan equities</li>
           <li>Venezuela's opposition has proposed a <strong>$1.7 trillion 15-year recovery plan</strong>, suggesting massive long-term investment opportunity</li>
           <li>The <a href="/venezuela-hydrocarbons-law">Hydrocarbons Law reform</a> and <a href="/general-license-46-venezuela">General License 46</a> opened the oil sector to private participation</li>
-          <li>Bond markets are pricing in restructuring, with sovereign bonds rallying to 53.8 cents on the dollar</li>
+          <li>Bond markets are pricing in restructuring, with sovereign bonds publicly referenced around {{ fact_value(investment_facts, "bond_price_sovereign_2027_peak", "53.8 cents") }} on the dollar {{ fact_source(investment_facts, "bond_price_sovereign_2027_peak") }}</li>
         </ul>
       </section>
 
@@ -120,7 +121,7 @@
         <p>The SEC faces a complex decision on the Teucrium filing:</p>
         <ul>
           <li><strong>Sanctions compliance:</strong> Many Venezuelan entities remain on the SDN list. The fund would need robust compliance mechanisms to avoid holding sanctioned securities</li>
-          <li><strong>Liquidity:</strong> The Caracas Stock Exchange trades under $100,000/day. Any meaningful ETF inflows could overwhelm the local market</li>
+          <li><strong>Liquidity:</strong> The Caracas Stock Exchange trades {{ fact_value(investment_facts, "caracas_exchange_daily_volume", "under $100,000/day") }}. Any meaningful ETF inflows could overwhelm the local market {{ fact_source(investment_facts, "caracas_exchange_daily_volume") }}</li>
           <li><strong>Custody:</strong> Secure custody of Venezuelan-domiciled securities is challenging given the country's institutional instability</li>
           <li><strong>Pricing:</strong> Reliable daily NAV calculations require transparent pricing of underlying holdings — difficult in Venezuela's opaque markets</li>
           <li><strong>Political sensitivity:</strong> Approving a Venezuela-focused fund while sanctions remain partially in effect raises policy questions</li>
@@ -133,7 +134,7 @@
         <p>Understanding the BVC is essential context for any Venezuela equity product:</p>
         <ul>
           <li>Approximately <strong>30–40 listed companies</strong> (down from hundreds pre-crisis)</li>
-          <li>Daily trading volume often <strong>under $100,000</strong></li>
+          <li>Daily trading volume {{ fact_value(investment_facts, "caracas_exchange_daily_volume", "often under $100,000") }} {{ fact_source(investment_facts, "caracas_exchange_daily_volume") }}</li>
           <li>Total market capitalization has collapsed from billions to millions of dollars</li>
           <li><strong>No international brokerage access</strong> — requires a Venezuelan brokerage account, local bank account, and bolivar settlement</li>
           <li>Poor corporate disclosure and transparency standards</li>
@@ -147,7 +148,7 @@
         <div class="alt-grid">
           <div class="alt-card">
             <h3>Oil Majors with Venezuela Operations</h3>
-            <p><strong>Chevron (CVX)</strong> produces ~260,000 bpd in Venezuela and recently executed a strategic asset swap with PDVSA. <strong>Repsol, ENI</strong>, and Chinese companies also maintain JV operations.</p>
+            <p><strong>Chevron (CVX)</strong> produces {{ fact_value(investment_facts, "chevron_venezuela_production", "~260,000 bpd") }} in Venezuela and recently executed a strategic asset swap with PDVSA. <strong>Repsol, ENI</strong>, and Chinese companies also maintain JV operations. {{ fact_source(investment_facts, "chevron_venezuela_production") }}</p>
           </div>
           <div class="alt-card">
             <h3>Venezuelan Sovereign Bonds</h3>
@@ -177,13 +178,14 @@
         </div>
       </section>
 
-      {{ cluster_nav("invest", request.path) }}
+      {{ cluster_nav(cluster_ctx) }}
     </div>
   </article>
 
   <div class="related">
     <h3>Related Analysis</h3>
     <ul>
+      <li><a href="/venezuela-bonds-tracker">Venezuela Bonds Tracker</a> <small>Markets</small></li>
       <li><a href="/venezuela-bonds-restructuring">Venezuela Bond Market & Debt Restructuring</a> <small>Finance</small></li>
       <li><a href="/invest-in-venezuela">How to Invest in Venezuela: Complete Guide</a> <small>Pillar</small></li>
       <li><a href="/venezuela-hydrocarbons-law">Hydrocarbons Law Reform Explained</a> <small>Reform</small></li>

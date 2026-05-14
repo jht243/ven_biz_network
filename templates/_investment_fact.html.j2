@@ -1,0 +1,19 @@
+{% macro fact_value(facts, key, fallback='') -%}
+  {%- set fact = facts.get(key) if facts else none -%}
+  {{ fact.display_text if fact else fallback }}
+{%- endmacro %}
+
+{% macro fact_source(facts, key) -%}
+  {%- set fact = facts.get(key) if facts else none -%}
+  {%- if fact -%}
+    <span class="fact-source">
+      {%- if fact.source_url -%}
+        <a href="{{ fact.source_url }}" rel="nofollow noopener" target="_blank">{{ fact.source_name or 'Source' }}</a>
+      {%- else -%}
+        {{ fact.source_name or 'Source' }}
+      {%- endif -%}
+      {%- if fact.source_date %} · as of {{ fact.source_date }}{% endif -%}
+      {%- if fact.is_stale %} · last verified{% endif -%}
+    </span>
+  {%- endif -%}
+{%- endmacro %}

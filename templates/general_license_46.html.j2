@@ -1,6 +1,7 @@
 {% extends "_base.html.j2" %}
 {% from "_base.html.j2" import share_button %}
 {% from "_cluster_nav.html.j2" import cluster_nav %}
+{% from "_investment_fact.html.j2" import fact_value, fact_source %}
 
 {% block head_extra %}
 <style>
@@ -53,7 +54,7 @@
     </nav>
     <span class="kicker">OFAC · Sanctions Relief</span>
     <h1>OFAC General License 46: What U.S. Companies Can Now Do in Venezuela's Oil Sector</h1>
-    <p class="lead">On January 29, 2026, the U.S. Treasury authorized established U.S. entities to engage in previously prohibited transactions involving Venezuelan-origin oil. Here's exactly what GL 46 permits — and what it doesn't.</p>
+    <p class="lead">On January 29, 2026, the U.S. Treasury {{ fact_value(investment_facts, "ofac_gl46_status", "authorized certain Venezuela oil transactions") }}. Here's exactly what GL 46 permits — and what it doesn't. {{ fact_source(investment_facts, "ofac_gl46_status") }}</p>
   </div>
 </div>
 
@@ -70,7 +71,7 @@
     <div class="takeaways">
       <h3>Key Takeaways</h3>
       <ul>
-        <li>GL 46 authorizes <strong>established U.S. entities</strong> to lift, export, sell, transport, store, and refine Venezuelan-origin oil</li>
+        <li>GL 46 <strong>{{ fact_value(investment_facts, "ofac_gl46_status", "authorizes certain Venezuela oil transactions") }}</strong> for eligible parties {{ fact_source(investment_facts, "ofac_gl46_status") }}</li>
         <li>Eligibility: Must be organized under U.S. law <strong>on or before January 29, 2025</strong>, and not owned/controlled by Chinese, Russian, Iranian, North Korean, or Cuban persons</li>
         <li>All payments to Venezuela/PDVSA must go into <strong>Foreign Government Deposit Funds</strong> controlled by the U.S. government</li>
         <li>Contracts must be governed by <strong>U.S. law</strong> with dispute resolution in the United States</li>
@@ -212,7 +213,7 @@
         </div>
       </section>
 
-      {{ cluster_nav("sanctions", request.path) }}
+      {{ cluster_nav(cluster_ctx) }}
 
     </div>
   </article>
@@ -221,6 +222,7 @@
     <h3>Related Analysis</h3>
     <ul>
       <li><a href="/venezuela-hydrocarbons-law">Venezuela Hydrocarbons Law Reform: What Investors Need to Know</a> <small>Reform</small></li>
+      <li><a href="/venezuela-bonds-tracker">Venezuela Bonds Tracker</a> <small>Markets</small></li>
       <li><a href="/sanctions-tracker">OFAC Venezuela Sanctions Tracker</a> <small>Tool</small></li>
       <li><a href="/tools/ofac-general-licenses">All OFAC General Licenses for Venezuela</a> <small>Reference</small></li>
       <li><a href="/why-is-venezuela-sanctioned">Why Is Venezuela Sanctioned?</a> <small>Explainer</small></li>
