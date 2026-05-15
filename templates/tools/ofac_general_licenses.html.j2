@@ -18,8 +18,10 @@
   .gl-source { display: inline-block; margin-left: 6px; padding: 2px 7px; border-radius: 3px; background: #e8f5e9; color: #166534; font-size: 10px; font-weight: 800; letter-spacing: 0.8px; text-transform: uppercase; }
   .gl-source.fallback { background: #fff3e0; color: #7c4a03; }
   .gl-empty { text-align: center; padding: 32px; color: var(--sr-gray-text); }
-  .live-status { border: 1px solid var(--sr-gray-light); border-left: 4px solid #166534; padding: 12px 16px; margin: 0 0 18px; background: #f8fff9; font-size: 13px; color: var(--sr-dark-text); border-radius: 3px; }
-  .live-status.fallback { border-left-color: #f5b041; background: #fffaf0; }
+  .live-status { display: inline-flex; align-items: center; gap: 7px; border: 1px solid #bbf7d0; padding: 5px 10px; margin: 0 0 16px; background: #f0fdf4; color: #166534; border-radius: 999px; font-size: 12px; font-weight: 700; line-height: 1.2; }
+  .live-status::before { content: ""; width: 7px; height: 7px; border-radius: 50%; background: #16a34a; flex: 0 0 auto; }
+  .live-status.fallback { border-color: #fed7aa; background: #fff7ed; color: #9a3412; }
+  .live-status.fallback::before { background: #f97316; }
   .disclaimer { background: #fff3e0; border-left: 4px solid #f5b041; padding: 14px 18px; font-size: 13px; color: #7c4a03; margin: 32px 0; border-radius: 3px; }
 </style>
 {% endblock %}
@@ -50,12 +52,9 @@
   {% set is_live = license_payload and license_payload.source == "live" %}
   <div class="live-status{% if not is_live %} fallback{% endif %}">
     {% if is_live %}
-      <strong>Live OFAC cache:</strong>
-      refreshed from OFAC{% if license_payload.scraped_at %} at {{ license_payload.scraped_at[:16].replace('T', ' ') }} UTC{% endif %}.
-      The daily pipeline checks OFAC for new or changed Venezuela general-license links.
+      Live OFAC scrape{% if license_payload.scraped_at %} · {{ license_payload.scraped_at[:10] }}{% endif %}
     {% else %}
-      <strong>Curated fallback:</strong>
-      no live OFAC cache is available yet, so this page is showing the hand-maintained seed list until the scraper completes.
+      Curated fallback
     {% endif %}
   </div>
 
