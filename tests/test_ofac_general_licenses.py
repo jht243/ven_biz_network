@@ -77,6 +77,11 @@ class OFACGeneralLicenseScraperTests(unittest.TestCase):
         self.assertIn("Third-Country Diplomatic and Consular Funds Transfers Authorized", html)
         self.assertIn("OFAC listing date", html)
         self.assertIn("Current Monitoring Signals", html)
+        self.assertIn("What the License Authorizes", html)
+        self.assertIn("What It Does Not Authorize", html)
+        self.assertIn("Practical Reading", html)
+        self.assertIn("third-country diplomatic or consular mission", html)
+        self.assertIn("blocked solely under the August 5, 2019 order", html)
         self.assertNotIn("AI-Assisted", html)
 
 

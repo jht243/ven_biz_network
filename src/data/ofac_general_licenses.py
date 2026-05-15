@@ -229,6 +229,53 @@ OFFICIAL_OFAC_LICENSE_META: dict[str, dict[str, str]] = {
     },
 }
 
+OFFICIAL_LICENSE_ANALYSIS: dict[str, dict] = {
+    "GL 23": {
+        "takeaway": (
+            "GL 23 is a narrow banking-pathway license for diplomatic and consular operations, "
+            "not a general permission to transact with the Government of Venezuela. Its practical "
+            "value is that it keeps third-country missions in Venezuela able to pay operating "
+            "expenses through U.S.-linked financial intermediaries when the transfer necessarily "
+            "touches a Government of Venezuela party blocked solely under the August 5, 2019 order."
+        ),
+        "authorized_activity": [
+            "U.S. depository institutions may process qualifying funds transfers.",
+            "U.S.-registered broker-dealers may process qualifying funds transfers.",
+            "U.S.-registered money transmitters may process qualifying funds transfers.",
+            "The transfer must involve the Government of Venezuela and be necessary for operating expenses or other official business of a third-country diplomatic or consular mission in Venezuela.",
+        ],
+        "limits": [
+            "The license only reaches Government of Venezuela persons blocked solely under the August 5, 2019 executive order.",
+            "It does not clear transactions independently prohibited by the Venezuela executive orders covering PdVSA, debt, digital currency, securities, or broader blocking measures.",
+            "It does not authorize commercial Venezuela business, investment flows, debt trading, oil-sector activity, or payments unrelated to third-country diplomatic or consular operations.",
+        ],
+        "practical_analysis": [
+            (
+                "The center of gravity is purpose and beneficiary: the payment must be tied to a "
+                "third-country mission's official work in Venezuela. A bank should be able to map "
+                "the payment to rent, utilities, payroll, consular services, vendor expenses, or "
+                "another mission operating need, not merely to a counterparty that happens to be diplomatic."
+            ),
+            (
+                "The phrase 'blocked solely' is the main compliance hinge. If a Government of "
+                "Venezuela party is also blocked under another Venezuela authority, or if another "
+                "blocked person participates in the payment chain, GL 23 may not solve the problem. "
+                "That makes SDN screening and ownership analysis part of the transaction test."
+            ),
+            (
+                "For investors, GL 23 is mostly a negative signal: it preserves basic diplomatic "
+                "payments but does not indicate broader sanctions relaxation. It should not be used "
+                "as support for commercial payments, sovereign-debt activity, PdVSA exposure, or "
+                "services to Venezuelan state entities outside the diplomatic mission fact pattern."
+            ),
+        ],
+        "source_basis": (
+            "Based on OFAC General License 23, dated August 5, 2019, under the executive order "
+            "blocking property of the Government of Venezuela."
+        ),
+    }
+}
+
 
 def list_general_licenses() -> list[dict]:
     return get_general_license_payload()["licenses"]
@@ -526,6 +573,7 @@ def _analysis_for_license(number: str, title: str, scopes: list[str], row: dict)
     checked = _display_checked_at(row.get("scraped_at"))
     visible_scopes = [s for s in scopes if s not in ("general", "ofac")]
     scope_text = ", ".join(visible_scopes) if visible_scopes else "Venezuela sanctions"
+    official_analysis = OFFICIAL_LICENSE_ANALYSIS.get(number)
 
     if any(term in lowered for term in ("oil", "gas", "pdvsa", "chevron", "energy", "petroleum")):
         importance = (
@@ -565,6 +613,37 @@ def _analysis_for_license(number: str, title: str, scopes: list[str], row: dict)
             "OFAC's public listing provides the license title and source document. "
             "This page tracks the license and routes readers to the official text for the operative terms."
         )
+
+    if official_analysis:
+        return {
+            "plain_english": plain_english,
+            "why_it_matters": official_analysis["takeaway"],
+            "source_basis": official_analysis["source_basis"],
+            "authorized_activity": official_analysis["authorized_activity"],
+            "limits": official_analysis["limits"],
+            "practical_analysis": official_analysis["practical_analysis"],
+            "current_context": [
+                (
+                    f"Our tracker classifies {number} under {scope_text}. OFAC lists this license "
+                    f"as '{title}' with an OFAC listing date of {listing_date}."
+                ),
+                (
+                    f"The source document is linked from {source_page}. Caracas Research last "
+                    f"checked the OFAC cache for this page at {checked}."
+                ),
+            ],
+            "review_items": [
+                "Confirm the payment is for operating expenses or official business of a third-country diplomatic or consular mission in Venezuela",
+                "Confirm every Government of Venezuela party in the payment chain is blocked solely under the August 5, 2019 order",
+                "Screen for any separate sanctions authority, SDN ownership issue, PdVSA exposure, debt restriction, or oil-sector purpose outside GL 23",
+                "Keep documentation tying the transfer purpose, beneficiary, and payment route to the diplomatic or consular mission fact pattern",
+            ],
+            "monitoring_items": [
+                "Any OFAC replacement of GL 23 or new Venezuela banking license language",
+                "Changes to the Government of Venezuela blocking framework that affect the 'blocked solely' analysis",
+                "Related banking, remittance, diplomatic, and Government of Venezuela authorizations in the license directory",
+            ],
+        }
 
     return {
         "plain_english": plain_english,

@@ -58,9 +58,32 @@
       <section class="license-section">
         <h2>Our Analysis</h2>
         <p>{{ license.analysis.why_it_matters }}</p>
-        {% for paragraph in license.analysis.current_context %}
+        {% if license.analysis.source_basis %}<p><strong>Source basis:</strong> {{ license.analysis.source_basis }}</p>{% endif %}
+
+        {% if license.analysis.authorized_activity %}
+        <h3>What the License Authorizes</h3>
+        <ul>
+          {% for item in license.analysis.authorized_activity %}
+          <li>{{ item }}</li>
+          {% endfor %}
+        </ul>
+        {% endif %}
+
+        {% if license.analysis.limits %}
+        <h3>What It Does Not Authorize</h3>
+        <ul>
+          {% for item in license.analysis.limits %}
+          <li>{{ item }}</li>
+          {% endfor %}
+        </ul>
+        {% endif %}
+
+        {% if license.analysis.practical_analysis %}
+        <h3>Practical Reading</h3>
+        {% for paragraph in license.analysis.practical_analysis %}
         <p>{{ paragraph }}</p>
         {% endfor %}
+        {% endif %}
 
         <h3>What to Check in the OFAC Text</h3>
         <ul>
@@ -75,6 +98,10 @@
           <li>{{ item }}</li>
           {% endfor %}
         </ul>
+
+        {% for paragraph in license.analysis.current_context %}
+        <p>{{ paragraph }}</p>
+        {% endfor %}
       </section>
 
       <section class="license-section">
