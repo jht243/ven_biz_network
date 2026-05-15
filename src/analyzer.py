@@ -427,6 +427,28 @@ def _rule_based_analysis(article) -> dict:
     queryable, but get a low relevance score so they don't flood the report.
     """
     if article.source == SourceType.OFAC_SDN:
+        if "general license" in (article.article_type or "").lower():
+            meta = article.extra_metadata or {}
+            number = meta.get("number") or "General License"
+            title = meta.get("title") or article.headline or "OFAC Venezuela general license"
+            return {
+                "relevance_score": 7,
+                "sectors": ["sanctions"],
+                "sentiment": "mixed",
+                "status": "monitoring",
+                "status_label": "OFAC General License",
+                "category_label": "Sanctions",
+                "headline_short": f"OFAC updates Venezuela {number}",
+                "takeaway": (
+                    f"<strong>{number}</strong> is present in the live OFAC Venezuela "
+                    f"general-license feed: {title}. Review the official OFAC text "
+                    "before relying on the authorization."
+                ),
+                "is_breaking": True,
+                "source_trust": "official",
+                "_rule_based": True,
+            }
+
         meta = article.extra_metadata or {}
         name = meta.get("name") or "Unknown entity"
         program = meta.get("program") or "Venezuela program"

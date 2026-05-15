@@ -32,6 +32,7 @@ from src.scraper.base import ScrapedGazette, ScrapedNews, ScrapedArticle, Scrape
 from src.scraper.gazette import TuGacetaScraper, OfficialGazetteScraper
 from src.scraper.assembly import AssemblyNewsScraper
 from src.scraper.federal_register import FederalRegisterScraper
+from src.scraper.ofac_general_licenses import OFACGeneralLicensesScraper
 from src.scraper.ofac_sdn import OFACSdnScraper
 from src.scraper.gdelt import GDELTScraper
 from src.scraper.google_news import GoogleNewsScraper
@@ -85,6 +86,7 @@ def run_daily_scrape(target_date: Optional[date] = None) -> dict:
         OfficialGazetteScraper(),
         AssemblyNewsScraper(),
         FederalRegisterScraper(),
+        OFACGeneralLicensesScraper(),
         OFACSdnScraper(),
         GDELTScraper(),
         AnsaLatinaScraper(),

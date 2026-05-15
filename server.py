@@ -3981,11 +3981,12 @@ def tool_ofac_sdn_name_check(slug: str):
 def tool_ofac_general_licenses():
     """Searchable lookup of OFAC Venezuela general licenses."""
     try:
-        from src.data.ofac_general_licenses import list_general_licenses
+        from src.data.ofac_general_licenses import get_general_license_payload
         from src.page_renderer import _env
         from datetime import date as _date
 
-        licenses = list_general_licenses()
+        license_payload = get_general_license_payload()
+        licenses = license_payload["licenses"]
 
         seo, jsonld = _tool_seo_jsonld(
             slug="ofac-venezuela-general-licenses",
@@ -4019,6 +4020,7 @@ def tool_ofac_general_licenses():
         template = _env.get_template("tools/ofac_general_licenses.html.j2")
         html = template.render(
             licenses=licenses,
+            license_payload=license_payload,
             seo=seo,
             jsonld=jsonld,
             cluster_ctx=cluster_ctx,
@@ -4031,6 +4033,13 @@ def tool_ofac_general_licenses():
     except Exception as exc:
         logger.exception("tool render failed: %s", exc)
         abort(500)
+
+
+@app.route("/tools/ofac-general-licenses")
+@app.route("/tools/ofac-general-licenses/")
+def tool_ofac_general_licenses_legacy():
+    """Legacy alias kept for older internal links."""
+    return redirect("/tools/ofac-venezuela-general-licenses", code=301)
 
 
 @app.route("/tools/sec-edgar-venezuela-impairment-search")
@@ -10947,7 +10956,7 @@ def sitemap_xml():
         {"loc": f"{base}/tools/venezuela-trade-leads", "lastmod": today_iso, "changefreq": "daily", "priority": "0.8"},
         {"loc": f"{base}/tools/venezuela-market-entry-checklist", "lastmod": today_iso, "changefreq": "weekly", "priority": "0.72"},
         {"loc": f"{base}/companies", "lastmod": today_iso, "changefreq": "weekly", "priority": "0.85"},
-        {"loc": f"{base}/tools/ofac-venezuela-general-licenses", "lastmod": today_iso, "changefreq": "weekly", "priority": "0.7"},
+        {"loc": f"{base}/tools/ofac-venezuela-general-licenses", "lastmod": today_iso, "changefreq": "daily", "priority": "0.7"},
         {"loc": f"{base}/tools/caracas-safety-by-neighborhood", "lastmod": today_iso, "changefreq": "weekly", "priority": "0.6"},
         {"loc": f"{base}/tools/venezuela-investment-roi-calculator", "lastmod": today_iso, "changefreq": "monthly", "priority": "0.6"},
         {"loc": f"{base}/tools/venezuela-visa-requirements", "lastmod": today_iso, "changefreq": "monthly", "priority": "0.6"},

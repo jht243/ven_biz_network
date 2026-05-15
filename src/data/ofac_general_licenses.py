@@ -1,9 +1,10 @@
 """
-Static catalogue of currently-relevant OFAC general licenses (GLs)
-authorising specific transactions involving Venezuela. This is the
-seed data for the /tools/ofac-venezuela-general-licenses lookup tool.
+Catalogue of currently-relevant OFAC general licenses (GLs) authorising
+specific transactions involving Venezuela.
 
-Update whenever OFAC publishes a new GL or extends an expiration.
+The page reads the live scraper cache first. This curated list remains as
+the fallback and as analyst context merged onto live OFAC rows when the
+number matches.
 
 Authoritative source for everything below:
   https://ofac.treasury.gov/recent-actions
@@ -14,6 +15,12 @@ this list is a navigation aid, not a legal substitute.
 """
 
 from __future__ import annotations
+
+from datetime import datetime, timedelta, timezone
+
+from src.scraper.ofac_general_licenses import load_cached_general_licenses
+
+_LIVE_CACHE_MAX_AGE = timedelta(hours=12)
 
 
 GENERAL_LICENSES: list[dict] = [
@@ -111,4 +118,106 @@ GENERAL_LICENSES: list[dict] = [
 
 
 def list_general_licenses() -> list[dict]:
-    return GENERAL_LICENSES
+    return get_general_license_payload()["licenses"]
+
+
+def get_general_license_payload() -> dict:
+    """Return live cached OFAC GL data, falling back to the curated seed list."""
+    cached = load_cached_general_licenses()
+    if _cache_is_stale(cached):
+        try:
+            from src.scraper.ofac_general_licenses import OFACGeneralLicensesScraper
+
+            scraper = OFACGeneralLicensesScraper()
+            try:
+                result = scraper.scrape()
+            finally:
+                scraper.close()
+            if result.success:
+                cached = load_cached_general_licenses()
+        except Exception:
+            # Keep page rendering deterministic. If OFAC or the network is
+            # unavailable, the curated fallback below still gives readers a
+            # useful compliance navigation aid.
+            cached = cached or {}
+
+    live_rows = cached.get("licenses") or []
+    if live_rows:
+        merged = _merge_live_with_curated(live_rows)
+        payload = dict(cached)
+        payload["licenses"] = merged
+        payload["source"] = "live"
+        return payload
+
+    return {
+        "source": "curated_fallback",
+        "program": "venezuela",
+        "scraped_at": None,
+        "source_urls": [
+            "https://ofac.treasury.gov/recent-actions",
+            "https://ofac.treasury.gov/sanctions-programs-and-country-information/venezuela-related-sanctions",
+        ],
+        "generated_at": datetime.now(timezone.utc).isoformat(),
+        "licenses": [dict(item, source="curated") for item in GENERAL_LICENSES],
+    }
+
+
+def _merge_live_with_curated(live_rows: list[dict]) -> list[dict]:
+    curated_by_number = {
+        (item.get("number") or "").strip().upper(): item
+        for item in GENERAL_LICENSES
+    }
+    merged: list[dict] = []
+    seen: set[str] = set()
+
+    for live in live_rows:
+        number = (live.get("number") or "").strip().upper()
+        curated = curated_by_number.get(number, {})
+        row = dict(live)
+        # Preserve official title/URL from live scrape, but keep analyst
+        # summaries/context when the live OFAC page only exposes link text.
+        for field in ("summary", "expires", "scope", "context"):
+            if curated.get(field) and (
+                not row.get(field)
+                or str(row.get(field)).startswith("Live OFAC listing")
+                or row.get(field) in ("See OFAC text", ["general"])
+            ):
+                row[field] = curated[field]
+        if curated.get("title") and len(row.get("title", "")) < 12:
+            row["title"] = curated["title"]
+        row["source"] = "live"
+        merged.append(row)
+        seen.add(number)
+
+    # Keep curated licenses that OFAC did not expose in the latest scrape,
+    # marked clearly so readers know they are fallback entries.
+    for curated in GENERAL_LICENSES:
+        number = (curated.get("number") or "").strip().upper()
+        if number not in seen:
+            row = dict(curated)
+            row["source"] = "curated_fallback"
+            merged.append(row)
+
+    return sorted(merged, key=lambda item: _license_sort_key(item.get("number", "")))
+
+
+def _cache_is_stale(payload: dict) -> bool:
+    scraped_at = (payload or {}).get("scraped_at")
+    if not scraped_at:
+        return True
+    try:
+        checked = datetime.fromisoformat(scraped_at)
+        if checked.tzinfo is None:
+            checked = checked.replace(tzinfo=timezone.utc)
+    except (TypeError, ValueError):
+        return True
+    return datetime.now(timezone.utc) - checked > _LIVE_CACHE_MAX_AGE
+
+
+def _license_sort_key(number: str) -> tuple[int, str]:
+    import re
+
+    match = re.search(r"(\d+)([A-Z]?)", number or "")
+    if not match:
+        return (9999, number or "")
+    return (int(match.group(1)), match.group(2))
