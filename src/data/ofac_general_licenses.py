@@ -155,7 +155,7 @@ def enrich_license_for_page(row: dict) -> dict:
         ("OFAC title", title),
         ("Coverage", scope_text),
         ("Status", enriched.get("expires") or "Check current OFAC text"),
-        ("Source", "Live OFAC scrape" if enriched.get("source") == "live" else "Curated Caracas Research entry"),
+        ("Source", "OFAC source" if enriched.get("source") == "live" else "Caracas Research entry"),
     ]
     return enriched
 

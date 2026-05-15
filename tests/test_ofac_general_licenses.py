@@ -42,6 +42,8 @@ class OFACGeneralLicenseScraperTests(unittest.TestCase):
         self.assertIn("/tools/ofac-venezuela-general-licenses/gl-", html)
         self.assertNotIn("Read at OFAC", html)
         self.assertNotIn(">Fallback<", html)
+        self.assertNotIn("Live OFAC", html)
+        self.assertNotIn("Curated", html)
 
     def test_live_only_rows_get_public_metadata(self):
         from src.data.ofac_general_licenses import _merge_live_with_curated
