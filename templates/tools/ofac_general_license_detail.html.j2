@@ -9,6 +9,7 @@
   .license-layout { display: grid; grid-template-columns: minmax(0, 1fr) 320px; gap: 28px; align-items: start; }
   .license-section { margin-bottom: 28px; }
   .license-section h2 { font-family: var(--font-serif); color: var(--sr-blue-dark); font-size: 22px; margin: 0 0 10px; }
+  .license-section h3 { font-family: var(--font-serif); color: var(--sr-blue-dark); font-size: 17px; margin: 18px 0 8px; }
   .license-section p, .license-section li { font-size: 15px; line-height: 1.65; color: var(--sr-dark-text); }
   .detail-table { border: 1px solid var(--sr-gray-light); border-radius: 4px; overflow: hidden; background: #fff; }
   .detail-row { display: grid; grid-template-columns: 110px 1fr; gap: 14px; padding: 11px 14px; border-bottom: 1px solid var(--sr-gray-light); font-size: 14px; }
@@ -55,10 +56,22 @@
       </section>
 
       <section class="license-section">
-        <h2>AI-Assisted Analysis</h2>
+        <h2>Our Analysis</h2>
         <p>{{ license.analysis.why_it_matters }}</p>
+        {% for paragraph in license.analysis.current_context %}
+        <p>{{ paragraph }}</p>
+        {% endfor %}
+
+        <h3>What to Check in the OFAC Text</h3>
         <ul>
-          {% for item in license.analysis.watch_items %}
+          {% for item in license.analysis.review_items %}
+          <li>{{ item }}</li>
+          {% endfor %}
+        </ul>
+
+        <h3>Current Monitoring Signals</h3>
+        <ul>
+          {% for item in license.analysis.monitoring_items %}
           <li>{{ item }}</li>
           {% endfor %}
         </ul>

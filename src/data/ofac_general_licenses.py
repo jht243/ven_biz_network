@@ -117,6 +117,118 @@ GENERAL_LICENSES: list[dict] = [
     },
 ]
 
+OFFICIAL_OFAC_LICENSE_META: dict[str, dict[str, str]] = {
+    "GL 2A": {
+        "title": "Authorizing Certain New Debt, New Equity, and Securities Transactions Involving PDV Holding, Inc. and CITGO Holding, Inc.",
+        "date": "August 05, 2019",
+    },
+    "GL 3I": {
+        "title": "Authorizing Transactions Related to, Provision of Financing for, and Other Dealings in Certain Bonds",
+        "date": "October 18, 2023",
+    },
+    "GL 4C": {
+        "title": "Authorizing Certain New Debt Transactions and Other Transactions Involving Certain Blocked Persons Related to the Exportation or Reexportation of Agricultural Commodities, Medicine, Medical Devices, Replacement Parts and Components, or Software Updates",
+        "date": "August 05, 2019",
+    },
+    "GL 5W": {
+        "title": "Authorizing Certain Transactions Related to the Petróleos de Venezuela, S.A. 2020 8.5 Percent Bond on or After June 19, 2026",
+        "date": "May 04, 2026",
+    },
+    "GL 7C": {
+        "title": "Authorizing Certain Activities Involving PDV Holding, Inc. and CITGO Holding, Inc.",
+        "date": "August 05, 2019",
+    },
+    "GL 9H": {
+        "title": "Authorizing Transactions Related to Dealings in Certain Securities",
+        "date": "October 18, 2023",
+    },
+    "GL 10A": {
+        "title": "Authorizing the Purchase in Venezuela of Refined Petroleum Products from Petróleos de Venezuela, S.A.",
+        "date": "August 05, 2019",
+    },
+    "GL 15C": {"title": "Authorizing Transactions Involving Certain Banks for Certain Entities", "date": "May 12, 2020"},
+    "GL 16C": {
+        "title": "Authorizing Maintenance of U.S. Person Accounts and Noncommercial, Personal Remittances involving Certain Banks",
+        "date": "March 12, 2020",
+    },
+    "GL 18A": {
+        "title": "Authorizing Certain Transactions Involving Integración Administradora de Fondos de Ahorro Previsional, S.A.",
+        "date": "August 05, 2019",
+    },
+    "GL 21": {
+        "title": "Entries in Certain Accounts for Normal Service Charges and Payments and Transfers to Blocked Accounts in U.S. Financial Institutions Authorized",
+        "date": "August 05, 2019",
+    },
+    "GL 22": {"title": "Venezuela's Mission to the United Nations", "date": "August 05, 2019"},
+    "GL 23": {"title": "Third-Country Diplomatic and Consular Funds Transfers Authorized", "date": "August 05, 2019"},
+    "GL 24": {
+        "title": "Certain Transactions Involving the Government of Venezuela Related to Telecommunications and Mail Authorized",
+        "date": "August 05, 2019",
+    },
+    "GL 25": {
+        "title": "Exportation of Certain Services, Software, Hardware, and Technology Incident to the Exchange of Communications over the Internet Authorized",
+        "date": "August 05, 2019",
+    },
+    "GL 26": {"title": "Emergency and Certain Other Medical Services Authorized", "date": "August 05, 2019"},
+    "GL 27": {"title": "Certain Transactions Related to Patents, Trademarks, and Copyrights Authorized", "date": "August 05, 2019"},
+    "GL 29": {
+        "title": "Certain Transactions Involving the Government of Venezuela in Support of Certain Nongovernmental Organizations' Activities Authorized",
+        "date": "August 05, 2019",
+    },
+    "GL 30B": {"title": "Authorizing Certain Transactions Necessary to Port and Airport Operations", "date": "February 10, 2026"},
+    "GL 31B": {
+        "title": "Certain Transactions Involving the IV Venezuelan National Assembly and Certain Other Persons",
+        "date": "January 09, 2023",
+    },
+    "GL 32": {
+        "title": "Authorizing Certain Transactions Related to Personal Maintenance of Individuals who are U.S. Persons Residing in Venezuela",
+        "date": "August 05, 2019",
+    },
+    "GL 33": {"title": "Authorizing Overflight Payments, Emergency Landings, and Air Ambulance Services", "date": "August 05, 2019"},
+    "GL 34A": {"title": "Authorizing Transactions Involving Certain Government of Venezuela Persons", "date": "November 05, 2019"},
+    "GL 35": {"title": "Authorizing Certain Administrative Transactions with the Government of Venezuela", "date": "November 05, 2019"},
+    "GL 40D": {"title": "Authorizing the Offloading of Liquefied Petroleum Gas in Venezuela", "date": "July 07, 2025"},
+    "GL 42": {
+        "title": "Authorizing Certain Transactions Related to the Negotiation of Certain Settlement Agreements with the IV Venezuelan National Assembly and Certain Other Persons",
+        "date": "May 01, 2023",
+    },
+    "GL 45B": {
+        "title": "Authorizing Certain Repatriation Transactions Involving Consorcio Venezolano de Industrias Aeronáuticas y Servicios Aéreos, S.A.",
+        "date": "February 29, 2024",
+    },
+    "GL 46B": {"title": "Authorizing Certain Activities Involving Venezuelan-Origin Oil or Petrochemical Products", "date": "March 13, 2026"},
+    "GL 47": {"title": "Authorizing the Sale of U.S.-Origin Diluents to Venezuela", "date": "February 03, 2026"},
+    "GL 48A": {"title": "Authorizing the Supply of Certain Items and Services to Venezuela", "date": "March 13, 2026"},
+    "GL 49A": {
+        "title": "Authorizing Negotiations of and Entry Into Contingent Contracts for Certain Investment in Venezuela",
+        "date": "March 13, 2026",
+    },
+    "GL 50A": {
+        "title": "Authorizing Transactions Related to Oil or Gas Sector Operations in Venezuela of Certain Entities",
+        "date": "February 18, 2026",
+    },
+    "GL 51A": {"title": "Authorizing Certain Activities Involving Venezuelan-Origin Minerals, Including Gold", "date": "March 27, 2026"},
+    "GL 52": {"title": "Authorizing Certain Transactions Involving Petróleos de Venezuela, S.A.", "date": "March 18, 2026"},
+    "GL 53": {"title": "Official Missions of the Government of Venezuela to the United States", "date": "March 24, 2026"},
+    "GL 54": {"title": "Authorizing the Supply of Certain Items and Services for Minerals Operations in Venezuela", "date": "March 27, 2026"},
+    "GL 55": {
+        "title": "Authorizing Negotiations of and Entry Into Contingent Contracts for Certain Investment in Venezuela's Minerals Sector",
+        "date": "March 27, 2026",
+    },
+    "GL 56": {
+        "title": "Authorizing Commercial-Related Negotiations of Contingent Contracts with the Government of Venezuela",
+        "date": "April 14, 2026",
+    },
+    "GL 57": {
+        "title": "Authorizing Financial Services Transactions Involving Certain Venezuelan Banks and Government of Venezuela Individuals",
+        "date": "April 14, 2026",
+    },
+    "GL 58": {
+        "title": "Authorizing Certain Services to the Government of Venezuela in Connection with Potential Debt Restructuring",
+        "date": "May 05, 2026",
+    },
+}
+
 
 def list_general_licenses() -> list[dict]:
     return get_general_license_payload()["licenses"]
@@ -155,6 +267,8 @@ def enrich_license_for_page(row: dict) -> dict:
         ("OFAC title", title),
         ("Coverage", scope_text),
         ("Status", enriched.get("expires") or "Check current OFAC text"),
+        ("OFAC listing date", enriched.get("ofac_listing_date") or "Check current OFAC text"),
+        ("Last checked", _display_checked_at(enriched.get("scraped_at"))),
         ("Source", "OFAC source" if enriched.get("source") == "live" else "Caracas Research entry"),
     ]
     return enriched
@@ -183,6 +297,9 @@ def get_general_license_payload() -> dict:
     live_rows = cached.get("licenses") or []
     if live_rows:
         merged = _merge_live_with_curated(live_rows)
+        for row in merged:
+            row["scraped_at"] = cached.get("scraped_at")
+            row["source_urls"] = cached.get("source_urls") or []
         payload = dict(cached)
         payload["licenses"] = merged
         payload["source"] = "live"
@@ -268,8 +385,7 @@ def _complete_license_metadata(row: dict, curated: dict | None = None) -> None:
     """Give every live OFAC row enough public-facing context for cards/SEO."""
     curated = curated or {}
     number = (row.get("number") or curated.get("number") or "GL").strip().upper()
-    scope = _normalized_scope(row.get("scope") or curated.get("scope") or [])
-    profile = _metadata_profile(number, scope)
+    official = OFFICIAL_OFAC_LICENSE_META.get(number, {})
 
     title = (row.get("title") or "").strip()
     generic_titles = {
@@ -279,14 +395,25 @@ def _complete_license_metadata(row: dict, curated: dict | None = None) -> None:
         f"Venezuela General License {number.replace('GL ', '')}",
     }
     if title in generic_titles:
-        row["title"] = curated.get("title") or profile["title"]
+        row["title"] = official.get("title") or curated.get("title") or title
     else:
-        row["title"] = title
+        row["title"] = official.get("title") or title
+
+    scope = _normalized_scope(
+        list(row.get("scope") or [])
+        + list(curated.get("scope") or [])
+        + _scope_from_text(" ".join([row.get("title") or "", row.get("summary") or "", row.get("context") or ""]))
+    )
+    profile = _metadata_profile(number, scope)
+    if (row.get("title") or "").strip() in generic_titles:
+        row["title"] = profile["title"]
 
     row["summary"] = row.get("summary") or curated.get("summary") or profile["summary"]
     row["context"] = row.get("context") or curated.get("context") or profile["context"]
     row["expires"] = row.get("expires") or curated.get("expires") or "Check current OFAC text"
     row["scope"] = scope
+    if official.get("date"):
+        row["ofac_listing_date"] = official["date"]
 
 
 def _normalized_scope(scope: list[str]) -> list[str]:
@@ -296,6 +423,39 @@ def _normalized_scope(scope: list[str]) -> list[str]:
         if clean and clean not in values and clean != "general":
             values.append(clean)
     return values or ["venezuela", "ofac"]
+
+
+def _scope_from_text(text: str) -> list[str]:
+    lowered = (text or "").lower()
+    checks = [
+        ("oil-gas", ("oil", "gas", "petroleum", "pdvsa", "petrochemical", "diluents", "lpg")),
+        ("energy", ("energy", "pdvsa", "citgo", "petroleum", "liquefied petroleum")),
+        ("debt", ("bond", "debt", "securities", "financing", "restructuring")),
+        ("banking", ("bank", "financial services", "funds transfers", "accounts", "remittances")),
+        ("diplomatic", ("diplomatic", "consular", "mission", "united nations", "official missions")),
+        ("telecom", ("telecommunications", "mail", "internet", "software", "hardware", "communications")),
+        ("humanitarian", ("medical", "medicine", "agricultural", "nongovernmental", "ngo", "emergency")),
+        ("aviation", ("airport", "overflight", "landing", "air ambulance", "aeronáuticas")),
+        ("legal", ("settlement", "court", "litigation", "judgment", "patents", "trademarks", "copyrights")),
+        ("mining", ("gold", "mining", "minerals")),
+        ("investment", ("investment", "contingent contracts", "commercial-related negotiations")),
+        ("government", ("government of venezuela", "national assembly", "government persons")),
+    ]
+    scopes: list[str] = []
+    for scope, needles in checks:
+        if any(needle in lowered for needle in needles):
+            scopes.append(scope)
+    return scopes
+
+
+def _display_checked_at(value: str | None) -> str:
+    if not value:
+        return "Checked daily"
+    try:
+        parsed = datetime.fromisoformat(value)
+    except (TypeError, ValueError):
+        return str(value)[:10]
+    return parsed.strftime("%Y-%m-%d %H:%M UTC")
 
 
 def _metadata_profile(number: str, scope: list[str]) -> dict:
@@ -361,6 +521,11 @@ def _license_sort_key(number: str) -> tuple[int, str]:
 
 def _analysis_for_license(number: str, title: str, scopes: list[str], row: dict) -> dict:
     lowered = " ".join([title, " ".join(scopes), row.get("summary") or "", row.get("context") or ""]).lower()
+    source_page = row.get("source_page") or "OFAC's Venezuela sanctions program page"
+    listing_date = row.get("ofac_listing_date") or "the current OFAC listing"
+    checked = _display_checked_at(row.get("scraped_at"))
+    visible_scopes = [s for s in scopes if s not in ("general", "ofac")]
+    scope_text = ", ".join(visible_scopes) if visible_scopes else "Venezuela sanctions"
 
     if any(term in lowered for term in ("oil", "gas", "pdvsa", "chevron", "energy", "petroleum")):
         importance = (
@@ -388,9 +553,9 @@ def _analysis_for_license(number: str, title: str, scopes: list[str], row: dict)
         )
     else:
         importance = (
-            f"{number} is a Venezuela-related OFAC authorization. The live OFAC listing "
-            "confirms the license exists, while the official text controls the exact "
-            "conditions, exclusions, and expiration."
+            f"{number} is a Venezuela-related OFAC authorization. It should be read as "
+            "a narrow permission for the transactions described in the official text, "
+            "not as broad sanctions relief for dealings with blocked Venezuelan parties."
         )
 
     if row.get("summary"):
@@ -404,9 +569,32 @@ def _analysis_for_license(number: str, title: str, scopes: list[str], row: dict)
     return {
         "plain_english": plain_english,
         "why_it_matters": importance,
-        "watch_items": [
-            "Amendments, extensions, or replacement license numbers",
-            "Counterparty limits involving PdVSA, Venezuelan state entities, or blocked persons",
-            "Wind-down dates, reporting requirements, and payment restrictions",
+        "current_context": [
+            (
+                f"Our tracker currently classifies {number} under {scope_text}. The OFAC "
+                f"program page lists this license as '{title}' with an OFAC listing date of {listing_date}."
+            ),
+            (
+                f"The source document is linked from {source_page}. Caracas Research last "
+                f"checked the OFAC cache for this page at {checked}, and the daily monitor "
+                "will surface new or changed Venezuela general-license links when OFAC publishes them."
+            ),
+            (
+                "For compliance work, treat this page as a research brief and the Treasury "
+                "document as the operative authority. The practical question is whether the "
+                "specific parties, payment path, timing, and transaction purpose fit the license text."
+            ),
+        ],
+        "review_items": [
+            "Covered parties and whether the license reaches the specific counterparty or only a named class of entities",
+            "Permitted transaction types, including any limits on payments, services, exports, imports, custody, or settlement",
+            "Effective dates, expiration dates, wind-down language, and whether a newer lettered version replaced the license",
+            "Carve-outs for blocked persons, Government of Venezuela entities, PdVSA affiliates, or SDN-owned counterparties",
+            "Reporting, recordkeeping, or notification language that may matter after the transaction closes",
+        ],
+        "monitoring_items": [
+            "Replacement license numbers or letter updates on OFAC's Venezuela sanctions page",
+            "Recent-actions notices that change the scope of Venezuela energy, debt, banking, or humanitarian permissions",
+            "Related licenses with the same coverage tags in the Caracas Research directory",
         ],
     }

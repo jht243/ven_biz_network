@@ -146,13 +146,14 @@ def _extract_license_links(html: str, source_url: str) -> list[dict]:
             continue
 
         ofac_url = urljoin(source_url, href)
-        title = text or _title_from_haystack(haystack, number)
+        title = _title_from_listing(text, surrounding, haystack, number)
         if _looks_like_federal_register_notice(title):
             continue
         found.append(
             {
                 "number": number,
                 "title": title,
+                "ofac_listing_date": _listing_date_from_text(surrounding),
                 "summary": "",
                 "expires": "See OFAC text",
                 "scope": _infer_scope(haystack),
@@ -194,6 +195,24 @@ def _title_from_haystack(text: str, number: str) -> str:
     if compact:
         return compact[:180]
     return f"OFAC Venezuela {number}"
+
+
+def _title_from_listing(link_text: str, surrounding: str, haystack: str, number: str) -> str:
+    listing = " ".join((surrounding or "").split())
+    suffix = number.replace("GL ", "")
+    match = re.search(
+        rf"Venezuela\s+General\s+License\s+{re.escape(suffix)}\s*-\s*(.+?)(?:\s*\([A-Z][a-z]+ \d{{2}}, \d{{4}}\)|$)",
+        listing,
+        re.IGNORECASE,
+    )
+    if match:
+        return match.group(1).strip()
+    return link_text or _title_from_haystack(haystack, number)
+
+
+def _listing_date_from_text(text: str) -> str:
+    match = re.search(r"\(([A-Z][a-z]+ \d{2}, \d{4})\)", text or "")
+    return match.group(1) if match else ""
 
 
 def _looks_like_federal_register_notice(title: str) -> bool:
@@ -239,6 +258,7 @@ def _finalize_license(item: dict) -> dict:
         "ofac_url": item["ofac_url"],
         "context": item.get("context") or "",
         "source_page": item.get("source_page") or OFAC_VENEZUELA_URL,
+        "ofac_listing_date": item.get("ofac_listing_date") or "",
         "source": "live",
     }
     normalized["fingerprint"] = hashlib.sha256(

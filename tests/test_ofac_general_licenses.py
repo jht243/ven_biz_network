@@ -15,7 +15,7 @@ class OFACGeneralLicenseScraperTests(unittest.TestCase):
               <a href="/media/932451/download?inline">
                 Venezuela General License 5T
               </a>
-              Authorizing certain transactions involving the PdVSA 2020 bond.
+              - Authorizing certain transactions involving the PdVSA 2020 bond. (May 04, 2026)
             </li>
             <li>
               <a href="/media/not-cuba/download?inline">
@@ -30,6 +30,7 @@ class OFACGeneralLicenseScraperTests(unittest.TestCase):
 
         self.assertEqual(len(rows), 1)
         self.assertEqual(rows[0]["number"], "GL 5T")
+        self.assertEqual(rows[0]["title"], "Authorizing certain transactions involving the PdVSA 2020 bond.")
         self.assertIn("debt", rows[0]["scope"])
         self.assertTrue(rows[0]["ofac_url"].startswith("https://ofac.treasury.gov/"))
 
@@ -66,6 +67,17 @@ class OFACGeneralLicenseScraperTests(unittest.TestCase):
         self.assertTrue(row["context"])
         self.assertEqual(row["expires"], "Check current OFAC text")
         self.assertIn("venezuela", row["scope"])
+
+    def test_detail_page_uses_our_analysis_language(self):
+        from server import app
+
+        html = app.test_client().get("/tools/ofac-venezuela-general-licenses/gl-23").get_data(as_text=True)
+
+        self.assertIn("Our Analysis", html)
+        self.assertIn("Third-Country Diplomatic and Consular Funds Transfers Authorized", html)
+        self.assertIn("OFAC listing date", html)
+        self.assertIn("Current Monitoring Signals", html)
+        self.assertNotIn("AI-Assisted", html)
 
 
 if __name__ == "__main__":
