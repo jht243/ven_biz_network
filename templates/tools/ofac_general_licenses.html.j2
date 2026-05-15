@@ -53,7 +53,7 @@
     {% if is_live %}
       Live OFAC scrape{% if license_payload.scraped_at %} · {{ license_payload.scraped_at[:10] }}{% endif %}
     {% else %}
-      Curated fallback
+      Curated data
     {% endif %}
   </div>
 
@@ -85,7 +85,7 @@
       <div class="gl-head">
         <span>
           <span class="gl-num">{{ gl.number }}</span>
-          <span class="gl-source{% if gl.source != 'live' %} fallback{% endif %}">{{ "Live OFAC" if gl.source == "live" else "Fallback" }}</span>
+          <span class="gl-source{% if gl.source != 'live' %} fallback{% endif %}">{{ "Live OFAC" if gl.source == "live" else "Curated" }}</span>
         </span>
         <a href="{{ gl.ofac_url }}" rel="nofollow noopener" target="_blank" style="font-size:13px;">Read at OFAC &rarr;</a>
       </div>
