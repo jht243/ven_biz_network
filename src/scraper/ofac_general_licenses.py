@@ -233,11 +233,11 @@ def _finalize_license(item: dict) -> dict:
     normalized = {
         "number": item["number"],
         "title": item.get("title") or f"OFAC Venezuela {item['number']}",
-        "summary": item.get("summary") or "Live OFAC listing. Open the official text for scope, conditions, and expiration details.",
-        "expires": item.get("expires") or "See OFAC text",
+        "summary": item.get("summary") or "",
+        "expires": item.get("expires") or "",
         "scope": item.get("scope") or ["general"],
         "ofac_url": item["ofac_url"],
-        "context": item.get("context") or "Detected from OFAC's public Venezuela sanctions and recent-actions pages.",
+        "context": item.get("context") or "",
         "source_page": item.get("source_page") or OFAC_VENEZUELA_URL,
         "source": "live",
     }

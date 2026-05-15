@@ -91,13 +91,18 @@
         <a href="{{ gl.ofac_url }}" rel="nofollow noopener" target="_blank" style="font-size:13px;">Read at OFAC &rarr;</a>
       </div>
       <h3>{{ gl.title }}</h3>
-      <p class="summary">{{ gl.summary }}</p>
-      <p class="ctx">{{ gl.context }}</p>
+      {% if gl.summary %}<p class="summary">{{ gl.summary }}</p>{% endif %}
+      {% if gl.context %}<p class="ctx">{{ gl.context }}</p>{% endif %}
+      {% set visible_scopes = gl.scope | reject("equalto", "general") | list %}
+      {% if gl.expires or visible_scopes %}
       <div class="gl-meta">
-        <strong>Status:</strong> {{ gl.expires }} ·
-        <strong>Scope:</strong>
-        {% for s in gl.scope %}<span class="gl-tag">{{ s }}</span>{% endfor %}
+        {% if gl.expires %}<strong>Status:</strong> {{ gl.expires }}{% endif %}
+        {% if visible_scopes %}
+          {% if gl.expires %} · {% endif %}<strong>Scope:</strong>
+          {% for s in visible_scopes %}<span class="gl-tag">{{ s }}</span>{% endfor %}
+        {% endif %}
       </div>
+      {% endif %}
     </article>
     {% endfor %}
   </div>

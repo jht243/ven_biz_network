@@ -174,6 +174,7 @@ def _merge_live_with_curated(live_rows: list[dict]) -> list[dict]:
         number = (live.get("number") or "").strip().upper()
         curated = curated_by_number.get(number, {})
         row = dict(live)
+        _strip_placeholder_fields(row)
         # Preserve official title/URL from live scrape, but keep analyst
         # summaries/context when the live OFAC page only exposes link text.
         for field in ("summary", "expires", "scope", "context"):
@@ -199,6 +200,15 @@ def _merge_live_with_curated(live_rows: list[dict]) -> list[dict]:
             merged.append(row)
 
     return sorted(merged, key=lambda item: _license_sort_key(item.get("number", "")))
+
+
+def _strip_placeholder_fields(row: dict) -> None:
+    if row.get("summary") == "Live OFAC listing. Open the official text for scope, conditions, and expiration details.":
+        row["summary"] = ""
+    if row.get("context") == "Detected from OFAC's public Venezuela sanctions and recent-actions pages.":
+        row["context"] = ""
+    if row.get("expires") == "See OFAC text":
+        row["expires"] = ""
 
 
 def _cache_is_stale(payload: dict) -> bool:
