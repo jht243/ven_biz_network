@@ -33,6 +33,15 @@ class OFACGeneralLicenseScraperTests(unittest.TestCase):
         self.assertIn("debt", rows[0]["scope"])
         self.assertTrue(rows[0]["ofac_url"].startswith("https://ofac.treasury.gov/"))
 
+    def test_directory_links_to_internal_analysis_pages(self):
+        from server import app
+
+        html = app.test_client().get("/tools/ofac-venezuela-general-licenses").get_data(as_text=True)
+
+        self.assertIn("View analysis", html)
+        self.assertIn("/tools/ofac-venezuela-general-licenses/gl-", html)
+        self.assertNotIn("Read at OFAC", html)
+
 
 if __name__ == "__main__":
     unittest.main()

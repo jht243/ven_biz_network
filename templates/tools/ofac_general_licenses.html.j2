@@ -17,6 +17,7 @@
   .gl-tag { display: inline-block; padding: 2px 8px; background: var(--sr-gray-light); color: var(--sr-dark-text); border-radius: 10px; font-size: 11px; margin-right: 4px; }
   .gl-source { display: inline-block; margin-left: 6px; padding: 2px 7px; border-radius: 3px; background: #e8f5e9; color: #166534; font-size: 10px; font-weight: 800; letter-spacing: 0.8px; text-transform: uppercase; }
   .gl-source.fallback { background: #fff3e0; color: #7c4a03; }
+  .gl-detail-link { font-size: 13px; font-weight: 700; color: var(--sr-blue); }
   .gl-empty { text-align: center; padding: 32px; color: var(--sr-gray-text); }
   .live-status { display: inline-flex; align-items: center; gap: 7px; border: 1px solid #bbf7d0; padding: 5px 10px; margin: 0 0 16px; background: #f0fdf4; color: #166534; border-radius: 999px; font-size: 12px; font-weight: 700; line-height: 1.2; }
   .live-status::before { content: ""; width: 7px; height: 7px; border-radius: 50%; background: #16a34a; flex: 0 0 auto; }
@@ -71,7 +72,7 @@
         <option value="wind-down">Wind-down</option>
       </select>
     </div>
-    <p class="cr-search-help">Filter the license list first, then open the official OFAC text from the matching card.</p>
+    <p class="cr-search-help">Filter the license list first, then open our internal analysis for the matching card.</p>
   </div>
 
   <div class="tool-intro">
@@ -87,9 +88,9 @@
           <span class="gl-num">{{ gl.number }}</span>
           <span class="gl-source{% if gl.source != 'live' %} fallback{% endif %}">{{ "Live OFAC" if gl.source == "live" else "Curated" }}</span>
         </span>
-        <a href="{{ gl.ofac_url }}" rel="nofollow noopener" target="_blank" style="font-size:13px;">Read at OFAC &rarr;</a>
+        <a class="gl-detail-link" href="{{ gl.detail_url }}">View analysis &rarr;</a>
       </div>
-      <h3>{{ gl.title }}</h3>
+      <h3><a href="{{ gl.detail_url }}" style="color:inherit; text-decoration:none;">{{ gl.title }}</a></h3>
       {% if gl.summary %}<p class="summary">{{ gl.summary }}</p>{% endif %}
       {% if gl.context %}<p class="ctx">{{ gl.context }}</p>{% endif %}
       {% set visible_scopes = gl.scope | reject("equalto", "general") | list %}
@@ -110,7 +111,7 @@
     <strong>Important:</strong> This tool is a navigation aid. OFAC general license terms,
     expirations, and reporting requirements change frequently — sometimes
     intra-week. Always confirm authorisation by reading the full OFAC text
-    linked in each card and consider seeking sanctions counsel for borderline
+    linked from each analysis page and consider seeking sanctions counsel for borderline
     transactions. Nothing on this site constitutes legal advice.
   </div>
 

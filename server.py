@@ -4035,6 +4035,98 @@ def tool_ofac_general_licenses():
         abort(500)
 
 
+@app.route("/tools/ofac-venezuela-general-licenses/<slug>")
+@app.route("/tools/ofac-venezuela-general-licenses/<slug>/")
+def tool_ofac_general_license_detail(slug: str):
+    """Internal analysis page for one OFAC Venezuela general license."""
+    try:
+        import json as _json
+        from datetime import datetime as _dt
+        from src.data.ofac_general_licenses import (
+            enrich_license_for_page,
+            get_license_by_slug,
+            list_general_licenses,
+            license_slug,
+        )
+        from src.page_renderer import _base_url, _env, _iso
+        from src.seo.cluster_topology import build_cluster_ctx
+
+        row = get_license_by_slug(slug)
+        if not row:
+            abort(404)
+        license_page = enrich_license_for_page(row)
+        number = license_page.get("number", "OFAC General License")
+        title = license_page["seo_title"]
+        base = _base_url()
+        canonical = f"{base}/tools/ofac-venezuela-general-licenses/{license_page['slug']}"
+        now_iso = _iso(_dt.utcnow())
+        seo = {
+            "title": title,
+            "description": license_page["seo_description"],
+            "keywords": (
+                f"OFAC {number}, Venezuela {number}, {number} Venezuela general license, "
+                "OFAC Venezuela sanctions, PDVSA sanctions license"
+            ),
+            "canonical": canonical,
+            "site_name": settings.site_name,
+            "site_url": base,
+            "locale": settings.site_locale,
+            "og_image": f"{base}/static/og-image.png?v=3",
+            "og_type": "article",
+            "published_iso": now_iso,
+            "modified_iso": now_iso,
+        }
+        graph = {
+            "@context": "https://schema.org",
+            "@graph": [
+                {
+                    "@type": "BreadcrumbList",
+                    "itemListElement": [
+                        {"@type": "ListItem", "position": 1, "name": "Home", "item": f"{base}/"},
+                        {"@type": "ListItem", "position": 2, "name": "Tools", "item": f"{base}/tools"},
+                        {"@type": "ListItem", "position": 3, "name": "OFAC Venezuela General Licenses", "item": f"{base}/tools/ofac-venezuela-general-licenses"},
+                        {"@type": "ListItem", "position": 4, "name": number, "item": canonical},
+                    ],
+                },
+                {
+                    "@type": "Article",
+                    "@id": f"{canonical}#article",
+                    "headline": title,
+                    "description": license_page["seo_description"],
+                    "datePublished": now_iso,
+                    "dateModified": now_iso,
+                    "author": {"@type": "Organization", "name": settings.site_name},
+                    "publisher": {"@type": "Organization", "name": settings.site_name, "url": f"{base}/"},
+                    "mainEntityOfPage": canonical,
+                    "about": ["OFAC", "Venezuela sanctions", number],
+                    "isBasedOn": license_page.get("ofac_url"),
+                },
+            ],
+        }
+        all_licenses = [
+            enrich_license_for_page(gl)
+            for gl in list_general_licenses()
+            if license_slug(gl.get("number", "")) != license_page["slug"]
+        ]
+        related = all_licenses[:6]
+        template = _env.get_template("tools/ofac_general_license_detail.html.j2")
+        html = template.render(
+            license=license_page,
+            related_licenses=related,
+            seo=seo,
+            jsonld=_json.dumps(graph, ensure_ascii=False),
+            cluster_ctx=build_cluster_ctx("/tools/ofac-venezuela-general-licenses"),
+            current_year=_dt.utcnow().year,
+            recent_briefings=_fetch_recent_briefings(),
+        )
+        return Response(html, mimetype="text/html")
+    except HTTPException:
+        raise
+    except Exception as exc:
+        logger.exception("ofac general license detail render failed: %s", exc)
+        abort(500)
+
+
 @app.route("/tools/ofac-general-licenses")
 @app.route("/tools/ofac-general-licenses/")
 def tool_ofac_general_licenses_legacy():
@@ -10961,6 +11053,19 @@ def sitemap_xml():
         {"loc": f"{base}/tools/venezuela-investment-roi-calculator", "lastmod": today_iso, "changefreq": "monthly", "priority": "0.6"},
         {"loc": f"{base}/tools/venezuela-visa-requirements", "lastmod": today_iso, "changefreq": "monthly", "priority": "0.6"},
     ]
+
+    try:
+        from src.data.ofac_general_licenses import list_general_licenses, license_slug
+        for gl in list_general_licenses():
+            slug = license_slug(gl.get("number", ""))
+            static_urls.append({
+                "loc": f"{base}/tools/ofac-venezuela-general-licenses/{slug}",
+                "lastmod": today_iso,
+                "changefreq": "daily",
+                "priority": "0.65",
+            })
+    except Exception as exc:
+        logger.warning("OFAC GL sitemap expansion failed: %s", exc)
 
     # Visa cluster — walked from the content registries so newly-added
     # country/category variants and document landing pages do not need a

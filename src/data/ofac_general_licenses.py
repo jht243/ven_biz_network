@@ -16,6 +16,7 @@ this list is a navigation aid, not a legal substitute.
 
 from __future__ import annotations
 
+import re
 from datetime import datetime, timedelta, timezone
 
 from src.scraper.ofac_general_licenses import load_cached_general_licenses
@@ -121,6 +122,44 @@ def list_general_licenses() -> list[dict]:
     return get_general_license_payload()["licenses"]
 
 
+def license_slug(number: str) -> str:
+    clean = re.sub(r"[^0-9A-Za-z]+", "-", number or "").strip("-").lower()
+    return clean or "general-license"
+
+
+def get_license_by_slug(slug: str) -> dict | None:
+    for row in list_general_licenses():
+        if license_slug(row.get("number", "")) == slug:
+            return row
+    return None
+
+
+def enrich_license_for_page(row: dict) -> dict:
+    """Add presentation fields for an internal license-analysis page."""
+    enriched = dict(row)
+    number = enriched.get("number") or "OFAC General License"
+    title = enriched.get("title") or f"Venezuela {number}"
+    scopes = [s for s in (enriched.get("scope") or []) if s != "general"]
+    scope_text = ", ".join(scopes) if scopes else "Venezuela sanctions"
+
+    enriched["slug"] = license_slug(number)
+    enriched["detail_url"] = f"/tools/ofac-venezuela-general-licenses/{enriched['slug']}"
+    enriched["seo_title"] = f"OFAC {number} Venezuela General License: Scope & Analysis"
+    enriched["seo_description"] = (
+        f"Plain-English analysis of OFAC {number} for Venezuela: what the license "
+        f"covers, why it matters, source links, and related sanctions context."
+    )
+    enriched["analysis"] = _analysis_for_license(number, title, scopes, enriched)
+    enriched["detail_rows"] = [
+        ("License", number),
+        ("OFAC title", title),
+        ("Coverage", scope_text),
+        ("Status", enriched.get("expires") or "Check current OFAC text"),
+        ("Source", "Live OFAC scrape" if enriched.get("source") == "live" else "Curated Caracas Research entry"),
+    ]
+    return enriched
+
+
 def get_general_license_payload() -> dict:
     """Return live cached OFAC GL data, falling back to the curated seed list."""
     cached = load_cached_general_licenses()
@@ -158,7 +197,7 @@ def get_general_license_payload() -> dict:
             "https://ofac.treasury.gov/sanctions-programs-and-country-information/venezuela-related-sanctions",
         ],
         "generated_at": datetime.now(timezone.utc).isoformat(),
-        "licenses": [dict(item, source="curated") for item in GENERAL_LICENSES],
+        "licenses": [_curated_row(item) for item in GENERAL_LICENSES],
     }
 
 
@@ -187,6 +226,8 @@ def _merge_live_with_curated(live_rows: list[dict]) -> list[dict]:
         if curated.get("title") and len(row.get("title", "")) < 12:
             row["title"] = curated["title"]
         row["source"] = "live"
+        row["slug"] = license_slug(number)
+        row["detail_url"] = f"/tools/ofac-venezuela-general-licenses/{row['slug']}"
         merged.append(row)
         seen.add(number)
 
@@ -197,9 +238,20 @@ def _merge_live_with_curated(live_rows: list[dict]) -> list[dict]:
         if number not in seen:
             row = dict(curated)
             row["source"] = "curated_fallback"
+            row["slug"] = license_slug(number)
+            row["detail_url"] = f"/tools/ofac-venezuela-general-licenses/{row['slug']}"
             merged.append(row)
 
     return sorted(merged, key=lambda item: _license_sort_key(item.get("number", "")))
+
+
+def _curated_row(item: dict) -> dict:
+    row = dict(item)
+    number = (row.get("number") or "").strip().upper()
+    row["source"] = "curated"
+    row["slug"] = license_slug(number)
+    row["detail_url"] = f"/tools/ofac-venezuela-general-licenses/{row['slug']}"
+    return row
 
 
 def _strip_placeholder_fields(row: dict) -> None:
@@ -225,9 +277,60 @@ def _cache_is_stale(payload: dict) -> bool:
 
 
 def _license_sort_key(number: str) -> tuple[int, str]:
-    import re
-
     match = re.search(r"(\d+)([A-Z]?)", number or "")
     if not match:
         return (9999, number or "")
     return (int(match.group(1)), match.group(2))
+
+
+def _analysis_for_license(number: str, title: str, scopes: list[str], row: dict) -> dict:
+    lowered = " ".join([title, " ".join(scopes), row.get("summary") or "", row.get("context") or ""]).lower()
+
+    if any(term in lowered for term in ("oil", "gas", "pdvsa", "chevron", "energy", "petroleum")):
+        importance = (
+            f"{number} is part of the Venezuela energy-sanctions framework. "
+            "Investors should treat it as a permissions boundary for oil, gas, PDVSA, "
+            "or service-company exposure rather than as broad sanctions relief."
+        )
+    elif any(term in lowered for term in ("debt", "bond", "securities")):
+        importance = (
+            f"{number} matters most for Venezuelan sovereign, PDVSA, or related "
+            "securities exposure. Funds and banks should map the license text to "
+            "trade date, custody, settlement, and beneficial-owner controls."
+        )
+    elif any(term in lowered for term in ("citgo", "pdv holding")):
+        importance = (
+            f"{number} is relevant to the CITGO / PDV Holding structure and the "
+            "sanctions perimeter around blocked PdVSA ownership. It should be read "
+            "alongside any court, creditor, or restructuring developments."
+        )
+    elif any(term in lowered for term in ("wind", "gold", "mining")):
+        importance = (
+            f"{number} appears tied to a narrow wind-down or sector-specific sanctions "
+            "permission. The practical issue is usually timing: what activity remains "
+            "authorized, and when the authorization ends."
+        )
+    else:
+        importance = (
+            f"{number} is a Venezuela-related OFAC authorization. The live OFAC listing "
+            "confirms the license exists, while the official text controls the exact "
+            "conditions, exclusions, and expiration."
+        )
+
+    if row.get("summary"):
+        plain_english = row["summary"]
+    else:
+        plain_english = (
+            "OFAC's public listing provides the license title and source document. "
+            "This page tracks the license and routes readers to the official text for the operative terms."
+        )
+
+    return {
+        "plain_english": plain_english,
+        "why_it_matters": importance,
+        "watch_items": [
+            "Amendments, extensions, or replacement license numbers",
+            "Counterparty limits involving PdVSA, Venezuelan state entities, or blocked persons",
+            "Wind-down dates, reporting requirements, and payment restrictions",
+        ],
+    }
