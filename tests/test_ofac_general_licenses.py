@@ -41,6 +41,29 @@ class OFACGeneralLicenseScraperTests(unittest.TestCase):
         self.assertIn("View analysis", html)
         self.assertIn("/tools/ofac-venezuela-general-licenses/gl-", html)
         self.assertNotIn("Read at OFAC", html)
+        self.assertNotIn(">Fallback<", html)
+
+    def test_live_only_rows_get_public_metadata(self):
+        from src.data.ofac_general_licenses import _merge_live_with_curated
+
+        rows = _merge_live_with_curated([
+            {
+                "number": "GL 99",
+                "title": "Venezuela General License 99",
+                "summary": "",
+                "expires": "See OFAC text",
+                "scope": ["general"],
+                "context": "",
+                "ofac_url": "https://ofac.treasury.gov/media/example/download?inline",
+            }
+        ])
+        row = next(item for item in rows if item["number"] == "GL 99")
+
+        self.assertIn("OFAC Authorization", row["title"])
+        self.assertTrue(row["summary"])
+        self.assertTrue(row["context"])
+        self.assertEqual(row["expires"], "Check current OFAC text")
+        self.assertIn("venezuela", row["scope"])
 
 
 if __name__ == "__main__":

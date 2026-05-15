@@ -225,6 +225,7 @@ def _merge_live_with_curated(live_rows: list[dict]) -> list[dict]:
                 row[field] = curated[field]
         if curated.get("title") and len(row.get("title", "")) < 12:
             row["title"] = curated["title"]
+        _complete_license_metadata(row, curated)
         row["source"] = "live"
         row["slug"] = license_slug(number)
         row["detail_url"] = f"/tools/ofac-venezuela-general-licenses/{row['slug']}"
@@ -261,6 +262,81 @@ def _strip_placeholder_fields(row: dict) -> None:
         row["context"] = ""
     if row.get("expires") == "See OFAC text":
         row["expires"] = ""
+
+
+def _complete_license_metadata(row: dict, curated: dict | None = None) -> None:
+    """Give every live OFAC row enough public-facing context for cards/SEO."""
+    curated = curated or {}
+    number = (row.get("number") or curated.get("number") or "GL").strip().upper()
+    scope = _normalized_scope(row.get("scope") or curated.get("scope") or [])
+    profile = _metadata_profile(number, scope)
+
+    title = (row.get("title") or "").strip()
+    generic_titles = {
+        "",
+        number,
+        f"Venezuela {number}",
+        f"Venezuela General License {number.replace('GL ', '')}",
+    }
+    if title in generic_titles:
+        row["title"] = curated.get("title") or profile["title"]
+    else:
+        row["title"] = title
+
+    row["summary"] = row.get("summary") or curated.get("summary") or profile["summary"]
+    row["context"] = row.get("context") or curated.get("context") or profile["context"]
+    row["expires"] = row.get("expires") or curated.get("expires") or "Check current OFAC text"
+    row["scope"] = scope
+
+
+def _normalized_scope(scope: list[str]) -> list[str]:
+    values: list[str] = []
+    for item in scope or []:
+        clean = str(item).strip().lower()
+        if clean and clean not in values and clean != "general":
+            values.append(clean)
+    return values or ["venezuela", "ofac"]
+
+
+def _metadata_profile(number: str, scope: list[str]) -> dict:
+    scope_text = " ".join(scope).lower()
+    suffix = number.replace("GL ", "")
+
+    if any(term in scope_text for term in ("oil-gas", "energy")):
+        return {
+            "title": f"Venezuela General License {suffix}: Energy and PdVSA-Related Transactions",
+            "summary": "Tracks OFAC authorization for Venezuela energy, oil-and-gas, or PdVSA-related activity. The official license text controls the exact counterparties, payments, and limits.",
+            "context": "Key for investors and operators assessing whether Venezuela energy exposure can proceed under a current OFAC authorization.",
+        }
+    if any(term in scope_text for term in ("debt", "securities")):
+        return {
+            "title": f"Venezuela General License {suffix}: Debt and Securities Transactions",
+            "summary": "Tracks OFAC authorization affecting Venezuelan debt, securities, bonds, or related settlement activity. Review the license text before trading, custody, or payment decisions.",
+            "context": "Useful for funds, banks, and counsel mapping Venezuela securities exposure to OFAC's current permissions.",
+        }
+    if any(term in scope_text for term in ("mining", "gold")):
+        return {
+            "title": f"Venezuela General License {suffix}: Mining and Gold-Sector Transactions",
+            "summary": "Tracks OFAC authorization connected to Venezuela mining or gold-sector activity. Check the official license for eligible parties, wind-down dates, and prohibited flows.",
+            "context": "Important for counterparties screening exposure to Venezuela's gold and mining sanctions perimeter.",
+        }
+    if any(term in scope_text for term in ("legal", "settlement")):
+        return {
+            "title": f"Venezuela General License {suffix}: Legal and Settlement Transactions",
+            "summary": "Tracks OFAC authorization for legal, court, arbitration, or settlement-related activity involving Venezuela sanctions restrictions.",
+            "context": "Relevant for creditors, litigants, and advisers handling Venezuela claims or settlement mechanics.",
+        }
+    if "wind-down" in scope_text:
+        return {
+            "title": f"Venezuela General License {suffix}: Wind-Down Authorization",
+            "summary": "Tracks OFAC authorization for limited wind-down activity tied to Venezuela sanctions. Timing, scope, and payment restrictions should be checked against the source text.",
+            "context": "Use this as a timing flag for compliance teams managing exit activity or newly restricted counterparties.",
+        }
+    return {
+        "title": f"Venezuela General License {suffix}: OFAC Authorization for Venezuela-Related Transactions",
+        "summary": "Tracks an OFAC general license for Venezuela-related transactions. Use the internal analysis to understand the likely context, then confirm details in the official OFAC text.",
+        "context": "A live OFAC-sourced license entry with Caracas Research context for investors, operators, and compliance teams.",
+    }
 
 
 def _cache_is_stale(payload: dict) -> bool:
