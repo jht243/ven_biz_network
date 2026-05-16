@@ -69,8 +69,13 @@
         <option value="legal">Legal / settlement</option>
         <option value="wind-down">Wind-down</option>
       </select>
+      <select id="gl-date-sort" aria-label="Sort by OFAC listing date">
+        <option value="">OFAC order</option>
+        <option value="newest">Newest first</option>
+        <option value="oldest">Oldest first</option>
+      </select>
     </div>
-    <p class="cr-search-help">Filter the license list first, then open our internal analysis for the matching card.</p>
+    <p class="cr-search-help">Filter the license list, sort by OFAC listing date, then open our internal analysis for the matching card.</p>
   </div>
 
   <div class="tool-intro">
@@ -80,7 +85,7 @@
 
   <div id="gl-list">
     {% for gl in licenses %}
-    <article class="gl-card" data-num="{{ gl.number|lower }}" data-title="{{ gl.title|lower }}" data-summary="{{ gl.summary|lower }}" data-scope="{{ gl.scope|join(' ') }}" data-context="{{ gl.context|lower }}">
+    <article class="gl-card" data-original-index="{{ loop.index0 }}" data-date="{{ gl.ofac_listing_date or '' }}" data-num="{{ gl.number|lower }}" data-title="{{ gl.title|lower }}" data-summary="{{ gl.summary|lower }}" data-scope="{{ gl.scope|join(' ') }}" data-context="{{ gl.context|lower }}">
       <div class="gl-head">
         <span>
           <span class="gl-num">{{ gl.number }}</span>
@@ -91,11 +96,14 @@
       {% if gl.summary %}<p class="summary">{{ gl.summary }}</p>{% endif %}
       {% if gl.context %}<p class="ctx">{{ gl.context }}</p>{% endif %}
       {% set visible_scopes = gl.scope | reject("equalto", "general") | list %}
-      {% if gl.expires or visible_scopes %}
+      {% if gl.expires or gl.ofac_listing_date or visible_scopes %}
       <div class="gl-meta">
         {% if gl.expires %}<strong>Status:</strong> {{ gl.expires }}{% endif %}
+        {% if gl.ofac_listing_date %}
+          {% if gl.expires %} · {% endif %}<strong>OFAC date:</strong> {{ gl.ofac_listing_date }}
+        {% endif %}
         {% if visible_scopes %}
-          {% if gl.expires %} · {% endif %}<strong>Scope:</strong>
+          {% if gl.expires or gl.ofac_listing_date %} · {% endif %}<strong>Scope:</strong>
           {% for s in visible_scopes %}<span class="gl-tag">{{ s }}</span>{% endfor %}
         {% endif %}
       </div>
@@ -121,11 +129,27 @@
   <script>
     (function() {
       var cards = Array.prototype.slice.call(document.querySelectorAll('#gl-list .gl-card'));
+      var list = document.getElementById('gl-list');
       var q = document.getElementById('gl-q');
       var scope = document.getElementById('gl-scope');
+      var dateSort = document.getElementById('gl-date-sort');
+      function dateValue(c) {
+        var parsed = Date.parse(c.dataset.date || '');
+        return isNaN(parsed) ? 0 : parsed;
+      }
+      function sortCards() {
+        var mode = dateSort.value;
+        cards.sort(function(a, b) {
+          if (mode === 'newest') return dateValue(b) - dateValue(a) || Number(a.dataset.originalIndex) - Number(b.dataset.originalIndex);
+          if (mode === 'oldest') return dateValue(a) - dateValue(b) || Number(a.dataset.originalIndex) - Number(b.dataset.originalIndex);
+          return Number(a.dataset.originalIndex) - Number(b.dataset.originalIndex);
+        });
+        cards.forEach(function(c) { list.appendChild(c); });
+      }
       function apply() {
         var qs = (q.value || '').toLowerCase().trim();
         var sc = scope.value;
+        sortCards();
         cards.forEach(function(c) {
           var matchQ = !qs || c.dataset.num.indexOf(qs) !== -1
             || c.dataset.title.indexOf(qs) !== -1
@@ -137,10 +161,11 @@
       }
       var glTracked = false;
       function trackGL() {
-        if (!glTracked && typeof gtag === 'function') { gtag('event', 'tool_interaction', { tool_name: 'ofac_general_licenses', search_term: q.value || scope.value }); glTracked = true; }
+        if (!glTracked && typeof gtag === 'function') { gtag('event', 'tool_interaction', { tool_name: 'ofac_general_licenses', search_term: q.value || scope.value || dateSort.value }); glTracked = true; }
       }
       q.addEventListener('input', function() { apply(); trackGL(); });
       scope.addEventListener('change', function() { apply(); trackGL(); });
+      dateSort.addEventListener('change', function() { apply(); trackGL(); });
     })();
   </script>
 

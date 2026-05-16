@@ -6,7 +6,8 @@
   .license-kicker { font-size: 12px; text-transform: uppercase; letter-spacing: 1.4px; color: #cc0000; font-weight: 800; }
   .license-title { font-family: var(--font-serif); font-size: 34px; color: var(--sr-blue-dark); margin: 8px 0 10px; }
   .license-lede { font-family: var(--font-serif); font-style: italic; color: var(--sr-gray-text); font-size: 17px; max-width: 860px; }
-  .license-layout { display: grid; grid-template-columns: minmax(0, 1fr) 320px; gap: 28px; align-items: start; }
+  .license-source-pill { display: inline-flex; align-items: center; gap: 8px; margin-top: 14px; padding: 7px 12px; border: 1px solid var(--sr-gray-light); border-radius: 999px; background: #fff; color: var(--sr-blue-dark); font-size: 13px; font-weight: 700; text-decoration: none; }
+  .license-source-pill span { color: var(--sr-gray-text); font-weight: 600; }
   .license-section { margin-bottom: 28px; }
   .license-section h2 { font-family: var(--font-serif); color: var(--sr-blue-dark); font-size: 22px; margin: 0 0 10px; }
   .license-section h3 { font-family: var(--font-serif); color: var(--sr-blue-dark); font-size: 17px; margin: 18px 0 8px; }
@@ -20,12 +21,12 @@
   .detail-row { display: grid; grid-template-columns: 110px 1fr; gap: 14px; padding: 11px 14px; border-bottom: 1px solid var(--sr-gray-light); font-size: 14px; }
   .detail-row:last-child { border-bottom: 0; }
   .detail-row strong { color: var(--sr-blue-dark); }
-  .source-card { border: 1px solid var(--sr-gray-light); border-top: 4px solid var(--sr-blue); padding: 16px; border-radius: 4px; background: #fff; }
-  .source-card h2 { font-family: var(--font-serif); color: var(--sr-blue-dark); font-size: 18px; margin: 0 0 8px; }
-  .source-card a { font-weight: 700; }
   .related-list { display: grid; gap: 8px; margin-top: 10px; }
   .related-list a { display: block; padding: 9px 10px; background: var(--sr-gray-bg); border-left: 3px solid var(--sr-blue); font-size: 13px; font-weight: 700; }
-  @media (max-width: 860px) { .license-layout { grid-template-columns: 1fr; } }
+  @media (max-width: 560px) {
+    .detail-row { grid-template-columns: 1fr; gap: 4px; }
+    .license-source-pill { align-items: flex-start; border-radius: 4px; }
+  }
 </style>
 {% endblock %}
 
@@ -42,100 +43,93 @@
     <div class="license-kicker">OFAC Venezuela general license analysis</div>
     <h1 class="license-title">{{ license.number }}: {{ license.title }}</h1>
     <p class="license-lede">{{ license.seo_description }}</p>
+    <a class="license-source-pill" href="{{ license.ofac_url }}" rel="nofollow noopener" target="_blank">
+      Primary source <span>OFAC official text &rarr;</span>
+    </a>
   </header>
 
-  <div class="license-layout">
-    <main>
-      <section class="license-section">
-        <h2>License Details</h2>
-        <div class="detail-table">
-          {% for label, value in license.detail_rows %}
-          <div class="detail-row"><strong>{{ label }}</strong><span>{{ value }}</span></div>
-          {% endfor %}
-        </div>
-      </section>
-
-      <section class="license-section">
-        <h2>Plain-English Summary</h2>
-        <p>{{ license.analysis.plain_english }}</p>
-      </section>
-
-      <section class="license-section">
-        <h2>Our Analysis</h2>
-        <p>{{ license.analysis.why_it_matters }}</p>
-        {% if license.analysis.source_basis %}<p><strong>Source basis:</strong> {{ license.analysis.source_basis }}</p>{% endif %}
-
-        {% if license.analysis.authorized_activity %}
-        <h3>What the License Authorizes</h3>
-        <ul>
-          {% for item in license.analysis.authorized_activity %}
-          <li>{{ item }}</li>
-          {% endfor %}
-        </ul>
-        {% endif %}
-
-        {% if license.analysis.limits %}
-        <h3>What It Does Not Authorize</h3>
-        <ul>
-          {% for item in license.analysis.limits %}
-          <li>{{ item }}</li>
-          {% endfor %}
-        </ul>
-        {% endif %}
-
-        {% if license.analysis.practical_analysis %}
-        <h3>Practical Reading</h3>
-        {% for paragraph in license.analysis.practical_analysis %}
-        <p>{{ paragraph }}</p>
+  <main>
+    <section class="license-section">
+      <h2>License Details</h2>
+      <div class="detail-table">
+        {% for label, value in license.detail_rows %}
+        <div class="detail-row"><strong>{{ label }}</strong><span>{{ value }}</span></div>
         {% endfor %}
-        {% endif %}
+      </div>
+    </section>
 
-        <h3>What to Check in the OFAC Text</h3>
-        <ul>
-          {% for item in license.analysis.review_items %}
-          <li>{{ item }}</li>
-          {% endfor %}
-        </ul>
+    <section class="license-section">
+      <h2>Plain-English Summary</h2>
+      <p>{{ license.analysis.plain_english }}</p>
+    </section>
 
-        <h3>Current Monitoring Signals</h3>
-        <ul>
-          {% for item in license.analysis.monitoring_items %}
-          <li>{{ item }}</li>
-          {% endfor %}
-        </ul>
+    <section class="license-section">
+      <h2>Our Analysis</h2>
+      <p>{{ license.analysis.why_it_matters }}</p>
+      {% if license.analysis.source_basis %}<p><strong>Source basis:</strong> {{ license.analysis.source_basis }}</p>{% endif %}
 
-        {% for paragraph in license.analysis.current_context %}
-        <p>{{ paragraph }}</p>
+      {% if license.analysis.authorized_activity %}
+      <h3>What the License Authorizes</h3>
+      <ul>
+        {% for item in license.analysis.authorized_activity %}
+        <li>{{ item }}</li>
         {% endfor %}
-      </section>
+      </ul>
+      {% endif %}
 
-      <section class="license-section">
-        <h2>Related OFAC Tools</h2>
-        <p>
-          Track related updates in the <a href="/sanctions-tracker">Venezuela sanctions tracker</a>,
-          compare active licenses in the <a href="/tools/ofac-venezuela-general-licenses">general-license directory</a>,
-          and screen counterparties with the <a href="/tools/ofac-venezuela-sanctions-checker">OFAC Venezuela sanctions checker</a>.
-        </p>
-      </section>
-    </main>
+      {% if license.analysis.limits %}
+      <h3>What It Does Not Authorize</h3>
+      <ul>
+        {% for item in license.analysis.limits %}
+        <li>{{ item }}</li>
+        {% endfor %}
+      </ul>
+      {% endif %}
 
-    <aside>
-      <div class="source-card">
-        <h2>Primary Source</h2>
-        <p>OFAC's text is the controlling source for scope, exclusions, and expiration.</p>
-        <p><a href="{{ license.ofac_url }}" rel="nofollow noopener" target="_blank">Open official OFAC text &rarr;</a></p>
+      {% if license.analysis.practical_analysis %}
+      <h3>Practical Reading</h3>
+      {% for paragraph in license.analysis.practical_analysis %}
+      <p>{{ paragraph }}</p>
+      {% endfor %}
+      {% endif %}
+
+      <h3>What to Check in the OFAC Text</h3>
+      <ul>
+        {% for item in license.analysis.review_items %}
+        <li>{{ item }}</li>
+        {% endfor %}
+      </ul>
+
+      <h3>Current Monitoring Signals</h3>
+      <ul>
+        {% for item in license.analysis.monitoring_items %}
+        <li>{{ item }}</li>
+        {% endfor %}
+      </ul>
+
+      {% for paragraph in license.analysis.current_context %}
+      <p>{{ paragraph }}</p>
+      {% endfor %}
+    </section>
+
+    <section class="license-section">
+      <h2>Related OFAC Licenses</h2>
+      <div class="related-list">
+        {% for rel in related_licenses %}
+        <a href="{{ rel.detail_url }}">{{ rel.number }}: {{ rel.title }}</a>
+        {% endfor %}
       </div>
+    </section>
 
-      <div class="source-card" style="margin-top:18px;">
-        <h2>Related Licenses</h2>
-        <div class="related-list">
-          {% for rel in related_licenses %}
-          <a href="{{ rel.detail_url }}">{{ rel.number }}: {{ rel.title }}</a>
-          {% endfor %}
-        </div>
-      </div>
-    </aside>
-  </div>
+    <section class="license-section">
+      <h2>Related OFAC Tools</h2>
+      <p>
+        Track related updates in the <a href="/sanctions-tracker">Venezuela sanctions tracker</a>,
+        compare active licenses in the <a href="/tools/ofac-venezuela-general-licenses">general-license directory</a>,
+        and screen counterparties with the <a href="/tools/ofac-venezuela-sanctions-checker">OFAC Venezuela sanctions checker</a>.
+      </p>
+    </section>
+  </main>
 
   {% from "_cluster_nav.html.j2" import cluster_nav %}
   {{ cluster_nav(cluster_ctx) }}

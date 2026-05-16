@@ -5069,7 +5069,10 @@ def sanctions_tracker():
                 "total": 0, "individuals": 0, "entities": 0,
                 "vessels": 0, "aircraft": 0,
             }
+            from src.data.sdn_tracker import is_sdn_designation_row
             for r in rows:
+                if not is_sdn_designation_row(r):
+                    continue
                 meta = r.extra_metadata or {}
                 ent_type = (meta.get("type") or "").lower()
                 if ent_type not in ("individual", "vessel", "aircraft", "entity"):
