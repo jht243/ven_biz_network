@@ -1,6 +1,8 @@
 {% extends "_base.html.j2" %}
+{% from "_ofac_alert_signup.html.j2" import ofac_alert_signup, ofac_alert_css, ofac_alert_js %}
 
 {% block head_extra %}
+{{ ofac_alert_css() }}
 <style>
   .stats-row { display: grid; grid-template-columns: repeat(auto-fit, minmax(160px, 1fr)); gap: 12px; margin: 24px 0 32px; }
   .stat-card { background: var(--sr-gray-bg); border-left: 3px solid var(--sr-blue); padding: 14px 16px; }
@@ -197,6 +199,13 @@
     and the <a href="/tools/ofac-venezuela-general-licenses">general license lookup</a>.
   </p>
 
+  {{ ofac_alert_signup(
+       headline="Get notified when the SDN list changes",
+       note="New designations, delistings, and entity modifications — delivered within hours of publication.",
+       interests=["sdn_changes"],
+       source="sanctions_tracker"
+  ) }}
+
   {% from "_recent_briefings.html.j2" import recent_briefings_rail %}
   {{ recent_briefings_rail(
        recent_briefings,
@@ -207,6 +216,7 @@
   {% from "_cluster_nav.html.j2" import cluster_nav %}
   {{ cluster_nav(cluster_ctx) }}
 
+  {{ ofac_alert_js() }}
   <script>
     (function() {
       var table = document.getElementById('sdn-table');

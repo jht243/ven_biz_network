@@ -1,7 +1,9 @@
 {% extends "_base.html.j2" %}
 {% from "_base.html.j2" import share_button %}
+{% from "_ofac_alert_signup.html.j2" import ofac_alert_signup, ofac_alert_css, ofac_alert_js %}
 
 {% block head_extra %}
+{{ ofac_alert_css() }}
 <style>
   .oil-hero { background: linear-gradient(180deg, #f4f8fc 0%, var(--white) 100%); padding: 28px 0 16px; margin-bottom: 16px; }
   .oil-hero .kicker { font-size: 12px; text-transform: uppercase; letter-spacing: 1.4px; color: var(--sr-blue); font-weight: 700; }
@@ -767,14 +769,12 @@
     </div>
   </section>
 
-  <div style="margin-top: 40px; padding: 18px; background: var(--sr-gray-bg); border-radius: 4px;">
-    <p style="font-size: 14px; color: var(--sr-dark-text); margin: 0;">
-      <strong>Tracking Venezuela&rsquo;s oil sector?</strong>
-      Subscribe to the Caracas Research daily briefing for sanctions, production,
-      PDVSA, and investment updates delivered to your inbox.
-      <a href="/#signup" style="font-weight: 600;">Get the daily briefing &rarr;</a>
-    </p>
-  </div>
+  {{ ofac_alert_signup(
+       headline="Get notified when oil-sector OFAC licenses change",
+       note="License amendments, revocations, and new authorizations affecting Venezuela oil operations — delivered within hours.",
+       interests=["license_updates", "diplomatic_signals"],
+       source="venezuela_oil"
+  ) }}
 
   <p style="font-size: 12px; color: var(--sr-gray-text); margin: 24px 0;">
     Sources: OPEC Annual Statistical Bulletin; BP Statistical Review of World Energy;
@@ -785,6 +785,8 @@
   </p>
 
 </section>
+
+{{ ofac_alert_js() }}
 
 {% from "_recent_briefings.html.j2" import recent_briefings_rail %}
 {{ recent_briefings_rail(

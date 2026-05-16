@@ -19,8 +19,10 @@
 #}
 {% extends "_base.html.j2" %}
 {% from "_cluster_nav.html.j2" import cluster_nav %}
+{% from "_ofac_alert_signup.html.j2" import ofac_alert_signup, ofac_alert_css, ofac_alert_js %}
 
 {% block head_extra %}
+{{ ofac_alert_css() }}
 <style>
   .sector-grid { display: grid; grid-template-columns: 1fr; gap: 22px; margin: 28px 0 32px; }
   @media (min-width: 720px) { .sector-grid { grid-template-columns: 1fr 1fr; } }
@@ -128,6 +130,14 @@
     </div>
   </article>
 
+  {{ ofac_alert_signup(
+       headline="Get notified when SDN designations change",
+       note="New listings, delistings, and modifications to Venezuela-program entries — delivered within hours.",
+       interests=["sdn_changes"],
+       source="sanctions_by_sector_index"
+  ) }}
+
   {{ cluster_nav(cluster_ctx) }}
+  {{ ofac_alert_js() }}
 </div>
 {% endblock %}

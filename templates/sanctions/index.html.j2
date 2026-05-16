@@ -14,6 +14,9 @@
 #}
 {% extends "_base.html.j2" %}
 {% from "_cluster_nav.html.j2" import cluster_nav %}
+{% from "_ofac_alert_signup.html.j2" import ofac_alert_signup, ofac_alert_css, ofac_alert_js %}
+
+{% block head_extra %}{{ ofac_alert_css() }}{% endblock %}
 
 {% block content %}
 <div class="container-wide">
@@ -107,7 +110,15 @@
     </div>
   </article>
 
+  {{ ofac_alert_signup(
+       headline="Get notified when SDN designations change",
+       note="New listings, delistings, and modifications to Venezuela-program entries — delivered within hours.",
+       interests=["sdn_changes"],
+       source="sanctions_index"
+  ) }}
+
   {{ cluster_nav(cluster_ctx) }}
+  {{ ofac_alert_js() }}
 </div>
 
 <script>

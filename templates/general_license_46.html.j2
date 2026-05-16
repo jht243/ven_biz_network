@@ -2,8 +2,10 @@
 {% from "_base.html.j2" import share_button %}
 {% from "_cluster_nav.html.j2" import cluster_nav %}
 {% from "_investment_fact.html.j2" import fact_value, fact_source %}
+{% from "_ofac_alert_signup.html.j2" import ofac_alert_signup, ofac_alert_css, ofac_alert_js %}
 
 {% block head_extra %}
+{{ ofac_alert_css() }}
 <style>
   .gl-hero { background: linear-gradient(180deg, #f6f8fa 0%, var(--white) 100%); padding: 28px 0 16px; margin-bottom: 16px; }
   .gl-hero .kicker { font-size: 12px; text-transform: uppercase; letter-spacing: 1.4px; color: #cc0000; font-weight: 700; }
@@ -218,6 +220,13 @@
     </div>
   </article>
 
+  {{ ofac_alert_signup(
+       headline="Get notified when OFAC general licenses change",
+       note="License amendments, revocations, and new authorizations — delivered within hours of publication.",
+       interests=["license_updates"],
+       source="general_license_46"
+  ) }}
+
   <div class="related">
     <h3>Related Analysis</h3>
     <ul>
@@ -231,6 +240,7 @@
   </div>
 </div>
 
+{{ ofac_alert_js() }}
 <script>
 document.querySelectorAll('.faq-q').forEach(function(btn) {
   btn.addEventListener('click', function() {

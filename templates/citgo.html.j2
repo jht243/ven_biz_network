@@ -1,7 +1,9 @@
 {% extends "_base.html.j2" %}
 {% from "_base.html.j2" import share_button %}
+{% from "_ofac_alert_signup.html.j2" import ofac_alert_signup, ofac_alert_css, ofac_alert_js %}
 
 {% block head_extra %}
+{{ ofac_alert_css() }}
 <style>
   .citgo-hero { background: linear-gradient(180deg, #f6f8fa 0%, var(--white) 100%); padding: 28px 0 16px; margin-bottom: 16px; }
   .citgo-hero .kicker { font-size: 12px; text-transform: uppercase; letter-spacing: 1.4px; color: #cc0000; font-weight: 700; }
@@ -1054,14 +1056,12 @@
     Venezuelan-state-owned entities. Information is current as of {{ updated_label }}.
   </div>
 
-  <div style="margin-top: 40px; padding: 18px; background: var(--sr-gray-bg); border-radius: 4px;">
-    <p style="font-size: 14px; color: var(--sr-dark-text); margin: 0;">
-      <strong>Tracking the Citgo ownership battle?</strong>
-      Subscribe to the Caracas Research daily briefing for real-time updates on
-      creditor proceedings, OFAC licensing changes, and Venezuelan energy policy.
-      <a href="/#signup" style="font-weight: 600;">Get the daily briefing &rarr;</a>
-    </p>
-  </div>
+  {{ ofac_alert_signup(
+       headline="Get notified when OFAC licensing or Citgo policy changes",
+       note="License amendments, enforcement actions, and diplomatic signals affecting Citgo and Venezuela oil — delivered within hours.",
+       interests=["license_updates", "enforcement", "diplomatic_signals"],
+       source="citgo"
+  ) }}
 
   <p style="font-size: 12px; color: var(--sr-gray-text); margin: 24px 0;">
     Sources: OFAC Venezuela-related sanctions program; Delaware District Court filings
@@ -1083,6 +1083,8 @@ document.querySelectorAll('.faq-q').forEach(function(btn){
   });
 });
 </script>
+
+{{ ofac_alert_js() }}
 
 {% from "_recent_briefings.html.j2" import recent_briefings_rail %}
 {{ recent_briefings_rail(
