@@ -1,0 +1,61 @@
+{% extends "_base.html.j2" %}
+
+{% block content %}
+<section class="container">
+
+  <nav class="breadcrumbs" aria-label="Breadcrumb">
+    <a href="/">Home</a><span>/</span>
+    <span>Terms of Service</span>
+  </nav>
+
+  <header style="margin: 16px 0 28px;">
+    <div style="font-size:12px; text-transform:uppercase; letter-spacing:1.4px; color:#cc0000; font-weight:700;">
+      Legal
+    </div>
+    <h1 style="font-family:var(--font-serif); font-size:36px; color:var(--sr-blue-dark); margin:8px 0 12px;">
+      Terms of Service
+    </h1>
+    <p style="font-family:var(--font-serif); font-style:italic; color:var(--sr-gray-text); font-size:18px;">
+      These terms govern your access to and use of Caracas Research, including our website,
+      briefings, tools, data, and related services.
+    </p>
+    <p style="font-size:13px; color:var(--sr-gray-text); margin-top:14px;">
+      Effective date: {{ effective_date }}
+    </p>
+  </header>
+
+  <h2 style="font-family:var(--font-serif); color:var(--sr-blue-dark); margin:32px 0 12px;">Acceptance of these terms</h2>
+  <p>By accessing or using this website, you agree to these Terms of Service. If you do not agree, you should not use the website or related services.</p>
+
+  <h2 style="font-family:var(--font-serif); color:var(--sr-blue-dark); margin:32px 0 12px;">Informational use only</h2>
+  <p>Content published by Caracas Research is provided for general informational and research purposes only. It is not legal, financial, tax, investment, sanctions-compliance, immigration, or professional advice. You are responsible for consulting qualified advisers before making decisions based on any information found on this website.</p>
+
+  <h2 style="font-family:var(--font-serif); color:var(--sr-blue-dark); margin:32px 0 12px;">No guarantee of accuracy</h2>
+  <p>We work to keep information current and useful, but we do not guarantee that any content, data, pricing, availability, source link, calculation, or analysis is complete, accurate, timely, or error-free. Information may change without notice.</p>
+
+  <h2 style="font-family:var(--font-serif); color:var(--sr-blue-dark); margin:32px 0 12px;">User responsibilities</h2>
+  <p>You agree to use the website only for lawful purposes. You may not misuse the website, interfere with its operation, attempt unauthorized access, scrape at unreasonable volume, or use the service in a way that violates applicable law or the rights of others.</p>
+
+  <h2 style="font-family:var(--font-serif); color:var(--sr-blue-dark); margin:32px 0 12px;">Third-party links and sources</h2>
+  <p>The website may link to third-party websites, government sources, data providers, or external services. Those resources are controlled by their respective owners. We are not responsible for third-party content, availability, policies, or practices.</p>
+
+  <h2 style="font-family:var(--font-serif); color:var(--sr-blue-dark); margin:32px 0 12px;">Intellectual property</h2>
+  <p>Unless otherwise stated, the website design, editorial content, analysis, and related materials are owned by Caracas Research or its licensors. You may reference or link to our public pages for ordinary informational use, but you may not reproduce, sell, or redistribute substantial portions of the service without permission.</p>
+
+  <h2 style="font-family:var(--font-serif); color:var(--sr-blue-dark); margin:32px 0 12px;">Paid services and submissions</h2>
+  <p>If the website offers paid services, forms, subscriptions, or document-preparation workflows, additional terms, prices, refund rules, or disclosures may apply. By submitting information through a form, you represent that the information is accurate and that you have the right to provide it.</p>
+
+  <h2 style="font-family:var(--font-serif); color:var(--sr-blue-dark); margin:32px 0 12px;">Disclaimer of warranties</h2>
+  <p>The website and services are provided on an "as is" and "as available" basis. To the fullest extent permitted by law, we disclaim all warranties, whether express, implied, or statutory, including warranties of merchantability, fitness for a particular purpose, title, and non-infringement.</p>
+
+  <h2 style="font-family:var(--font-serif); color:var(--sr-blue-dark); margin:32px 0 12px;">Limitation of liability</h2>
+  <p>To the fullest extent permitted by law, Caracas Research and its owners, contributors, contractors, and affiliates will not be liable for indirect, incidental, consequential, special, exemplary, or punitive damages, or for lost profits, lost data, business interruption, or losses arising from your use of the website.</p>
+
+  <h2 style="font-family:var(--font-serif); color:var(--sr-blue-dark); margin:32px 0 12px;">Changes to these terms</h2>
+  <p>We may update these Terms of Service from time to time. Updated terms will be posted on this page with a revised effective date. Continued use of the website after changes are posted means you accept the updated terms.</p>
+
+  <h2 style="font-family:var(--font-serif); color:var(--sr-blue-dark); margin:32px 0 12px;">Contact</h2>
+  <p>Questions about these terms may be sent to Caracas Research at {{ contact_address }}.</p>
+
+</section>
+{% endblock %}
