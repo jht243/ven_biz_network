@@ -16,8 +16,10 @@
       returns to the rest of the site.
 #}
 {% extends "_base.html.j2" %}
+{% from "_ofac_alert_signup.html.j2" import ofac_alert_signup, ofac_alert_css, ofac_alert_js %}
 
 {% block head_extra %}
+{{ ofac_alert_css() }}
 <style>
   .nc-hero { background: linear-gradient(180deg, #fafbff, #f4f6fb); border: 1px solid var(--sr-gray-light); border-left: 4px solid #2e7d32; padding: 22px 24px; border-radius: 3px; margin: 18px 0 28px; }
   .nc-hero.hit { border-left-color: var(--sr-red); }
@@ -244,8 +246,16 @@
        intro="Recent investor briefings on OFAC Venezuela enforcement, license updates, and material designations.",
   ) }}
 
+  {{ ofac_alert_signup(
+       headline="Get notified when SDN designations change",
+       note="New listings, delistings, and modifications — so you know when to re-screen.",
+       interests=["sdn_changes"],
+       source="ofac_name_check"
+  ) }}
+
   {% from "_cluster_nav.html.j2" import cluster_nav %}
   {{ cluster_nav(cluster_ctx) }}
+  {{ ofac_alert_js() }}
 
 <script>
 if (typeof gtag === 'function') gtag('event', 'tool_interaction', { tool_name: 'ofac_sdn_name_check', search_term: '{{ slug }}' });

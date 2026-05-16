@@ -1,7 +1,9 @@
 {% extends "_base.html.j2" %}
 {% from "_base.html.j2" import share_button %}
+{% from "_ofac_alert_signup.html.j2" import ofac_alert_signup, ofac_alert_css, ofac_alert_js %}
 
 {% block head_extra %}
+{{ ofac_alert_css() }}
 <style>
   .tps-hero { background: linear-gradient(180deg, #f6f8fa 0%, var(--white) 100%); padding: 28px 0 16px; margin-bottom: 16px; }
   .tps-hero .kicker { font-size: 12px; text-transform: uppercase; letter-spacing: 1.4px; color: #cc0000; font-weight: 700; }
@@ -911,14 +913,12 @@
   {# ======================================================================= #}
   {# Newsletter CTA                                                          #}
   {# ======================================================================= #}
-  <div style="margin-top: 40px; padding: 18px; background: var(--sr-gray-bg); border-radius: 4px;">
-    <p style="font-size: 14px; color: var(--sr-dark-text); margin: 0;">
-      <strong>Stay informed on Venezuela sanctions changes.</strong>
-      Subscribe to the Caracas Research daily briefing for OFAC updates,
-      General License changes, SDN list updates, and compliance analysis.
-      <a href="/#signup" style="font-weight: 600;">Get the daily briefing &rarr;</a>
-    </p>
-  </div>
+  {{ ofac_alert_signup(
+       headline="Get notified when the OFAC SDN list changes",
+       note="New designations, delistings, general license changes, and enforcement actions — delivered within hours.",
+       interests=["sdn_changes", "license_updates"],
+       source="ofac_sanctions_list"
+  ) }}
 
   <p style="font-size: 12px; color: var(--sr-gray-text); margin: 24px 0;">
     Sources: US Department of the Treasury, Office of Foreign Assets Control;
@@ -941,6 +941,8 @@
   });
 })();
 </script>
+
+{{ ofac_alert_js() }}
 
 {% from "_recent_briefings.html.j2" import recent_briefings_rail %}
 {{ recent_briefings_rail(

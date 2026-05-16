@@ -1,7 +1,9 @@
 {% extends "_base.html.j2" %}
+{% from "_ofac_alert_signup.html.j2" import ofac_alert_signup, ofac_alert_css, ofac_alert_js %}
 {% from "_base.html.j2" import share_button %}
 
 {% block head_extra %}
+{{ ofac_alert_css() }}
 <style>
   .sanc-hero { background: linear-gradient(180deg, #f6f8fa 0%, var(--white) 100%); padding: 28px 0 16px; margin-bottom: 16px; }
   .sanc-hero .kicker { font-size: 12px; text-transform: uppercase; letter-spacing: 1.4px; color: #cc0000; font-weight: 700; }
@@ -837,14 +839,12 @@
     subject to change as US policy evolves.
   </div>
 
-  <div style="margin-top: 40px; padding: 18px; background: var(--sr-gray-bg); border-radius: 4px;">
-    <p style="font-size: 14px; color: var(--sr-dark-text); margin: 0;">
-      <strong>Stay current on Venezuela sanctions.</strong>
-      Subscribe to the Caracas Research daily briefing for real-time sanctions
-      updates, general-license changes, and compliance guidance.
-      <a href="/#signup" style="font-weight: 600;">Get the daily briefing &rarr;</a>
-    </p>
-  </div>
+  {{ ofac_alert_signup(
+       headline="Get notified when Venezuela sanctions policy changes",
+       note="Executive orders, new general licenses, enforcement actions, and Federal Register publications — delivered within hours.",
+       interests=["policy_legal", "license_updates"],
+       source="why_is_venezuela_sanctioned"
+  ) }}
 
   <p style="font-size: 12px; color: var(--sr-gray-text); margin: 24px 0;">
     Sources: OFAC sanctions actions and general licenses; Federal Register;
@@ -867,6 +867,8 @@
   });
 })();
 </script>
+
+{{ ofac_alert_js() }}
 
 {% from "_recent_briefings.html.j2" import recent_briefings_rail %}
 {{ recent_briefings_rail(

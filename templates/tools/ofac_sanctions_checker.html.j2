@@ -1,6 +1,8 @@
 {% extends "_base.html.j2" %}
+{% from "_ofac_alert_signup.html.j2" import ofac_alert_signup, ofac_alert_css, ofac_alert_js %}
 
 {% block head_extra %}
+{{ ofac_alert_css() }}
 <style>
   .checker-form { display: flex; gap: 8px; margin: 20px 0; }
   .checker-form input { flex: 1; padding: 14px 18px; border: 2px solid var(--sr-blue); border-radius: 3px; font-size: 16px; }
@@ -108,8 +110,16 @@
        intro="Recent investor briefings on OFAC enforcement, license updates, and material designations.",
   ) }}
 
+  {{ ofac_alert_signup(
+       headline="Get notified when the SDN list changes",
+       note="New designations, delistings, and entity modifications — so you know when to re-screen.",
+       interests=["sdn_changes"],
+       source="ofac_sanctions_checker"
+  ) }}
+
   {% from "_cluster_nav.html.j2" import cluster_nav %}
   {{ cluster_nav(cluster_ctx) }}
+  {{ ofac_alert_js() }}
 
 <script>
 document.querySelector('.checker-form').addEventListener('submit', function() {

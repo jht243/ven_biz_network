@@ -1,6 +1,8 @@
 {% extends "_base.html.j2" %}
+{% from "_ofac_alert_signup.html.j2" import ofac_alert_signup, ofac_alert_css, ofac_alert_js %}
 
 {% block head_extra %}
+{{ ofac_alert_css() }}
 <style>
   .tool-intro { background: var(--sr-gray-bg); border-left: 4px solid var(--sr-blue); padding: 18px 22px; margin: 16px 0 28px; }
   .tool-intro h2 { margin: 0 0 6px; font-family: var(--font-serif); color: var(--sr-blue-dark); font-size: 18px; }
@@ -147,8 +149,16 @@
     })();
   </script>
 
+  {{ ofac_alert_signup(
+       headline="Get notified when OFAC licenses change",
+       note="General licenses issued, amended, or revoked — delivered within hours of publication.",
+       interests=["license_updates"],
+       source="ofac_general_licenses"
+  ) }}
+
   {% from "_cluster_nav.html.j2" import cluster_nav %}
   {{ cluster_nav(cluster_ctx) }}
+  {{ ofac_alert_js() }}
 
   {% from "_recent_briefings.html.j2" import recent_briefings_rail %}
   {{ recent_briefings_rail(

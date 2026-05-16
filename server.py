@@ -2039,6 +2039,45 @@ def admin_regen_report():
         return jsonify({"ok": False, "error": str(exc)}), 500
 
 
+VALID_ALERT_INTERESTS = {
+    "sdn_changes",
+    "license_updates",
+    "enforcement",
+    "policy_legal",
+    "diplomatic_signals",
+    "daily_briefing",
+}
+
+
+def _build_buttondown_metadata(data: dict) -> dict:
+    """Build the metadata dict sent to Buttondown for a subscriber."""
+    interests = [
+        i for i in data.get("interests", [])
+        if isinstance(i, str) and i in VALID_ALERT_INTERESTS
+    ]
+    source = data.get("source", "")
+    if not isinstance(source, str):
+        source = ""
+
+    meta: dict = {
+        "site": settings.site_name,
+        "site_url": _base_url(),
+    }
+    if interests:
+        meta["interests"] = ",".join(interests)
+    if source:
+        meta["signup_source"] = source[:120]
+    return meta
+
+
+def _build_buttondown_tags(data: dict) -> list[str]:
+    """Build Buttondown tags from interests so segments can be created."""
+    return [
+        i for i in data.get("interests", [])
+        if isinstance(i, str) and i in VALID_ALERT_INTERESTS
+    ]
+
+
 @app.route("/api/subscribe", methods=["POST"])
 def subscribe():
     data = request.get_json(silent=True) or {}
@@ -2056,18 +2095,22 @@ def subscribe():
     if subscriber_ip and "," in subscriber_ip:
         subscriber_ip = subscriber_ip.split(",")[0].strip()
 
+    metadata = _build_buttondown_metadata(data)
+    tags = _build_buttondown_tags(data)
+
+    payload: dict = {
+        "email_address": email,
+        "type": "regular",
+        "ip_address": subscriber_ip,
+        "metadata": metadata,
+    }
+    if tags:
+        payload["tags"] = tags
+
     try:
         resp = httpx.post(
             BUTTONDOWN_API_URL,
-            json={
-                "email_address": email,
-                "type": "regular",
-                "ip_address": subscriber_ip,
-                "metadata": {
-                    "site": settings.site_name,
-                    "site_url": _base_url(),
-                },
-            },
+            json=payload,
             headers={
                 "Authorization": f"Token {api_key}",
             },
@@ -2075,16 +2118,15 @@ def subscribe():
         )
 
         if resp.status_code in (200, 201):
-            logger.info("Buttondown subscriber added: %s", email)
+            logger.info("Buttondown subscriber added: %s (tags=%s, source=%s)", email, tags, metadata.get("signup_source", ""))
             return jsonify({"ok": True})
 
         body = resp.json() if resp.headers.get("content-type", "").startswith("application/json") else {}
         code = body.get("code", "")
 
-        # Buttondown returns HTTP 400 with code=email_already_exists for
-        # duplicate emails (not 409). Treat that as a successful
-        # subscribe so the user UX is "you're in" either way.
         if resp.status_code == 409 or code == "email_already_exists":
+            if tags:
+                _update_subscriber_tags(api_key, email, tags, metadata)
             return jsonify({"ok": True, "note": "Already subscribed"})
 
         if code == "email_invalid":
@@ -2097,10 +2139,8 @@ def subscribe():
                 json={
                     "email_address": email,
                     "type": "regular",
-                    "metadata": {
-                        "site": settings.site_name,
-                        "site_url": _base_url(),
-                    },
+                    "metadata": metadata,
+                    **({"tags": tags} if tags else {}),
                 },
                 headers={
                     "Authorization": f"Token {api_key}",
@@ -2123,6 +2163,35 @@ def subscribe():
     except Exception as e:
         logger.error("Buttondown request failed: %s", e)
         return jsonify({"ok": False, "error": "Service unavailable"}), 503
+
+
+def _update_subscriber_tags(api_key: str, email: str, new_tags: list[str], metadata: dict) -> None:
+    """Merge new interest tags onto an existing Buttondown subscriber."""
+    try:
+        get_resp = httpx.get(
+            f"{BUTTONDOWN_API_URL}/{email}",
+            headers={"Authorization": f"Token {api_key}"},
+            timeout=10,
+        )
+        if get_resp.status_code != 200:
+            return
+        existing = get_resp.json()
+        existing_tags = set(existing.get("tags", []))
+        merged_tags = list(existing_tags | set(new_tags))
+        existing_meta = existing.get("metadata", {})
+        existing_meta.update(metadata)
+        if "interests" in existing_meta and new_tags:
+            old_interests = set(existing_meta.get("interests", "").split(","))
+            existing_meta["interests"] = ",".join(old_interests | set(new_tags))
+        httpx.patch(
+            f"{BUTTONDOWN_API_URL}/{email}",
+            json={"tags": merged_tags, "metadata": existing_meta},
+            headers={"Authorization": f"Token {api_key}"},
+            timeout=10,
+        )
+        logger.info("Updated tags for existing subscriber %s: %s", email, merged_tags)
+    except Exception as exc:
+        logger.warning("Failed to update tags for %s: %s", email, exc)
 
 
 @app.post("/api/feedback")
