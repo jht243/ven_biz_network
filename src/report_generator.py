@@ -1207,9 +1207,9 @@ def _build_jsonld(entries: list[dict], seo: dict, generated_at: datetime) -> str
         "url": f"{base}/",
         "logo": {
             "@type": "ImageObject",
-            "url": f"{base}/static/og-image.png?v=3",
-            "width": 1200,
-            "height": 630,
+            "url": f"{base}/static/cr-icon-512.png",
+            "width": 512,
+            "height": 512,
         },
     }
 

@@ -7,18 +7,28 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
 
   {% set _seo = seo|default({}) %}
+  {% set _site_name = _seo.site_name|default('Caracas Research') %}
+  {% set _site_url = _seo.site_url|default('https://caracasresearch.com') %}
   <title>{{ _seo.title|default('Caracas Research — Daily Investment & Sanctions Briefing') }}</title>
   <meta name="description" content="{{ _seo.description|default('Daily Venezuelan investment & sanctions briefing for global investors.') }}">
   <meta name="keywords" content="{{ _seo.keywords|default('invest in Venezuela, OFAC Venezuela sanctions, invest in Caracas, Venezuelan investment opportunities') }}">
-  <meta name="author" content="{{ _seo.site_name|default('Caracas Research') }}">
+  <meta name="author" content="{{ _site_name }}">
+  <meta name="application-name" content="{{ _site_name }}">
+  <meta name="apple-mobile-web-app-title" content="{{ _site_name }}">
   <meta name="robots" content="index, follow, max-image-preview:large, max-snippet:-1">
   <meta name="news_keywords" content="{{ _seo.keywords|default('Venezuela investment, OFAC sanctions, Caracas') }}">
   <link rel="canonical" href="{{ _seo.canonical|default('https://caracasresearch.com/') }}">
   <link rel="alternate" hreflang="en" href="{{ _seo.canonical|default('https://caracasresearch.com/') }}">
   <link rel="alternate" hreflang="x-default" href="{{ _seo.canonical|default('https://caracasresearch.com/') }}">
+  <link rel="icon" href="/favicon.ico" sizes="any">
+  <link rel="icon" type="image/svg+xml" href="/static/cr-favicon.svg">
+  <link rel="icon" type="image/png" sizes="48x48" href="/static/cr-favicon-48.png">
+  <link rel="icon" type="image/png" sizes="192x192" href="/static/cr-favicon-192.png">
+  <link rel="apple-touch-icon" sizes="180x180" href="/static/apple-touch-icon.png">
+  <link rel="manifest" href="/static/site.webmanifest">
 
   <meta property="og:type" content="{{ _seo.og_type|default('website') }}">
-  <meta property="og:site_name" content="{{ _seo.site_name|default('Caracas Research') }}">
+  <meta property="og:site_name" content="{{ _site_name }}">
   <meta property="og:locale" content="{{ _seo.locale|default('en_US') }}">
   <meta property="og:url" content="{{ _seo.canonical|default('https://caracasresearch.com/') }}">
   <meta property="og:title" content="{{ _seo.title|default('Caracas Research') }}">
@@ -34,6 +44,7 @@
   <meta name="twitter:title" content="{{ _seo.title|default('Caracas Research') }}">
   <meta name="twitter:description" content="{{ _seo.description|default('Daily Venezuelan investment briefing.') }}">
   <meta name="twitter:image" content="{{ _seo.og_image|default('https://caracasresearch.com/static/og-image.png?v=3') }}">
+  <script type="application/ld+json">{"@context":"https://schema.org","@graph":[{"@type":"Organization","@id":"{{ _site_url }}/#organization","name":"{{ _site_name }}","url":"{{ _site_url }}/","logo":{"@type":"ImageObject","url":"{{ _site_url }}/static/cr-icon-512.png","width":512,"height":512}},{"@type":"WebSite","@id":"{{ _site_url }}/#website","url":"{{ _site_url }}/","name":"{{ _site_name }}","alternateName":"Caracas Research","publisher":{"@id":"{{ _site_url }}/#organization"},"inLanguage":"en-US"}]}</script>
 
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>

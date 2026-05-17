@@ -281,23 +281,68 @@ def _ensure_feedback_widget(html: str) -> str:
     return html + _FEEDBACK_WIDGET_HTML
 
 
+def _site_identity_head_html() -> str:
+    """Head tags that help Google resolve the site name and favicon."""
+    base = settings.canonical_site_url.rstrip("/")
+    site_name = settings.site_name
+    return (
+        f'<meta name="application-name" content="{_xml_escape(site_name)}">\n'
+        f'  <meta name="apple-mobile-web-app-title" content="{_xml_escape(site_name)}">\n'
+        '  <link rel="icon" href="/favicon.ico" sizes="any">\n'
+        '  <link rel="icon" type="image/svg+xml" href="/static/cr-favicon.svg">\n'
+        '  <link rel="icon" type="image/png" sizes="48x48" href="/static/cr-favicon-48.png">\n'
+        '  <link rel="icon" type="image/png" sizes="192x192" href="/static/cr-favicon-192.png">\n'
+        '  <link rel="apple-touch-icon" sizes="180x180" href="/static/apple-touch-icon.png">\n'
+        '  <link rel="manifest" href="/static/site.webmanifest">\n'
+        '  <script type="application/ld+json">'
+        '{"@context":"https://schema.org","@graph":['
+        f'{{"@type":"Organization","@id":"{base}/#organization","name":"{_xml_escape(site_name)}","url":"{base}/","logo":{{"@type":"ImageObject","url":"{base}/static/cr-icon-512.png","width":512,"height":512}}}},'
+        f'{{"@type":"WebSite","@id":"{base}/#website","url":"{base}/","name":"{_xml_escape(site_name)}","alternateName":"Caracas Research","publisher":{{"@id":"{base}/#organization"}},"inLanguage":"en-US"}}'
+        "]}</script>"
+    )
+
+
+def _ensure_site_identity(html: str) -> str:
+    """Patch older generated homepage HTML with the current site identity."""
+    if not html:
+        return html
+    html = html.replace(
+        "<title>Venezuelan Business Network</title>",
+        "<title>Caracas Research</title>",
+        1,
+    )
+    if "cr-favicon" not in html:
+        marker = '<meta name="viewport" content="width=device-width, initial-scale=1.0">'
+        if marker in html:
+            html = html.replace(marker, f"{marker}\n  {_site_identity_head_html()}", 1)
+        elif "</head>" in html:
+            html = html.replace("</head>", f"  {_site_identity_head_html()}\n</head>", 1)
+    if 'property="og:site_name"' not in html and "</title>" in html:
+        html = html.replace(
+            "</title>",
+            '</title>\n  <meta property="og:site_name" content="Caracas Research">',
+            1,
+        )
+    return html
+
+
 def _get_report_html() -> str | None:
     """Return rendered report HTML from Supabase Storage (cached) or local disk."""
     if supabase_storage_read_enabled():
         now = time.time()
         if _REPORT_CACHE["html"] and now - _REPORT_CACHE["fetched_at"] < _REPORT_CACHE_TTL_SECONDS:
-            return _ensure_feedback_widget(_ensure_google_tag(_REPORT_CACHE["html"]))
+            return _ensure_site_identity(_ensure_feedback_widget(_ensure_google_tag(_REPORT_CACHE["html"])))
         html = fetch_report_html()
         if html:
             _REPORT_CACHE["html"] = html
             _REPORT_CACHE["fetched_at"] = now
-            return _ensure_feedback_widget(_ensure_google_tag(html))
+            return _ensure_site_identity(_ensure_feedback_widget(_ensure_google_tag(html)))
         if _REPORT_CACHE["html"]:
-            return _ensure_feedback_widget(_ensure_google_tag(_REPORT_CACHE["html"]))
+            return _ensure_site_identity(_ensure_feedback_widget(_ensure_google_tag(_REPORT_CACHE["html"])))
 
     report = OUTPUT_DIR / "report.html"
     if report.exists():
-        return _ensure_feedback_widget(_ensure_google_tag(report.read_text(encoding="utf-8")))
+        return _ensure_site_identity(_ensure_feedback_widget(_ensure_google_tag(report.read_text(encoding="utf-8"))))
     return None
 
 
@@ -679,6 +724,15 @@ def index():
     if not html:
         abort(503, description="Report not yet generated. Run the daily pipeline first.")
     return Response(html, mimetype="text/html")
+
+
+@app.route("/favicon.ico")
+def favicon_ico():
+    return send_from_directory(
+        Path(__file__).resolve().parent,
+        "favicon.ico",
+        mimetype="image/vnd.microsoft.icon",
+    )
 
 
 @app.post("/webhooks/stripe")
@@ -3213,7 +3267,7 @@ def _visa_service_jsonld(*, canonical: str, title: str, description: str,
             "provider": {"@type": "Organization", "name": _s.site_name, "url": f"{base}/"},
             "url": canonical,
             "description": description,
-            "termsOfService": f"{base}/sources",
+            "termsOfService": f"{base}/terms-of-service",
             "isRelatedTo": [{"@type": "WebPage", "name": p["name"], "url": p["url"]} for p in related_pages],
             "offers": {
                 "@type": "Offer",
@@ -5061,6 +5115,71 @@ def sources_page():
         raise
     except Exception as exc:
         logger.exception("sources page render failed: %s", exc)
+        abort(500)
+
+
+@app.route("/terms-of-service")
+@app.route("/terms-of-service/")
+def terms_of_service_page():
+    """Generic terms of service page."""
+    try:
+        from src.page_renderer import _env, _base_url, _iso, settings as _s
+        from datetime import date as _date, datetime as _dt
+        import json as _json
+
+        base = _base_url()
+        canonical = f"{base}/terms-of-service"
+        now_iso = _iso(_dt.utcnow())
+        seo = {
+            "title": "Terms of Service — Caracas Research",
+            "description": (
+                "Terms governing access to and use of the Caracas Research website, "
+                "content, tools, and related services."
+            ),
+            "keywords": "Caracas Research terms of service, website terms, terms and conditions",
+            "canonical": canonical,
+            "site_name": _s.site_name,
+            "site_url": base,
+            "locale": _s.site_locale,
+            "og_image": f"{base}/static/og-image.png?v=3",
+            "og_type": "website",
+            "published_iso": now_iso,
+            "modified_iso": now_iso,
+        }
+        jsonld = _json.dumps({
+            "@context": "https://schema.org",
+            "@graph": [
+                {
+                    "@type": "BreadcrumbList",
+                    "itemListElement": [
+                        {"@type": "ListItem", "position": 1, "name": "Home", "item": f"{base}/"},
+                        {"@type": "ListItem", "position": 2, "name": "Terms of Service", "item": canonical},
+                    ],
+                },
+                {
+                    "@type": "WebPage",
+                    "@id": f"{canonical}#webpage",
+                    "url": canonical,
+                    "name": seo["title"],
+                    "description": seo["description"],
+                    "publisher": {"@type": "Organization", "name": _s.site_name, "url": f"{base}/"},
+                },
+            ],
+        }, ensure_ascii=False)
+
+        template = _env.get_template("terms_of_service.html.j2")
+        html = template.render(
+            seo=seo,
+            jsonld=jsonld,
+            current_year=_date.today().year,
+            effective_date="May 16, 2026",
+            contact_address="725 SE 14th Court, Fort Lauderdale, Florida 33316",
+        )
+        return Response(html, mimetype="text/html")
+    except HTTPException:
+        raise
+    except Exception as exc:
+        logger.exception("terms of service page render failed: %s", exc)
         abort(500)
 
 
@@ -7122,7 +7241,7 @@ def companies_profile_page(slug: str):
                 "@type": "Organization",
                 "name": _s.site_name,
                 "url": f"{base}/",
-                "logo": {"@type": "ImageObject", "url": f"{base}/static/og-image.png?v=3"},
+                "logo": {"@type": "ImageObject", "url": f"{base}/static/cr-icon-512.png", "width": 512, "height": 512},
             },
             "about": {
                 "@type": "Organization",
@@ -9481,7 +9600,7 @@ def venezuela_vs_colombia_page():
                     "datePublished": "2026-01-08T00:00:00Z",
                     "dateModified": _iso(_dt.utcnow()),
                     "author": {"@type": "Organization", "name": "Caracas Research", "url": base},
-                    "publisher": {"@type": "Organization", "name": "Caracas Research", "url": base, "logo": {"@type": "ImageObject", "url": f"{base}/static/og-image.png"}},
+                    "publisher": {"@type": "Organization", "name": "Caracas Research", "url": base, "logo": {"@type": "ImageObject", "url": f"{base}/static/cr-icon-512.png", "width": 512, "height": 512}},
                     "mainEntityOfPage": canonical,
                     "image": f"{base}/static/og-image.png?v=3",
                     "articleSection": "Investment",
@@ -9662,7 +9781,7 @@ def investing_in_venezuelan_oil_page():
                     "datePublished": "2026-01-29T00:00:00Z",
                     "dateModified": _iso(_dt.utcnow()),
                     "author": {"@type": "Organization", "name": "Caracas Research", "url": base},
-                    "publisher": {"@type": "Organization", "name": "Caracas Research", "url": base, "logo": {"@type": "ImageObject", "url": f"{base}/static/og-image.png"}},
+                    "publisher": {"@type": "Organization", "name": "Caracas Research", "url": base, "logo": {"@type": "ImageObject", "url": f"{base}/static/cr-icon-512.png", "width": 512, "height": 512}},
                     "mainEntityOfPage": canonical,
                     "image": f"{base}/static/og-image.png?v=3",
                     "articleSection": "Oil & Energy",
@@ -9831,7 +9950,7 @@ def venezuela_hydrocarbons_law_page():
                     "datePublished": "2026-01-29T00:00:00Z",
                     "dateModified": _iso(_dt.utcnow()),
                     "author": {"@type": "Organization", "name": "Caracas Research", "url": base},
-                    "publisher": {"@type": "Organization", "name": "Caracas Research", "url": base, "logo": {"@type": "ImageObject", "url": f"{base}/static/og-image.png"}},
+                    "publisher": {"@type": "Organization", "name": "Caracas Research", "url": base, "logo": {"@type": "ImageObject", "url": f"{base}/static/cr-icon-512.png", "width": 512, "height": 512}},
                     "mainEntityOfPage": canonical,
                     "image": f"{base}/static/og-image.png?v=3",
                     "articleSection": "Oil & Energy",
@@ -9996,7 +10115,7 @@ def general_license_46_page():
                     "datePublished": "2026-01-29T00:00:00Z",
                     "dateModified": _iso(_dt.utcnow()),
                     "author": {"@type": "Organization", "name": "Caracas Research", "url": base},
-                    "publisher": {"@type": "Organization", "name": "Caracas Research", "url": base, "logo": {"@type": "ImageObject", "url": f"{base}/static/og-image.png"}},
+                    "publisher": {"@type": "Organization", "name": "Caracas Research", "url": base, "logo": {"@type": "ImageObject", "url": f"{base}/static/cr-icon-512.png", "width": 512, "height": 512}},
                     "mainEntityOfPage": canonical,
                     "image": f"{base}/static/og-image.png?v=3",
                     "articleSection": "Sanctions",
@@ -10149,7 +10268,7 @@ def venezuela_bonds_restructuring_page():
                     "datePublished": "2026-01-09T00:00:00Z",
                     "dateModified": _iso(_dt.utcnow()),
                     "author": {"@type": "Organization", "name": "Caracas Research", "url": base},
-                    "publisher": {"@type": "Organization", "name": "Caracas Research", "url": base, "logo": {"@type": "ImageObject", "url": f"{base}/static/og-image.png"}},
+                    "publisher": {"@type": "Organization", "name": "Caracas Research", "url": base, "logo": {"@type": "ImageObject", "url": f"{base}/static/cr-icon-512.png", "width": 512, "height": 512}},
                     "mainEntityOfPage": canonical,
                     "image": f"{base}/static/og-image.png?v=3",
                     "articleSection": "Finance",
@@ -10526,7 +10645,7 @@ def venezuela_etf_page():
                     "datePublished": "2026-01-06T00:00:00Z",
                     "dateModified": _iso(_dt.utcnow()),
                     "author": {"@type": "Organization", "name": "Caracas Research", "url": base},
-                    "publisher": {"@type": "Organization", "name": "Caracas Research", "url": base, "logo": {"@type": "ImageObject", "url": f"{base}/static/og-image.png"}},
+                    "publisher": {"@type": "Organization", "name": "Caracas Research", "url": base, "logo": {"@type": "ImageObject", "url": f"{base}/static/cr-icon-512.png", "width": 512, "height": 512}},
                     "mainEntityOfPage": canonical,
                     "image": f"{base}/static/og-image.png?v=3",
                     "articleSection": "Finance",
@@ -11104,6 +11223,7 @@ def sitemap_xml():
         {"loc": f"{base}/citgo", "lastmod": today_iso, "changefreq": "weekly", "priority": "0.85"},
         {"loc": f"{base}/get-venezuela-visa", "lastmod": today_iso, "changefreq": "weekly", "priority": "0.85"},
         {"loc": f"{base}/sources", "lastmod": today_iso, "changefreq": "weekly", "priority": "0.6"},
+        {"loc": f"{base}/terms-of-service", "lastmod": today_iso, "changefreq": "yearly", "priority": "0.3"},
         {"loc": f"{base}/briefing", "lastmod": today_iso, "changefreq": "daily", "priority": "0.9"},
         {"loc": f"{base}/tools", "lastmod": today_iso, "changefreq": "weekly", "priority": "0.8"},
         {"loc": f"{base}/explainers", "lastmod": today_iso, "changefreq": "weekly", "priority": "0.8"},
