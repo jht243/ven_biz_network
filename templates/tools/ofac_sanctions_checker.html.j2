@@ -1,5 +1,5 @@
 {% extends "_base.html.j2" %}
-{% from "_ofac_alert_signup.html.j2" import ofac_alert_signup, ofac_alert_css, ofac_alert_js %}
+{% from "_ofac_alert_signup.html.j2" import ofac_alert_signup, ofac_alert_button, ofac_alert_modal, ofac_alert_css, ofac_alert_js %}
 
 {% block head_extra %}
 {{ ofac_alert_css() }}
@@ -31,6 +31,7 @@
     <a href="/">Home</a><span>/</span>
     <a href="/invest-in-venezuela">Invest in Venezuela</a><span>/</span>
     <span>OFAC Sanctions Exposure Checker</span>
+    {{ ofac_alert_button() }}
   </nav>
 
   <header style="margin: 16px 0 20px;">
@@ -119,6 +120,12 @@
 
   {% from "_cluster_nav.html.j2" import cluster_nav %}
   {{ cluster_nav(cluster_ctx) }}
+  {{ ofac_alert_modal(
+       headline="Get notified when SDN designations change",
+       note="New listings, delistings, and modifications to Venezuela-program entries — delivered within hours.",
+       interests=["sdn_changes"],
+       source="ofac_sanctions_checker"
+  ) }}
   {{ ofac_alert_js() }}
 
 <script>

@@ -14,7 +14,7 @@
 #}
 {% extends "_base.html.j2" %}
 {% from "_cluster_nav.html.j2" import cluster_nav %}
-{% from "_ofac_alert_signup.html.j2" import ofac_alert_signup, ofac_alert_css, ofac_alert_js %}
+{% from "_ofac_alert_signup.html.j2" import ofac_alert_signup, ofac_alert_button, ofac_alert_modal, ofac_alert_css, ofac_alert_js %}
 
 {% block head_extra %}{{ ofac_alert_css() }}{% endblock %}
 
@@ -28,6 +28,7 @@
     <a href="/sanctions/by-sector">By sector</a>
     <span>›</span>
     <strong>{{ sector_label }}</strong>
+    {{ ofac_alert_button() }}
   </nav>
 
   <article>
@@ -127,6 +128,12 @@
   ) }}
 
   {{ cluster_nav(cluster_ctx) }}
+  {{ ofac_alert_modal(
+       headline="Get notified when SDN designations change",
+       note="New listings, delistings, and modifications to Venezuela-program entries — delivered within hours.",
+       interests=["sdn_changes"],
+       source="sanctions_by_sector"
+  ) }}
   {{ ofac_alert_js() }}
 </div>
 

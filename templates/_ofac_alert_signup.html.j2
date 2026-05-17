@@ -1,15 +1,23 @@
 {#
-  Contextual OFAC alert signup — drop into any page with:
+  Contextual OFAC alert signup — two patterns:
 
-    {% from "_ofac_alert_signup.html.j2" import ofac_alert_signup, ofac_alert_css, ofac_alert_js %}
-    {{ ofac_alert_css() }}          ← in head_extra or once per page
-    {{ ofac_alert_signup(
-         headline="Get notified when the SDN list changes",
-         note="New designations, delistings, and entity modifications — delivered within hours.",
-         interests=["sdn_changes"],
-         source="sanctions_tracker"
-       ) }}
-    {{ ofac_alert_js() }}           ← before </body> or once per page
+  1. HEADER BUTTON + MODAL (primary):
+     Renders a small "Notify Me" pill in the header area. On click,
+     opens a centered modal with headline, optional name, email, submit.
+
+     {% from "_ofac_alert_signup.html.j2" import ofac_alert_css, ofac_alert_button, ofac_alert_modal, ofac_alert_js %}
+     {{ ofac_alert_css() }}
+     {{ ofac_alert_button() }}                    ← place in header area
+     {{ ofac_alert_modal(
+          headline="Get notified when the SDN list changes",
+          note="New designations, delistings, and entity modifications — delivered within hours.",
+          interests=["sdn_changes"],
+          source="sanctions_tracker"
+        ) }}
+     {{ ofac_alert_js() }}
+
+  2. INLINE BAND (secondary, further down page):
+     {{ ofac_alert_signup(...) }}
 
   `interests` is a list of tags passed to Buttondown metadata:
     sdn_changes, license_updates, enforcement, policy_legal, diplomatic_signals
@@ -19,6 +27,139 @@
 
 {% macro ofac_alert_css() %}
 <style>
+  /* ── Header button ── */
+  .ofac-notify-btn {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    padding: 6px 14px;
+    background: var(--sr-blue-dark, #001f3f);
+    color: #fff;
+    border: 1px solid var(--sr-blue-dark, #001f3f);
+    border-radius: 999px;
+    font-family: var(--font-sans);
+    font-size: 12px;
+    font-weight: 600;
+    cursor: pointer;
+    transition: background 0.15s, border-color 0.15s;
+    line-height: 1;
+    text-decoration: none;
+  }
+  .ofac-notify-btn:hover { background: #002f5f; border-color: #002f5f; }
+  .ofac-notify-btn svg { flex-shrink: 0; }
+
+  /* ── Modal backdrop ── */
+  .ofac-modal-backdrop {
+    position: fixed;
+    inset: 0;
+    z-index: 10001;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: 20px;
+    background: rgba(10, 24, 40, 0.45);
+    backdrop-filter: blur(2px);
+    -webkit-backdrop-filter: blur(2px);
+  }
+  .ofac-modal-backdrop[hidden] { display: none; }
+
+  /* ── Modal card ── */
+  .ofac-modal {
+    position: relative;
+    width: min(460px, calc(100vw - 40px));
+    background: #fff;
+    border-radius: 8px;
+    box-shadow: 0 20px 60px rgba(0, 31, 68, 0.28);
+    padding: 32px 36px 36px;
+    animation: ofacModalIn 0.18s ease-out;
+  }
+  @keyframes ofacModalIn {
+    from { opacity: 0; transform: translateY(12px) scale(0.97); }
+    to   { opacity: 1; transform: translateY(0) scale(1); }
+  }
+  .ofac-modal-close {
+    position: absolute;
+    top: 14px;
+    right: 16px;
+    background: transparent;
+    border: none;
+    font-size: 22px;
+    color: #888;
+    cursor: pointer;
+    padding: 2px 6px;
+    line-height: 1;
+  }
+  .ofac-modal-close:hover { color: #001f3f; }
+  .ofac-modal h3 {
+    font-family: var(--font-serif);
+    font-size: 20px;
+    color: var(--sr-blue-dark);
+    margin: 0 0 6px;
+    padding-right: 28px;
+    font-weight: 700;
+    line-height: 1.25;
+  }
+  .ofac-modal .ofac-modal-note {
+    font-size: 14px;
+    color: var(--sr-gray-text);
+    margin: 0 0 20px;
+    line-height: 1.5;
+  }
+  .ofac-modal-field {
+    margin-bottom: 14px;
+  }
+  .ofac-modal-field label {
+    display: block;
+    font-family: var(--font-sans);
+    font-size: 12px;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 0.6px;
+    color: var(--sr-blue-dark);
+    margin: 0 0 5px;
+  }
+  .ofac-modal-field input {
+    width: 100%;
+    box-sizing: border-box;
+    padding: 12px 14px;
+    border: 2px solid #d0d8e4;
+    border-radius: 3px;
+    font-family: var(--font-sans);
+    font-size: 15px;
+    color: var(--sr-dark-text);
+    outline: none;
+    transition: border-color 0.15s;
+  }
+  .ofac-modal-field input:focus {
+    border-color: var(--sr-blue);
+  }
+  .ofac-modal-field input::placeholder { color: #999; }
+  .ofac-modal-submit {
+    width: 100%;
+    padding: 14px 20px;
+    background: var(--sr-blue);
+    color: var(--white);
+    border: none;
+    border-radius: 3px;
+    font-family: var(--font-sans);
+    font-size: 14px;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 0.8px;
+    cursor: pointer;
+    transition: background 0.15s;
+    margin-top: 4px;
+  }
+  .ofac-modal-submit:hover { background: var(--sr-blue-dark); }
+  .ofac-modal-submit:disabled { opacity: 0.7; cursor: wait; }
+  .ofac-modal-fine {
+    text-align: center;
+    font-size: 11.5px;
+    color: var(--sr-gray-text);
+    margin: 10px 0 0;
+  }
+
+  /* ── Inline band (bottom of page) ── */
   .ofac-alert-band {
     background: #f4f8fc;
     border: 1px solid #cfddee;
@@ -90,6 +231,46 @@
 </style>
 {% endmacro %}
 
+
+{# ── Header button — place near breadcrumbs or title ── #}
+{% macro ofac_alert_button(label="Notify Me") %}
+<button type="button" class="ofac-notify-btn" aria-haspopup="dialog" aria-controls="ofac-alert-modal" onclick="document.getElementById('ofac-alert-modal').hidden=false;">
+  <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+    <path d="M18 8A6 6 0 0 0 6 8c0 7-3 9-3 9h18s-3-2-3-9"/>
+    <path d="M13.73 21a2 2 0 0 1-3.46 0"/>
+  </svg>
+  {{ label }}
+</button>
+{% endmacro %}
+
+
+{# ── Modal — one per page, hidden by default ── #}
+{% macro ofac_alert_modal(headline, note, interests, source) %}
+<div class="ofac-modal-backdrop" id="ofac-alert-modal" hidden
+     data-alert-interests="{{ interests|join(',') }}"
+     data-alert-source="{{ source }}">
+  <div class="ofac-modal" role="dialog" aria-modal="true" aria-labelledby="ofac-modal-title">
+    <button type="button" class="ofac-modal-close" aria-label="Close">&times;</button>
+    <h3 id="ofac-modal-title">{{ headline }}</h3>
+    <p class="ofac-modal-note">{{ note }}</p>
+    <form onsubmit="handleOfacModal(event)">
+      <div class="ofac-modal-field">
+        <label for="ofac-modal-name">Name <span style="font-weight:400;text-transform:none;letter-spacing:0;">(optional)</span></label>
+        <input type="text" id="ofac-modal-name" name="name" placeholder="Jane Smith" autocomplete="name">
+      </div>
+      <div class="ofac-modal-field">
+        <label for="ofac-modal-email">Email</label>
+        <input type="email" id="ofac-modal-email" name="email" placeholder="you@company.com" required autocomplete="email">
+      </div>
+      <button type="submit" class="ofac-modal-submit">Notify Me</button>
+    </form>
+    <div class="ofac-modal-fine">Free. Unsubscribe anytime. No spam.</div>
+  </div>
+</div>
+{% endmacro %}
+
+
+{# ── Inline band (bottom of page) ── #}
 {% macro ofac_alert_signup(headline, note, interests, source) %}
 <div class="ofac-alert-band" data-alert-interests="{{ interests|join(',') }}" data-alert-source="{{ source }}">
   <h4>{{ headline }}</h4>
@@ -102,8 +283,81 @@
 </div>
 {% endmacro %}
 
+
 {% macro ofac_alert_js() %}
 <script>
+/* ── Shared subscribe call ── */
+function _ofacSubscribe(email, name, interests, source, onSuccess, onError) {
+  var payload = { email: email, interests: interests, source: source };
+  if (name) payload.name = name;
+  fetch('/api/subscribe', {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify(payload)
+  })
+  .then(function(r) { return r.json(); })
+  .then(function(data) {
+    if (data.ok) {
+      if (typeof gtag === 'function') {
+        gtag('event', 'ofac_alert_subscribe', { method: source, interests: interests.join(',') });
+      }
+      onSuccess();
+    } else {
+      onError(data.error || 'Something went wrong. Please try again.');
+    }
+  })
+  .catch(function() { onError('Network error. Please try again.'); });
+}
+
+/* ── Modal handler ── */
+(function initOfacModal() {
+  var backdrop = document.getElementById('ofac-alert-modal');
+  if (!backdrop) return;
+  var modal = backdrop.querySelector('.ofac-modal');
+  var closeBtn = backdrop.querySelector('.ofac-modal-close');
+
+  function closeModal() { backdrop.hidden = true; }
+  closeBtn.addEventListener('click', closeModal);
+  backdrop.addEventListener('click', function(e) { if (e.target === backdrop) closeModal(); });
+  document.addEventListener('keydown', function(e) { if (e.key === 'Escape' && !backdrop.hidden) closeModal(); });
+})();
+
+function handleOfacModal(e) {
+  e.preventDefault();
+  var backdrop = document.getElementById('ofac-alert-modal');
+  var form = e.target;
+  var emailInput = form.querySelector('input[type="email"]');
+  var nameInput = form.querySelector('input[type="text"]');
+  var btn = form.querySelector('.ofac-modal-submit');
+  var email = emailInput.value.trim();
+  var name = nameInput ? nameInput.value.trim() : '';
+  if (!email) return;
+
+  var interests = (backdrop.getAttribute('data-alert-interests') || '').split(',').filter(Boolean);
+  var source = backdrop.getAttribute('data-alert-source') || '';
+
+  btn.disabled = true;
+  btn.textContent = 'Subscribing…';
+
+  _ofacSubscribe(email, name, interests, source,
+    function() {
+      var modal = backdrop.querySelector('.ofac-modal');
+      modal.innerHTML = '<div style="text-align:center;padding:32px 20px;">' +
+        '<div style="font-size:2.2rem;margin-bottom:12px;">✓</div>' +
+        '<div style="font-family:var(--font-serif);font-size:18px;color:var(--sr-blue-dark);font-weight:700;margin-bottom:6px;">You\'re in.</div>' +
+        '<div style="font-size:14px;color:var(--sr-gray-text);">We\'ll notify you when things change.</div>' +
+        '<button type="button" style="margin-top:18px;padding:10px 24px;background:var(--sr-blue);color:#fff;border:none;border-radius:3px;font-family:var(--font-sans);font-size:13px;font-weight:700;cursor:pointer;text-transform:uppercase;letter-spacing:0.5px;" onclick="document.getElementById(\'ofac-alert-modal\').hidden=true;">Done</button>' +
+        '</div>';
+    },
+    function(msg) {
+      btn.disabled = false;
+      btn.textContent = 'Notify Me';
+      alert(msg);
+    }
+  );
+}
+
+/* ── Inline band handler ── */
 function handleOfacAlert(e, form) {
   e.preventDefault();
   var input = form.querySelector('input[type="email"]');
@@ -118,36 +372,16 @@ function handleOfacAlert(e, form) {
   btn.disabled = true;
   btn.textContent = 'Subscribing…';
 
-  fetch('/api/subscribe', {
-    method: 'POST',
-    headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify({
-      email: email,
-      interests: interests,
-      source: source
-    })
-  })
-  .then(function(r) { return r.json(); })
-  .then(function(data) {
-    if (data.ok) {
-      if (typeof gtag === 'function') {
-        gtag('event', 'ofac_alert_subscribe', {
-          method: source,
-          interests: interests.join(',')
-        });
-      }
-      band.innerHTML = '<div style="display:flex;align-items:center;gap:10px;padding:6px 0;"><span style="color:#166534;font-size:1.3rem;">✓</span><span style="font-family:var(--font-serif);color:var(--sr-blue-dark);font-size:15px;">You’re in. We’ll notify you when things change.</span></div>';
-    } else {
+  _ofacSubscribe(email, '', interests, source,
+    function() {
+      band.innerHTML = '<div style="display:flex;align-items:center;gap:10px;padding:6px 0;"><span style="color:#166534;font-size:1.3rem;">✓</span><span style="font-family:var(--font-serif);color:var(--sr-blue-dark);font-size:15px;">You\'re in. We\'ll notify you when things change.</span></div>';
+    },
+    function(msg) {
       btn.disabled = false;
       btn.textContent = 'Notify Me';
-      alert(data.error || 'Something went wrong. Please try again.');
+      alert(msg);
     }
-  })
-  .catch(function() {
-    btn.disabled = false;
-    btn.textContent = 'Notify Me';
-    alert('Network error. Please try again.');
-  });
+  );
 }
 </script>
 {% endmacro %}

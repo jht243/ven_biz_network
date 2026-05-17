@@ -2097,6 +2097,7 @@ def subscribe():
 
     metadata = _build_buttondown_metadata(data)
     tags = _build_buttondown_tags(data)
+    subscriber_name = data.get("name", "").strip()[:120] if isinstance(data.get("name"), str) else ""
 
     payload: dict = {
         "email_address": email,
@@ -2104,6 +2105,8 @@ def subscribe():
         "ip_address": subscriber_ip,
         "metadata": metadata,
     }
+    if subscriber_name:
+        payload["subscriber_name"] = subscriber_name
     if tags:
         payload["tags"] = tags
 
@@ -3210,7 +3213,7 @@ def _visa_service_jsonld(*, canonical: str, title: str, description: str,
             "provider": {"@type": "Organization", "name": _s.site_name, "url": f"{base}/"},
             "url": canonical,
             "description": description,
-            "termsOfService": f"{base}/terms-of-service",
+            "termsOfService": f"{base}/sources",
             "isRelatedTo": [{"@type": "WebPage", "name": p["name"], "url": p["url"]} for p in related_pages],
             "offers": {
                 "@type": "Offer",
@@ -5061,71 +5064,6 @@ def sources_page():
         abort(500)
 
 
-@app.route("/terms-of-service")
-@app.route("/terms-of-service/")
-def terms_of_service_page():
-    """Generic terms of service page."""
-    try:
-        from src.page_renderer import _env, _base_url, _iso, settings as _s
-        from datetime import date as _date, datetime as _dt
-        import json as _json
-
-        base = _base_url()
-        canonical = f"{base}/terms-of-service"
-        now_iso = _iso(_dt.utcnow())
-        seo = {
-            "title": "Terms of Service — Caracas Research",
-            "description": (
-                "Terms governing access to and use of the Caracas Research website, "
-                "content, tools, and related services."
-            ),
-            "keywords": "Caracas Research terms of service, website terms, terms and conditions",
-            "canonical": canonical,
-            "site_name": _s.site_name,
-            "site_url": base,
-            "locale": _s.site_locale,
-            "og_image": f"{base}/static/og-image.png?v=3",
-            "og_type": "website",
-            "published_iso": now_iso,
-            "modified_iso": now_iso,
-        }
-        jsonld = _json.dumps({
-            "@context": "https://schema.org",
-            "@graph": [
-                {
-                    "@type": "BreadcrumbList",
-                    "itemListElement": [
-                        {"@type": "ListItem", "position": 1, "name": "Home", "item": f"{base}/"},
-                        {"@type": "ListItem", "position": 2, "name": "Terms of Service", "item": canonical},
-                    ],
-                },
-                {
-                    "@type": "WebPage",
-                    "@id": f"{canonical}#webpage",
-                    "url": canonical,
-                    "name": seo["title"],
-                    "description": seo["description"],
-                    "publisher": {"@type": "Organization", "name": _s.site_name, "url": f"{base}/"},
-                },
-            ],
-        }, ensure_ascii=False)
-
-        template = _env.get_template("terms_of_service.html.j2")
-        html = template.render(
-            seo=seo,
-            jsonld=jsonld,
-            current_year=_date.today().year,
-            effective_date="May 16, 2026",
-            contact_address="725 SE 14th Court, Fort Lauderdale, Florida 33316",
-        )
-        return Response(html, mimetype="text/html")
-    except HTTPException:
-        raise
-    except Exception as exc:
-        logger.exception("terms of service page render failed: %s", exc)
-        abort(500)
-
-
 @app.route("/sanctions-tracker")
 @app.route("/sanctions-tracker/")
 def sanctions_tracker():
@@ -5203,10 +5141,7 @@ def sanctions_tracker():
                 "total": 0, "individuals": 0, "entities": 0,
                 "vessels": 0, "aircraft": 0,
             }
-            from src.data.sdn_tracker import is_sdn_designation_row
             for r in rows:
-                if not is_sdn_designation_row(r):
-                    continue
                 meta = r.extra_metadata or {}
                 ent_type = (meta.get("type") or "").lower()
                 if ent_type not in ("individual", "vessel", "aircraft", "entity"):
@@ -11169,7 +11104,6 @@ def sitemap_xml():
         {"loc": f"{base}/citgo", "lastmod": today_iso, "changefreq": "weekly", "priority": "0.85"},
         {"loc": f"{base}/get-venezuela-visa", "lastmod": today_iso, "changefreq": "weekly", "priority": "0.85"},
         {"loc": f"{base}/sources", "lastmod": today_iso, "changefreq": "weekly", "priority": "0.6"},
-        {"loc": f"{base}/terms-of-service", "lastmod": today_iso, "changefreq": "yearly", "priority": "0.3"},
         {"loc": f"{base}/briefing", "lastmod": today_iso, "changefreq": "daily", "priority": "0.9"},
         {"loc": f"{base}/tools", "lastmod": today_iso, "changefreq": "weekly", "priority": "0.8"},
         {"loc": f"{base}/explainers", "lastmod": today_iso, "changefreq": "weekly", "priority": "0.8"},

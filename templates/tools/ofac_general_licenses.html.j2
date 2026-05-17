@@ -1,5 +1,5 @@
 {% extends "_base.html.j2" %}
-{% from "_ofac_alert_signup.html.j2" import ofac_alert_signup, ofac_alert_css, ofac_alert_js %}
+{% from "_ofac_alert_signup.html.j2" import ofac_alert_signup, ofac_alert_button, ofac_alert_modal, ofac_alert_css, ofac_alert_js %}
 
 {% block head_extra %}
 {{ ofac_alert_css() }}
@@ -17,6 +17,8 @@
   .gl-meta { font-size: 12px; color: var(--sr-gray-text); margin-top: 8px; }
   .gl-meta strong { color: var(--sr-blue-dark); }
   .gl-tag { display: inline-block; padding: 2px 8px; background: var(--sr-gray-light); color: var(--sr-dark-text); border-radius: 10px; font-size: 11px; margin-right: 4px; }
+  .gl-source { display: inline-block; margin-left: 6px; padding: 2px 7px; border-radius: 3px; background: #e8f5e9; color: #166534; font-size: 10px; font-weight: 800; letter-spacing: 0.8px; text-transform: uppercase; }
+  .gl-source.fallback { background: #fff3e0; color: #7c4a03; }
   .gl-detail-link { font-size: 13px; font-weight: 700; color: var(--sr-blue); }
   .gl-empty { text-align: center; padding: 32px; color: var(--sr-gray-text); }
   .live-status { display: inline-flex; align-items: center; gap: 7px; border: 1px solid #bbf7d0; padding: 5px 10px; margin: 0 0 16px; background: #f0fdf4; color: #166534; border-radius: 999px; font-size: 12px; font-weight: 700; line-height: 1.2; }
@@ -34,6 +36,7 @@
     <a href="/">Home</a><span>/</span>
     <a href="/invest-in-venezuela">Invest in Venezuela</a><span>/</span>
     <span>OFAC General License Lookup</span>
+    {{ ofac_alert_button() }}
   </nav>
 
   <header style="margin: 16px 0 20px;">
@@ -52,9 +55,9 @@
   {% set is_live = license_payload and license_payload.source == "live" %}
   <div class="live-status{% if not is_live %} fallback{% endif %}">
     {% if is_live %}
-      Updated{% if license_payload.scraped_at %} · {{ license_payload.scraped_at[:10] }}{% endif %}
+      Live OFAC scrape{% if license_payload.scraped_at %} · {{ license_payload.scraped_at[:10] }}{% endif %}
     {% else %}
-      Reference data
+      Curated data
     {% endif %}
   </div>
 
@@ -71,13 +74,8 @@
         <option value="legal">Legal / settlement</option>
         <option value="wind-down">Wind-down</option>
       </select>
-      <select id="gl-date-sort" aria-label="Sort by OFAC listing date">
-        <option value="">OFAC order</option>
-        <option value="newest">Newest first</option>
-        <option value="oldest">Oldest first</option>
-      </select>
     </div>
-    <p class="cr-search-help">Filter the license list, sort by OFAC listing date, then open our internal analysis for the matching card.</p>
+    <p class="cr-search-help">Filter the license list first, then open our internal analysis for the matching card.</p>
   </div>
 
   <div class="tool-intro">
@@ -87,10 +85,11 @@
 
   <div id="gl-list">
     {% for gl in licenses %}
-    <article class="gl-card" data-original-index="{{ loop.index0 }}" data-date="{{ gl.ofac_listing_date or '' }}" data-num="{{ gl.number|lower }}" data-title="{{ gl.title|lower }}" data-summary="{{ gl.summary|lower }}" data-scope="{{ gl.scope|join(' ') }}" data-context="{{ gl.context|lower }}">
+    <article class="gl-card" data-num="{{ gl.number|lower }}" data-title="{{ gl.title|lower }}" data-summary="{{ gl.summary|lower }}" data-scope="{{ gl.scope|join(' ') }}" data-context="{{ gl.context|lower }}">
       <div class="gl-head">
         <span>
           <span class="gl-num">{{ gl.number }}</span>
+          <span class="gl-source{% if gl.source != 'live' %} fallback{% endif %}">{{ "Live OFAC" if gl.source == "live" else "Curated" }}</span>
         </span>
         <a class="gl-detail-link" href="{{ gl.detail_url }}">View analysis &rarr;</a>
       </div>
@@ -98,14 +97,11 @@
       {% if gl.summary %}<p class="summary">{{ gl.summary }}</p>{% endif %}
       {% if gl.context %}<p class="ctx">{{ gl.context }}</p>{% endif %}
       {% set visible_scopes = gl.scope | reject("equalto", "general") | list %}
-      {% if gl.expires or gl.ofac_listing_date or visible_scopes %}
+      {% if gl.expires or visible_scopes %}
       <div class="gl-meta">
         {% if gl.expires %}<strong>Status:</strong> {{ gl.expires }}{% endif %}
-        {% if gl.ofac_listing_date %}
-          {% if gl.expires %} · {% endif %}<strong>OFAC date:</strong> {{ gl.ofac_listing_date }}
-        {% endif %}
         {% if visible_scopes %}
-          {% if gl.expires or gl.ofac_listing_date %} · {% endif %}<strong>Scope:</strong>
+          {% if gl.expires %} · {% endif %}<strong>Scope:</strong>
           {% for s in visible_scopes %}<span class="gl-tag">{{ s }}</span>{% endfor %}
         {% endif %}
       </div>
@@ -131,27 +127,11 @@
   <script>
     (function() {
       var cards = Array.prototype.slice.call(document.querySelectorAll('#gl-list .gl-card'));
-      var list = document.getElementById('gl-list');
       var q = document.getElementById('gl-q');
       var scope = document.getElementById('gl-scope');
-      var dateSort = document.getElementById('gl-date-sort');
-      function dateValue(c) {
-        var parsed = Date.parse(c.dataset.date || '');
-        return isNaN(parsed) ? 0 : parsed;
-      }
-      function sortCards() {
-        var mode = dateSort.value;
-        cards.sort(function(a, b) {
-          if (mode === 'newest') return dateValue(b) - dateValue(a) || Number(a.dataset.originalIndex) - Number(b.dataset.originalIndex);
-          if (mode === 'oldest') return dateValue(a) - dateValue(b) || Number(a.dataset.originalIndex) - Number(b.dataset.originalIndex);
-          return Number(a.dataset.originalIndex) - Number(b.dataset.originalIndex);
-        });
-        cards.forEach(function(c) { list.appendChild(c); });
-      }
       function apply() {
         var qs = (q.value || '').toLowerCase().trim();
         var sc = scope.value;
-        sortCards();
         cards.forEach(function(c) {
           var matchQ = !qs || c.dataset.num.indexOf(qs) !== -1
             || c.dataset.title.indexOf(qs) !== -1
@@ -163,11 +143,10 @@
       }
       var glTracked = false;
       function trackGL() {
-        if (!glTracked && typeof gtag === 'function') { gtag('event', 'tool_interaction', { tool_name: 'ofac_general_licenses', search_term: q.value || scope.value || dateSort.value }); glTracked = true; }
+        if (!glTracked && typeof gtag === 'function') { gtag('event', 'tool_interaction', { tool_name: 'ofac_general_licenses', search_term: q.value || scope.value }); glTracked = true; }
       }
       q.addEventListener('input', function() { apply(); trackGL(); });
       scope.addEventListener('change', function() { apply(); trackGL(); });
-      dateSort.addEventListener('change', function() { apply(); trackGL(); });
     })();
   </script>
 
@@ -180,6 +159,12 @@
 
   {% from "_cluster_nav.html.j2" import cluster_nav %}
   {{ cluster_nav(cluster_ctx) }}
+  {{ ofac_alert_modal(
+       headline="Get notified when OFAC licenses change",
+       note="General licenses issued, amended, or revoked — delivered within hours of publication.",
+       interests=["license_updates"],
+       source="ofac_general_licenses"
+  ) }}
   {{ ofac_alert_js() }}
 
   {% from "_recent_briefings.html.j2" import recent_briefings_rail %}

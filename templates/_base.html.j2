@@ -110,6 +110,9 @@
     .breadcrumbs a { color: var(--sr-gray-text); }
     .breadcrumbs span { margin: 0 0; }
     .breadcrumbs .breadcrumb-share { margin-left: auto; }
+    .breadcrumbs .ofac-notify-btn { margin-left: auto; }
+    .breadcrumbs .ofac-notify-btn + .share-btn,
+    .breadcrumbs .ofac-notify-btn + .breadcrumb-share { margin-left: 0; }
 
     article header h1 { font-family: var(--font-serif); font-size: 38px; line-height: 1.2; color: var(--sr-blue-dark); margin: 12px 0; font-weight: 700; }
     article header .subtitle { font-family: var(--font-serif); font-style: italic; font-size: 20px; color: var(--sr-gray-text); margin-bottom: 18px; }
@@ -271,6 +274,7 @@
     <div class="nav-links" id="primary-nav">
       <a href="/briefing">Analysis</a>
       <a href="/invest-in-venezuela">Invest</a>
+      <a href="/real-estate/">Real Estate</a>
       <a href="/sanctions-tracker">Sanctions</a>
       <a href="/research/sdn/">Research</a>
       <a href="/tools">Tools</a>
@@ -311,8 +315,6 @@
 
 <footer class="site-footer">
   &copy; {{ current_year|default(2026) }} Caracas Research ·
-  <a href="/real-estate/">Real Estate</a> ·
-  <a href="/terms-of-service">Terms of Service</a> ·
   <a href="/sitemap.xml">Sitemap</a>
 </footer>
 
@@ -398,7 +400,12 @@
       '<circle cx="18" cy="5" r="3"/><circle cx="6" cy="12" r="3"/><circle cx="18" cy="19" r="3"/>' +
       '<line x1="8.59" y1="13.51" x2="15.42" y2="17.49"/><line x1="15.41" y1="6.51" x2="8.59" y2="10.49"/>' +
       '</svg><span class="share-btn-label">Share</span>';
-    crumbs.appendChild(btn);
+    var notifyBtn = crumbs.querySelector('.ofac-notify-btn');
+    if (notifyBtn) {
+      notifyBtn.insertAdjacentElement('afterend', btn);
+    } else {
+      crumbs.appendChild(btn);
+    }
   });
 })();
 

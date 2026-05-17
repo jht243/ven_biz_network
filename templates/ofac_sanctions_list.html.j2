@@ -1,6 +1,6 @@
 {% extends "_base.html.j2" %}
 {% from "_base.html.j2" import share_button %}
-{% from "_ofac_alert_signup.html.j2" import ofac_alert_signup, ofac_alert_css, ofac_alert_js %}
+{% from "_ofac_alert_signup.html.j2" import ofac_alert_signup, ofac_alert_button, ofac_alert_modal, ofac_alert_css, ofac_alert_js %}
 
 {% block head_extra %}
 {{ ofac_alert_css() }}
@@ -95,7 +95,7 @@
     <a href="/">Home</a><span>/</span>
     <a href="/explainers">Explainers</a><span>/</span>
     <span>OFAC Sanctions List</span>
-    <span style="margin-left:auto;">{{ share_button(seo.canonical, seo.title) }}</span>
+    {{ ofac_alert_button() }}{{ share_button(seo.canonical, seo.title) }}
   </nav>
 
   <header class="tps-hero">
@@ -942,6 +942,12 @@
 })();
 </script>
 
+{{ ofac_alert_modal(
+     headline="Get notified when the OFAC SDN list changes",
+     note="New designations, delistings, general license changes, and enforcement actions — delivered within hours.",
+     interests=["sdn_changes", "license_updates"],
+     source="ofac_sanctions_list"
+) }}
 {{ ofac_alert_js() }}
 
 {% from "_recent_briefings.html.j2" import recent_briefings_rail %}

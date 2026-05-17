@@ -2,7 +2,7 @@
 {% from "_base.html.j2" import share_button %}
 {% from "_cluster_nav.html.j2" import cluster_nav %}
 {% from "_investment_fact.html.j2" import fact_value, fact_source %}
-{% from "_ofac_alert_signup.html.j2" import ofac_alert_signup, ofac_alert_css, ofac_alert_js %}
+{% from "_ofac_alert_signup.html.j2" import ofac_alert_signup, ofac_alert_button, ofac_alert_modal, ofac_alert_css, ofac_alert_js %}
 
 {% block head_extra %}
 {{ ofac_alert_css() }}
@@ -53,6 +53,7 @@
       <a href="/">Home</a> <span>›</span>
       <a href="/sanctions-tracker">Sanctions</a> <span>›</span>
       General License 46
+      {{ ofac_alert_button() }}
     </nav>
     <span class="kicker">OFAC · Sanctions Relief</span>
     <h1>OFAC General License 46: What U.S. Companies Can Now Do in Venezuela's Oil Sector</h1>
@@ -240,6 +241,12 @@
   </div>
 </div>
 
+{{ ofac_alert_modal(
+     headline="Get notified when OFAC general licenses change",
+     note="License amendments, revocations, and new authorizations — delivered within hours of publication.",
+     interests=["license_updates"],
+     source="general_license_46"
+) }}
 {{ ofac_alert_js() }}
 <script>
 document.querySelectorAll('.faq-q').forEach(function(btn) {

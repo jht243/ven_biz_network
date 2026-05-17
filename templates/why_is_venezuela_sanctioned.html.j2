@@ -1,5 +1,5 @@
 {% extends "_base.html.j2" %}
-{% from "_ofac_alert_signup.html.j2" import ofac_alert_signup, ofac_alert_css, ofac_alert_js %}
+{% from "_ofac_alert_signup.html.j2" import ofac_alert_signup, ofac_alert_button, ofac_alert_modal, ofac_alert_css, ofac_alert_js %}
 {% from "_base.html.j2" import share_button %}
 
 {% block head_extra %}
@@ -101,7 +101,7 @@
     <a href="/">Home</a><span>/</span>
     <a href="/sanctions-tracker">Sanctions</a><span>/</span>
     <span>Why Is Venezuela Sanctioned</span>
-    <span style="margin-left:auto;">{{ share_button(seo.canonical, seo.title) }}</span>
+    {{ ofac_alert_button() }}{{ share_button(seo.canonical, seo.title) }}
   </nav>
 
   <header class="sanc-hero">
@@ -868,6 +868,12 @@
 })();
 </script>
 
+{{ ofac_alert_modal(
+     headline="Get notified when Venezuela sanctions policy changes",
+     note="Executive orders, new general licenses, enforcement actions, and Federal Register publications — delivered within hours.",
+     interests=["policy_legal", "license_updates"],
+     source="why_is_venezuela_sanctioned"
+) }}
 {{ ofac_alert_js() }}
 
 {% from "_recent_briefings.html.j2" import recent_briefings_rail %}

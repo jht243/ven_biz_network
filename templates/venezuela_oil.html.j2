@@ -1,6 +1,6 @@
 {% extends "_base.html.j2" %}
 {% from "_base.html.j2" import share_button %}
-{% from "_ofac_alert_signup.html.j2" import ofac_alert_signup, ofac_alert_css, ofac_alert_js %}
+{% from "_ofac_alert_signup.html.j2" import ofac_alert_signup, ofac_alert_button, ofac_alert_modal, ofac_alert_css, ofac_alert_js %}
 
 {% block head_extra %}
 {{ ofac_alert_css() }}
@@ -84,7 +84,7 @@
     <a href="/">Home</a><span>/</span>
     <a href="/invest-in-venezuela">Invest in Venezuela</a><span>/</span>
     <span>Venezuela Oil</span>
-    <span style="margin-left:auto;">{{ share_button(seo.canonical, seo.title) }}</span>
+    {{ ofac_alert_button() }}{{ share_button(seo.canonical, seo.title) }}
   </nav>
 
   <header class="oil-hero">
@@ -786,6 +786,12 @@
 
 </section>
 
+{{ ofac_alert_modal(
+     headline="Get notified when oil-sector OFAC licenses change",
+     note="License amendments, revocations, and new authorizations affecting Venezuela oil operations — delivered within hours.",
+     interests=["license_updates", "diplomatic_signals"],
+     source="venezuela_oil"
+) }}
 {{ ofac_alert_js() }}
 
 {% from "_recent_briefings.html.j2" import recent_briefings_rail %}
